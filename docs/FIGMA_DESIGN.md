@@ -144,8 +144,13 @@ Cart empty-state — intentionally keep their icon/illustration, not a product p
 2. **Shipping Address** — name, street, city, etc.
 3. **Shipping Methods** — Standard Shipping (free) / Express Shipping (AED 10.00).
 4. **Payment Method** — Check / Money order, Cash on Delivery, N‑Genius Online by
-   Network, Pay later with Tabby.
+   Network, Pay later with Tabby. Each option is a selectable card (radio + full
+   title/subtitle + trailing icon); **Tabby** uses its mint‑green brand chip.
 5. **Order Summary** + **Complete Order**.
+
+Each step is numbered with a burgundy circular badge (① Contact, ② Shipping,
+③ Payment). Option labels fill the card width — titles and subtitles are never
+truncated, in both EN and the Arabic mirror.
 
 ---
 
