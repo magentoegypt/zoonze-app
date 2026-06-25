@@ -23,8 +23,10 @@ screen (reachable from My Account).
 
 All device frames are **390 px** wide (iPhone logical width). Every screen exists
 in two variants — **English / LTR** and a full **Arabic / RTL** mirror — laid out
-in parallel section columns on the canvas (the AR sections are suffixed
-`(AR / RTL)`), for **28 screens × 2 = 56 frames**.
+as two parallel, banner-labelled column groups on the canvas: **EN · English (LTR)**
+on the left and **AR · العربية (RTL)** on the right, with each language's sections
+suffixed `(EN / LTR)` / `(AR / RTL)` and aligned row-by-row for side-by-side
+comparison. That's **28 screens × 2 = 56 frames**.
 
 ### Arabic / RTL
 
