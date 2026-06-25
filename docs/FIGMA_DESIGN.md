@@ -21,8 +21,22 @@ Sign-up collects **name, email, password only** — no mobile number and no SMS/
 verification step. Account details and preferences are edited on the **Edit Profile**
 screen (reachable from My Account).
 
-All device frames are **390 px** wide (iPhone logical width), LTR/EN. The Arabic
-RTL mirror is produced at implementation time from the same components.
+All device frames are **390 px** wide (iPhone logical width). Every screen exists
+in two variants — **English / LTR** and a full **Arabic / RTL** mirror — laid out
+in parallel section columns on the canvas (the AR sections are suffixed
+`(AR / RTL)`), for **28 screens × 2 = 56 frames**.
+
+### Arabic / RTL
+
+The Arabic mirror of all 28 screens is generated from the LTR set:
+
+- Text is set in **Cairo** (Regular / Medium / SemiBold / Bold), right-aligned.
+- Layouts are mirrored — horizontal rows reversed, left/right padding swapped,
+  absolutely-positioned elements mirrored, and back-arrows flipped.
+- The **`ZOONZE` wordmark stays in English** (Playfair Display) in both languages.
+  Brand names, product titles, prices, and order codes also remain Latin —
+  standard for UAE bilingual storefronts.
+- All UI chrome strings are translated to UAE Arabic; Western numerals are kept.
 
 ---
 
