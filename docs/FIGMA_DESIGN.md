@@ -10,7 +10,7 @@ The canvas is organized into four labelled sections (Figma *Sections*):
 
 | # | Section | Screens |
 |---|---------|---------|
-| 01 | Onboarding & Auth | Splash — Launch, Splash — Welcome, Sign In, Sign Up, Forgot Password |
+| 01 | Onboarding & Auth | Splash — Launch, Onboarding (3 intro slides), Splash — Welcome, Sign In, Sign Up, Forgot Password |
 | 02 | Home & Discovery | Home (UAE / EN), Categories, Search, Search Results |
 | 03 | Product · Wishlist · Cart | PLP (Fragrance), PDP (Coco Mademoiselle), Wishlist, Cart, Cart — Empty, Checkout, Order Success, Filters (Sheet) |
 | 04 | Orders & Account | My Account, Edit Profile, My Orders, Order Tracking, Saved Addresses, Add Address, Notifications, Help & FAQ |
@@ -85,3 +85,18 @@ product photo.
 - Category tiles currently reuse product photography as representative imagery —
   replace with per-category art when available.
 - Currency is **AED**; all copy shown is the EN/LTR variant.
+
+## Recent refinements
+
+- **Launch splash** uses the real ZoonZE logo (Z-mark + wordmark) in white on the
+  burgundy background; light-background screens use the favicon mark + wordmark.
+- **Onboarding** — three intro slides (Authentic Beauty, Curated for You, Free
+  3-Hour Delivery) sit between the Launch and Welcome splashes.
+- **Product imagery is full-bleed** on grid cards and the PDP main gallery image.
+- **Product cards** carry a wishlist (heart) action with a **share** action below it.
+- **PDP** has a **Description · Details · Reviews** tab bar and a full **Reviews**
+  block (rating summary, rating bars, verified review cards, write-a-review).
+- **Checkout** mirrors the live ZoonZE flow: Contact Information, Shipping Address,
+  Shipping Methods (Standard free / Express AED 10), and the real payment methods —
+  **Check / Money order, Cash on Delivery, N‑Genius Online by Network, Pay later
+  with Tabby**.
