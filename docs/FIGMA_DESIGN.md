@@ -6,14 +6,15 @@ between the Figma source of truth and the Flutter implementation in this repo.
 
 **Figma file:** https://www.figma.com/design/lxyvR0z3xERp8lw8IlPTlH/
 
-The canvas is organized into four labelled sections (Figma *Sections*):
+The canvas is organized into five labelled sections (Figma *Sections*), stacked in app-flow order:
 
 | # | Section | Screens |
 |---|---------|---------|
-| 01 | Onboarding & Auth | Splash — Launch, Onboarding (3 intro slides), Splash — Welcome, Sign In, Sign Up, Forgot Password |
-| 02 | Home & Discovery | Home (UAE / EN), Categories, Search, Search Results |
-| 03 | Product · Wishlist · Cart | PLP (Fragrance), PDP (Coco Mademoiselle), Wishlist, Cart, Cart — Empty, Checkout, Order Success, Filters (Sheet) |
-| 04 | Orders & Account | My Account, Edit Profile, My Orders, Order Tracking, Saved Addresses, Add Address, Notifications, Help & FAQ |
+| 01 | Splash & Onboarding | Splash — Launch, Onboarding (3 intro slides), Splash — Welcome |
+| 02 | Authentication | Sign In, Sign Up, Forgot Password |
+| 03 | Home & Discovery | Home (UAE / EN), Categories, Search, Search Results |
+| 04 | Product · Wishlist · Cart | PLP (Fragrance), PDP (Coco Mademoiselle), Wishlist, Cart, Cart — Empty, Checkout, Order Success, Filters (Sheet) |
+| 05 | Orders & Account | My Account, Edit Profile, My Orders, Order Tracking, Saved Addresses, Add Address, Notifications, Help & FAQ |
 
 Sign-up collects **name, email, password only** — no mobile number and no SMS/OTP
 verification step. Account details and preferences are edited on the **Edit Profile**
