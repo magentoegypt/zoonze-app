@@ -10,10 +10,14 @@ The canvas is organized into four labelled sections (Figma *Sections*):
 
 | # | Section | Screens |
 |---|---------|---------|
-| 01 | Onboarding & Auth | Splash — Launch, Splash — Welcome, Sign In, Sign Up, OTP Verification, Forgot Password |
+| 01 | Onboarding & Auth | Splash — Launch, Splash — Welcome, Sign In, Sign Up, Forgot Password |
 | 02 | Home & Discovery | Home (UAE / EN), Categories, Search, Search Results |
 | 03 | Product · Wishlist · Cart | PLP (Fragrance), PDP (Coco Mademoiselle), Wishlist, Cart, Cart — Empty, Checkout, Order Success, Filters (Sheet) |
-| 04 | Orders & Account | My Account, My Orders, Order Tracking, Saved Addresses, Add Address, Payment Methods, Notifications, Help & FAQ |
+| 04 | Orders & Account | My Account, Edit Profile, My Orders, Order Tracking, Saved Addresses, Add Address, Notifications, Help & FAQ |
+
+Sign-up collects **name, email, password only** — no mobile number and no SMS/OTP
+verification step. Account details and preferences are edited on the **Edit Profile**
+screen (reachable from My Account).
 
 All device frames are **390 px** wide (iPhone logical width), LTR/EN. The Arabic
 RTL mirror is produced at implementation time from the same components.
