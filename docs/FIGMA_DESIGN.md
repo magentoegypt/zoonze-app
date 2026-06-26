@@ -18,9 +18,10 @@ between the Figma source of truth and the Flutter implementation in this repo.
 > integration (item 11). Item 1 ("remove selected") could not be located in the file.
 > The Splash & Onboarding and Authentication sections were also merged into a single
 > **01 · Splash & Authentication** section, and the remaining sections renumbered.
-> The auth screens (Sign In, Sign Up, Forgot Password) now show the `ZOONZE` logo
-> centered in the app bar (the duplicate in-body logo on Sign In was removed), and
-> the "Free 3-hour delivery across the UAE" line was removed from the Launch splash.
+> The auth screens (Sign In, Sign Up, Forgot Password) now show the **vertical
+> Splash — Welcome logo lockup** (Z-mark over the `ZOONZE` wordmark) centered in the
+> app bar (the duplicate in-body logo on Sign In was removed), and the "Free 3-hour
+> delivery across the UAE" line was removed from the Launch splash.
 
 The canvas holds **26 screens** organized into four labelled sections (Figma
 *Sections*), stacked top-to-bottom in app-flow order:
