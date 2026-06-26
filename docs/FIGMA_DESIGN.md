@@ -6,14 +6,14 @@ between the Figma source of truth and the Flutter implementation in this repo.
 
 **Figma file:** https://www.figma.com/design/lxyvR0z3xERp8lw8IlPTlH/
 
-The canvas holds **28 screens** organized into five labelled sections (Figma
+The canvas holds **29 screens** organized into five labelled sections (Figma
 *Sections*), stacked top-to-bottom in app-flow order:
 
 | # | Section | Screens |
 |---|---------|---------|
 | 01 | Splash & Onboarding | Splash — Launch, Onboarding 1 (Authentic), Onboarding 2 (Curated), Onboarding 3 (Delivery), Splash — Welcome |
 | 02 | Authentication | Sign In, Sign Up, Forgot Password |
-| 03 | Home & Discovery | Home (UAE / EN), Categories, Search, Search Results, Filters (Sheet), PLP — Fragrance |
+| 03 | Home & Discovery | Home (UAE / EN), Menu Drawer (side nav), Categories, Search, Search Results, Filters (Sheet), PLP — Fragrance |
 | 04 | Product · Wishlist · Cart | PDP (Coco Mademoiselle), Wishlist, Cart, Cart — Empty, Checkout, Order Success |
 | 05 | Orders & Account | My Orders, Order Tracking, My Account, Saved Addresses, Add Address, Notifications, Help & FAQ, Edit Profile |
 
@@ -21,8 +21,24 @@ Sign-up collects **name, email, password only** — no mobile number and no SMS/
 verification step. Account details and preferences are edited on the **Edit Profile**
 screen (reachable from My Account).
 
-All device frames are **390 px** wide (iPhone logical width), LTR/EN. The Arabic
-RTL mirror is produced at implementation time from the same components.
+All device frames are **390 px** wide (iPhone logical width). Every screen exists
+in two variants — **English / LTR** and a full **Arabic / RTL** mirror — laid out
+as two parallel, banner-labelled column groups on the canvas: **EN · English (LTR)**
+on the left and **AR · العربية (RTL)** on the right, with each language's sections
+suffixed `(EN / LTR)` / `(AR / RTL)` and aligned row-by-row for side-by-side
+comparison. That's **29 screens × 2 = 58 frames**.
+
+### Arabic / RTL
+
+The Arabic mirror of all 29 screens is generated from the LTR set:
+
+- Text is set in **Cairo** (Regular / Medium / SemiBold / Bold), right-aligned.
+- Layouts are mirrored — horizontal rows reversed, left/right padding swapped,
+  absolutely-positioned elements mirrored, and back-arrows flipped.
+- The **`ZOONZE` wordmark stays in English** (Playfair Display) in both languages.
+  Brand names, product titles, prices, and order codes also remain Latin —
+  standard for UAE bilingual storefronts.
+- All UI chrome strings are translated to UAE Arabic; Western numerals are kept.
 
 ---
 
@@ -57,6 +73,12 @@ chips, list rows, section headers, tab bar, toggles, and the product card
 badges, stacked wishlist + share actions, stacked price with bold burgundy special
 + muted struck original).
 
+The **top app bar** carries a hamburger (opens the Menu Drawer) + favicon/`ZOONZE`
+lockup on one side and an actions cluster on the other. Action icons show a small
+red **count badge** (white numeral, white ring) at the corner — **cart `2`** and
+**wishlist `8`** (matching the drawer's quick-stats). In the Arabic mirror the
+badges sit on the opposite (top-left) corner.
+
 ---
 
 ## Brand assets → where they appear
@@ -66,7 +88,7 @@ Figma file (raster fills) so the mockup uses live imagery, not placeholders.
 
 | Repo asset | In the design | Notes |
 |------------|---------------|-------|
-| `assets/branding/favicon.ico` | The ornate **Z monogram** mark, placed immediately **before** the `ZOONZE` wordmark in the header lockup across the onboarding/auth screens and primary navigation screens (Welcome, Onboarding, Sign In, Home, Categories, PLP, PDP, Wishlist, Cart, Checkout, My Account). | Forms the icon + wordmark lockup. |
+| `assets/branding/favicon.ico` | The ornate **Z monogram** mark, placed immediately **before** the `ZOONZE` wordmark in the header lockup across the onboarding/auth screens and primary navigation screens (Welcome, Onboarding, Sign In, Home, Menu Drawer, Categories, PLP, PDP, Wishlist, Cart, Checkout, My Account). | Forms the icon + wordmark lockup. |
 | `assets/branding/logo.png` | The full ZoonZE logo (Z-mark + wordmark), rendered **in white on the burgundy Launch splash**. | Elsewhere the wordmark is set in Playfair Display, paired with the favicon Z-mark. |
 | `assets/images/banner.jpg` | **Home hero** (circular flatlay showcase), the **Welcome splash** visual, and the **Onboarding 1** hero. | Beauty-product flatlay. |
 | `assets/images/test_product.jpg` | Product photography (full-bleed) on **every** product card, PLP grid, Search Results, Wishlist, the PDP main gallery + thumbnails, PDP related products, Cart line-items, Category tiles, and the Onboarding 2/3 heroes. | The four `test_product*` images are assigned round-robin across all product slots. |
@@ -91,6 +113,19 @@ Cart empty-state — intentionally keep their icon/illustration, not a product p
 - **Welcome** — favicon + wordmark lockup, flatlay visual, `Get Started`, sign-in
   and guest links.
 
+### Menu Drawer (side navigation)
+- Opens from the Home hamburger; a 320 px panel over a dimmed scrim.
+- **Brand header** — favicon Z-mark + `ZOONZE` wordmark lockup with a close (×).
+- **Profile header** — avatar initials in a burgundy ring, name, and a gold
+  `Gold Member` badge, on a blush tint.
+- **Quick stats** — three tiles: Orders `12`, Wishlist `8`, Vouchers `3`.
+- **SHOP** — Makeup, Skincare, Fragrance, Gift Sets, New Arrivals, Bestsellers,
+  each a tinted icon chip + label + chevron.
+- **ACCOUNT** — Saved Addresses, Notifications, Help & Support.
+- **Footer** — `Language` toggle (`EN` | `العربية`) and `Log Out`.
+- The Arabic mirror flips the panel to the right; the brand lockup stays in its
+  fixed favicon→`ZOONZE` order and the close (×) moves to the left.
+
 ### Product cards
 - Image is **full-bleed** within the card.
 - Top-left: `NEW` / `BESTSELLER` / discount badges. Top-right: a **wishlist (heart)**
@@ -109,8 +144,13 @@ Cart empty-state — intentionally keep their icon/illustration, not a product p
 2. **Shipping Address** — name, street, city, etc.
 3. **Shipping Methods** — Standard Shipping (free) / Express Shipping (AED 10.00).
 4. **Payment Method** — Check / Money order, Cash on Delivery, N‑Genius Online by
-   Network, Pay later with Tabby.
+   Network, Pay later with Tabby. Each option is a selectable card (radio + full
+   title/subtitle + trailing icon); **Tabby** uses its mint‑green brand chip.
 5. **Order Summary** + **Complete Order**.
+
+Each step is numbered with a burgundy circular badge (① Contact, ② Shipping,
+③ Payment). Option labels fill the card width — titles and subtitles are never
+truncated, in both EN and the Arabic mirror.
 
 ---
 
