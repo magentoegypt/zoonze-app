@@ -37,7 +37,12 @@ between the Figma source of truth and the Flutter implementation in this repo.
 > (Splash, Welcome, Sign In/Up, Forgot Password) — they stay clean and chrome-free —
 > as well as from the Menu Drawer, the Filters sheet, and the Launch splash. Canvas
 > sections were resized to fit their frames and re-stacked at a uniform 200 px gap so
-> nothing overlaps.
+> nothing overlaps. On the **Notifications** screen the welcome notification reads
+> "Welcome to Zoonze"; the brand stays "ZoonZE" elsewhere and the all-caps `ZOONZE`
+> logo wordmark is unchanged. The **Menu Drawer** logo is centered in its header
+> (close button pinned to the corner); footer logos stay left/right-aligned. Each
+> page's footer has a **32 px top gap** separating it from the page content (a
+> transparent spacer on Home; bottom-block offset on the other screens).
 
 The canvas holds **26 screens** organized into four labelled sections (Figma
 *Sections*), stacked top-to-bottom in app-flow order:
