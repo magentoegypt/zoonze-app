@@ -77,15 +77,22 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.shopping_bag_outlined,
-                  size: 56, color: AppColors.brandPrimary),
+              const Icon(
+                Icons.shopping_bag_outlined,
+                size: 56,
+                color: AppColors.brandPrimary,
+              ),
               const SizedBox(height: 16),
-              Text(l10n.cartEmptyTitle,
-                  style: Theme.of(context).textTheme.titleLarge),
+              Text(
+                l10n.cartEmptyTitle,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
               const SizedBox(height: 8),
-              Text(l10n.cartEmptyBody,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.inkMuted)),
+              Text(
+                l10n.cartEmptyBody,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: AppColors.inkMuted),
+              ),
               const SizedBox(height: 24),
               FilledButton(
                 onPressed: () => context.go(AppRoutes.home),
@@ -120,16 +127,19 @@ class _CartScreenState extends ConsumerState<CartScreen> {
               _coupon.clear();
             } catch (_) {
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(l10n.cartCouponError)),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(l10n.cartCouponError)));
               }
             }
           },
           onRemoveCoupon: _controller.removeCoupon,
         ),
         const Divider(height: 32),
-        _TotalRow(label: l10n.cartSubtotal, value: cart.totals.subtotal?.formatted()),
+        _TotalRow(
+          label: l10n.cartSubtotal,
+          value: cart.totals.subtotal?.formatted(),
+        ),
         if (cart.totals.discount != null)
           _TotalRow(
             label: l10n.cartDiscount,
@@ -192,14 +202,20 @@ class _CartItemTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.name,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                Text(
+                  item.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
                 for (final option in item.options)
-                  Text(option,
-                      style: const TextStyle(
-                          color: AppColors.inkMuted, fontSize: 12)),
+                  Text(
+                    option,
+                    style: const TextStyle(
+                      color: AppColors.inkMuted,
+                      fontSize: 12,
+                    ),
+                  ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -247,17 +263,17 @@ class _QtyButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => InkWell(
-        onTap: onTap,
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(6),
+    child: Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.inkMuted.withValues(alpha: 0.4)),
         borderRadius: BorderRadius.circular(6),
-        child: Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            border: Border.all(color: AppColors.inkMuted.withValues(alpha: 0.4)),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Icon(icon, size: 16),
-        ),
-      );
+      ),
+      child: Icon(icon, size: 16),
+    ),
+  );
 }
 
 class _CouponSection extends StatelessWidget {

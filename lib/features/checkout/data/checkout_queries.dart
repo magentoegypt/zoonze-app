@@ -20,6 +20,8 @@ mutation SetShippingAddress($cartId: String!, $address: CartAddressInput!) {
           method_code
           carrier_title
           method_title
+          available
+          error_message
           amount { value currency }
         }
       }

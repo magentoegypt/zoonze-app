@@ -370,6 +370,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reviewSubmitted => 'Thank you! Your review is awaiting approval.';
 
   @override
+  String get checkoutTitle => 'Checkout';
+
+  @override
   String get checkoutContact => 'Contact';
 
   @override
@@ -394,7 +397,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get checkoutPayIn4 => 'or 4 interest-free payments';
 
   @override
+  String get fieldCountryLabel => 'Country';
+
+  @override
+  String get countryUae => 'United Arab Emirates';
+
+  @override
+  String get paymentDeclined =>
+      'Payment was declined. Please choose another payment method.';
+
+  @override
+  String get paymentFailed =>
+      'Payment couldn\'t be completed. Please try again.';
+
+  @override
   String get orderSuccessTitle => 'Order placed!';
+
+  @override
+  String get orderPendingTitle => 'Order received';
 
   @override
   String orderSuccessBody(String number) {
@@ -406,7 +426,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get paymentRedirectPending =>
-      'Your order is placed and awaiting payment. The in-app redirect for this gateway needs backend setup — see docs.';
+      'Your order is placed and awaiting payment confirmation. We\'ll notify you once your payment is completed.';
 
   @override
   String get badgeNew => 'NEW';

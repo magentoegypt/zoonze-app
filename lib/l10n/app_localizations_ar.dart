@@ -366,6 +366,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get reviewSubmitted => 'شكرًا لك! مراجعتك قيد المراجعة.';
 
   @override
+  String get checkoutTitle => 'إتمام الشراء';
+
+  @override
   String get checkoutContact => 'معلومات الاتصال';
 
   @override
@@ -390,7 +393,22 @@ class AppLocalizationsAr extends AppLocalizations {
   String get checkoutPayIn4 => 'أو 4 دفعات بدون فوائد';
 
   @override
+  String get fieldCountryLabel => 'الدولة';
+
+  @override
+  String get countryUae => 'الإمارات العربية المتحدة';
+
+  @override
+  String get paymentDeclined => 'تم رفض الدفع. يرجى اختيار طريقة دفع أخرى.';
+
+  @override
+  String get paymentFailed => 'تعذّر إتمام الدفع. يرجى المحاولة مرة أخرى.';
+
+  @override
   String get orderSuccessTitle => 'تم تنفيذ الطلب!';
+
+  @override
+  String get orderPendingTitle => 'تم استلام طلبك';
 
   @override
   String orderSuccessBody(String number) {
@@ -402,7 +420,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get paymentRedirectPending =>
-      'تم تنفيذ طلبك وهو بانتظار الدفع. يحتاج التوجيه داخل التطبيق لهذه البوابة إلى إعداد من الخادم — راجع المستندات.';
+      'تم استلام طلبك وهو بانتظار تأكيد الدفع. سنخطرك بمجرد إتمام الدفع.';
 
   @override
   String get badgeNew => 'جديد';

@@ -794,6 +794,12 @@ abstract class AppLocalizations {
   /// **'Thank you! Your review is awaiting approval.'**
   String get reviewSubmitted;
 
+  /// No description provided for @checkoutTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Checkout'**
+  String get checkoutTitle;
+
   /// No description provided for @checkoutContact.
   ///
   /// In en, this message translates to:
@@ -842,11 +848,41 @@ abstract class AppLocalizations {
   /// **'or 4 interest-free payments'**
   String get checkoutPayIn4;
 
+  /// No description provided for @fieldCountryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Country'**
+  String get fieldCountryLabel;
+
+  /// No description provided for @countryUae.
+  ///
+  /// In en, this message translates to:
+  /// **'United Arab Emirates'**
+  String get countryUae;
+
+  /// No description provided for @paymentDeclined.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment was declined. Please choose another payment method.'**
+  String get paymentDeclined;
+
+  /// No description provided for @paymentFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment couldn\'t be completed. Please try again.'**
+  String get paymentFailed;
+
   /// No description provided for @orderSuccessTitle.
   ///
   /// In en, this message translates to:
   /// **'Order placed!'**
   String get orderSuccessTitle;
+
+  /// No description provided for @orderPendingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Order received'**
+  String get orderPendingTitle;
 
   /// No description provided for @orderSuccessBody.
   ///
@@ -863,7 +899,7 @@ abstract class AppLocalizations {
   /// No description provided for @paymentRedirectPending.
   ///
   /// In en, this message translates to:
-  /// **'Your order is placed and awaiting payment. The in-app redirect for this gateway needs backend setup — see docs.'**
+  /// **'Your order is placed and awaiting payment confirmation. We\'ll notify you once your payment is completed.'**
   String get paymentRedirectPending;
 
   /// No description provided for @badgeNew.

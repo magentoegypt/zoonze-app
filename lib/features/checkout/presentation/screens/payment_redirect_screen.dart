@@ -38,7 +38,9 @@ class PaymentRedirectScreen extends StatelessWidget {
       appBar: AppBar(title: Text(l10n.paymentRedirectTitle)),
       body: InAppWebView(
         initialUrlRequest: URLRequest(url: WebUri(url)),
-        initialSettings: InAppWebViewSettings(useShouldOverrideUrlLoading: true),
+        initialSettings: InAppWebViewSettings(
+          useShouldOverrideUrlLoading: true,
+        ),
         shouldOverrideUrlLoading: (controller, action) async {
           final target = action.request.url?.toString() ?? '';
           final outcome = _detect(target);

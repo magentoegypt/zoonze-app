@@ -14,25 +14,35 @@ class CheckoutRepository {
 
   final GraphQLClient _client;
 
-  Future<void> setGuestEmail(String cartId, String email) =>
-      _mutate(CheckoutQueries.setGuestEmail, {'cartId': cartId, 'email': email});
+  Future<void> setGuestEmail(String cartId, String email) => _mutate(
+    CheckoutQueries.setGuestEmail,
+    {'cartId': cartId, 'email': email},
+  );
 
   /// Sets the shipping address and returns the available shipping methods.
   Future<List<ShippingMethodOption>> setShippingAddress(
     String cartId,
     Map<String, dynamic> address,
   ) async {
-    final data = await _mutate(CheckoutQueries.setShippingAddress,
-        {'cartId': cartId, 'address': address});
-    final addresses = ((data['setShippingAddressesOnCart']
-            as Map<String, dynamic>?)?['cart'] as Map<String, dynamic>?)?[
-        'shipping_addresses'] as List<dynamic>?;
+    final data = await _mutate(CheckoutQueries.setShippingAddress, {
+      'cartId': cartId,
+      'address': address,
+    });
+    final addresses =
+        ((data['setShippingAddressesOnCart'] as Map<String, dynamic>?)?['cart']
+                as Map<String, dynamic>?)?['shipping_addresses']
+            as List<dynamic>?;
     final methods = (addresses != null && addresses.isNotEmpty)
-        ? (addresses.first as Map<String, dynamic>)['available_shipping_methods']
-            as List<dynamic>?
+        ? (addresses.first
+                  as Map<String, dynamic>)['available_shipping_methods']
+              as List<dynamic>?
         : null;
     return (methods ?? const [])
         .whereType<Map<String, dynamic>>()
+        // Drop carriers Magento flags as unavailable for this address (these
+        // come back with available=false and often a null method_code); keep
+        // entries where the flag is absent so an older schema still works.
+        .where((m) => m['available'] != false)
         .map(_parseShipping)
         .toList();
   }
@@ -43,51 +53,67 @@ class CheckoutRepository {
     String carrier,
     String method,
   ) async {
-    final data = await _mutate(CheckoutQueries.setShippingMethod,
-        {'cartId': cartId, 'carrier': carrier, 'method': method});
-    final prices = ((data['setShippingMethodsOnCart']
-            as Map<String, dynamic>?)?['cart'] as Map<String, dynamic>?)?['prices']
-        as Map<String, dynamic>?;
+    final data = await _mutate(CheckoutQueries.setShippingMethod, {
+      'cartId': cartId,
+      'carrier': carrier,
+      'method': method,
+    });
+    final prices =
+        ((data['setShippingMethodsOnCart'] as Map<String, dynamic>?)?['cart']
+                as Map<String, dynamic>?)?['prices']
+            as Map<String, dynamic>?;
     return moneyFromJson(prices?['grand_total'] as Map<String, dynamic>?);
   }
 
   /// Sets billing = shipping and returns the available payment methods.
   Future<List<PaymentMethodOption>> setBillingSameAsShipping(
-      String cartId) async {
-    final data = await _mutate(
-        CheckoutQueries.setBillingSameAsShipping, {'cartId': cartId});
-    final methods = ((data['setBillingAddressOnCart']
-            as Map<String, dynamic>?)?['cart'] as Map<String, dynamic>?)?[
-        'available_payment_methods'] as List<dynamic>?;
+    String cartId,
+  ) async {
+    final data = await _mutate(CheckoutQueries.setBillingSameAsShipping, {
+      'cartId': cartId,
+    });
+    final methods =
+        ((data['setBillingAddressOnCart'] as Map<String, dynamic>?)?['cart']
+                as Map<String, dynamic>?)?['available_payment_methods']
+            as List<dynamic>?;
     return (methods ?? const [])
         .whereType<Map<String, dynamic>>()
-        .map((m) => PaymentMethodOption(
-              code: (m['code'] as String?) ?? '',
-              title: (m['title'] as String?) ?? '',
-            ))
+        .map(
+          (m) => PaymentMethodOption(
+            code: (m['code'] as String?) ?? '',
+            title: (m['title'] as String?) ?? '',
+          ),
+        )
         .toList();
   }
 
-  Future<void> setPaymentMethod(String cartId, String code) =>
-      _mutate(CheckoutQueries.setPaymentMethod, {'cartId': cartId, 'code': code});
+  Future<void> setPaymentMethod(String cartId, String code) => _mutate(
+    CheckoutQueries.setPaymentMethod,
+    {'cartId': cartId, 'code': code},
+  );
 
   Future<PlaceOrderResult> placeOrder(String cartId) async {
     final data = await _mutate(CheckoutQueries.placeOrder, {'cartId': cartId});
     final order =
-        (data['placeOrder'] as Map<String, dynamic>?)?['order'] as Map<String, dynamic>?;
-    return PlaceOrderResult(
-      orderNumber: (order?['order_number'] as String?) ?? '',
-    );
+        (data['placeOrder'] as Map<String, dynamic>?)?['order']
+            as Map<String, dynamic>?;
+    final number = order?['order_number'] as String?;
+    // A response without an order number is not a success — surface it as a
+    // failure rather than routing the user to a blank-reference success screen.
+    if (number == null || number.isEmpty) {
+      throw const Failure(FailureKind.unknown);
+    }
+    return PlaceOrderResult(orderNumber: number);
   }
 
   ShippingMethodOption _parseShipping(Map<String, dynamic> json) =>
       ShippingMethodOption(
         carrierCode: (json['carrier_code'] as String?) ?? '',
         methodCode: (json['method_code'] as String?) ?? '',
-        title: [json['carrier_title'], json['method_title']]
-            .whereType<String>()
-            .where((s) => s.isNotEmpty)
-            .join(' · '),
+        title: [
+          json['carrier_title'],
+          json['method_title'],
+        ].whereType<String>().where((s) => s.isNotEmpty).join(' · '),
         amount: moneyFromJson(json['amount'] as Map<String, dynamic>?),
       );
 
@@ -96,11 +122,13 @@ class CheckoutRepository {
     Map<String, dynamic> variables,
   ) async {
     try {
-      final result = await _client.mutate(MutationOptions(
-        document: gql(document),
-        variables: variables,
-        fetchPolicy: FetchPolicy.networkOnly,
-      ));
+      final result = await _client.mutate(
+        MutationOptions(
+          document: gql(document),
+          variables: variables,
+          fetchPolicy: FetchPolicy.networkOnly,
+        ),
+      );
       if (result.hasException) {
         throw mapOperationException(result.exception!);
       }

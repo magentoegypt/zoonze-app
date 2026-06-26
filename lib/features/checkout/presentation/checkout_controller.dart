@@ -27,7 +27,8 @@ class CheckoutState {
   final Object? error;
 
   bool get addressDone => shippingMethods.isNotEmpty;
-  bool get shippingDone => selectedShipping != null && paymentMethods.isNotEmpty;
+  bool get shippingDone =>
+      selectedShipping != null && paymentMethods.isNotEmpty;
   bool get paymentDone => selectedPayment != null;
 
   static const Object _keep = Object();
@@ -41,23 +42,22 @@ class CheckoutState {
     Object? grandTotal = _keep,
     bool? isBusy,
     Object? error = _keep,
-  }) =>
-      CheckoutState(
-        email: email ?? this.email,
-        shippingMethods: shippingMethods ?? this.shippingMethods,
-        selectedShipping: identical(selectedShipping, _keep)
-            ? this.selectedShipping
-            : selectedShipping as ShippingMethodOption?,
-        paymentMethods: paymentMethods ?? this.paymentMethods,
-        selectedPayment: identical(selectedPayment, _keep)
-            ? this.selectedPayment
-            : selectedPayment as PaymentMethodOption?,
-        grandTotal: identical(grandTotal, _keep)
-            ? this.grandTotal
-            : grandTotal as Money?,
-        isBusy: isBusy ?? this.isBusy,
-        error: identical(error, _keep) ? this.error : error,
-      );
+  }) => CheckoutState(
+    email: email ?? this.email,
+    shippingMethods: shippingMethods ?? this.shippingMethods,
+    selectedShipping: identical(selectedShipping, _keep)
+        ? this.selectedShipping
+        : selectedShipping as ShippingMethodOption?,
+    paymentMethods: paymentMethods ?? this.paymentMethods,
+    selectedPayment: identical(selectedPayment, _keep)
+        ? this.selectedPayment
+        : selectedPayment as PaymentMethodOption?,
+    grandTotal: identical(grandTotal, _keep)
+        ? this.grandTotal
+        : grandTotal as Money?,
+    isBusy: isBusy ?? this.isBusy,
+    error: identical(error, _keep) ? this.error : error,
+  );
 }
 
 /// Drives the sequential checkout mutations against the active cart.
@@ -105,8 +105,11 @@ class CheckoutController extends Notifier<CheckoutState> {
     if (cartId == null) return false;
     state = state.copyWith(isBusy: true, error: null);
     try {
-      final total =
-          await _repo.setShippingMethod(cartId, method.carrierCode, method.methodCode);
+      final total = await _repo.setShippingMethod(
+        cartId,
+        method.carrierCode,
+        method.methodCode,
+      );
       final payments = await _repo.setBillingSameAsShipping(cartId);
       state = state.copyWith(
         selectedShipping: method,
@@ -142,15 +145,20 @@ class CheckoutController extends Notifier<CheckoutState> {
     state = state.copyWith(isBusy: true, error: null);
     try {
       final result = await _repo.placeOrder(cartId);
-      state = state.copyWith(isBusy: false);
-      // The order consumed the cart — refresh it.
+      // The order consumed the cart — refresh it before releasing the busy
+      // lock so the Place Order button cannot be re-tapped on a consumed cart.
       await ref.read(cartControllerProvider.notifier).refresh();
+      state = state.copyWith(isBusy: false);
       return result;
     } catch (error) {
       state = state.copyWith(isBusy: false, error: error);
       return null;
     }
   }
+
+  /// Clears the selected payment method so a rejected/cancelled redirect bounces
+  /// the user back to method selection with the other options intact (§5).
+  void resetPayment() => state = state.copyWith(selectedPayment: null);
 }
 
 final checkoutControllerProvider =

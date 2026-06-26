@@ -26,19 +26,36 @@ class OrderSuccessScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.check_circle_outline,
-                    size: 72, color: AppColors.brandPrimary),
+                // Awaiting-payment orders get a neutral "received" treatment, not
+                // the celebratory green check reserved for a confirmed order.
+                Icon(
+                  pendingPayment
+                      ? Icons.schedule_outlined
+                      : Icons.check_circle_outline,
+                  size: 72,
+                  color: pendingPayment
+                      ? AppColors.accentGold
+                      : AppColors.brandPrimary,
+                ),
                 const SizedBox(height: 16),
-                Text(l10n.orderSuccessTitle,
-                    style: Theme.of(context).textTheme.headlineSmall),
+                Text(
+                  pendingPayment
+                      ? l10n.orderPendingTitle
+                      : l10n.orderSuccessTitle,
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
                 const SizedBox(height: 8),
-                Text(l10n.orderSuccessBody(orderNumber),
-                    textAlign: TextAlign.center),
+                Text(
+                  l10n.orderSuccessBody(orderNumber),
+                  textAlign: TextAlign.center,
+                ),
                 if (pendingPayment) ...[
                   const SizedBox(height: 12),
-                  Text(l10n.paymentRedirectPending,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: AppColors.inkMuted)),
+                  Text(
+                    l10n.paymentRedirectPending,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: AppColors.inkMuted),
+                  ),
                 ],
                 const SizedBox(height: 24),
                 SizedBox(
