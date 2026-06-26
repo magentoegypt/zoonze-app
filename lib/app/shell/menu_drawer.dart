@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/store/store_controller.dart';
 import '../../core/widgets/brand_lockup.dart';
+import '../../features/auth/presentation/auth_controller.dart';
 import '../../features/catalog/presentation/catalog_providers.dart';
 import '../../l10n/l10n.dart';
 import '../routes.dart';
@@ -20,6 +21,9 @@ class MenuDrawer extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final store = ref.watch(storeControllerProvider);
     final categories = ref.watch(categoryTreeProvider);
+    final isAuthed = ref.watch(
+      authControllerProvider.select((s) => s.isAuthenticated),
+    );
 
     return Drawer(
       child: SafeArea(
@@ -94,12 +98,21 @@ class MenuDrawer extends ConsumerWidget {
                 context.go(AppRoutes.account);
               },
             ),
-            const SizedBox(height: 8),
-            ListTile(
-              leading: const Icon(Icons.logout, color: AppColors.inkMuted),
-              title: Text(l10n.menuLogOut),
-              onTap: () => Navigator.of(context).maybePop(),
-            ),
+            if (isAuthed) ...[
+              const SizedBox(height: 8),
+              ListTile(
+                leading: const Icon(Icons.logout, color: AppColors.inkMuted),
+                title: Text(l10n.menuLogOut),
+                onTap: () async {
+                  // Capture router before the async gap; close the drawer, sign
+                  // out (revoke token + reset cache), then land on Home.
+                  final router = GoRouter.of(context);
+                  Navigator.of(context).maybePop();
+                  await ref.read(authControllerProvider.notifier).logout();
+                  router.go(AppRoutes.home);
+                },
+              ),
+            ],
           ],
         ),
       ),

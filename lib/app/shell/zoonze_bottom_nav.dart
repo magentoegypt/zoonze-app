@@ -3,11 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/cart/presentation/cart_controller.dart';
+import '../../features/wishlist/presentation/wishlist_controller.dart';
 import '../../l10n/l10n.dart';
 import '../routes.dart';
 
 /// Persistent bottom navigation (Home · Categories · Cart · Wishlist · Account)
-/// with a live cart count badge.
+/// with live cart + wishlist count badges.
 class ZoonzeBottomNav extends ConsumerWidget {
   const ZoonzeBottomNav({super.key, required this.current});
 
@@ -18,6 +19,9 @@ class ZoonzeBottomNav extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final cartCount = ref.watch(
       cartControllerProvider.select((s) => s.itemCount),
+    );
+    final wishlistCount = ref.watch(
+      wishlistControllerProvider.select((s) => s.entries.length),
     );
 
     return NavigationBar(
@@ -50,8 +54,16 @@ class ZoonzeBottomNav extends ConsumerWidget {
           label: l10n.navCart,
         ),
         NavigationDestination(
-          icon: const Icon(Icons.favorite_border),
-          selectedIcon: const Icon(Icons.favorite),
+          icon: Badge(
+            isLabelVisible: wishlistCount > 0,
+            label: Text('$wishlistCount'),
+            child: const Icon(Icons.favorite_border),
+          ),
+          selectedIcon: Badge(
+            isLabelVisible: wishlistCount > 0,
+            label: Text('$wishlistCount'),
+            child: const Icon(Icons.favorite),
+          ),
           label: l10n.navWishlist,
         ),
         NavigationDestination(
