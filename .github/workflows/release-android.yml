@@ -1,0 +1,58 @@
+name: Release · Android
+
+# Builds a signed Play app bundle. Run from the Actions tab (choose a flavor).
+on:
+  workflow_dispatch:
+    inputs:
+      flavor:
+        description: "Flutter flavor"
+        type: choice
+        default: prod
+        options: [prod, staging, dev]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.4
+          channel: stable
+          cache: true
+      - run: flutter pub get
+
+      # google-services.json is committed; only the keystore is injected.
+      - name: Write keystore + key.properties
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/release.jks
+          cat > android/key.properties <<EOF
+          storePassword=$ANDROID_STORE_PASSWORD
+          keyPassword=$ANDROID_KEY_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          storeFile=release.jks
+          EOF
+
+      - name: Build app bundle
+        env:
+          FLAVOR: ${{ inputs.flavor }}
+        run: >
+          flutter build appbundle --release
+          --flavor "$FLAVOR"
+          -t "lib/main_$FLAVOR.dart"
+          --dart-define-from-file="config/$FLAVOR.json"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: appbundle-${{ inputs.flavor }}
+          path: build/app/outputs/bundle/${{ inputs.flavor }}Release/*.aab
+          if-no-files-found: error

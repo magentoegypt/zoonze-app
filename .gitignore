@@ -44,10 +44,9 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# Secrets — Firebase config & signing (owner-provided, never commit)
-android/app/google-services.json
-ios/Runner/GoogleService-Info.plist
-**/firebase_options.dart
+# Firebase client config (google-services.json / GoogleService-Info.plist) is
+# intentionally committed for this private repo + CI. Real signing secrets stay
+# out of git:
 android/key.properties
 **/*.jks
 **/*.keystore
