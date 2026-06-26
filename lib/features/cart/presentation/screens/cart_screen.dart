@@ -9,6 +9,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/widgets/failure_message.dart';
 import '../../../../l10n/l10n.dart';
+import '../../../checkout/payments/tabby_promo.dart';
 import '../../domain/cart.dart';
 import '../cart_controller.dart';
 
@@ -150,6 +151,11 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           value: cart.totals.grandTotal?.formatted(),
           emphasize: true,
         ),
+        if (cart.totals.grandTotal != null)
+          TabbyPromo(
+            price: cart.totals.grandTotal!,
+            padding: const EdgeInsets.only(top: 8),
+          ),
         const SizedBox(height: 16),
         FilledButton(
           onPressed: () => context.push(AppRoutes.checkout),

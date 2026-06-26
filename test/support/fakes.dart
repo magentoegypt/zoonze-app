@@ -11,6 +11,7 @@ import 'package:zoonze_app/features/cart/domain/cart.dart';
 import 'package:zoonze_app/features/checkout/data/checkout_repository.dart';
 import 'package:zoonze_app/features/checkout/domain/checkout.dart';
 import 'package:zoonze_app/features/checkout/domain/payment_session.dart';
+import 'package:zoonze_app/features/checkout/domain/tabby_config.dart';
 import 'package:zoonze_app/features/wishlist/data/wishlist_repository.dart';
 import 'package:zoonze_app/features/wishlist/domain/wishlist_entry.dart';
 import 'package:zoonze_app/features/catalog/data/catalog_repository.dart';
@@ -192,6 +193,7 @@ class FakeCheckoutRepository implements CheckoutRepository {
     this.grandTotal = const Money(amount: 219, currency: 'AED'),
     this.orderResult = const PlaceOrderResult(orderNumber: '000000123'),
     this.paymentSession,
+    this.tabbyConfig,
     this.fail = false,
   });
 
@@ -203,6 +205,9 @@ class FakeCheckoutRepository implements CheckoutRepository {
   /// Provider session returned by [fetchPaymentSession]; null mimics a backend
   /// without the resolver deployed (Open Q §2).
   final PaymentSession? paymentSession;
+
+  /// Tabby config returned by [fetchTabbyConfig]; null mimics Tabby unconfigured.
+  final TabbyConfig? tabbyConfig;
   final bool fail;
 
   String? guestEmail;
@@ -260,6 +265,9 @@ class FakeCheckoutRepository implements CheckoutRepository {
   @override
   Future<PaymentSession?> fetchPaymentSession(String orderNumber) async =>
       paymentSession;
+
+  @override
+  Future<TabbyConfig?> fetchTabbyConfig() async => tabbyConfig;
 }
 
 class FakeWishlistRepository implements WishlistRepository {

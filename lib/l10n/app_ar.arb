@@ -138,6 +138,7 @@
   "checkoutContinue": "متابعة",
   "checkoutPlaceOrder": "تأكيد الطلب",
   "checkoutPayIn4": "أو 4 دفعات بدون فوائد",
+  "promoTabbyPayIn4": "أو {count} دفعات بدون فوائد بقيمة {amount}",
   "fieldCountryLabel": "الدولة",
   "countryUae": "الإمارات العربية المتحدة",
   "paymentDeclined": "تم رفض الدفع. يرجى اختيار طريقة دفع أخرى.",

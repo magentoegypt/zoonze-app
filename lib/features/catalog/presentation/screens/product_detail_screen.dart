@@ -10,6 +10,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../core/widgets/async_value_view.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../cart/presentation/cart_controller.dart';
+import '../../../checkout/payments/tabby_promo.dart';
 import '../../../wishlist/presentation/widgets/wishlist_heart.dart';
 import '../../domain/money.dart';
 import '../../domain/product_detail.dart';
@@ -38,8 +39,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       currentTab: AppTab.home,
       body: AsyncValueView(
         value: detail,
-        onRetry: () =>
-            ref.invalidate(productDetailProvider(widget.urlKey)),
+        onRetry: () => ref.invalidate(productDetailProvider(widget.urlKey)),
         data: (product) {
           if (product == null) {
             return Center(child: Text(l10n.stateEmpty));
@@ -48,8 +48,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
             product: product,
             selection: _selection,
             tab: _tab,
-            onSelect: (code, value) =>
-                setState(() => _selection[code] = value),
+            onSelect: (code, value) => setState(() => _selection[code] = value),
             onTab: (index) => setState(() => _tab = index),
           );
         },
@@ -92,12 +91,25 @@ class _Content extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (product.brand != null && product.brand!.isNotEmpty)
-                Text(product.brand!,
-                    style: const TextStyle(color: AppColors.inkMuted)),
-              Text(product.name,
-                  style: Theme.of(context).textTheme.headlineSmall),
+                Text(
+                  product.brand!,
+                  style: const TextStyle(color: AppColors.inkMuted),
+                ),
+              Text(
+                product.name,
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
               const SizedBox(height: 12),
-              _PriceRow(price: price, product: product, showStruck: variant == null),
+              _PriceRow(
+                price: price,
+                product: product,
+                showStruck: variant == null,
+              ),
+              if (price != null)
+                TabbyPromo(
+                  price: price,
+                  padding: const EdgeInsets.only(top: 8),
+                ),
               const SizedBox(height: 16),
               for (final option in product.options)
                 _OptionSelector(
@@ -175,8 +187,10 @@ class _GalleryState extends State<_Gallery> {
                           WishlistHeart(sku: widget.sku),
                           IconButton(
                             onPressed: () {},
-                            icon: const Icon(Icons.share_outlined,
-                                color: AppColors.inkHeading),
+                            icon: const Icon(
+                              Icons.share_outlined,
+                              color: AppColors.inkHeading,
+                            ),
                           ),
                         ],
                       ),
@@ -271,8 +285,10 @@ class _OptionSelector extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(option.label,
-              style: const TextStyle(fontWeight: FontWeight.w600)),
+          Text(
+            option.label,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
@@ -285,7 +301,8 @@ class _OptionSelector extends StatelessWidget {
                   onSelected: (_) => onSelect(value.valueIndex),
                   avatar: value.swatchColor != null
                       ? CircleAvatar(
-                          backgroundColor: _parseColor(value.swatchColor!))
+                          backgroundColor: _parseColor(value.swatchColor!),
+                        )
                       : null,
                 ),
             ],
@@ -344,12 +361,15 @@ class _AddToCartButton extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final inStock = variant?.inStock ?? product.inStock;
     if (!inStock) {
-      return Text(l10n.productOutOfStock,
-          style: const TextStyle(color: AppColors.accentSale));
+      return Text(
+        l10n.productOutOfStock,
+        style: const TextStyle(color: AppColors.accentSale),
+      );
     }
     final needsSelection = product.isConfigurable && variant == null;
-    final isMutating =
-        ref.watch(cartControllerProvider.select((s) => s.isMutating));
+    final isMutating = ref.watch(
+      cartControllerProvider.select((s) => s.isMutating),
+    );
     final enabled = !needsSelection && !isMutating;
 
     return FilledButton(
@@ -383,13 +403,15 @@ class _AddToCartButton extends ConsumerWidget {
           .read(cartControllerProvider.notifier)
           .addToCart(sku: product.sku, selectedOptionUids: uids);
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(l10n.cartAdded)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.cartAdded)));
       }
     } catch (_) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(l10n.errorGeneric)));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.errorGeneric)));
       }
     }
   }
@@ -415,18 +437,27 @@ class _ReviewCard extends StatelessWidget {
                   color: AppColors.accentGold,
                 ),
               const SizedBox(width: 8),
-              Text(review.nickname,
-                  style: const TextStyle(fontWeight: FontWeight.w600)),
+              Text(
+                review.nickname,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
             ],
           ),
           if (review.summary.isNotEmpty)
-            Text(review.summary,
-                style: const TextStyle(fontWeight: FontWeight.w600)),
+            Text(
+              review.summary,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
           if (review.text.isNotEmpty)
-            Text(review.text, style: const TextStyle(color: AppColors.inkMuted)),
+            Text(
+              review.text,
+              style: const TextStyle(color: AppColors.inkMuted),
+            ),
           if (review.date.isNotEmpty)
-            Text(review.date,
-                style: const TextStyle(color: AppColors.inkMuted, fontSize: 12)),
+            Text(
+              review.date,
+              style: const TextStyle(color: AppColors.inkMuted, fontSize: 12),
+            ),
         ],
       ),
     );
@@ -445,8 +476,10 @@ class _TabContent extends StatelessWidget {
       case 1:
         return Row(
           children: [
-            Text('${l10n.specSku}: ',
-                style: const TextStyle(fontWeight: FontWeight.w600)),
+            Text(
+              '${l10n.specSku}: ',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
             Text(product.sku),
           ],
         );
@@ -460,14 +493,17 @@ class _TabContent extends StatelessWidget {
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 12),
-              for (final review in product.reviews)
-                _ReviewCard(review: review),
+              for (final review in product.reviews) _ReviewCard(review: review),
             ] else ...[
-              Text(l10n.reviewsEmptyTitle,
-                  style: const TextStyle(fontWeight: FontWeight.w600)),
+              Text(
+                l10n.reviewsEmptyTitle,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
               const SizedBox(height: 4),
-              Text(l10n.reviewsEmptyBody,
-                  style: const TextStyle(color: AppColors.inkMuted)),
+              Text(
+                l10n.reviewsEmptyBody,
+                style: const TextStyle(color: AppColors.inkMuted),
+              ),
             ],
             const SizedBox(height: 16),
             OutlinedButton.icon(

@@ -8,6 +8,7 @@ import 'package:zoonze_app/core/storage/locale_prefs.dart';
 import 'package:zoonze_app/core/storage/secure_token_store.dart';
 import 'package:zoonze_app/features/catalog/data/catalog_repository.dart';
 import 'package:zoonze_app/features/catalog/presentation/screens/product_detail_screen.dart';
+import 'package:zoonze_app/features/checkout/payments/tabby_promo.dart';
 import 'package:zoonze_app/l10n/l10n.dart';
 
 import '../../../support/fakes.dart';
@@ -31,6 +32,8 @@ Widget _harness(String locale) {
       localePrefsProvider.overrideWithValue(FakeLocalePrefs(locale)),
       secureTokenStoreProvider.overrideWithValue(FakeSecureTokenStore()),
       catalogRepositoryProvider.overrideWithValue(FakeCatalogRepository()),
+      // Keep the PDP test network-free; the Tabby promo is covered separately.
+      tabbyConfigProvider.overrideWith((ref) => null),
     ],
     child: MaterialApp.router(
       routerConfig: router,

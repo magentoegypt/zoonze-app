@@ -105,4 +105,20 @@ query PaymentSession($orderNumber: String!) {
   }
 }
 ''';
+
+  /// Tabby "Pay in 4" settings, read from Magento config (enable flag +
+  /// thresholds — never hardcoded). Custom resolver the backend exposes (see
+  /// docs/decisions/payments.md); store-scoped via the Store header. Until it is
+  /// deployed this errors and the repository degrades to null (promo hidden).
+  static const String tabbyConfig = r'''
+query TabbyConfig {
+  tabbyConfig {
+    enabled
+    currency
+    installments
+    min_order_total { value currency }
+    max_order_total { value currency }
+  }
+}
+''';
 }

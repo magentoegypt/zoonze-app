@@ -8,6 +8,7 @@ import '../../catalog/data/product_mapper.dart';
 import '../../catalog/domain/money.dart';
 import '../domain/checkout.dart';
 import '../domain/payment_session.dart';
+import '../domain/tabby_config.dart';
 import 'checkout_queries.dart';
 
 class CheckoutRepository {
@@ -128,6 +129,31 @@ class CheckoutRepository {
         publicKey: json['public_key'] as String?,
         expiresAt: json['expires_at'] as String?,
         additionalData: _keyValues(json['additional_data'] as List<dynamic>?),
+      );
+    } on Failure {
+      return null;
+    }
+  }
+
+  /// Fetches the backend-configured Tabby "Pay in 4" settings. Returns null when
+  /// the resolver isn't deployed or Tabby is unconfigured, so the promo hides.
+  Future<TabbyConfig?> fetchTabbyConfig() async {
+    try {
+      final data = await _query(CheckoutQueries.tabbyConfig, const {});
+      final json = data['tabbyConfig'] as Map<String, dynamic>?;
+      if (json == null) return null;
+      final min = moneyFromJson(
+        json['min_order_total'] as Map<String, dynamic>?,
+      );
+      final max = moneyFromJson(
+        json['max_order_total'] as Map<String, dynamic>?,
+      );
+      return TabbyConfig(
+        enabled: (json['enabled'] as bool?) ?? false,
+        currency: (json['currency'] as String?) ?? 'AED',
+        installments: (json['installments'] as num?)?.toInt() ?? 4,
+        minOrderTotal: min?.amount,
+        maxOrderTotal: max?.amount,
       );
     } on Failure {
       return null;

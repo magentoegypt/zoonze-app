@@ -393,6 +393,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get checkoutPayIn4 => 'أو 4 دفعات بدون فوائد';
 
   @override
+  String promoTabbyPayIn4(int count, String amount) {
+    return 'أو $count دفعات بدون فوائد بقيمة $amount';
+  }
+
+  @override
   String get fieldCountryLabel => 'الدولة';
 
   @override
