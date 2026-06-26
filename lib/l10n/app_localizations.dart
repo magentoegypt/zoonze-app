@@ -518,6 +518,90 @@ abstract class AppLocalizations {
   /// **'Help & FAQ'**
   String get accountHelp;
 
+  /// No description provided for @helpIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Answers to common questions. Still stuck? Reach our team below.'**
+  String get helpIntro;
+
+  /// No description provided for @helpQOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'How do I track my order?'**
+  String get helpQOrders;
+
+  /// No description provided for @helpAOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Account → My Orders to see the status of each order.'**
+  String get helpAOrders;
+
+  /// No description provided for @helpQPayments.
+  ///
+  /// In en, this message translates to:
+  /// **'Which payment methods can I use?'**
+  String get helpQPayments;
+
+  /// No description provided for @helpAPayments.
+  ///
+  /// In en, this message translates to:
+  /// **'Cards via Network International, and Tabby (Pay in 4 / Pay Later) where available at checkout.'**
+  String get helpAPayments;
+
+  /// No description provided for @helpQDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Where do you deliver?'**
+  String get helpQDelivery;
+
+  /// No description provided for @helpADelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'We deliver across the United Arab Emirates.'**
+  String get helpADelivery;
+
+  /// No description provided for @helpQReturns.
+  ///
+  /// In en, this message translates to:
+  /// **'How do I return an item?'**
+  String get helpQReturns;
+
+  /// No description provided for @helpAReturns.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact our support team within 14 days of delivery to arrange a return.'**
+  String get helpAReturns;
+
+  /// No description provided for @helpQLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'How do I change the language?'**
+  String get helpQLanguage;
+
+  /// No description provided for @helpALanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Use the EN / العربية toggle in the menu or in Settings.'**
+  String get helpALanguage;
+
+  /// No description provided for @helpContactTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Still need help?'**
+  String get helpContactTitle;
+
+  /// No description provided for @helpEmailAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Email support'**
+  String get helpEmailAction;
+
+  /// No description provided for @helpWebsiteAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Visit zoonze.com'**
+  String get helpWebsiteAction;
+
   /// No description provided for @notificationsTitle.
   ///
   /// In en, this message translates to:

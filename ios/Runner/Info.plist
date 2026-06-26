@@ -81,5 +81,12 @@
 			</array>
 		</dict>
 	</array>
+	<!-- url_launcher: schemes the app may open (footer links, Help contact). -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>https</string>
+		<string>mailto</string>
+		<string>tel</string>
+	</array>
 </dict>
 </plist>

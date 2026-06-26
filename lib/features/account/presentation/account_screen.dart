@@ -121,7 +121,7 @@ class _Authenticated extends StatelessWidget {
           leading: const Icon(Icons.help_outline),
           title: Text(l10n.accountHelp),
           trailing: const Icon(Icons.chevron_right),
-          onTap: () {},
+          onTap: () => context.push(AppRoutes.help),
         ),
         const SizedBox(height: 24),
         Padding(

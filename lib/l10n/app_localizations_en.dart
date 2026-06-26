@@ -228,6 +228,53 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountHelp => 'Help & FAQ';
 
   @override
+  String get helpIntro =>
+      'Answers to common questions. Still stuck? Reach our team below.';
+
+  @override
+  String get helpQOrders => 'How do I track my order?';
+
+  @override
+  String get helpAOrders =>
+      'Open Account → My Orders to see the status of each order.';
+
+  @override
+  String get helpQPayments => 'Which payment methods can I use?';
+
+  @override
+  String get helpAPayments =>
+      'Cards via Network International, and Tabby (Pay in 4 / Pay Later) where available at checkout.';
+
+  @override
+  String get helpQDelivery => 'Where do you deliver?';
+
+  @override
+  String get helpADelivery => 'We deliver across the United Arab Emirates.';
+
+  @override
+  String get helpQReturns => 'How do I return an item?';
+
+  @override
+  String get helpAReturns =>
+      'Contact our support team within 14 days of delivery to arrange a return.';
+
+  @override
+  String get helpQLanguage => 'How do I change the language?';
+
+  @override
+  String get helpALanguage =>
+      'Use the EN / العربية toggle in the menu or in Settings.';
+
+  @override
+  String get helpContactTitle => 'Still need help?';
+
+  @override
+  String get helpEmailAction => 'Email support';
+
+  @override
+  String get helpWebsiteAction => 'Visit zoonze.com';
+
+  @override
   String get notificationsTitle => 'Notifications';
 
   @override

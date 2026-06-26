@@ -225,6 +225,52 @@ class AppLocalizationsAr extends AppLocalizations {
   String get accountHelp => 'المساعدة والأسئلة الشائعة';
 
   @override
+  String get helpIntro =>
+      'إجابات عن الأسئلة الشائعة. ما زلت بحاجة إلى مساعدة؟ تواصل مع فريقنا أدناه.';
+
+  @override
+  String get helpQOrders => 'كيف أتتبّع طلبي؟';
+
+  @override
+  String get helpAOrders => 'افتح حسابي ← طلباتي لعرض حالة كل طلب.';
+
+  @override
+  String get helpQPayments => 'ما طرق الدفع المتاحة؟';
+
+  @override
+  String get helpAPayments =>
+      'البطاقات عبر Network International، وتابي (الدفع على 4 دفعات / الدفع لاحقًا) عند توفّرها في الدفع.';
+
+  @override
+  String get helpQDelivery => 'إلى أين توصّلون؟';
+
+  @override
+  String get helpADelivery => 'نوصّل إلى جميع أنحاء الإمارات العربية المتحدة.';
+
+  @override
+  String get helpQReturns => 'كيف أرجع منتجًا؟';
+
+  @override
+  String get helpAReturns =>
+      'تواصل مع فريق الدعم خلال 14 يومًا من التوصيل لترتيب الإرجاع.';
+
+  @override
+  String get helpQLanguage => 'كيف أغيّر اللغة؟';
+
+  @override
+  String get helpALanguage =>
+      'استخدم زر EN / العربية في القائمة أو في الإعدادات.';
+
+  @override
+  String get helpContactTitle => 'ما زلت بحاجة إلى مساعدة؟';
+
+  @override
+  String get helpEmailAction => 'مراسلة الدعم';
+
+  @override
+  String get helpWebsiteAction => 'زيارة zoonze.com';
+
+  @override
   String get notificationsTitle => 'الإشعارات';
 
   @override
