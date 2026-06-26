@@ -19,12 +19,14 @@ Future<FakeCheckoutRepository> _pump(
   WidgetTester tester, {
   PaymentSession? session,
   String? currentMethod = 'ngeniusonline',
+  String locale = 'en',
 }) async {
   final repo = FakeCheckoutRepository(paymentSession: session);
   await tester.pumpWidget(
     ProviderScope(
       overrides: [checkoutRepositoryProvider.overrideWithValue(repo)],
       child: MaterialApp(
+        locale: Locale(locale),
         localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
@@ -90,5 +92,15 @@ void main() {
       repo.switchedToMethod,
       isNull,
     ); // used fetchPaymentSession, not switch
+  });
+
+  testWidgets('renders translated + RTL in Arabic', (tester) async {
+    await _pump(tester, locale: 'ar');
+    expect(find.text('إتمام الدفع'), findsOneWidget); // completePaymentTitle
+    expect(find.text('سأدفع لاحقًا'), findsOneWidget); // pay later
+    expect(
+      Directionality.of(tester.element(find.text('سأدفع لاحقًا'))),
+      TextDirection.rtl,
+    );
   });
 }

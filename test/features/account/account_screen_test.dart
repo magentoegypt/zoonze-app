@@ -13,7 +13,7 @@ import 'package:zoonze_app/l10n/l10n.dart';
 
 import '../../support/fakes.dart';
 
-Widget _harness({String? token}) {
+Widget _harness({String? token, String locale = 'en'}) {
   final router = GoRouter(
     initialLocation: '/account',
     routes: [
@@ -34,12 +34,12 @@ Widget _harness({String? token}) {
       secureTokenStoreProvider.overrideWithValue(FakeSecureTokenStore(token)),
       authRepositoryProvider.overrideWithValue(FakeAuthRepository()),
       localCacheProvider.overrideWithValue(FakeLocalCache()),
-      localePrefsProvider.overrideWithValue(FakeLocalePrefs('en')),
+      localePrefsProvider.overrideWithValue(FakeLocalePrefs(locale)),
       catalogRepositoryProvider.overrideWithValue(FakeCatalogRepository()),
     ],
     child: MaterialApp.router(
       routerConfig: router,
-      locale: const Locale('en'),
+      locale: Locale(locale),
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: const [
         AppLocalizations.delegate,
@@ -76,5 +76,20 @@ void main() {
     expect(find.text('Layla Hassan'), findsOneWidget);
     expect(find.text('layla@example.com'), findsOneWidget);
     expect(find.text('Sign Out'), findsOneWidget);
+  });
+
+  testWidgets('renders translated + RTL in Arabic', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(800, 1400));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(_harness(token: 'persisted', locale: 'ar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('الإشعارات'), findsOneWidget); // Notifications entry
+    expect(find.text('تسجيل الخروج'), findsOneWidget); // Sign Out
+    expect(
+      Directionality.of(tester.element(find.text('الإشعارات'))),
+      TextDirection.rtl,
+    );
   });
 }
