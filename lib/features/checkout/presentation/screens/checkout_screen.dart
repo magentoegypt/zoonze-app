@@ -9,6 +9,7 @@ import '../../../../l10n/l10n.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../domain/checkout.dart';
 import '../../domain/payment_session.dart';
+import '../../domain/tabby_config.dart';
 import '../../payments/payment_gateway.dart';
 import '../checkout_controller.dart';
 
@@ -406,7 +407,11 @@ class _PaymentCard extends StatelessWidget {
           color: selected ? AppColors.brandPrimary : AppColors.inkMuted,
         ),
         title: Text(method.title),
-        subtitle: method.isTabby ? Text(l10n.checkoutPayIn4) : null,
+        subtitle: switch (method.tabbyProduct) {
+          TabbyProductType.payIn4 => Text(l10n.checkoutPayIn4),
+          TabbyProductType.payLater => Text(l10n.checkoutPayLater),
+          null => null,
+        },
         trailing: method.isTabby
             ? Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

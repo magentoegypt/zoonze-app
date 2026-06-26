@@ -135,28 +135,59 @@ class CheckoutRepository {
     }
   }
 
-  /// Fetches the backend-configured Tabby "Pay in 4" settings. Returns null when
-  /// the resolver isn't deployed or Tabby is unconfigured, so the promo hides.
+  /// Fetches the backend-configured Tabby products ("Pay in 4" + "Pay Later")
+  /// with their enable flags and thresholds. Returns null when the resolver
+  /// isn't deployed or Tabby is unconfigured, so the promo/labels hide.
   Future<TabbyConfig?> fetchTabbyConfig() async {
     try {
       final data = await _query(CheckoutQueries.tabbyConfig, const {});
       final json = data['tabbyConfig'] as Map<String, dynamic>?;
       if (json == null) return null;
-      final min = moneyFromJson(
-        json['min_order_total'] as Map<String, dynamic>?,
-      );
-      final max = moneyFromJson(
-        json['max_order_total'] as Map<String, dynamic>?,
-      );
+      final products =
+          (json['products'] as List<dynamic>?)
+              ?.whereType<Map<String, dynamic>>()
+              .map(_tabbyProduct)
+              .whereType<TabbyProduct>()
+              .toList() ??
+          const <TabbyProduct>[];
       return TabbyConfig(
-        enabled: (json['enabled'] as bool?) ?? false,
         currency: (json['currency'] as String?) ?? 'AED',
-        installments: (json['installments'] as num?)?.toInt() ?? 4,
-        minOrderTotal: min?.amount,
-        maxOrderTotal: max?.amount,
+        products: products,
       );
     } on Failure {
       return null;
+    }
+  }
+
+  TabbyProduct? _tabbyProduct(Map<String, dynamic> json) {
+    final type = _tabbyType(json['type'] as String?);
+    if (type == null) return null;
+    return TabbyProduct(
+      type: type,
+      enabled: (json['enabled'] as bool?) ?? false,
+      installments:
+          (json['installments'] as num?)?.toInt() ??
+          (type == TabbyProductType.payIn4 ? 4 : 1),
+      minOrderTotal: moneyFromJson(
+        json['min_order_total'] as Map<String, dynamic>?,
+      )?.amount,
+      maxOrderTotal: moneyFromJson(
+        json['max_order_total'] as Map<String, dynamic>?,
+      )?.amount,
+    );
+  }
+
+  TabbyProductType? _tabbyType(String? raw) {
+    switch (raw?.toUpperCase()) {
+      case 'PAY_IN_4':
+      case 'PAY_IN_INSTALLMENTS':
+      case 'INSTALLMENTS':
+        return TabbyProductType.payIn4;
+      case 'PAY_LATER':
+      case 'PAYLATER':
+        return TabbyProductType.payLater;
+      default:
+        return null;
     }
   }
 

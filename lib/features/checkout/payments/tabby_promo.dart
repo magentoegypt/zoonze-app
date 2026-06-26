@@ -13,9 +13,9 @@ final tabbyConfigProvider = FutureProvider<TabbyConfig?>(
   (ref) => ref.watch(checkoutRepositoryProvider).fetchTabbyConfig(),
 );
 
-/// "Pay in 4 interest-free payments of AED X" promo, shown on the PDP and cart
-/// **only when the backend config enables Tabby and the price is in range**.
-/// Renders nothing otherwise — no fabricated eligibility.
+/// Tabby promo ("Pay in 4" / "Pay Later"), shown on the PDP and cart **only for
+/// the products the backend enables and the price qualifies for** — one line per
+/// eligible product. Renders nothing otherwise; no fabricated eligibility.
 class TabbyPromo extends ConsumerWidget {
   const TabbyPromo({super.key, required this.price, this.padding});
 
@@ -25,28 +25,47 @@ class TabbyPromo extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final config = ref.watch(tabbyConfigProvider).valueOrNull;
-    if (config == null || !config.isEligible(price)) {
-      return const SizedBox.shrink();
-    }
+    final eligible = config?.eligibleFor(price) ?? const <TabbyProduct>[];
+    if (eligible.isEmpty) return const SizedBox.shrink();
     final l10n = AppLocalizations.of(context);
-    final per = config.perInstallment(price);
     return Padding(
       padding: padding ?? EdgeInsets.zero,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _TabbyChip(),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              l10n.promoTabbyPayIn4(config.installments, per.formatted()),
-              style: const TextStyle(color: AppColors.inkMuted, fontSize: 13),
+          for (final product in eligible)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const _TabbyChip(),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      _message(l10n, product),
+                      style: const TextStyle(
+                        color: AppColors.inkMuted,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );
   }
+
+  String _message(AppLocalizations l10n, TabbyProduct product) =>
+      switch (product.type) {
+        TabbyProductType.payIn4 => l10n.promoTabbyPayIn4(
+          product.installments,
+          product.perInstallment(price).formatted(),
+        ),
+        TabbyProductType.payLater => l10n.promoTabbyPayLater,
+      };
 }
 
 class _TabbyChip extends StatelessWidget {

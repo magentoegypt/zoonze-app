@@ -1,4 +1,5 @@
 import '../../catalog/domain/money.dart';
+import 'tabby_config.dart';
 
 class ShippingMethodOption {
   const ShippingMethodOption({
@@ -33,6 +34,15 @@ class PaymentMethodOption {
   }
 
   bool get isTabby => code.toLowerCase().contains('tabby');
+
+  /// Which Tabby product this method is, so checkout can label it correctly.
+  /// "Pay Later" codes carry `later`; any other Tabby method is "Pay in 4".
+  TabbyProductType? get tabbyProduct {
+    final c = code.toLowerCase();
+    if (!c.contains('tabby')) return null;
+    if (c.contains('later')) return TabbyProductType.payLater;
+    return TabbyProductType.payIn4;
+  }
 }
 
 class PlaceOrderResult {

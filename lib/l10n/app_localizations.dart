@@ -848,11 +848,23 @@ abstract class AppLocalizations {
   /// **'or 4 interest-free payments'**
   String get checkoutPayIn4;
 
+  /// No description provided for @checkoutPayLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay later, interest-free'**
+  String get checkoutPayLater;
+
   /// No description provided for @promoTabbyPayIn4.
   ///
   /// In en, this message translates to:
   /// **'or {count} interest-free payments of {amount}'**
   String promoTabbyPayIn4(int count, String amount);
+
+  /// No description provided for @promoTabbyPayLater.
+  ///
+  /// In en, this message translates to:
+  /// **'or pay later, interest-free'**
+  String get promoTabbyPayLater;
 
   /// No description provided for @fieldCountryLabel.
   ///

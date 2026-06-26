@@ -397,9 +397,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get checkoutPayIn4 => 'or 4 interest-free payments';
 
   @override
+  String get checkoutPayLater => 'Pay later, interest-free';
+
+  @override
   String promoTabbyPayIn4(int count, String amount) {
     return 'or $count interest-free payments of $amount';
   }
+
+  @override
+  String get promoTabbyPayLater => 'or pay later, interest-free';
 
   @override
   String get fieldCountryLabel => 'Country';

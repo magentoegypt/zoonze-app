@@ -79,35 +79,46 @@ wraps `Model\SessionData::createSession()` (already returns `payment_id`). The a
 consumes this exact shape (`checkout_queries.paymentSession`) and **degrades to "awaiting
 payment" if the field is absent**, so deploying it is non-breaking.
 
-### Tabby "Pay in 4" config — backend-driven enable + thresholds
+### Tabby config — both products, backend-driven enable + thresholds
 
-The enable flag **and** the min/max order thresholds for Tabby "Pay in 4" come **only**
-from Magento config — nothing is hardcoded in the app. Same pattern: a small store-scoped
-resolver the app reads, caches, and refetches on a store switch.
+Tabby offers two products — **"Pay in 4"** and **"Pay Later"** — each enabled independently
+in Magento config with its own min/max thresholds. **Nothing is hardcoded in the app**: a
+small store-scoped resolver returns the products, and the promo + checkout reflect whichever
+the backend enables. The resolver is read, cached, and refetched on a store switch.
 
 ```graphql
 type Query { tabbyConfig: TabbyConfigOutput }
 
 type TabbyConfigOutput {
-  enabled: Boolean!            # Pay-in-4 enabled for this store
-  currency: String!            # thresholds currency (AED)
-  installments: Int!           # number of equal payments (4)
-  min_order_total: Money       # inclusive lower bound (null = unbounded)
-  max_order_total: Money       # inclusive upper bound (null = unbounded)
+  currency: String!                  # thresholds currency (AED)
+  products: [TabbyProductConfig!]!
 }
+type TabbyProductConfig {
+  type: TabbyProductType!            # PAY_IN_4 | PAY_LATER
+  enabled: Boolean!
+  installments: Int!                 # Pay in 4 → 4; Pay Later → 1
+  min_order_total: Money             # inclusive lower bound (null = unbounded)
+  max_order_total: Money             # inclusive upper bound (null = unbounded)
+}
+enum TabbyProductType { PAY_IN_4  PAY_LATER }
 ```
 
 App side (`domain/tabby_config.dart`, `payments/tabby_promo.dart`):
 - `tabbyConfigProvider` (FutureProvider) reads `fetchTabbyConfig()`; null when the resolver
   isn't deployed or Tabby is unconfigured → **promo hidden** (no fabricated eligibility).
-- `TabbyConfig.isEligible(price)` gates on `enabled` + currency + min/max; `perInstallment`
-  splits the total by `installments`.
-- `TabbyPromo(price:)` renders "or 4 interest-free payments of AED X" on **PDP** (under the
-  price) and **cart** (under the grand total), only when eligible. Backend wiring: read the
-  values from the Tabby extension's config (`tabby/m2-payments` store config / `getConfig`).
-- The official `tabby_flutter_inapp_sdk` ships `TabbyProductPageSnippet` (a richer, dynamic
-  promo widget) — swap `TabbyPromo` for it once the SDK + publishable key are wired; the
-  config gate (enable + thresholds) stays the source of truth either way.
+- `TabbyProduct.isEligible(price, currency)` gates per product on enable + currency + min/max;
+  `TabbyConfig.eligibleFor(price)` returns the enabled, in-range products.
+- `TabbyPromo(price:)` renders **one line per eligible product** on the **PDP** (under the
+  price) and **cart** (under the grand total): "or 4 interest-free payments of AED X" for
+  Pay in 4, "or pay later, interest-free" for Pay Later. Hidden when none qualify.
+- Checkout labels reflect the product too: `PaymentMethodOption.tabbyProduct` ("later" in the
+  method code → Pay Later, else Pay in 4) drives the payment-card subtitle. The method list
+  itself still comes only from `cart { available_payment_methods }`, so the backend ultimately
+  controls which Tabby products appear at checkout.
+- Backend wiring: read the values from the Tabby extension config (`tabby/m2-payments` store
+  config). The official `tabby_flutter_inapp_sdk` ships `TabbyProductPageSnippet` (a richer,
+  dynamic promo) — swap `TabbyPromo` for it once the SDK + publishable key are wired; the
+  config gate stays the source of truth either way.
 
 ---
 

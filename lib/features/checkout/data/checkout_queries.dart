@@ -113,11 +113,14 @@ query PaymentSession($orderNumber: String!) {
   static const String tabbyConfig = r'''
 query TabbyConfig {
   tabbyConfig {
-    enabled
     currency
-    installments
-    min_order_total { value currency }
-    max_order_total { value currency }
+    products {
+      type
+      enabled
+      installments
+      min_order_total { value currency }
+      max_order_total { value currency }
+    }
   }
 }
 ''';

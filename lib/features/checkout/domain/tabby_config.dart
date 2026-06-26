@@ -1,32 +1,30 @@
 import '../../catalog/domain/money.dart';
 
-/// Tabby "Pay in 4" settings, resolved **entirely from backend config** — the
-/// enable flag, currency and min/max order thresholds all come from Magento, so
-/// nothing about Tabby eligibility is hardcoded in the app. Drives both checkout
-/// availability and the PDP/cart promo. See docs/decisions/payments.md.
-class TabbyConfig {
-  const TabbyConfig({
+/// Tabby products a merchant can enable independently in Magento config.
+enum TabbyProductType { payIn4, payLater }
+
+/// One Tabby product's backend config — enable flag + eligibility bounds. All
+/// values come from Magento; nothing is hardcoded in the app.
+class TabbyProduct {
+  const TabbyProduct({
+    required this.type,
     required this.enabled,
-    required this.currency,
-    this.installments = 4,
+    this.installments = 1,
     this.minOrderTotal,
     this.maxOrderTotal,
   });
 
+  final TabbyProductType type;
   final bool enabled;
 
-  /// Currency the thresholds are expressed in (and the only one Tabby serves).
-  final String currency;
-
-  /// Number of equal payments (config-driven; "Pay in 4" → 4).
+  /// Equal payments the total is split into ("Pay in 4" → 4; "Pay Later" → 1).
   final int installments;
 
   /// Inclusive eligibility bounds; null means unbounded on that side.
   final double? minOrderTotal;
   final double? maxOrderTotal;
 
-  /// Whether a given price qualifies for "Pay in 4" under the backend config.
-  bool isEligible(Money price) {
+  bool isEligible(Money price, String currency) {
     if (!enabled || installments <= 0) return false;
     if (price.currency != currency) return false;
     if (minOrderTotal != null && price.amount < minOrderTotal!) return false;
@@ -34,7 +32,29 @@ class TabbyConfig {
     return true;
   }
 
-  /// The per-instalment amount shown in the promo (total ÷ instalments).
+  /// Per-instalment amount for the promo (total ÷ instalments).
   Money perInstallment(Money price) =>
       Money(amount: price.amount / installments, currency: price.currency);
+}
+
+/// Tabby "Pay in 4" + "Pay Later" settings, resolved **entirely from backend
+/// config** — each product's enable flag and min/max thresholds come from
+/// Magento, so nothing about Tabby eligibility is hardcoded. Drives both the
+/// PDP/cart promo and the checkout method labels. See docs/decisions/payments.md.
+class TabbyConfig {
+  const TabbyConfig({required this.currency, this.products = const []});
+
+  final String currency;
+  final List<TabbyProduct> products;
+
+  /// Enabled products eligible for [price], in backend order.
+  List<TabbyProduct> eligibleFor(Money price) =>
+      products.where((p) => p.isEligible(price, currency)).toList();
+
+  TabbyProduct? product(TabbyProductType type) {
+    for (final p in products) {
+      if (p.type == type) return p;
+    }
+    return null;
+  }
 }

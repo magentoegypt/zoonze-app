@@ -144,6 +144,7 @@
   "checkoutContinue": "Continue",
   "checkoutPlaceOrder": "Place Order",
   "checkoutPayIn4": "or 4 interest-free payments",
+  "checkoutPayLater": "Pay later, interest-free",
   "promoTabbyPayIn4": "or {count} interest-free payments of {amount}",
   "@promoTabbyPayIn4": {
     "placeholders": {
@@ -151,6 +152,7 @@
       "amount": { "type": "String" }
     }
   },
+  "promoTabbyPayLater": "or pay later, interest-free",
   "fieldCountryLabel": "Country",
   "countryUae": "United Arab Emirates",
   "paymentDeclined": "Payment was declined. Please choose another payment method.",
