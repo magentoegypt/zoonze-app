@@ -28,6 +28,11 @@ between the Figma source of truth and the Flutter implementation in this repo.
 > shows a "Create Account" heading under the logo, and Sign In / Sign Up carry a
 > circular icon badge (lock / person) matching the Forgot Password style. The canvas
 > sections use a uniform 200 px gap.
+> On the **PDP**, the app-bar share + wishlist icons were removed and the share icon
+> is now stacked directly beneath the wishlist heart on the gallery image. The bottom
+> navigation footer now also appears on Welcome and the auth screens (Sign In, Sign
+> Up, Forgot Password) — every standalone screen. It is intentionally omitted from the
+> Menu Drawer, the Filters bottom sheet, and the Launch splash (overlays / transient).
 
 The canvas holds **26 screens** organized into four labelled sections (Figma
 *Sections*), stacked top-to-bottom in app-flow order:
