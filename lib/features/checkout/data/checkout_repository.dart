@@ -106,11 +106,7 @@ class CheckoutRepository {
     if (number == null || number.isEmpty) {
       throw const Failure(FailureKind.unknown);
     }
-    final token = orderV2?['token'] as String?;
-    return PlaceOrderResult(
-      orderNumber: number,
-      guestToken: (token != null && token.isNotEmpty) ? token : null,
-    );
+    return PlaceOrderResult(orderNumber: number);
   }
 
   /// Fetches the provider session reference for a placed order. Returns null
@@ -118,22 +114,19 @@ class CheckoutRepository {
   /// or surfaces no session, so checkout shows the awaiting-payment state rather
   /// than a fabricated payment UI.
   /// A guest (no customer bearer) authorizes the call for the order they just
-  /// placed by **either** the Magento order token ([guestToken], from
-  /// `orderV2.token`) **or** the billing [email] + [lastname]; both mechanisms
-  /// are sent so the resolver can use whichever it validates. All null for
-  /// logged-in customers (the bearer authorizes).
+  /// placed with the billing [email] + [lastname] entered at checkout (the
+  /// live `paymentSession` resolver's guest-auth args). Both null for logged-in
+  /// customers (the bearer authorizes).
   Future<PaymentSession?> fetchPaymentSession(
     String orderNumber, {
     String? email,
     String? lastname,
-    String? guestToken,
   }) async {
     try {
       final data = await _query(CheckoutQueries.paymentSession, {
         'orderNumber': orderNumber,
         'email': email,
         'lastname': lastname,
-        'guestToken': guestToken,
       });
       return _parseSession(
         data['paymentSession'] as Map<String, dynamic>?,
@@ -156,7 +149,6 @@ class CheckoutRepository {
     String methodCode, {
     String? email,
     String? lastname,
-    String? guestToken,
   }) async {
     try {
       final data = await _mutate(CheckoutQueries.setOrderPaymentMethod, {
@@ -164,7 +156,6 @@ class CheckoutRepository {
         'methodCode': methodCode,
         'email': email,
         'lastname': lastname,
-        'guestToken': guestToken,
       });
       return _parseSession(
         data['setOrderPaymentMethod'] as Map<String, dynamic>?,
