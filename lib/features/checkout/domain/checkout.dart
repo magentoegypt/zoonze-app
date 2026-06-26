@@ -52,7 +52,12 @@ class PaymentMethodOption {
 }
 
 class PlaceOrderResult {
-  const PlaceOrderResult({required this.orderNumber});
+  const PlaceOrderResult({required this.orderNumber, this.guestToken});
 
   final String orderNumber;
+
+  /// Guest order token (`orderV2.token`, Magento 2.4.7+) — an alternative way to
+  /// authorize a guest's follow-up `paymentSession` call (vs. billing
+  /// email+lastname). Null for logged-in customers (the bearer authorizes).
+  final String? guestToken;
 }

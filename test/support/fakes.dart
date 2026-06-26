@@ -216,6 +216,7 @@ class FakeCheckoutRepository implements CheckoutRepository {
   String? selectedPaymentCode;
   String? lastSessionEmail;
   String? lastSessionLastname;
+  String? lastSessionGuestToken;
 
   @override
   Future<void> setGuestEmail(String cartId, String email) async {
@@ -269,9 +270,11 @@ class FakeCheckoutRepository implements CheckoutRepository {
     String orderNumber, {
     String? email,
     String? lastname,
+    String? guestToken,
   }) async {
     lastSessionEmail = email;
     lastSessionLastname = lastname;
+    lastSessionGuestToken = guestToken;
     return paymentSession;
   }
 

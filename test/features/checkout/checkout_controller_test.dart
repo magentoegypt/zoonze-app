@@ -149,7 +149,7 @@ void main() {
     });
 
     test(
-      'loadPaymentSession sends the guest billing email + lastname',
+      'loadPaymentSession sends the guest order token + email + lastname',
       () async {
         final repo = FakeCheckoutRepository();
         final container = await _seededContainer(repo);
@@ -160,15 +160,16 @@ void main() {
           address: _address,
           isGuest: true,
         );
-        await checkout.loadPaymentSession('000000123');
+        await checkout.loadPaymentSession('000000123', guestToken: 'tok-1');
 
         expect(repo.lastSessionEmail, 'guest@example.com');
         expect(repo.lastSessionLastname, 'Hassan');
+        expect(repo.lastSessionGuestToken, 'tok-1');
       },
     );
 
     test(
-      'loadPaymentSession sends no billing details for a customer order',
+      'loadPaymentSession sends no guest credentials for a customer order',
       () async {
         final repo = FakeCheckoutRepository();
         final container = await _seededContainer(repo);
@@ -179,10 +180,11 @@ void main() {
           address: _address,
           isGuest: false,
         );
-        await checkout.loadPaymentSession('000000123');
+        await checkout.loadPaymentSession('000000123', guestToken: 'tok-1');
 
         expect(repo.lastSessionEmail, isNull);
         expect(repo.lastSessionLastname, isNull);
+        expect(repo.lastSessionGuestToken, isNull);
       },
     );
 

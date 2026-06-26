@@ -96,35 +96,44 @@ class CheckoutRepository {
 
   Future<PlaceOrderResult> placeOrder(String cartId) async {
     final data = await _mutate(CheckoutQueries.placeOrder, {'cartId': cartId});
-    final order =
-        (data['placeOrder'] as Map<String, dynamic>?)?['order']
-            as Map<String, dynamic>?;
-    final number = order?['order_number'] as String?;
+    final placed = data['placeOrder'] as Map<String, dynamic>?;
+    final order = placed?['order'] as Map<String, dynamic>?;
+    final orderV2 = placed?['orderV2'] as Map<String, dynamic>?;
+    final number =
+        (order?['order_number'] as String?) ?? (orderV2?['number'] as String?);
     // A response without an order number is not a success — surface it as a
     // failure rather than routing the user to a blank-reference success screen.
     if (number == null || number.isEmpty) {
       throw const Failure(FailureKind.unknown);
     }
-    return PlaceOrderResult(orderNumber: number);
+    final token = orderV2?['token'] as String?;
+    return PlaceOrderResult(
+      orderNumber: number,
+      guestToken: (token != null && token.isNotEmpty) ? token : null,
+    );
   }
 
   /// Fetches the provider session reference for a placed order. Returns null
   /// when the backend `paymentSession` resolver is not deployed yet (Open Q §2)
   /// or surfaces no session, so checkout shows the awaiting-payment state rather
   /// than a fabricated payment UI.
-  /// [email] + [lastname] are the guest's billing details, sent so the resolver
-  /// can authorize a guest (no customer bearer) for the order they just placed;
-  /// both null for logged-in customers (the bearer authorizes).
+  /// A guest (no customer bearer) authorizes the call for the order they just
+  /// placed by **either** the Magento order token ([guestToken], from
+  /// `orderV2.token`) **or** the billing [email] + [lastname]; both mechanisms
+  /// are sent so the resolver can use whichever it validates. All null for
+  /// logged-in customers (the bearer authorizes).
   Future<PaymentSession?> fetchPaymentSession(
     String orderNumber, {
     String? email,
     String? lastname,
+    String? guestToken,
   }) async {
     try {
       final data = await _query(CheckoutQueries.paymentSession, {
         'orderNumber': orderNumber,
         'email': email,
         'lastname': lastname,
+        'guestToken': guestToken,
       });
       final json = data['paymentSession'] as Map<String, dynamic>?;
       if (json == null) return null;
@@ -139,6 +148,10 @@ class CheckoutRepository {
         additionalData: _keyValues(json['additional_data'] as List<dynamic>?),
       );
     } on Failure {
+      return null;
+    } catch (_) {
+      // A malformed-but-200 response (unexpected JSON shape) must degrade to
+      // "awaiting payment", not crash the checkout flow with a cast error.
       return null;
     }
   }
@@ -170,6 +183,9 @@ class CheckoutRepository {
         products: products,
       );
     } on Failure {
+      return null;
+    } catch (_) {
+      // Malformed-but-200 response → hide the promo rather than crash.
       return null;
     }
   }

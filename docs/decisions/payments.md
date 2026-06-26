@@ -83,11 +83,12 @@ wraps `Model\SessionData::createSession()` (returns `payment_id` + `web_url`). T
 consumes this shape (`checkout_queries.paymentSession`) and **degrades to "awaiting payment" if the
 field is absent**, so deploying it is non-breaking.
 
-**Guest orders reach the gateway** via the optional `email` + `lastname` args: a logged-in customer
-is authorized by the bearer (app sends only `order_number`); a guest is authorized by matching the
-billing `email` + `lastname` it entered at checkout against the order's billing address. The app
-captures these at the address step (`CheckoutState.email`/`lastname`/`isGuest`) and
-`loadPaymentSession` sends them only for guest orders.
+**Guest orders reach the gateway** via the optional `guest_token` / `email` / `lastname` args: a
+logged-in customer is authorized by the bearer (app sends only `order_number`); a guest is
+authorized by **either** Magento's order token (`placeOrder.orderV2.token`, captured as
+`PlaceOrderResult.guestToken`) **or** the billing `email` + `lastname` it entered at checkout. The
+app captures both at place-order / the address step (`CheckoutState`) and `loadPaymentSession` sends
+all three for guest orders only — the resolver uses whichever validates.
 
 ### Tabby config — three products, backend-driven enable + thresholds + promo
 

@@ -93,7 +93,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
   Future<void> _placeOrder() async {
     if (_placing) return;
-    _placing = true;
+    // Hold the busy lock across the WHOLE flow (place order → session poll →
+    // native present), not just placeOrder — otherwise the form is tappable and
+    // the barrier vanishes while a payment runs against an already-consumed cart.
+    setState(() => _placing = true);
     try {
       final result = await _controller.placeOrder();
       if (!mounted) return;
@@ -108,13 +111,17 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         _goSuccess(result.orderNumber, pending: false);
         return;
       }
-      // Gateway method: fetch the session (the controller sends the guest's
-      // billing email + lastname to authorize a guest order) and route by status.
-      final session = await _controller.loadPaymentSession(result.orderNumber);
+      // Gateway method: fetch the session (the controller sends the guest's order
+      // token + billing email/lastname to authorize a guest order) and route by
+      // status.
+      final session = await _controller.loadPaymentSession(
+        result.orderNumber,
+        guestToken: result.guestToken,
+      );
       if (!mounted) return;
       await _drive(session, result.orderNumber, state.grandTotal);
     } finally {
-      _placing = false;
+      if (mounted) setState(() => _placing = false);
     }
   }
 
@@ -209,13 +216,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(checkoutControllerProvider);
     final isGuest = !ref.watch(authControllerProvider).isAuthenticated;
+    // _placing spans the whole place-order → session → present flow; state.isBusy
+    // covers the individual address/shipping/payment mutations.
+    final busy = state.isBusy || _placing;
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.checkoutTitle)),
       body: Stack(
         children: [
           AbsorbPointer(
-            absorbing: state.isBusy,
+            absorbing: busy,
             child: ListView(
               padding: const EdgeInsets.all(16),
               children: [
@@ -287,7 +297,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 ),
                 const SizedBox(height: 8),
                 FilledButton(
-                  onPressed: state.isBusy ? null : _submitAddress,
+                  onPressed: busy ? null : _submitAddress,
                   child: Text(l10n.checkoutContinue),
                 ),
                 if (state.addressDone) ...[
@@ -352,7 +362,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     ),
                   const SizedBox(height: 16),
                   FilledButton(
-                    onPressed: state.isBusy ? null : _placeOrder,
+                    onPressed: busy ? null : _placeOrder,
                     child: Text(l10n.checkoutPlaceOrder),
                   ),
                 ],
@@ -361,7 +371,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           ),
           // Single busy indicator over a translucent barrier — reinforces the
           // AbsorbPointer lock without stacking multiple spinners.
-          if (state.isBusy)
+          if (busy)
             const Positioned.fill(
               child: ColoredBox(
                 color: Color(0x33000000),

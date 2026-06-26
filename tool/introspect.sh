@@ -37,6 +37,22 @@ for store in "$STORE_EN" "$STORE_AR"; do
   echo; echo
 done
 
+echo "== Phase 3 payment contract — MagentoEgypt_PaymentGraphQl (Store: $STORE_EN) =="
+# Confirm the resolvers + args exist on the live schema and match the app's queries
+# (docs/backend/payment-contract.md). paymentSession must accept
+# order_number!, email, lastname, guest_token; tabbyConfig must exist.
+post "$STORE_EN" '{"query":"{ __type(name:\"Query\"){ fields(includeDeprecated:true){ name args{ name type{ kind name ofType{ kind name } } } } } }"}' \
+  | tr ',' '\n' | grep -A12 -iE '"name": ?"(paymentSession|tabbyConfig)"' || \
+  echo "  (paymentSession/tabbyConfig not found on Query — module not deployed?)"
+echo
+for t in PaymentSessionOutput TabbyConfigOutput TabbyProduct; do
+  echo "-- type $t --"
+  post "$STORE_EN" "{\"query\":\"{ __type(name:\\\"$t\\\"){ name kind fields{ name type{ kind name ofType{ kind name } } } enumValues{ name } } }\"}"
+  echo
+done
+echo "Cross-check the above field/arg/enum names against docs/backend/payment-contract.md."
+echo
+
 echo "== Full schema introspection -> $OUT_DIR/schema.graphql (SDL) or schema.json =="
 # Prefer SDL via a tool if available; otherwise dump the introspection JSON.
 INTROSPECTION_QUERY='{"query":"query IntrospectionQuery { __schema { queryType { name } mutationType { name } subscriptionType { name } types { ...FullType } directives { name locations args { ...InputValue } } } } fragment FullType on __Type { kind name description fields(includeDeprecated:true){ name description args{ ...InputValue } type{ ...TypeRef } isDeprecated deprecationReason } inputFields{ ...InputValue } interfaces{ ...TypeRef } enumValues(includeDeprecated:true){ name description isDeprecated deprecationReason } possibleTypes{ ...TypeRef } } fragment InputValue on __InputValue { name description type{ ...TypeRef } defaultValue } fragment TypeRef on __Type { kind name ofType{ kind name ofType{ kind name ofType{ kind name ofType{ kind name ofType{ kind name ofType{ kind name ofType{ kind name } } } } } } } }"}'

@@ -23,7 +23,7 @@ Two GraphQL queries + one Flutter `MethodChannel`:
 
 ```graphql
 type Query {
-    paymentSession(order_number: String!, email: String, lastname: String): PaymentSessionOutput
+    paymentSession(order_number: String!, email: String, lastname: String, guest_token: String): PaymentSessionOutput
         @resolver(class: "MagentoEgypt\\PaymentGraphQl\\Model\\Resolver\\PaymentSession")
         @doc(description: "Create or return the gateway payment session for an already-placed order (keyed by increment id). Requires the customer/guest who owns the order.")
 }
@@ -60,14 +60,18 @@ enum PaymentSessionStatus {
 ### Authorization (guest vs logged-in)
 
 A guest places the order without a customer bearer, so it must prove ownership of the order to
-reach the gateway. The two optional args carry the **billing email + lastname the app collected
-at checkout**:
+reach the gateway. The optional args carry the guest's credentials; the resolver accepts **either**
+mechanism:
 
 - **Logged-in customer:** `Authorization: Bearer <token>` is sent; the resolver matches the order
-  to the customer and **ignores** `email`/`lastname` (the app sends only `order_number`).
-- **Guest:** no bearer. The resolver authorizes by matching `email` + `lastname` against the
-  order's **billing address** (the classic Magento guest-order lookup). Mismatch → GraphQL
-  authorization error. The app sends both for any order it placed as a guest.
+  to the customer and **ignores** the guest args (the app sends only `order_number`).
+- **Guest — two interchangeable paths, the app sends both:**
+  1. **`guest_token`** — Magento's order token (`placeOrder { orderV2 { token } }`, 2.4.7+). The
+     resolver validates it the same way `guestOrderByToken` does.
+  2. **`email` + `lastname`** — matched against the order's **billing address** (the classic
+     Magento guest-order lookup).
+  The resolver authorizes if **either** validates; if neither does → GraphQL authorization error.
+  (`placeOrder` must therefore return `orderV2 { number token }` so the app can capture the token.)
 
 ### `isReady` contract
 
@@ -82,7 +86,7 @@ The app's `isReady()` is **exactly** `status == READY`. Only `READY` may launch 
 
 ### Per-gateway resolver behaviour
 
-**Resolution flow:** load order by `order_number` → assert ownership (logged-in: bearer matches the order's customer; guest: `email` + `lastname` match the order's billing address) else GraphQL authorization error → read `order.payment.method` → dispatch to the gateway builder below → normalise to `PaymentSessionOutput`.
+**Resolution flow:** load order by `order_number` → assert ownership (logged-in: bearer matches the order's customer; guest: `guest_token` validates **or** `email` + `lastname` match the order's billing address) else GraphQL authorization error → read `order.payment.method` → dispatch to the gateway builder below → normalise to `PaymentSessionOutput`.
 
 #### N-Genius (`ngeniusonline`)
 
@@ -283,7 +287,7 @@ finalises the order server-side) before showing the success screen.
 | Contract | App |
 |---|---|
 | `paymentSession` SDL | `CheckoutQueries.paymentSession` → `CheckoutRepository.fetchPaymentSession` → `PaymentSession` (`domain/payment_session.dart`) |
-| guest `email`/`lastname` args | captured at the address step (`CheckoutState.email`/`lastname`/`isGuest`); `CheckoutController.loadPaymentSession` sends them for guest orders, omits them for customers |
+| guest auth args (`guest_token` / `email` / `lastname`) | `guest_token` from `placeOrder.orderV2.token` (`PlaceOrderResult.guestToken`); `email`/`lastname` captured at the address step (`CheckoutState`). `CheckoutController.loadPaymentSession` sends all three for guest orders, none for customers (bearer) |
 | `isReady == READY` | `PaymentSession.isReady` (`status == ready`) |
 | `PENDING` poll | `CheckoutController.loadPaymentSession` (back-off, 4 attempts) |
 | `REJECTED` / `FAILED` | checkout `_drive`: rejected → terminal "choose another method"; failed → retry |
