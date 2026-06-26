@@ -261,6 +261,22 @@ class AppLocalizationsAr extends AppLocalizations {
   String get cartCouponError => 'هذا الرمز غير صالح.';
 
   @override
+  String get wishlistEmptyTitle => 'قائمة المفضلة فارغة';
+
+  @override
+  String get wishlistEmptyBody => 'اضغط على القلب في أي منتج لحفظه هنا.';
+
+  @override
+  String get wishlistSignInPrompt => 'سجّل الدخول لحفظ المنتجات في قائمتك.';
+
+  @override
+  String get wishlistGuestTitle => 'احفظ مفضّلاتك';
+
+  @override
+  String get wishlistGuestBody =>
+      'سجّل الدخول للاحتفاظ بقائمة المفضلة عبر أجهزتك.';
+
+  @override
   String get badgeNew => 'جديد';
 
   @override

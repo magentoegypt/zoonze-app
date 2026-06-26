@@ -264,6 +264,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cartCouponError => 'That code didn\'t work.';
 
   @override
+  String get wishlistEmptyTitle => 'Your wishlist is empty';
+
+  @override
+  String get wishlistEmptyBody =>
+      'Tap the heart on any product to save it here.';
+
+  @override
+  String get wishlistSignInPrompt => 'Sign in to save items to your wishlist.';
+
+  @override
+  String get wishlistGuestTitle => 'Save your favourites';
+
+  @override
+  String get wishlistGuestBody =>
+      'Sign in to keep your wishlist across devices.';
+
+  @override
   String get badgeNew => 'NEW';
 
   @override

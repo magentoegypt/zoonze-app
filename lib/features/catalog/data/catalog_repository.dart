@@ -11,6 +11,7 @@ import '../domain/product.dart';
 import '../domain/product_detail.dart';
 import '../domain/product_page.dart';
 import 'catalog_queries.dart';
+import 'product_mapper.dart';
 
 enum ProductSortField { relevance, priceAsc, priceDesc, nameAsc, newest }
 
@@ -237,30 +238,9 @@ class CatalogRepository {
     );
   }
 
-  Product _parseProduct(Map<String, dynamic> json) {
-    final image = json['image'] as Map<String, dynamic>?;
-    final minPrice = (json['price_range'] as Map<String, dynamic>?)?['minimum_price']
-        as Map<String, dynamic>?;
-    return Product(
-      sku: (json['sku'] as String?) ?? '',
-      name: (json['name'] as String?) ?? '',
-      urlKey: (json['url_key'] as String?) ?? '',
-      imageUrl: image?['url'] as String?,
-      regularPrice:
-          _parseMoney(minPrice?['regular_price'] as Map<String, dynamic>?),
-      finalPrice: _parseMoney(minPrice?['final_price'] as Map<String, dynamic>?),
-      inStock: (json['stock_status'] as String?) != 'OUT_OF_STOCK',
-    );
-  }
+  Product _parseProduct(Map<String, dynamic> json) => productFromJson(json);
 
-  Money? _parseMoney(Map<String, dynamic>? json) {
-    final value = json?['value'];
-    if (value is! num) return null;
-    return Money(
-      amount: value.toDouble(),
-      currency: (json!['currency'] as String?) ?? 'AED',
-    );
-  }
+  Money? _parseMoney(Map<String, dynamic>? json) => moneyFromJson(json);
 
   List<Aggregation> _parseAggregations(List<dynamic>? json) {
     if (json == null) return const [];

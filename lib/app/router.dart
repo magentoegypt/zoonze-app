@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../core/widgets/placeholder_screen.dart';
 import '../features/account/presentation/account_screen.dart';
 import '../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../features/cart/presentation/screens/cart_screen.dart';
@@ -12,6 +11,7 @@ import '../features/catalog/presentation/screens/home_screen.dart';
 import '../features/catalog/presentation/screens/plp_screen.dart';
 import '../features/catalog/presentation/screens/product_detail_screen.dart';
 import '../features/catalog/presentation/screens/search_screen.dart';
+import '../features/wishlist/presentation/screens/wishlist_screen.dart';
 import '../features/diagnostics/presentation/health_check_screen.dart';
 import '../features/onboarding/presentation/launch_splash_screen.dart';
 import '../features/onboarding/presentation/welcome_screen.dart';
@@ -61,8 +61,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.wishlist,
-        builder: (context, state) =>
-            const PlaceholderScreen(title: 'Wishlist', tab: AppTab.wishlist),
+        builder: (context, state) => const WishlistScreen(),
       ),
       GoRoute(
         path: AppRoutes.account,

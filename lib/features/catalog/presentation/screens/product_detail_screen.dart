@@ -9,6 +9,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../core/widgets/async_value_view.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../cart/presentation/cart_controller.dart';
+import '../../../wishlist/presentation/widgets/wishlist_heart.dart';
 import '../../domain/money.dart';
 import '../../domain/product_detail.dart';
 import '../catalog_providers.dart';
@@ -83,7 +84,7 @@ class _Content extends StatelessWidget {
     return ListView(
       padding: EdgeInsets.zero,
       children: [
-        _Gallery(images: images),
+        _Gallery(images: images, sku: product.sku),
         Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -123,8 +124,9 @@ class _Content extends StatelessWidget {
 }
 
 class _Gallery extends StatefulWidget {
-  const _Gallery({required this.images});
+  const _Gallery({required this.images, required this.sku});
   final List<String> images;
+  final String sku;
 
   @override
   State<_Gallery> createState() => _GalleryState();
@@ -164,14 +166,17 @@ class _GalleryState extends State<_Gallery> {
                             Container(color: AppColors.surfaceTint),
                       ),
                     ),
-                    const PositionedDirectional(
+                    PositionedDirectional(
                       top: 8,
                       end: 8,
                       child: Column(
                         children: [
-                          Icon(Icons.favorite_border, color: AppColors.inkHeading),
-                          SizedBox(height: 12),
-                          Icon(Icons.share_outlined, color: AppColors.inkHeading),
+                          WishlistHeart(sku: widget.sku),
+                          IconButton(
+                            onPressed: () {},
+                            icon: const Icon(Icons.share_outlined,
+                                color: AppColors.inkHeading),
+                          ),
                         ],
                       ),
                     ),

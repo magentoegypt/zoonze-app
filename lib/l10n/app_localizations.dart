@@ -590,6 +590,36 @@ abstract class AppLocalizations {
   /// **'That code didn\'t work.'**
   String get cartCouponError;
 
+  /// No description provided for @wishlistEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your wishlist is empty'**
+  String get wishlistEmptyTitle;
+
+  /// No description provided for @wishlistEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap the heart on any product to save it here.'**
+  String get wishlistEmptyBody;
+
+  /// No description provided for @wishlistSignInPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to save items to your wishlist.'**
+  String get wishlistSignInPrompt;
+
+  /// No description provided for @wishlistGuestTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save your favourites'**
+  String get wishlistGuestTitle;
+
+  /// No description provided for @wishlistGuestBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to keep your wishlist across devices.'**
+  String get wishlistGuestBody;
+
   /// No description provided for @badgeNew.
   ///
   /// In en, this message translates to:

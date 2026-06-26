@@ -92,6 +92,12 @@
   "cartAdded": "تمت الإضافة إلى السلة",
   "cartCouponError": "هذا الرمز غير صالح.",
 
+  "wishlistEmptyTitle": "قائمة المفضلة فارغة",
+  "wishlistEmptyBody": "اضغط على القلب في أي منتج لحفظه هنا.",
+  "wishlistSignInPrompt": "سجّل الدخول لحفظ المنتجات في قائمتك.",
+  "wishlistGuestTitle": "احفظ مفضّلاتك",
+  "wishlistGuestBody": "سجّل الدخول للاحتفاظ بقائمة المفضلة عبر أجهزتك.",
+
   "badgeNew": "جديد",
   "badgeBestseller": "الأكثر مبيعًا",
   "priceFrom": "ابتداءً من",

@@ -8,6 +8,8 @@ import 'package:zoonze_app/features/auth/data/auth_repository.dart';
 import 'package:zoonze_app/features/auth/domain/customer.dart';
 import 'package:zoonze_app/features/cart/data/cart_repository.dart';
 import 'package:zoonze_app/features/cart/domain/cart.dart';
+import 'package:zoonze_app/features/wishlist/data/wishlist_repository.dart';
+import 'package:zoonze_app/features/wishlist/domain/wishlist_entry.dart';
 import 'package:zoonze_app/features/catalog/data/catalog_repository.dart';
 import 'package:zoonze_app/features/catalog/domain/aggregation.dart';
 import 'package:zoonze_app/features/catalog/domain/category.dart';
@@ -165,6 +167,37 @@ class FakeCartRepository implements CartRepository {
     mergeCalls++;
     _cart = Cart(id: destination, items: _cart.items);
     return _cart;
+  }
+}
+
+class FakeWishlistRepository implements WishlistRepository {
+  WishlistData _data = const WishlistData(id: 'wl-1');
+
+  @override
+  Future<WishlistData?> fetchWishlist() async => _data;
+
+  @override
+  Future<WishlistData> addProduct(String wishlistId, String sku) async {
+    _data = WishlistData(
+      id: wishlistId,
+      entries: [
+        ..._data.entries,
+        WishlistEntry(
+          id: 'item-$sku',
+          product: Product(sku: sku, name: sku, urlKey: sku),
+        ),
+      ],
+    );
+    return _data;
+  }
+
+  @override
+  Future<WishlistData> removeItem(String wishlistId, String itemId) async {
+    _data = WishlistData(
+      id: wishlistId,
+      entries: _data.entries.where((e) => e.id != itemId).toList(),
+    );
+    return _data;
   }
 }
 

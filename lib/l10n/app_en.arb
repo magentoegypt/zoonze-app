@@ -97,6 +97,12 @@
   "cartAdded": "Added to cart",
   "cartCouponError": "That code didn't work.",
 
+  "wishlistEmptyTitle": "Your wishlist is empty",
+  "wishlistEmptyBody": "Tap the heart on any product to save it here.",
+  "wishlistSignInPrompt": "Sign in to save items to your wishlist.",
+  "wishlistGuestTitle": "Save your favourites",
+  "wishlistGuestBody": "Sign in to keep your wishlist across devices.",
+
   "badgeNew": "NEW",
   "badgeBestseller": "BESTSELLER",
   "priceFrom": "From",

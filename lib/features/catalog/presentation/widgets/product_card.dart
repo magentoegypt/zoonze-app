@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../l10n/l10n.dart';
+import '../../../wishlist/presentation/widgets/wishlist_heart.dart';
 import '../../domain/product.dart';
 import 'price_view.dart';
 
@@ -38,13 +39,10 @@ class ProductCard extends StatelessWidget {
                       start: 8,
                       child: _Badge(label: '-$discount%', color: AppColors.accentSale),
                     ),
-                  const PositionedDirectional(
+                  PositionedDirectional(
                     top: 4,
                     end: 4,
-                    child: IconButton(
-                      onPressed: null,
-                      icon: Icon(Icons.favorite_border, color: AppColors.inkHeading),
-                    ),
+                    child: WishlistHeart(sku: product.sku),
                   ),
                 ],
               ),
