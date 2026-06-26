@@ -20,11 +20,15 @@ OUT_DIR="lib/core/graphql"
 mkdir -p "$OUT_DIR"
 
 post() { # $1 = Store header (empty => omit, use default store), $2 = json body
-  local hdr=()
+  local hdr=() auth=()
   [ -n "$1" ] && hdr=(-H "Store: $1")
+  # Optional bearer (e.g. TOKEN from a CI secret). Not needed for the public
+  # availableStores/storeConfig/introspection calls, but forwarded if present.
+  [ -n "${TOKEN:-}" ] && auth=(-H "Authorization: Bearer ${TOKEN}")
   curl -sS --max-time 40 -X POST "$ENDPOINT" \
     -H "Content-Type: application/json" \
     "${hdr[@]}" \
+    "${auth[@]}" \
     -H "User-Agent: $UA" \
     --data "$2"
 }
