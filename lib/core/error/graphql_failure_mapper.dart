@@ -23,7 +23,7 @@ Failure mapOperationException(OperationException exception) {
 
   final graphqlErrors = exception.graphqlErrors;
   if (graphqlErrors.isNotEmpty) {
-    final isAuth = graphqlErrors.any(_isAuthError);
+    final isAuth = graphqlErrors.any(isAuthGraphqlError);
     if (isAuth) return const Failure(FailureKind.auth);
     return Failure(FailureKind.server, detail: graphqlErrors.first.message);
   }
@@ -31,7 +31,11 @@ Failure mapOperationException(OperationException exception) {
   return const Failure(FailureKind.unknown);
 }
 
-bool _isAuthError(GraphQLError error) {
+/// True when a GraphQL error indicates the customer token is invalid/expired
+/// (Magento returns these as a 200 + errors payload, category
+/// `graphql-authorization`/`graphql-authentication`). Shared by the failure
+/// mapper and the resilience link's mid-session logout trigger.
+bool isAuthGraphqlError(GraphQLError error) {
   final category = error.extensions?['category'];
   if (category == 'graphql-authorization' ||
       category == 'graphql-authentication') {

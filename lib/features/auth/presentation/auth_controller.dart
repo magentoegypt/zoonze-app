@@ -79,6 +79,17 @@ class AuthController extends Notifier<AuthState> {
   Future<void> requestPasswordReset(String email) =>
       _repo.requestPasswordReset(email);
 
+  /// Invoked when a live request reports the token is invalid/expired
+  /// mid-session (the resilience link detects `graphql-authorization`). Drops
+  /// the session to guest locally — no revoke round-trip, since the token is
+  /// already rejected — and resets the cache so customer data is cleared.
+  Future<void> handleSessionExpired() async {
+    if (state.status != AuthStatus.authenticated) return;
+    await _tokens.clear();
+    ref.invalidate(graphqlClientProvider);
+    state = const AuthState(status: AuthStatus.guest);
+  }
+
   /// Re-fetches the customer profile (e.g. after an Edit Profile save).
   Future<void> refreshCustomer() async {
     if (!state.isAuthenticated) return;

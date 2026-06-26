@@ -1,13 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
+import '../../features/auth/presentation/auth_controller.dart';
 import '../config/app_config.dart';
 import '../storage/secure_token_store.dart';
 import '../store/store_controller.dart';
+import 'resilience_link.dart';
 import 'store_link.dart';
 
 /// Builds the GraphQL client with the link chain:
 ///   AuthLink (bearer when present) → StoreHeaderLink (dynamic `Store` header)
+///   → ResilienceLink (retry transient queries + mid-session logout)
 ///   → HttpLink (terminating).
 ///
 /// Exception → [Failure] mapping happens at the repository layer
@@ -31,7 +34,15 @@ final graphqlClientProvider = Provider<GraphQLClient>((ref) {
     userAgent: config.userAgent,
   );
 
-  final link = Link.from(<Link>[authLink, storeLink, httpLink]);
+  final resilienceLink = ResilienceLink(
+    // Defer to a microtask so logout (which invalidates this very provider)
+    // runs after the current response stream settles, never mid-emit.
+    onAuthError: () => Future.microtask(
+      () => ref.read(authControllerProvider.notifier).handleSessionExpired(),
+    ),
+  );
+
+  final link = Link.from(<Link>[authLink, storeLink, resilienceLink, httpLink]);
 
   return GraphQLClient(
     link: link,
