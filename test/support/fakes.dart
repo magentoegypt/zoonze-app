@@ -419,25 +419,25 @@ class FakeCatalogRepository implements CatalogRepository {
 
 const List<StoreView> kSampleStores = <StoreView>[
   StoreView(
-    storeCode: 'uae-en',
-    storeName: 'UAE English',
+    storeCode: 'eg_en',
+    storeName: 'EN',
     locale: 'en_US',
     isDefault: true,
     baseCurrencyCode: 'AED',
     displayCurrencyCode: 'AED',
-    baseUrl: 'https://zoonze.com/uae-en/',
-    secureBaseUrl: 'https://zoonze.com/uae-en/',
+    baseUrl: 'https://zoonze.com/',
+    secureBaseUrl: 'https://zoonze.com/',
     baseMediaUrl: 'https://zoonze.com/media/',
   ),
   StoreView(
-    storeCode: 'uae-ar',
-    storeName: 'UAE Arabic',
+    storeCode: 'eg_ar',
+    storeName: 'AR',
     locale: 'ar_SA',
     isDefault: false,
     baseCurrencyCode: 'AED',
     displayCurrencyCode: 'AED',
-    baseUrl: 'https://zoonze.com/uae-ar/',
-    secureBaseUrl: 'https://zoonze.com/uae-ar/',
+    baseUrl: 'https://zoonze.com/',
+    secureBaseUrl: 'https://zoonze.com/',
     baseMediaUrl: 'https://zoonze.com/media/',
   ),
 ];

@@ -9,12 +9,12 @@ void main() {
       expect(config.flavor, 'dev');
       expect(config.defaultLocale, 'en');
       expect(config.currency, 'AED');
-      expect(config.bootstrapStoreCode, 'uae-en');
+      expect(config.bootstrapStoreCode, 'eg_en');
       expect(config.graphqlEndpoint, 'https://zoonze.com/graphql');
     });
 
     test('exposes provisional locale -> store_code fallback', () {
-      expect(config.provisionalStoreCodes, {'en': 'uae-en', 'ar': 'uae-ar'});
+      expect(config.provisionalStoreCodes, {'en': 'eg_en', 'ar': 'eg_ar'});
     });
 
     test('isProd reflects the flavor', () {

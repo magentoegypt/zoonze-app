@@ -20,7 +20,7 @@
 #   ORDER_NUMBER=000000123 TOKEN=<customer_token> bash tool/verify_payments.sh
 #
 #   # Override the store view / endpoint if needed:
-#   STORE=uae-ar ENDPOINT=https://zoonze.com/graphql bash tool/verify_payments.sh
+#   STORE=eg_ar ENDPOINT=https://zoonze.com/graphql bash tool/verify_payments.sh
 set -euo pipefail
 
 ENDPOINT="${ENDPOINT:-https://zoonze.com/graphql}"

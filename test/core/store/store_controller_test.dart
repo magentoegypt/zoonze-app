@@ -27,8 +27,8 @@ void main() {
       final container = _container();
       final state = container.read(storeControllerProvider);
       expect(state.activeLocale, 'en');
-      expect(state.localeToCode, {'en': 'uae-en', 'ar': 'uae-ar'});
-      expect(state.activeStoreCode, 'uae-en');
+      expect(state.localeToCode, {'en': 'eg_en', 'ar': 'eg_ar'});
+      expect(state.activeStoreCode, 'eg_en');
     });
 
     test('honours the persisted locale', () {
@@ -36,7 +36,7 @@ void main() {
       final state = container.read(storeControllerProvider);
       expect(state.activeLocale, 'ar');
       expect(state.isRtl, isTrue);
-      expect(state.activeStoreCode, 'uae-ar');
+      expect(state.activeStoreCode, 'eg_ar');
     });
 
     test(
@@ -47,8 +47,8 @@ void main() {
         final state = container.read(storeControllerProvider);
 
         expect(state.stores, hasLength(2));
-        expect(state.localeToCode['en'], 'uae-en');
-        expect(state.localeToCode['ar'], 'uae-ar');
+        expect(state.localeToCode['en'], 'eg_en');
+        expect(state.localeToCode['ar'], 'eg_ar');
         expect(state.defaultLocale, 'en');
         expect(state.currency, 'AED');
       },
@@ -63,7 +63,7 @@ void main() {
 
       expect(state.activeLocale, 'ar');
       expect(state.isRtl, isTrue);
-      expect(state.activeStoreCode, 'uae-ar');
+      expect(state.activeStoreCode, 'eg_ar');
     });
   });
 }

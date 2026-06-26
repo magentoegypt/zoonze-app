@@ -42,15 +42,15 @@ class AppConfig {
     defaultLocale: String.fromEnvironment('DEFAULT_LOCALE', defaultValue: 'en'),
     bootstrapStoreCode: String.fromEnvironment(
       'BOOTSTRAP_STORE_CODE',
-      defaultValue: 'uae-en',
+      defaultValue: 'eg_en',
     ),
     storeCodeEn: String.fromEnvironment(
       'STORE_CODE_EN',
-      defaultValue: 'uae-en',
+      defaultValue: 'eg_en',
     ),
     storeCodeAr: String.fromEnvironment(
       'STORE_CODE_AR',
-      defaultValue: 'uae-ar',
+      defaultValue: 'eg_ar',
     ),
     currency: String.fromEnvironment('CURRENCY', defaultValue: 'AED'),
     userAgent: String.fromEnvironment(

@@ -8,13 +8,13 @@
 #
 # Usage:
 #   bash tool/introspect.sh
-#   ENDPOINT=https://zoonze.com/graphql STORE_EN=uae-en STORE_AR=uae-ar bash tool/introspect.sh
+#   ENDPOINT=https://zoonze.com/graphql STORE_EN=eg_en STORE_AR=eg_ar bash tool/introspect.sh
 #
 set -euo pipefail
 
 ENDPOINT="${ENDPOINT:-https://zoonze.com/graphql}"
-STORE_EN="${STORE_EN:-uae-en}"
-STORE_AR="${STORE_AR:-uae-ar}"
+STORE_EN="${STORE_EN:-eg_en}"
+STORE_AR="${STORE_AR:-eg_ar}"
 UA="${USER_AGENT:-ZoonzeApp/0.1.0 (Flutter)}"
 OUT_DIR="lib/core/graphql"
 mkdir -p "$OUT_DIR"

@@ -12,11 +12,11 @@ import 'package:zoonze_app/features/diagnostics/presentation/health_check_screen
 import '../../support/fakes.dart';
 
 const _config = StoreConfigData(
-  storeCode: 'uae-en',
+  storeCode: 'eg_en',
   storeName: 'UAE English',
   locale: 'en_US',
   currency: 'AED',
-  baseUrl: 'https://zoonze.com/uae-en/',
+  baseUrl: 'https://zoonze.com/',
   baseMediaUrl: 'https://zoonze.com/media/',
 );
 
@@ -45,7 +45,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Store code'), findsOneWidget);
-    expect(find.text('uae-en'), findsWidgets);
+    expect(find.text('eg_en'), findsWidgets);
 
     final direction = Directionality.of(
       tester.element(find.text('Store code')),
