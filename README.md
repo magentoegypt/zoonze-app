@@ -6,15 +6,29 @@ storefront client for the **ZoonZE Beauty** Magento Open Source 2.4.8-p5 backend
 
 **Status (EN + AR/RTL throughout; `flutter analyze` clean, tests green):**
 - **Phase 0 — Foundation** ✅ flavors, `AppConfig`, GraphQL link chain (dynamic
-  `Store` header), dynamic store resolution, theme (Figma tokens +
-  Inter/Cairo/Playfair), ARB + language switcher, secure storage + Hive, diagnostics.
+  `Store` header, retry-with-backoff + mid-session logout), dynamic store
+  resolution, theme (Figma tokens + Inter/Cairo/Playfair), ARB + language
+  switcher, secure storage + Hive, diagnostics.
 - **Phase 1 — Catalog browse** ✅ app shell (drawer, bottom nav, footer),
-  splash/welcome, home, PLP (filters/sort/pagination), PDP, search.
-- **Phase 2 — Cart + Auth** ✅ guest cart, coupons, merge-on-login; sign in/up/reset, account.
-- **Phase 3 — Checkout + payments** ⏸️ on hold pending the gateway-exposure answer (Open Q §2).
-- **Phase 4 — Account/Wishlist/Reviews** ✅ wishlist, orders, addresses, edit profile, reviews.
-- **Phase 5 — Push + release** 🔄 app-side push plumbing + deep links + release docs done;
-  Firebase config, signing, iOS schemes, and store submission are owner/platform steps.
+  splash/welcome, home, PLP (aggregation filters incl. price range, sort,
+  pagination), PDP, search.
+- **Phase 2 — Cart + Auth** ✅ guest cart, coupons, merge-on-login; sign
+  in/up/forgot + in-app reset, account.
+- **Phase 3 — Checkout + payments** ✅ _app side._ Address → shipping → payment
+  (driven only by `available_payment_methods`) → `placeOrder` → one native-SDK
+  payment seam (`zoonze/payments` channel); N-Genius + Tabby via
+  `paymentSession`/`tabbyConfig`, Tabby promo (PDP/cart), Zero Subtotal
+  Checkout (`free`), and post-order recovery (`CompletePaymentScreen`). The
+  GraphQL payment contract is **verified field-for-field against the live
+  schema** (see `docs/backend/payment-contract.md`). **Remaining:** the native
+  N-Genius/Tabby SDK modules behind the channel (a device/native step) — the
+  Dart side degrades to "awaiting payment" until they land.
+- **Phase 4 — Account/Wishlist/Reviews** ✅ wishlist (+ live badge), orders +
+  detail/tracking, addresses, edit profile, reviews, Help & FAQ, Settings.
+- **Phase 5 — Push + release** ✅ _app side._ FCM + local notifications, deep
+  links, notification settings, performance pass, CI + Android/iOS release
+  workflows. **Remaining (owner/platform):** Firebase per-flavor registration,
+  signing secrets, iOS Team ID / `match`, and store submission.
 
 See `CLAUDE.md` (binding spec), `docs/PLAN.md` (phased roadmap + ETAs),
 `docs/FIGMA_DESIGN.md` (UI source of truth), and `docs/decisions/`.
@@ -43,23 +57,34 @@ flutter analyze     # clean
 flutter test        # unit + bidirectional widget tests
 ```
 
-## Confirm store config / generate schema (run on a network that reaches zoonze.com)
+## Store config / live schema introspection
+Store codes are **confirmed**: `eg_en` (en_US, default view) / `eg_ar` (ar_SA),
+both **AED** (see `docs/decisions/stores.md`). The app still resolves the
+`locale → store_code` mapping dynamically at runtime from `availableStores`.
+
+The agent sandbox can't reach `zoonze.com`, but a **GitHub Actions** runner can,
+so introspection runs there:
 ```bash
-bash tool/introspect.sh   # availableStores + per-view storeConfig + schema introspection
+# locally, on any network that reaches the origin:
+bash tool/introspect.sh        # availableStores + storeConfig + schema + payment-contract check
+bash tool/verify_payments.sh   # paymentSession / tabbyConfig shape + a live session
 ```
-The build environment's egress policy blocks `zoonze.com`, so store codes are
-**resolved dynamically at runtime** and the bootstrap values in `config/*.json`
-are provisional until confirmed (see `docs/decisions/stores.md`).
+Or trigger the **Introspect Live GraphQL** workflow (Actions tab) — it runs
+`tool/introspect.sh` and uploads the output + `schema.introspection.json`.
 
 ## Project layout
 ```
 lib/
-  app/         MaterialApp.router, router, theme (Figma tokens)
-  core/        config · graphql (link chain) · store (dynamic resolution)
-               storage (secure/Hive/prefs) · error · widgets · assets
-  features/    diagnostics (storeConfig health check)
+  app/         MaterialApp.router, router, theme (Figma tokens), shell (drawer/nav/footer)
+  core/        config · graphql (link chain + resilience) · store (dynamic resolution)
+               storage (secure/Hive/prefs) · error · notifications · util · widgets · assets
+  features/    catalog · search · cart · auth · checkout (payments) · account · wishlist
+               · notifications · diagnostics
   l10n/        app_en.arb · app_ar.arb
-config/        dev|staging|prod.json   ·   tool/introspect.sh
+config/        dev|staging|prod.json
+tool/          introspect.sh · verify_payments.sh
+.github/workflows/   ci · release-android · release-ios · introspect
+docs/          backend/payment-contract.md · decisions/ · PLAN.md · FIGMA_DESIGN.md
 ```
 
 ## Conventions
