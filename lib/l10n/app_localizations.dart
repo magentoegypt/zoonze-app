@@ -308,6 +308,12 @@ abstract class AppLocalizations {
   /// **'Filters'**
   String get filtersLabel;
 
+  /// No description provided for @filterPriceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Price'**
+  String get filterPriceLabel;
+
   /// No description provided for @sortLabel.
   ///
   /// In en, this message translates to:

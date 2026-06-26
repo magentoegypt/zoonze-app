@@ -40,6 +40,8 @@ class CatalogRepository {
     String? search,
     String? categoryUid,
     Map<String, Set<String>> attributeFilters = const {},
+    double? priceFrom,
+    double? priceTo,
     ProductSortField sort = ProductSortField.relevance,
     int pageSize = 20,
     int currentPage = 1,
@@ -54,12 +56,20 @@ class CatalogRepository {
       filter['category_uid'] = <String, dynamic>{'eq': categoryUid};
     }
     attributeFilters.forEach((code, values) {
-      // 'price' uses a range input (handled separately); apply equal-type
-      // filters for the rest as `{in: [...]}`.
+      // 'price' uses a range input (handled below); apply equal-type filters
+      // for the rest as `{in: [...]}`.
       if (code != 'price' && values.isNotEmpty) {
         filter[code] = <String, dynamic>{'in': values.toList()};
       }
     });
+    // Magento's ProductAttributeFilterInput.price is a FilterRangeTypeInput
+    // ({from, to} as strings). Send whichever bound is set.
+    if (priceFrom != null || priceTo != null) {
+      filter['price'] = <String, dynamic>{
+        if (priceFrom != null) 'from': priceFrom.toStringAsFixed(2),
+        if (priceTo != null) 'to': priceTo.toStringAsFixed(2),
+      };
+    }
     final variables = <String, dynamic>{
       'pageSize': pageSize,
       'currentPage': currentPage,

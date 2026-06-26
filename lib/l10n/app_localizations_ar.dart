@@ -115,6 +115,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get filtersLabel => 'تصفية';
 
   @override
+  String get filterPriceLabel => 'السعر';
+
+  @override
   String get sortLabel => 'ترتيب';
 
   @override

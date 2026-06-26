@@ -7,6 +7,7 @@ import '../../../../app/shell/marketing_footer.dart';
 import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/error/failure.dart';
+import '../../../../core/store/store_controller.dart';
 import '../../../../core/widgets/failure_message.dart';
 import '../../../../l10n/l10n.dart';
 import '../../data/catalog_repository.dart';
@@ -60,16 +61,26 @@ class _PlpScreenState extends ConsumerState<PlpScreen> {
       };
 
   Future<void> _openFilters(PlpState state) async {
-    final result = await showModalBottomSheet<Map<String, Set<String>>>(
+    final currency = ref.read(storeControllerProvider).currency;
+    final result = await showModalBottomSheet<FilterResult>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
       builder: (_) => FilterSheet(
         aggregations: state.aggregations,
         initial: state.selectedFilters,
+        currency: currency,
+        initialPriceFrom: state.priceFrom,
+        initialPriceTo: state.priceTo,
       ),
     );
-    if (result != null) _controller.applyFilters(result);
+    if (result != null) {
+      _controller.applyFilters(
+        result.attributes,
+        priceFrom: result.priceFrom,
+        priceTo: result.priceTo,
+      );
+    }
   }
 
   @override

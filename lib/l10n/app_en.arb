@@ -43,6 +43,7 @@
   "homeSeeAll": "See all",
 
   "filtersLabel": "Filters",
+  "filterPriceLabel": "Price",
   "sortLabel": "Sort",
   "sortRelevance": "Relevance",
   "sortPriceLowHigh": "Price: Low to High",

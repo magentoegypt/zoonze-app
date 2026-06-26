@@ -83,6 +83,8 @@ class _PagingRepo implements CatalogRepository {
     String? search,
     String? categoryUid,
     Map<String, Set<String>> attributeFilters = const {},
+    double? priceFrom,
+    double? priceTo,
     ProductSortField sort = ProductSortField.relevance,
     int pageSize = 20,
     int currentPage = 1,

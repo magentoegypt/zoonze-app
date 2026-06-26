@@ -117,6 +117,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filtersLabel => 'Filters';
 
   @override
+  String get filterPriceLabel => 'Price';
+
+  @override
   String get sortLabel => 'Sort';
 
   @override

@@ -11,6 +11,8 @@ class PlpState {
     this.products = const [],
     this.aggregations = const [],
     this.selectedFilters = const {},
+    this.priceFrom,
+    this.priceTo,
     this.sort = ProductSortField.relevance,
     this.totalCount = 0,
     this.currentPage = 0,
@@ -23,6 +25,8 @@ class PlpState {
   final List<Product> products;
   final List<Aggregation> aggregations;
   final Map<String, Set<String>> selectedFilters;
+  final double? priceFrom;
+  final double? priceTo;
   final ProductSortField sort;
   final int totalCount;
   final int currentPage;
@@ -33,8 +37,11 @@ class PlpState {
 
   bool get hasMore => currentPage < totalPages;
 
+  bool get hasPriceFilter => priceFrom != null || priceTo != null;
+
   int get activeFilterCount =>
-      selectedFilters.values.fold(0, (sum, values) => sum + values.length);
+      selectedFilters.values.fold(0, (sum, values) => sum + values.length) +
+      (hasPriceFilter ? 1 : 0);
 
   static const Object _keep = Object();
 
@@ -42,6 +49,8 @@ class PlpState {
     List<Product>? products,
     List<Aggregation>? aggregations,
     Map<String, Set<String>>? selectedFilters,
+    Object? priceFrom = _keep,
+    Object? priceTo = _keep,
     ProductSortField? sort,
     int? totalCount,
     int? currentPage,
@@ -53,6 +62,8 @@ class PlpState {
     products: products ?? this.products,
     aggregations: aggregations ?? this.aggregations,
     selectedFilters: selectedFilters ?? this.selectedFilters,
+    priceFrom: identical(priceFrom, _keep) ? this.priceFrom : priceFrom as double?,
+    priceTo: identical(priceTo, _keep) ? this.priceTo : priceTo as double?,
     sort: sort ?? this.sort,
     totalCount: totalCount ?? this.totalCount,
     currentPage: currentPage ?? this.currentPage,
@@ -83,6 +94,8 @@ class PlpController extends AutoDisposeFamilyNotifier<PlpState, String> {
       final page = await _repo.fetchProducts(
         categoryUid: arg,
         attributeFilters: state.selectedFilters,
+        priceFrom: state.priceFrom,
+        priceTo: state.priceTo,
         sort: state.sort,
         pageSize: _pageSize,
         currentPage: 1,
@@ -109,6 +122,8 @@ class PlpController extends AutoDisposeFamilyNotifier<PlpState, String> {
       final page = await _repo.fetchProducts(
         categoryUid: arg,
         attributeFilters: state.selectedFilters,
+        priceFrom: state.priceFrom,
+        priceTo: state.priceTo,
         sort: state.sort,
         pageSize: _pageSize,
         currentPage: state.currentPage + 1,
@@ -136,9 +151,15 @@ class PlpController extends AutoDisposeFamilyNotifier<PlpState, String> {
     _loadFirst();
   }
 
-  void applyFilters(Map<String, Set<String>> filters) {
+  void applyFilters(
+    Map<String, Set<String>> filters, {
+    double? priceFrom,
+    double? priceTo,
+  }) {
     state = state.copyWith(
       selectedFilters: filters,
+      priceFrom: priceFrom,
+      priceTo: priceTo,
       products: const [],
       currentPage: 0,
       totalPages: 0,
