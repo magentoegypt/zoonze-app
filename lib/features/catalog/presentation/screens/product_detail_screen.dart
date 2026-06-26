@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../app/routes.dart';
 import '../../../../app/shell/marketing_footer.dart';
@@ -394,6 +395,44 @@ class _AddToCartButton extends ConsumerWidget {
   }
 }
 
+class _ReviewCard extends StatelessWidget {
+  const _ReviewCard({required this.review});
+  final ProductReview review;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              for (var i = 1; i <= 5; i++)
+                Icon(
+                  i <= review.stars ? Icons.star : Icons.star_border,
+                  size: 16,
+                  color: AppColors.accentGold,
+                ),
+              const SizedBox(width: 8),
+              Text(review.nickname,
+                  style: const TextStyle(fontWeight: FontWeight.w600)),
+            ],
+          ),
+          if (review.summary.isNotEmpty)
+            Text(review.summary,
+                style: const TextStyle(fontWeight: FontWeight.w600)),
+          if (review.text.isNotEmpty)
+            Text(review.text, style: const TextStyle(color: AppColors.inkMuted)),
+          if (review.date.isNotEmpty)
+            Text(review.date,
+                style: const TextStyle(color: AppColors.inkMuted, fontSize: 12)),
+        ],
+      ),
+    );
+  }
+}
+
 class _TabContent extends StatelessWidget {
   const _TabContent({required this.product, required this.tab});
   final ProductDetail product;
@@ -412,20 +451,31 @@ class _TabContent extends StatelessWidget {
           ],
         );
       case 2:
-        if (!product.hasReviews) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (product.hasReviews) ...[
+              Text(
+                l10n.reviewsSummary(product.ratingSummary, product.reviewCount),
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 12),
+              for (final review in product.reviews)
+                _ReviewCard(review: review),
+            ] else ...[
               Text(l10n.reviewsEmptyTitle,
                   style: const TextStyle(fontWeight: FontWeight.w600)),
               const SizedBox(height: 4),
               Text(l10n.reviewsEmptyBody,
                   style: const TextStyle(color: AppColors.inkMuted)),
             ],
-          );
-        }
-        return Text(
-          l10n.reviewsSummary(product.ratingSummary, product.reviewCount),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: () => context.push(AppRoutes.review(product.sku)),
+              icon: const Icon(Icons.rate_review_outlined),
+              label: Text(l10n.reviewsWrite),
+            ),
+          ],
         );
       case 0:
       default:

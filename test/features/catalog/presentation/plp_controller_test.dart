@@ -91,4 +91,18 @@ class _PagingRepo implements CatalogRepository {
         currentPage: currentPage,
         totalPages: 2,
       );
+
+  @override
+  Future<List<ReviewRatingMetadata>> fetchReviewRatingsMetadata() async =>
+      const [];
+
+  @override
+  Future<void> createReview({
+    required String sku,
+    required String nickname,
+    required String summary,
+    required String text,
+    required String ratingId,
+    required String valueId,
+  }) async {}
 }

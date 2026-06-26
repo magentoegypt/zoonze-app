@@ -1,7 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/account/domain/customer_address.dart';
 import '../features/account/presentation/account_screen.dart';
+import '../features/account/presentation/screens/address_form_screen.dart';
+import '../features/account/presentation/screens/addresses_screen.dart';
+import '../features/account/presentation/screens/edit_profile_screen.dart';
+import '../features/account/presentation/screens/orders_screen.dart';
 import '../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../features/cart/presentation/screens/cart_screen.dart';
 import '../features/auth/presentation/screens/sign_in_screen.dart';
@@ -11,6 +16,7 @@ import '../features/catalog/presentation/screens/home_screen.dart';
 import '../features/catalog/presentation/screens/plp_screen.dart';
 import '../features/catalog/presentation/screens/product_detail_screen.dart';
 import '../features/catalog/presentation/screens/search_screen.dart';
+import '../features/catalog/presentation/screens/write_review_screen.dart';
 import '../features/wishlist/presentation/screens/wishlist_screen.dart';
 import '../features/diagnostics/presentation/health_check_screen.dart';
 import '../features/onboarding/presentation/launch_splash_screen.dart';
@@ -56,6 +62,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SearchScreen(),
       ),
       GoRoute(
+        path: '/review/:sku',
+        builder: (context, state) =>
+            WriteReviewScreen(sku: state.pathParameters['sku']!),
+      ),
+      GoRoute(
         path: AppRoutes.cart,
         builder: (context, state) => const CartScreen(),
       ),
@@ -78,6 +89,23 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.forgotPassword,
         builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.orders,
+        builder: (context, state) => const OrdersScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.addresses,
+        builder: (context, state) => const AddressesScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.addressForm,
+        builder: (context, state) =>
+            AddressFormScreen(initial: state.extra as CustomerAddress?),
+      ),
+      GoRoute(
+        path: AppRoutes.editProfile,
+        builder: (context, state) => const EditProfileScreen(),
       ),
       GoRoute(
         path: '/diagnostics',

@@ -620,6 +620,180 @@ abstract class AppLocalizations {
   /// **'Sign in to keep your wishlist across devices.'**
   String get wishlistGuestBody;
 
+  /// No description provided for @ordersEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'You have no orders yet.'**
+  String get ordersEmpty;
+
+  /// No description provided for @orderStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get orderStatus;
+
+  /// No description provided for @orderNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Order #{number}'**
+  String orderNumber(String number);
+
+  /// No description provided for @addressesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved addresses yet.'**
+  String get addressesEmpty;
+
+  /// No description provided for @addressAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Address'**
+  String get addressAdd;
+
+  /// No description provided for @addressEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Address'**
+  String get addressEdit;
+
+  /// No description provided for @actionSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get actionSave;
+
+  /// No description provided for @actionDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get actionDelete;
+
+  /// No description provided for @defaultBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get defaultBadge;
+
+  /// No description provided for @fieldPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get fieldPhone;
+
+  /// No description provided for @fieldStreet.
+  ///
+  /// In en, this message translates to:
+  /// **'Street address'**
+  String get fieldStreet;
+
+  /// No description provided for @fieldCity.
+  ///
+  /// In en, this message translates to:
+  /// **'City'**
+  String get fieldCity;
+
+  /// No description provided for @fieldPostcode.
+  ///
+  /// In en, this message translates to:
+  /// **'Postcode'**
+  String get fieldPostcode;
+
+  /// No description provided for @fieldRegion.
+  ///
+  /// In en, this message translates to:
+  /// **'Area / Emirate'**
+  String get fieldRegion;
+
+  /// No description provided for @fieldCountry.
+  ///
+  /// In en, this message translates to:
+  /// **'Country code'**
+  String get fieldCountry;
+
+  /// No description provided for @addressDefaultShipping.
+  ///
+  /// In en, this message translates to:
+  /// **'Set as default shipping'**
+  String get addressDefaultShipping;
+
+  /// No description provided for @profileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Profile'**
+  String get profileTitle;
+
+  /// No description provided for @profileSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile updated'**
+  String get profileSaved;
+
+  /// No description provided for @profilePasswordSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Password'**
+  String get profilePasswordSection;
+
+  /// No description provided for @fieldCurrentPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Current password'**
+  String get fieldCurrentPassword;
+
+  /// No description provided for @fieldNewPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'New password'**
+  String get fieldNewPassword;
+
+  /// No description provided for @passwordChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'Password changed'**
+  String get passwordChanged;
+
+  /// No description provided for @reviewsWrite.
+  ///
+  /// In en, this message translates to:
+  /// **'Write a Review'**
+  String get reviewsWrite;
+
+  /// No description provided for @reviewRating.
+  ///
+  /// In en, this message translates to:
+  /// **'Your rating'**
+  String get reviewRating;
+
+  /// No description provided for @reviewNickname.
+  ///
+  /// In en, this message translates to:
+  /// **'Nickname'**
+  String get reviewNickname;
+
+  /// No description provided for @reviewSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary'**
+  String get reviewSummary;
+
+  /// No description provided for @reviewText.
+  ///
+  /// In en, this message translates to:
+  /// **'Your review'**
+  String get reviewText;
+
+  /// No description provided for @reviewSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Review'**
+  String get reviewSubmit;
+
+  /// No description provided for @reviewSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Thank you! Your review is awaiting approval.'**
+  String get reviewSubmitted;
+
   /// No description provided for @badgeNew.
   ///
   /// In en, this message translates to:

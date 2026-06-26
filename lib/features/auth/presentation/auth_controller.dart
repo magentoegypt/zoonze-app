@@ -78,6 +78,17 @@ class AuthController extends Notifier<AuthState> {
 
   Future<void> requestPasswordReset(String email) =>
       _repo.requestPasswordReset(email);
+
+  /// Re-fetches the customer profile (e.g. after an Edit Profile save).
+  Future<void> refreshCustomer() async {
+    if (!state.isAuthenticated) return;
+    try {
+      final customer = await _repo.fetchCustomer();
+      state = AuthState(customer: customer, status: AuthStatus.authenticated);
+    } on Object {
+      // keep current profile on failure
+    }
+  }
 }
 
 final authControllerProvider =

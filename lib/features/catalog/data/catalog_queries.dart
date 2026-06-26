@@ -94,6 +94,15 @@ query ProductDetail($urlKey: String!) {
       stock_status
       rating_summary
       review_count
+      reviews(pageSize: 20) {
+        items {
+          nickname
+          summary
+          text
+          average_rating
+          created_at
+        }
+      }
       description {
         html
       }
@@ -156,6 +165,26 @@ query ProductDetail($urlKey: String!) {
         }
       }
     }
+  }
+}
+''';
+
+  static const String reviewRatingsMetadata = r'''
+query ReviewRatingsMetadata {
+  productReviewRatingsMetadata {
+    items {
+      id
+      name
+      values { value_id value }
+    }
+  }
+}
+''';
+
+  static const String createReview = r'''
+mutation CreateReview($input: CreateProductReviewInput!) {
+  createProductReview(input: $input) {
+    review { nickname summary text }
   }
 }
 ''';

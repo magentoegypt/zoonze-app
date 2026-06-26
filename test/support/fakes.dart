@@ -264,6 +264,20 @@ class FakeCatalogRepository implements CatalogRepository {
 
   @override
   Future<ProductDetail?> fetchProductDetail(String urlKey) async => kSampleDetail;
+
+  @override
+  Future<List<ReviewRatingMetadata>> fetchReviewRatingsMetadata() async =>
+      const [];
+
+  @override
+  Future<void> createReview({
+    required String sku,
+    required String nickname,
+    required String summary,
+    required String text,
+    required String ratingId,
+    required String valueId,
+  }) async {}
 }
 
 const List<StoreView> kSampleStores = <StoreView>[

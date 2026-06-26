@@ -281,6 +281,95 @@ class AppLocalizationsEn extends AppLocalizations {
       'Sign in to keep your wishlist across devices.';
 
   @override
+  String get ordersEmpty => 'You have no orders yet.';
+
+  @override
+  String get orderStatus => 'Status';
+
+  @override
+  String orderNumber(String number) {
+    return 'Order #$number';
+  }
+
+  @override
+  String get addressesEmpty => 'No saved addresses yet.';
+
+  @override
+  String get addressAdd => 'Add Address';
+
+  @override
+  String get addressEdit => 'Edit Address';
+
+  @override
+  String get actionSave => 'Save';
+
+  @override
+  String get actionDelete => 'Delete';
+
+  @override
+  String get defaultBadge => 'Default';
+
+  @override
+  String get fieldPhone => 'Phone';
+
+  @override
+  String get fieldStreet => 'Street address';
+
+  @override
+  String get fieldCity => 'City';
+
+  @override
+  String get fieldPostcode => 'Postcode';
+
+  @override
+  String get fieldRegion => 'Area / Emirate';
+
+  @override
+  String get fieldCountry => 'Country code';
+
+  @override
+  String get addressDefaultShipping => 'Set as default shipping';
+
+  @override
+  String get profileTitle => 'Edit Profile';
+
+  @override
+  String get profileSaved => 'Profile updated';
+
+  @override
+  String get profilePasswordSection => 'Change Password';
+
+  @override
+  String get fieldCurrentPassword => 'Current password';
+
+  @override
+  String get fieldNewPassword => 'New password';
+
+  @override
+  String get passwordChanged => 'Password changed';
+
+  @override
+  String get reviewsWrite => 'Write a Review';
+
+  @override
+  String get reviewRating => 'Your rating';
+
+  @override
+  String get reviewNickname => 'Nickname';
+
+  @override
+  String get reviewSummary => 'Summary';
+
+  @override
+  String get reviewText => 'Your review';
+
+  @override
+  String get reviewSubmit => 'Submit Review';
+
+  @override
+  String get reviewSubmitted => 'Thank you! Your review is awaiting approval.';
+
+  @override
   String get badgeNew => 'NEW';
 
   @override

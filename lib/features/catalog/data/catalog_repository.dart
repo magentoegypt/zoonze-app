@@ -157,7 +157,82 @@ class CatalogRepository {
       variants: variants,
       ratingSummary: (json['rating_summary'] as int?) ?? 0,
       reviewCount: (json['review_count'] as int?) ?? 0,
+      reviews: ((json['reviews'] as Map<String, dynamic>?)?['items']
+                  as List<dynamic>? ??
+              const [])
+          .whereType<Map<String, dynamic>>()
+          .map((r) => ProductReview(
+                nickname: (r['nickname'] as String?) ?? '',
+                summary: (r['summary'] as String?) ?? '',
+                text: (r['text'] as String?) ?? '',
+                averageRating: (r['average_rating'] as num?)?.toInt() ?? 0,
+                date: (r['created_at'] as String?) ?? '',
+              ))
+          .toList(),
     );
+  }
+
+  Future<List<ReviewRatingMetadata>> fetchReviewRatingsMetadata() async {
+    final data =
+        await _query(CatalogQueries.reviewRatingsMetadata, const {});
+    final items = (data['productReviewRatingsMetadata']
+        as Map<String, dynamic>?)?['items'] as List<dynamic>?;
+    return (items ?? const [])
+        .whereType<Map<String, dynamic>>()
+        .map((m) => ReviewRatingMetadata(
+              id: m['id']?.toString() ?? '',
+              name: (m['name'] as String?) ?? '',
+              values: (m['values'] as List<dynamic>? ?? const [])
+                  .whereType<Map<String, dynamic>>()
+                  .map((v) => ReviewRatingValue(
+                        valueId: v['value_id']?.toString() ?? '',
+                        value: (v['value'] as num?)?.toInt() ?? 0,
+                      ))
+                  .toList(),
+            ))
+        .toList();
+  }
+
+  Future<void> createReview({
+    required String sku,
+    required String nickname,
+    required String summary,
+    required String text,
+    required String ratingId,
+    required String valueId,
+  }) async {
+    await _mutate(CatalogQueries.createReview, {
+      'input': <String, dynamic>{
+        'sku': sku,
+        'nickname': nickname,
+        'summary': summary,
+        'text': text,
+        'ratings': [
+          {'id': ratingId, 'value_id': valueId},
+        ],
+      },
+    });
+  }
+
+  Future<Map<String, dynamic>> _mutate(
+    String document,
+    Map<String, dynamic> variables,
+  ) async {
+    try {
+      final result = await _client.mutate(MutationOptions(
+        document: gql(document),
+        variables: variables,
+        fetchPolicy: FetchPolicy.networkOnly,
+      ));
+      if (result.hasException) {
+        throw mapOperationException(result.exception!);
+      }
+      return result.data ?? const <String, dynamic>{};
+    } on Failure {
+      rethrow;
+    } catch (error) {
+      throw Failure(FailureKind.unknown, detail: error.toString());
+    }
   }
 
   String? _stripHtml(String? html) {

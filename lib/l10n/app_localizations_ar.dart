@@ -277,6 +277,95 @@ class AppLocalizationsAr extends AppLocalizations {
       'سجّل الدخول للاحتفاظ بقائمة المفضلة عبر أجهزتك.';
 
   @override
+  String get ordersEmpty => 'ليس لديك طلبات بعد.';
+
+  @override
+  String get orderStatus => 'الحالة';
+
+  @override
+  String orderNumber(String number) {
+    return 'الطلب رقم $number';
+  }
+
+  @override
+  String get addressesEmpty => 'لا توجد عناوين محفوظة بعد.';
+
+  @override
+  String get addressAdd => 'إضافة عنوان';
+
+  @override
+  String get addressEdit => 'تعديل العنوان';
+
+  @override
+  String get actionSave => 'حفظ';
+
+  @override
+  String get actionDelete => 'حذف';
+
+  @override
+  String get defaultBadge => 'افتراضي';
+
+  @override
+  String get fieldPhone => 'الهاتف';
+
+  @override
+  String get fieldStreet => 'عنوان الشارع';
+
+  @override
+  String get fieldCity => 'المدينة';
+
+  @override
+  String get fieldPostcode => 'الرمز البريدي';
+
+  @override
+  String get fieldRegion => 'المنطقة / الإمارة';
+
+  @override
+  String get fieldCountry => 'رمز الدولة';
+
+  @override
+  String get addressDefaultShipping => 'تعيين كعنوان شحن افتراضي';
+
+  @override
+  String get profileTitle => 'تعديل الملف الشخصي';
+
+  @override
+  String get profileSaved => 'تم تحديث الملف الشخصي';
+
+  @override
+  String get profilePasswordSection => 'تغيير كلمة المرور';
+
+  @override
+  String get fieldCurrentPassword => 'كلمة المرور الحالية';
+
+  @override
+  String get fieldNewPassword => 'كلمة المرور الجديدة';
+
+  @override
+  String get passwordChanged => 'تم تغيير كلمة المرور';
+
+  @override
+  String get reviewsWrite => 'اكتب مراجعة';
+
+  @override
+  String get reviewRating => 'تقييمك';
+
+  @override
+  String get reviewNickname => 'الاسم المستعار';
+
+  @override
+  String get reviewSummary => 'العنوان';
+
+  @override
+  String get reviewText => 'مراجعتك';
+
+  @override
+  String get reviewSubmit => 'إرسال المراجعة';
+
+  @override
+  String get reviewSubmitted => 'شكرًا لك! مراجعتك قيد المراجعة.';
+
+  @override
   String get badgeNew => 'جديد';
 
   @override

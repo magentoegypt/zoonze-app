@@ -49,6 +49,45 @@ class ProductVariant {
   final String? imageUrl;
 }
 
+/// A single published product review.
+class ProductReview {
+  const ProductReview({
+    required this.nickname,
+    required this.summary,
+    required this.text,
+    required this.averageRating,
+    required this.date,
+  });
+
+  final String nickname;
+  final String summary;
+  final String text;
+
+  /// 0–100 (Magento `average_rating`).
+  final int averageRating;
+  final String date;
+
+  int get stars => (averageRating / 20).round();
+}
+
+/// Review rating metadata value (e.g. "5 stars" -> value_id).
+class ReviewRatingValue {
+  const ReviewRatingValue({required this.valueId, required this.value});
+  final String valueId;
+  final int value;
+}
+
+class ReviewRatingMetadata {
+  const ReviewRatingMetadata({
+    required this.id,
+    required this.name,
+    required this.values,
+  });
+  final String id;
+  final String name;
+  final List<ReviewRatingValue> values;
+}
+
 /// Full product detail for the PDP. Reviews degrade to an empty state when the
 /// store has none (no fabricated stars).
 class ProductDetail {
@@ -66,6 +105,7 @@ class ProductDetail {
     this.variants = const <ProductVariant>[],
     this.ratingSummary = 0,
     this.reviewCount = 0,
+    this.reviews = const <ProductReview>[],
   });
 
   final String sku;
@@ -85,6 +125,7 @@ class ProductDetail {
   /// 0–100 (Magento `rating_summary`).
   final int ratingSummary;
   final int reviewCount;
+  final List<ProductReview> reviews;
 
   bool get isConfigurable => options.isNotEmpty;
   bool get hasReviews => reviewCount > 0;

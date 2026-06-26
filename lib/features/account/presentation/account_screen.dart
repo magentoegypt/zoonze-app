@@ -87,16 +87,22 @@ class _Authenticated extends StatelessWidget {
         const SizedBox(height: 16),
         const Divider(height: 1),
         ListTile(
+          leading: const Icon(Icons.person_outline),
+          title: Text(l10n.profileTitle),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push(AppRoutes.editProfile),
+        ),
+        ListTile(
           leading: const Icon(Icons.receipt_long_outlined),
           title: Text(l10n.accountOrders),
           trailing: const Icon(Icons.chevron_right),
-          onTap: () {},
+          onTap: () => context.push(AppRoutes.orders),
         ),
         ListTile(
           leading: const Icon(Icons.location_on_outlined),
           title: Text(l10n.accountAddresses),
           trailing: const Icon(Icons.chevron_right),
-          onTap: () {},
+          onTap: () => context.push(AppRoutes.addresses),
         ),
         ListTile(
           leading: const Icon(Icons.favorite_border),

@@ -33,6 +33,13 @@ final productDetailProvider =
   return ref.watch(catalogRepositoryProvider).fetchProductDetail(urlKey);
 });
 
+/// Review rating metadata for the "Write a review" star selector.
+final reviewRatingsMetadataProvider =
+    FutureProvider.autoDispose<List<ReviewRatingMetadata>>((ref) {
+  ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
+  return ref.watch(catalogRepositoryProvider).fetchReviewRatingsMetadata();
+});
+
 /// Search results for a query string (native `products(search:)`).
 final searchResultsProvider =
     FutureProvider.autoDispose.family<ProductPage, String>((ref, query) {
