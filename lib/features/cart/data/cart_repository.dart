@@ -158,6 +158,7 @@ class CartRepository {
     return Cart(
       id: (json['id'] as String?) ?? fallbackId,
       items: items,
+      totalQuantity: (json['total_quantity'] as num?)?.toInt() ?? 0,
       totals: CartTotals(
         grandTotal:
             _parseMoney(prices?['grand_total'] as Map<String, dynamic>?),

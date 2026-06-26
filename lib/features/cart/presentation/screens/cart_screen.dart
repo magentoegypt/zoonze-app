@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/routes.dart';
 import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/error/failure.dart';
+import '../../../../core/widgets/failure_message.dart';
 import '../../../../l10n/l10n.dart';
 import '../../domain/cart.dart';
 import '../cart_controller.dart';
@@ -43,6 +45,30 @@ class _CartScreenState extends ConsumerState<CartScreen> {
   Widget _body(AppLocalizations l10n, CartState state) {
     if (state.isLoading && state.cart.isEmpty) {
       return const Center(child: CircularProgressIndicator());
+    }
+    if (state.error != null && state.cart.isEmpty) {
+      final error = state.error;
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                error is Failure
+                    ? failureMessage(context, error)
+                    : l10n.errorGeneric,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              FilledButton(
+                onPressed: _controller.refresh,
+                child: Text(l10n.actionRetry),
+              ),
+            ],
+          ),
+        ),
+      );
     }
     if (state.cart.isEmpty) {
       return Center(
@@ -88,6 +114,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           appliedCoupon: cart.totals.appliedCoupon,
           busy: state.isMutating,
           onApply: () async {
+            if (_coupon.text.trim().isEmpty) return;
             try {
               await _controller.applyCoupon(_coupon.text.trim());
               _coupon.clear();

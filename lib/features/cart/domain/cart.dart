@@ -44,13 +44,20 @@ class Cart {
     required this.id,
     this.items = const <CartItem>[],
     this.totals = const CartTotals(),
+    this.totalQuantity = 0,
   });
 
   final String id;
   final List<CartItem> items;
   final CartTotals totals;
 
-  int get itemCount => items.fold(0, (sum, item) => sum + item.quantity);
+  /// Server-authoritative total quantity (`Cart.total_quantity`).
+  final int totalQuantity;
+
+  /// Prefer the server count; fall back to summing line items.
+  int get itemCount => totalQuantity > 0
+      ? totalQuantity
+      : items.fold(0, (sum, item) => sum + item.quantity);
   bool get isEmpty => items.isEmpty;
 
   static const Cart empty = Cart(id: '');

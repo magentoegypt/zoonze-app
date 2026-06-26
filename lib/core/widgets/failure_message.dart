@@ -13,8 +13,9 @@ String failureMessage(BuildContext context, Failure failure) {
       return l10n.errorService;
     case FailureKind.auth:
     case FailureKind.unknown:
-      return l10n.errorGeneric;
     case FailureKind.server:
-      return failure.detail ?? l10n.errorGeneric;
+      // `detail` holds raw, non-localized backend text — keep it for logging
+      // only, never surface it to the user.
+      return l10n.errorGeneric;
   }
 }

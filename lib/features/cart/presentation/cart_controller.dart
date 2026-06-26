@@ -49,18 +49,30 @@ class CartController extends Notifier<CartState> {
       final wasAuthed = prev?.isAuthenticated ?? false;
       if (next.isAuthenticated && !wasAuthed) {
         _onLogin();
-      } else if (next.status == AuthStatus.guest && wasAuthed) {
-        _onLogout();
+      } else if (next.status == AuthStatus.guest) {
+        if (wasAuthed) {
+          _onLogout();
+        } else {
+          _restoreGuestCart();
+        }
       }
     });
-    Future.microtask(_restore);
+    // Handle an already-settled auth state (no transition for the listener to
+    // observe) so the guest and customer restore paths never race.
+    final auth = ref.read(authControllerProvider);
+    if (auth.isAuthenticated) {
+      Future.microtask(_onLogin);
+    } else if (auth.status == AuthStatus.guest) {
+      Future.microtask(_restoreGuestCart);
+    }
     return const CartState();
   }
 
   LocalCache get _cache => ref.read(localCacheProvider);
   CartRepository get _repo => ref.read(cartRepositoryProvider);
 
-  Future<void> _restore() async {
+  Future<void> _restoreGuestCart() async {
+    if (_cartId != null) return;
     final id = _cache.readString(_guestKey);
     if (id == null) return;
     _cartId = id;
@@ -112,7 +124,7 @@ class CartController extends Notifier<CartState> {
   Future<void> setQuantity(String uid, int quantity) async {
     final id = _cartId;
     if (id == null) return;
-    state = state.copyWith(isMutating: true);
+    state = state.copyWith(isMutating: true, error: null);
     try {
       final cart = quantity <= 0
           ? await _repo.removeItem(id, uid)
@@ -140,7 +152,7 @@ class CartController extends Notifier<CartState> {
   Future<void> removeCoupon() async {
     final id = _cartId;
     if (id == null) return;
-    state = state.copyWith(isMutating: true);
+    state = state.copyWith(isMutating: true, error: null);
     try {
       state =
           state.copyWith(cart: await _repo.removeCoupon(id), isMutating: false);
