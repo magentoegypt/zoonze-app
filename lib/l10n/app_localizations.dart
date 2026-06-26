@@ -464,6 +464,36 @@ abstract class AppLocalizations {
   /// **'If that email is registered, a reset link is on its way.'**
   String get authForgotSent;
 
+  /// No description provided for @authHaveResetCode.
+  ///
+  /// In en, this message translates to:
+  /// **'I have a reset code'**
+  String get authHaveResetCode;
+
+  /// No description provided for @authResetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set a New Password'**
+  String get authResetTitle;
+
+  /// No description provided for @authResetIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the code from your reset email and choose a new password.'**
+  String get authResetIntro;
+
+  /// No description provided for @authResetError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reset your password. Check the code and try again.'**
+  String get authResetError;
+
+  /// No description provided for @fieldResetCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset code'**
+  String get fieldResetCode;
+
   /// No description provided for @authSignInError.
   ///
   /// In en, this message translates to:

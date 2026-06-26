@@ -57,6 +57,23 @@ class AuthRepository {
     await _mutate(AuthQueries.requestPasswordReset, {'email': email});
   }
 
+  /// Completes a password reset with the token from the reset email. Throws
+  /// [Failure] when the token/email is invalid or expired.
+  Future<void> resetPassword({
+    required String email,
+    required String token,
+    required String newPassword,
+  }) async {
+    final data = await _mutate(AuthQueries.resetPassword, {
+      'email': email,
+      'resetPasswordToken': token,
+      'newPassword': newPassword,
+    });
+    if (data['resetPassword'] != true) {
+      throw const Failure(FailureKind.auth);
+    }
+  }
+
   Future<Customer> fetchCustomer() async {
     final data = await _query(AuthQueries.customer);
     final customer = data['customer'] as Map<String, dynamic>?;

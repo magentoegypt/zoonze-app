@@ -199,6 +199,23 @@ class AppLocalizationsEn extends AppLocalizations {
       'If that email is registered, a reset link is on its way.';
 
   @override
+  String get authHaveResetCode => 'I have a reset code';
+
+  @override
+  String get authResetTitle => 'Set a New Password';
+
+  @override
+  String get authResetIntro =>
+      'Enter the code from your reset email and choose a new password.';
+
+  @override
+  String get authResetError =>
+      'Couldn\'t reset your password. Check the code and try again.';
+
+  @override
+  String get fieldResetCode => 'Reset code';
+
+  @override
   String get authSignInError =>
       'Couldn\'t sign you in. Please check your details.';
 

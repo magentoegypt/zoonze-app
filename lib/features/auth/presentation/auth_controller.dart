@@ -79,6 +79,21 @@ class AuthController extends Notifier<AuthState> {
   Future<void> requestPasswordReset(String email) =>
       _repo.requestPasswordReset(email);
 
+  /// Completes a reset with the emailed token, then signs the customer in with
+  /// their new password so they land authenticated.
+  Future<void> resetPassword({
+    required String email,
+    required String token,
+    required String newPassword,
+  }) async {
+    await _repo.resetPassword(
+      email: email,
+      token: token,
+      newPassword: newPassword,
+    );
+    await login(email, newPassword);
+  }
+
   /// Invoked when a live request reports the token is invalid/expired
   /// mid-session (the resilience link detects `graphql-authorization`). Drops
   /// the session to guest locally — no revoke round-trip, since the token is

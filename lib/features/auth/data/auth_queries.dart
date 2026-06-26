@@ -34,6 +34,20 @@ mutation RequestPasswordReset($email: String!) {
 }
 ''';
 
+  static const String resetPassword = r'''
+mutation ResetPassword(
+  $email: String!
+  $resetPasswordToken: String!
+  $newPassword: String!
+) {
+  resetPassword(
+    email: $email
+    resetPasswordToken: $resetPasswordToken
+    newPassword: $newPassword
+  )
+}
+''';
+
   static const String customer = r'''
 query CurrentCustomer {
   customer {

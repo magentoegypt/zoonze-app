@@ -55,6 +55,28 @@ void main() {
       );
     });
 
+    test('resetPassword completes then signs the customer in', () async {
+      final container = _container();
+      await container
+          .read(authControllerProvider.notifier)
+          .resetPassword(
+            email: 'layla@example.com',
+            token: 'reset-code',
+            newPassword: 'newpassword1',
+          );
+      expect(container.read(authControllerProvider).isAuthenticated, isTrue);
+    });
+
+    test('handleSessionExpired drops an authed session to guest', () async {
+      final container = _container();
+      final notifier = container.read(authControllerProvider.notifier);
+      await notifier.login('layla@example.com', 'password1');
+      expect(container.read(authControllerProvider).isAuthenticated, isTrue);
+
+      await notifier.handleSessionExpired();
+      expect(container.read(authControllerProvider).status, AuthStatus.guest);
+    });
+
     test('logout returns to guest', () async {
       final container = _container();
       final notifier = container.read(authControllerProvider.notifier);

@@ -11,6 +11,7 @@ import '../features/account/presentation/screens/help_screen.dart';
 import '../features/account/presentation/screens/order_detail_screen.dart';
 import '../features/account/presentation/screens/orders_screen.dart';
 import '../features/auth/presentation/screens/forgot_password_screen.dart';
+import '../features/auth/presentation/screens/reset_password_screen.dart';
 import '../features/cart/presentation/screens/cart_screen.dart';
 import '../features/checkout/presentation/screens/checkout_screen.dart';
 import '../features/checkout/presentation/screens/complete_payment_screen.dart';
@@ -96,6 +97,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.forgotPassword,
         builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.resetPassword,
+        // Deep-link friendly: zoonze://app/reset-password?email=…&token=…
+        builder: (context, state) => ResetPasswordScreen(
+          initialEmail: state.uri.queryParameters['email'],
+          initialToken: state.uri.queryParameters['token'],
+        ),
       ),
       GoRoute(
         path: AppRoutes.orders,

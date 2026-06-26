@@ -197,6 +197,23 @@ class AppLocalizationsAr extends AppLocalizations {
       'إذا كان هذا البريد مسجّلاً، فسيصلك رابط إعادة التعيين قريبًا.';
 
   @override
+  String get authHaveResetCode => 'لديّ رمز إعادة التعيين';
+
+  @override
+  String get authResetTitle => 'تعيين كلمة مرور جديدة';
+
+  @override
+  String get authResetIntro =>
+      'أدخل الرمز من بريد إعادة التعيين واختر كلمة مرور جديدة.';
+
+  @override
+  String get authResetError =>
+      'تعذّر إعادة تعيين كلمة المرور. تحقّق من الرمز وحاول مرة أخرى.';
+
+  @override
+  String get fieldResetCode => 'رمز إعادة التعيين';
+
+  @override
   String get authSignInError => 'تعذّر تسجيل الدخول. يرجى التحقّق من بياناتك.';
 
   @override

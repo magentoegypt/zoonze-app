@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../app/routes.dart';
 import '../../../../core/validation/validators.dart';
 import '../../../../core/widgets/brand_lockup.dart';
 import '../../../../l10n/l10n.dart';
@@ -25,6 +26,15 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   void dispose() {
     _email.dispose();
     super.dispose();
+  }
+
+  void _goReset() {
+    final email = _email.text.trim();
+    context.push(
+      email.isEmpty
+          ? AppRoutes.resetPassword
+          : '${AppRoutes.resetPassword}?email=${Uri.encodeQueryComponent(email)}',
+    );
   }
 
   Future<void> _submit() async {
@@ -63,6 +73,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     Text(l10n.authForgotSent, textAlign: TextAlign.center),
                     const SizedBox(height: 24),
                     FilledButton(
+                      onPressed: () => _goReset(),
+                      child: Text(l10n.authHaveResetCode),
+                    ),
+                    TextButton(
                       onPressed: () => context.pop(),
                       child: Text(l10n.authSignInTitle),
                     ),
@@ -96,6 +110,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                 ),
                               )
                             : Text(l10n.authForgotTitle),
+                      ),
+                      TextButton(
+                        onPressed: _busy ? null : _goReset,
+                        child: Text(l10n.authHaveResetCode),
                       ),
                     ],
                   ),
