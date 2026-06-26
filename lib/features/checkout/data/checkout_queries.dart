@@ -116,6 +116,39 @@ query PaymentSession(
 }
 ''';
 
+  /// Switches the payment method on an already-placed order and returns a fresh
+  /// session, so a guest/customer can retry payment with a different method
+  /// without rebuilding the (consumed) cart. Same guest auth as `paymentSession`.
+  /// docs/backend/payment-contract.md §①.
+  static const String setOrderPaymentMethod = r'''
+mutation SetOrderPaymentMethod(
+  $orderNumber: String!
+  $methodCode: String!
+  $email: String
+  $lastname: String
+  $guestToken: String
+) {
+  setOrderPaymentMethod(
+    input: {
+      order_number: $orderNumber
+      method_code: $methodCode
+      email: $email
+      lastname: $lastname
+      guest_token: $guestToken
+    }
+  ) {
+    order_number
+    method_code
+    gateway
+    status
+    payment_id
+    web_url
+    publishable_key
+    additional_data { key value }
+  }
+}
+''';
+
   /// Tabby eligibility + promo metadata (`tabbyConfig`), read from Magento config
   /// (enable flags + thresholds — never hardcoded). Eligibility/promo only;
   /// checkout availability still comes from cart available_payment_methods. Until

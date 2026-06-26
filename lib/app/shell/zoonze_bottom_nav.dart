@@ -16,8 +16,9 @@ class ZoonzeBottomNav extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
-    final cartCount =
-        ref.watch(cartControllerProvider.select((s) => s.itemCount));
+    final cartCount = ref.watch(
+      cartControllerProvider.select((s) => s.itemCount),
+    );
 
     return NavigationBar(
       selectedIndex: current.index,

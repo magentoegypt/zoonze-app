@@ -8,11 +8,11 @@ import '../../../../core/validation/validators.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../catalog/domain/money.dart';
-import '../../domain/checkout.dart';
 import '../../domain/payment_session.dart';
-import '../../domain/tabby_config.dart';
-import '../../payments/payment_gateway.dart';
+import '../../payments/payment_method_card.dart';
+import '../../payments/payment_runner.dart';
 import '../checkout_controller.dart';
+import 'complete_payment_screen.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key});
@@ -119,7 +119,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         guestToken: result.guestToken,
       );
       if (!mounted) return;
-      await _drive(session, result.orderNumber, state.grandTotal);
+      await _drive(
+        session,
+        result.orderNumber,
+        state.grandTotal,
+        result.guestToken,
+      );
     } finally {
       if (mounted) setState(() => _placing = false);
     }
@@ -129,71 +134,54 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     PaymentSession? session,
     String orderNumber,
     Money? amount,
+    String? guestToken,
   ) async {
-    final l10n = AppLocalizations.of(context);
-    // No session: backend resolver not deployed yet → order awaiting payment.
-    if (session == null) {
-      _goSuccess(orderNumber, pending: true);
-      return;
-    }
-    switch (session.status) {
-      case PaymentSessionStatus.ready:
-        final gateway = ref
-            .read(paymentGatewayResolverProvider)
-            .resolve(session);
-        if (gateway == null) {
-          _goSuccess(orderNumber, pending: true);
-          return;
+    final result = await runPaymentSession(
+      context: context,
+      ref: ref,
+      session: session,
+      amount: amount,
+    );
+    if (!mounted) return;
+    switch (result.step) {
+      case PaymentStep.presented:
+        if (result.outcome == PaymentOutcome.success) {
+          // A real success must still be re-confirmed server-side before it is
+          // trusted (§5) — wired once the gateway exposes order status.
+          _goSuccess(orderNumber, pending: false);
+        } else {
+          // Reject / cancel / expiry / failure on a placed order — let the user
+          // retry or switch method (or pay later) on the complete-payment screen.
+          _goCompletePayment(orderNumber, amount, guestToken);
         }
-        try {
-          final outcome = await gateway.present(
-            context,
-            session,
-            amount: amount,
-          );
-          if (!mounted) return;
-          _handleOutcome(outcome, orderNumber);
-        } on PaymentGatewayUnavailable {
-          // Native module not installed yet — order awaiting payment.
-          if (!mounted) return;
-          _goSuccess(orderNumber, pending: true);
-        }
-      case PaymentSessionStatus.pending:
-        // Still not launchable after the back-off poll.
+      case PaymentStep.rejected:
+      case PaymentStep.failed:
+        _goCompletePayment(orderNumber, amount, guestToken);
+      case PaymentStep.pending:
+      case PaymentStep.unavailable:
+        // Not launchable / no native module yet — order is placed, awaiting payment.
         _goSuccess(orderNumber, pending: true);
-      case PaymentSessionStatus.rejected:
-        // Terminal — the gateway refused this order; pick another method.
-        _controller.resetPayment();
-        _snack(l10n.paymentSessionUnavailable);
-      case PaymentSessionStatus.failed:
-        // Retryable — keep the selection so the user can place again.
-        _snack(l10n.paymentFailed);
     }
   }
 
-  /// Maps the gateway outcome to the right next step. A Tabby/N-Genius reject,
-  /// cancel or expiry is a normal path (§5): bounce back to method selection
-  /// with the other options intact rather than showing a generic failure.
-  void _handleOutcome(PaymentOutcome outcome, String orderNumber) {
-    final l10n = AppLocalizations.of(context);
-    switch (outcome) {
-      case PaymentOutcome.success:
-        // A real success must still be re-confirmed server-side before it is
-        // trusted (§5) — wired once the gateway exposes order status (Open Q §2).
-        _goSuccess(orderNumber, pending: false);
-      case PaymentOutcome.rejected:
-        _controller.resetPayment();
-        _snack(l10n.paymentDeclined);
-      case PaymentOutcome.expired:
-        _controller.resetPayment();
-        _snack(l10n.paymentExpired);
-      case PaymentOutcome.failed:
-        _controller.resetPayment();
-        _snack(l10n.paymentFailed);
-      case PaymentOutcome.cancelled:
-        // User backed out — quietly return to payment selection, no error.
-        _controller.resetPayment();
-    }
+  void _goCompletePayment(
+    String orderNumber,
+    Money? amount,
+    String? guestToken,
+  ) {
+    final s = ref.read(checkoutControllerProvider);
+    context.go(
+      AppRoutes.completePayment,
+      extra: CompletePaymentArgs(
+        orderNumber: orderNumber,
+        methods: s.paymentMethods,
+        currentMethodCode: s.selectedPayment?.code,
+        amount: amount,
+        email: s.isGuest ? s.email : null,
+        lastname: s.isGuest ? s.lastname : null,
+        guestToken: s.isGuest ? guestToken : null,
+      ),
+    );
   }
 
   void _goSuccess(String number, {required bool pending}) {
@@ -333,7 +321,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   const SizedBox(height: 24),
                   _StepHeader(index: 3, title: l10n.checkoutPayment),
                   for (final method in state.paymentMethods)
-                    _PaymentCard(
+                    PaymentMethodCard(
                       method: method,
                       selected: state.selectedPayment?.code == method.code,
                       onTap: () => _controller.selectPayment(method),
@@ -422,63 +410,4 @@ class _StepHeader extends StatelessWidget {
       ],
     ),
   );
-}
-
-class _PaymentCard extends StatelessWidget {
-  const _PaymentCard({
-    required this.method,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final PaymentMethodOption method;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: selected ? AppColors.brandPrimary : Colors.transparent,
-          width: 1.5,
-        ),
-      ),
-      child: ListTile(
-        onTap: onTap,
-        leading: Icon(
-          selected ? Icons.radio_button_checked : Icons.radio_button_off,
-          color: selected ? AppColors.brandPrimary : AppColors.inkMuted,
-        ),
-        title: Text(method.title),
-        subtitle: switch (method.tabbyProduct) {
-          TabbyProductType.installments => Text(l10n.checkoutPayIn4),
-          TabbyProductType.payLater => Text(l10n.checkoutPayLater),
-          TabbyProductType.creditCardInstallments => Text(
-            l10n.checkoutCardInstalments,
-          ),
-          null => null,
-        },
-        trailing: method.isTabby
-            ? Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF3EE6C3),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Text(
-                  'tabby',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              )
-            : null,
-      ),
-    );
-  }
 }

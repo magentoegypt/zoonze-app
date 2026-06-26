@@ -914,6 +914,36 @@ abstract class AppLocalizations {
   /// **'Your payment session expired. Please try again.'**
   String get paymentExpired;
 
+  /// No description provided for @paymentProcessing.
+  ///
+  /// In en, this message translates to:
+  /// **'Your payment is still processing. Please try again in a moment.'**
+  String get paymentProcessing;
+
+  /// No description provided for @completePaymentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete payment'**
+  String get completePaymentTitle;
+
+  /// No description provided for @completePaymentBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Order {number} is placed and awaiting payment. Choose how you\'d like to pay.'**
+  String completePaymentBody(String number);
+
+  /// No description provided for @completePaymentPayNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay now'**
+  String get completePaymentPayNow;
+
+  /// No description provided for @completePaymentPayLater.
+  ///
+  /// In en, this message translates to:
+  /// **'I\'ll pay later'**
+  String get completePaymentPayLater;
+
   /// No description provided for @orderSuccessTitle.
   ///
   /// In en, this message translates to:

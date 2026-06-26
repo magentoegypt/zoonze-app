@@ -430,6 +430,24 @@ class AppLocalizationsAr extends AppLocalizations {
       'انتهت صلاحية جلسة الدفع. يرجى المحاولة مرة أخرى.';
 
   @override
+  String get paymentProcessing =>
+      'لا يزال الدفع قيد المعالجة. يرجى المحاولة بعد قليل.';
+
+  @override
+  String get completePaymentTitle => 'إتمام الدفع';
+
+  @override
+  String completePaymentBody(String number) {
+    return 'تم تنفيذ الطلب $number وهو بانتظار الدفع. اختر طريقة الدفع المناسبة لك.';
+  }
+
+  @override
+  String get completePaymentPayNow => 'ادفع الآن';
+
+  @override
+  String get completePaymentPayLater => 'سأدفع لاحقًا';
+
+  @override
   String get orderSuccessTitle => 'تم تنفيذ الطلب!';
 
   @override

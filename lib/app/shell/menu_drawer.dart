@@ -113,15 +113,15 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 8),
-        child: Text(
-          label.toUpperCase(),
-          style: const TextStyle(
-            color: AppColors.inkMuted,
-            fontWeight: FontWeight.w700,
-            fontSize: 12,
-            letterSpacing: 1,
-          ),
-        ),
-      );
+    padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 8),
+    child: Text(
+      label.toUpperCase(),
+      style: const TextStyle(
+        color: AppColors.inkMuted,
+        fontWeight: FontWeight.w700,
+        fontSize: 12,
+        letterSpacing: 1,
+      ),
+    ),
+  );
 }

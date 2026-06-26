@@ -47,7 +47,10 @@ class MarketingFooter extends StatelessWidget {
           const SizedBox(height: 24),
           Text(
             l10n.footerNewsletterTitle,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 8),
           Row(
@@ -58,8 +61,10 @@ class MarketingFooter extends StatelessWidget {
                     hintText: l10n.footerNewsletterHint,
                     filled: true,
                     fillColor: Colors.white,
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                       borderSide: BorderSide.none,
@@ -94,7 +99,10 @@ class _LinkColumn extends StatelessWidget {
       children: [
         Text(
           heading,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+          ),
         ),
         const SizedBox(height: 12),
         for (final link in links)

@@ -217,6 +217,7 @@ class FakeCheckoutRepository implements CheckoutRepository {
   String? lastSessionEmail;
   String? lastSessionLastname;
   String? lastSessionGuestToken;
+  String? switchedToMethod;
 
   @override
   Future<void> setGuestEmail(String cartId, String email) async {
@@ -275,6 +276,18 @@ class FakeCheckoutRepository implements CheckoutRepository {
     lastSessionEmail = email;
     lastSessionLastname = lastname;
     lastSessionGuestToken = guestToken;
+    return paymentSession;
+  }
+
+  @override
+  Future<PaymentSession?> setOrderPaymentMethod(
+    String orderNumber,
+    String methodCode, {
+    String? email,
+    String? lastname,
+    String? guestToken,
+  }) async {
+    switchedToMethod = methodCode;
     return paymentSession;
   }
 

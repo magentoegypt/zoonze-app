@@ -17,6 +17,7 @@ abstract final class AppRoutes {
   static const String editProfile = '/profile';
   static const String checkout = '/checkout';
   static const String orderSuccess = '/order-success';
+  static const String completePayment = '/complete-payment';
 
   static String category(String uid) => '/category/$uid';
   static String product(String urlKey) => '/product/$urlKey';
@@ -28,10 +29,10 @@ enum AppTab { home, categories, cart, wishlist, account }
 
 extension AppTabRoute on AppTab {
   String get route => switch (this) {
-        AppTab.home => AppRoutes.home,
-        AppTab.categories => AppRoutes.categories,
-        AppTab.cart => AppRoutes.cart,
-        AppTab.wishlist => AppRoutes.wishlist,
-        AppTab.account => AppRoutes.account,
-      };
+    AppTab.home => AppRoutes.home,
+    AppTab.categories => AppRoutes.categories,
+    AppTab.cart => AppRoutes.cart,
+    AppTab.wishlist => AppRoutes.wishlist,
+    AppTab.account => AppRoutes.account,
+  };
 }

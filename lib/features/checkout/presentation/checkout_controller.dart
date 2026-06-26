@@ -169,10 +169,6 @@ class CheckoutController extends Notifier<CheckoutState> {
     }
   }
 
-  /// Clears the selected payment method so a rejected/cancelled redirect bounces
-  /// the user back to method selection with the other options intact (§5).
-  void resetPayment() => state = state.copyWith(selectedPayment: null);
-
   /// Loads the gateway session for a placed order. A `PENDING` session isn't yet
   /// launchable, so we back-off poll a few times before giving up (the contract's
   /// PENDING flow). A guest order authorizes via **either** the Magento order

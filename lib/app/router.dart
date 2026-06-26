@@ -10,6 +10,7 @@ import '../features/account/presentation/screens/orders_screen.dart';
 import '../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../features/cart/presentation/screens/cart_screen.dart';
 import '../features/checkout/presentation/screens/checkout_screen.dart';
+import '../features/checkout/presentation/screens/complete_payment_screen.dart';
 import '../features/checkout/presentation/screens/order_success_screen.dart';
 import '../features/auth/presentation/screens/sign_in_screen.dart';
 import '../features/auth/presentation/screens/sign_up_screen.dart';
@@ -122,6 +123,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             pendingPayment: (extra?['pending'] as bool?) ?? false,
           );
         },
+      ),
+      GoRoute(
+        path: AppRoutes.completePayment,
+        builder: (context, state) =>
+            CompletePaymentScreen(args: state.extra as CompletePaymentArgs),
       ),
       GoRoute(
         path: '/diagnostics',

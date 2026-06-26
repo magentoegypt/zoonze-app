@@ -13,8 +13,10 @@ abstract final class AppTheme {
   static String fontFor(String languageCode) =>
       languageCode == 'ar' ? arabicFont : latinFont;
 
-  static ThemeData light(String languageCode) => _build(languageCode, Brightness.light);
-  static ThemeData dark(String languageCode) => _build(languageCode, Brightness.dark);
+  static ThemeData light(String languageCode) =>
+      _build(languageCode, Brightness.light);
+  static ThemeData dark(String languageCode) =>
+      _build(languageCode, Brightness.dark);
 
   static ThemeData _build(String languageCode, Brightness brightness) {
     final colorScheme = ColorScheme.fromSeed(
@@ -33,11 +35,13 @@ abstract final class AppTheme {
     );
 
     return base.copyWith(
-      scaffoldBackgroundColor:
-          brightness == Brightness.light ? Colors.white : AppColors.surfaceDark,
+      scaffoldBackgroundColor: brightness == Brightness.light
+          ? Colors.white
+          : AppColors.surfaceDark,
       appBarTheme: AppBarTheme(
-        backgroundColor:
-            brightness == Brightness.light ? Colors.white : AppColors.surfaceDark,
+        backgroundColor: brightness == Brightness.light
+            ? Colors.white
+            : AppColors.surfaceDark,
         foregroundColor: AppColors.brandPrimary,
         elevation: 0,
         centerTitle: true,

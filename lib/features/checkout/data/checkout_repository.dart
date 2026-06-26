@@ -135,17 +135,9 @@ class CheckoutRepository {
         'lastname': lastname,
         'guestToken': guestToken,
       });
-      final json = data['paymentSession'] as Map<String, dynamic>?;
-      if (json == null) return null;
-      return PaymentSession(
-        orderNumber: (json['order_number'] as String?) ?? orderNumber,
-        methodCode: (json['method_code'] as String?) ?? '',
-        gateway: _gateway(json['gateway'] as String?),
-        status: _sessionStatus(json['status'] as String?),
-        paymentId: json['payment_id'] as String?,
-        webUrl: json['web_url'] as String?,
-        publishableKey: json['publishable_key'] as String?,
-        additionalData: _keyValues(json['additional_data'] as List<dynamic>?),
+      return _parseSession(
+        data['paymentSession'] as Map<String, dynamic>?,
+        orderNumber,
       );
     } on Failure {
       return null;
@@ -154,6 +146,52 @@ class CheckoutRepository {
       // "awaiting payment", not crash the checkout flow with a cast error.
       return null;
     }
+  }
+
+  /// Switches a placed order's payment method and returns the new session, for
+  /// the post-order retry flow. Null on error → caller keeps the user on the
+  /// complete-payment screen.
+  Future<PaymentSession?> setOrderPaymentMethod(
+    String orderNumber,
+    String methodCode, {
+    String? email,
+    String? lastname,
+    String? guestToken,
+  }) async {
+    try {
+      final data = await _mutate(CheckoutQueries.setOrderPaymentMethod, {
+        'orderNumber': orderNumber,
+        'methodCode': methodCode,
+        'email': email,
+        'lastname': lastname,
+        'guestToken': guestToken,
+      });
+      return _parseSession(
+        data['setOrderPaymentMethod'] as Map<String, dynamic>?,
+        orderNumber,
+      );
+    } on Failure {
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  PaymentSession? _parseSession(
+    Map<String, dynamic>? json,
+    String orderNumber,
+  ) {
+    if (json == null) return null;
+    return PaymentSession(
+      orderNumber: (json['order_number'] as String?) ?? orderNumber,
+      methodCode: (json['method_code'] as String?) ?? '',
+      gateway: _gateway(json['gateway'] as String?),
+      status: _sessionStatus(json['status'] as String?),
+      paymentId: json['payment_id'] as String?,
+      webUrl: json['web_url'] as String?,
+      publishableKey: json['publishable_key'] as String?,
+      additionalData: _keyValues(json['additional_data'] as List<dynamic>?),
+    );
   }
 
   PaymentProvider _gateway(String? raw) => raw?.toUpperCase() == 'TABBY'

@@ -147,6 +147,35 @@ Mapping:
 > session, the resolver rebuilds the Tabby `payment` object from the placed order's items/totals rather than
 > the live request (so it works headless from the app).
 
+### `setOrderPaymentMethod` — retry / switch method on a placed order
+
+After `placeOrder` the cart is consumed, so a failed/declined/cancelled payment can't be recovered by
+re-running checkout. This mutation **changes the payment method on the already-placed order** and returns
+a fresh session, powering the app's "Complete payment" screen (pay now with a different method, or pay
+later). Same guest auth as `paymentSession` (order token / email + lastname / bearer).
+
+```graphql
+type Mutation {
+    setOrderPaymentMethod(input: SetOrderPaymentMethodInput!): PaymentSessionOutput
+        @resolver(class: "MagentoEgypt\\PaymentGraphQl\\Model\\Resolver\\SetOrderPaymentMethod")
+        @doc(description: "Switch the payment method on an already-placed (pending-payment) order and return a fresh gateway session. Same ownership rules as paymentSession.")
+}
+
+input SetOrderPaymentMethodInput {
+    order_number: String!
+    method_code: String!     # the new method (must be valid for the order/store)
+    email: String            # guest auth (see Authorization above)
+    lastname: String
+    guest_token: String
+}
+```
+
+- Assert ownership (same as `paymentSession`) → set the order's payment method to `method_code` (the order
+  stays in pending-payment; no new order is created) → build + return the gateway session exactly like
+  `paymentSession`. Same-method retry doesn't need this — the app just re-calls `paymentSession`.
+- Until this mutation is deployed the app degrades to null → it shows "couldn't switch, try again / pay
+  later" and the order remains awaiting payment (non-breaking).
+
 ---
 
 ## ② `tabbyConfig`
@@ -290,7 +319,8 @@ finalises the order server-side) before showing the success screen.
 | guest auth args (`guest_token` / `email` / `lastname`) | `guest_token` from `placeOrder.orderV2.token` (`PlaceOrderResult.guestToken`); `email`/`lastname` captured at the address step (`CheckoutState`). `CheckoutController.loadPaymentSession` sends all three for guest orders, none for customers (bearer) |
 | `isReady == READY` | `PaymentSession.isReady` (`status == ready`) |
 | `PENDING` poll | `CheckoutController.loadPaymentSession` (back-off, 4 attempts) |
-| `REJECTED` / `FAILED` | checkout `_drive`: rejected → terminal "choose another method"; failed → retry |
+| post-order recovery | a failed/declined/cancelled payment routes to `CompletePaymentScreen` (pay now / switch method / pay later); driven by the shared `runPaymentSession` |
+| `setOrderPaymentMethod` | `CheckoutRepository.setOrderPaymentMethod` — used by `CompletePaymentScreen` when the user picks a *different* method (same method re-calls `paymentSession`) |
 | `tabbyConfig` SDL | `CheckoutQueries.tabbyConfig` → `fetchTabbyConfig` → `TabbyConfig` / `TabbyProduct` |
 | type-string normalisation | `CheckoutRepository._tabbyType` |
 | `zoonze/payments` channel | `NativePaymentGateway` (args + canonical status mapping) |

@@ -436,6 +436,24 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your payment session expired. Please try again.';
 
   @override
+  String get paymentProcessing =>
+      'Your payment is still processing. Please try again in a moment.';
+
+  @override
+  String get completePaymentTitle => 'Complete payment';
+
+  @override
+  String completePaymentBody(String number) {
+    return 'Order $number is placed and awaiting payment. Choose how you\'d like to pay.';
+  }
+
+  @override
+  String get completePaymentPayNow => 'Pay now';
+
+  @override
+  String get completePaymentPayLater => 'I\'ll pay later';
+
+  @override
   String get orderSuccessTitle => 'Order placed!';
 
   @override

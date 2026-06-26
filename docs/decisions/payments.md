@@ -26,12 +26,21 @@ checkout_screen._placeOrder()
   → _drive(session) routes by status:
       READY     → PaymentGatewayResolver.resolve → NativePaymentGateway (channel zoonze/payments)
                     .present() → PaymentOutcome {success, cancelled, rejected, failed, expired}
-                    → _handleOutcome(): reject/expire/cancel bounce back to method selection (§5)
-      PENDING   → "awaiting payment" screen (not launchable)
-      REJECTED  → terminal: reset payment + "choose another method"
-      FAILED    → retryable: keep selection + retry
-      (no session / module missing) → "awaiting payment" screen (no fake UI)
+                    success → order success; any non-success → CompletePaymentScreen
+      PENDING / unavailable / no module → "awaiting payment" screen (no fake UI)
+      REJECTED / FAILED (session)       → CompletePaymentScreen
 ```
+
+The shared `runPaymentSession` (payments/payment_runner.dart) normalises session-status + native
+outcome into one result, used by both the initial checkout and the retry screen.
+
+**Post-order recovery (CompletePaymentScreen).** Because `placeOrder` consumes the cart *before*
+payment, a failed/declined/cancelled/expired attempt can't be recovered by re-running checkout. So
+any non-success routes to **CompletePaymentScreen**, which is both:
+- **(a) awaiting-payment** — "Order #X is placed and awaiting payment", with an **I'll pay later** exit
+  (the order stays pending; payable later), and
+- **(b) pay now** — pick a method to retry: the **same** method re-calls `paymentSession`; a **different**
+  method calls `setOrderPaymentMethod` (switches the placed order's method) → present again.
 
 Both gateways are driven through the **single native channel** (`zoonze/payments`); the native
 module hosts the N-Genius SDK and the Tabby SDK (Tabby's SDK renders its own hosted webview).
