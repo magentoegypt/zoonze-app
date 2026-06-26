@@ -632,6 +632,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get footerSubscribe => 'اشتراك';
 
   @override
+  String get footerSubscribed => 'شكرًا! سنبقيك على اطّلاع.';
+
+  @override
   String get footerRights => '© زونزي بيوتي. جميع الحقوق محفوظة.';
 
   @override

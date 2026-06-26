@@ -1,13 +1,52 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../core/util/launch.dart';
+import '../../core/validation/validators.dart';
 import '../../core/widgets/brand_lockup.dart';
 import '../../l10n/l10n.dart';
+import '../routes.dart';
 import '../theme/app_colors.dart';
 
 /// Marketing footer shown on content screens (home, PLP, PDP, cart, …) in both
-/// EN and AR. Static for now; links are wired as their destinations land.
-class MarketingFooter extends StatelessWidget {
+/// EN and AR. Links navigate to in-app destinations (categories, Help) or the
+/// website; the newsletter validates the email and confirms locally.
+class MarketingFooter extends StatefulWidget {
   const MarketingFooter({super.key});
+
+  @override
+  State<MarketingFooter> createState() => _MarketingFooterState();
+}
+
+class _MarketingFooterState extends State<MarketingFooter> {
+  static const String _websiteUrl = 'https://zoonze.com';
+  final TextEditingController _newsletter = TextEditingController();
+
+  @override
+  void dispose() {
+    _newsletter.dispose();
+    super.dispose();
+  }
+
+  void _subscribe() {
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    if (Validators.email(context, _newsletter.text) != null) {
+      messenger.showSnackBar(SnackBar(content: Text(l10n.validationEmail)));
+      return;
+    }
+    _newsletter.clear();
+    FocusScope.of(context).unfocus();
+    messenger.showSnackBar(SnackBar(content: Text(l10n.footerSubscribed)));
+  }
+
+  Future<void> _openWebsite() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
+    if (!await launchExternalUri(Uri.parse(_websiteUrl))) {
+      messenger.showSnackBar(SnackBar(content: Text(l10n.errorGeneric)));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,17 +67,35 @@ class MarketingFooter extends StatelessWidget {
               Expanded(
                 child: _LinkColumn(
                   heading: l10n.footerShop,
-                  links: [l10n.homeShopByCategory, l10n.homeFeatured],
+                  links: [
+                    (
+                      label: l10n.homeShopByCategory,
+                      onTap: () => context.go(AppRoutes.categories),
+                    ),
+                    (
+                      label: l10n.homeFeatured,
+                      onTap: () => context.go(AppRoutes.home),
+                    ),
+                  ],
                 ),
               ),
               Expanded(
                 child: _LinkColumn(
                   heading: l10n.footerSupport,
                   links: [
-                    l10n.footerAbout,
-                    l10n.footerContact,
-                    l10n.footerShipping,
-                    l10n.footerReturns,
+                    (label: l10n.footerAbout, onTap: _openWebsite),
+                    (
+                      label: l10n.footerContact,
+                      onTap: () => context.push(AppRoutes.help),
+                    ),
+                    (
+                      label: l10n.footerShipping,
+                      onTap: () => context.push(AppRoutes.help),
+                    ),
+                    (
+                      label: l10n.footerReturns,
+                      onTap: () => context.push(AppRoutes.help),
+                    ),
                   ],
                 ),
               ),
@@ -57,6 +114,9 @@ class MarketingFooter extends StatelessWidget {
             children: [
               Expanded(
                 child: TextField(
+                  controller: _newsletter,
+                  keyboardType: TextInputType.emailAddress,
+                  onSubmitted: (_) => _subscribe(),
                   decoration: InputDecoration(
                     hintText: l10n.footerNewsletterHint,
                     filled: true,
@@ -73,7 +133,10 @@ class MarketingFooter extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              FilledButton(onPressed: () {}, child: Text(l10n.footerSubscribe)),
+              FilledButton(
+                onPressed: _subscribe,
+                child: Text(l10n.footerSubscribe),
+              ),
             ],
           ),
           const SizedBox(height: 24),
@@ -87,10 +150,12 @@ class MarketingFooter extends StatelessWidget {
   }
 }
 
+typedef _FooterLink = ({String label, VoidCallback onTap});
+
 class _LinkColumn extends StatelessWidget {
   const _LinkColumn({required this.heading, required this.links});
   final String heading;
-  final List<String> links;
+  final List<_FooterLink> links;
 
   @override
   Widget build(BuildContext context) {
@@ -106,9 +171,15 @@ class _LinkColumn extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         for (final link in links)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(link, style: const TextStyle(color: Colors.white70)),
+          InkWell(
+            onTap: link.onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Text(
+                link.label,
+                style: const TextStyle(color: Colors.white70),
+              ),
+            ),
           ),
       ],
     );

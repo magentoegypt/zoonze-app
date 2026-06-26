@@ -641,6 +641,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get footerSubscribe => 'Subscribe';
 
   @override
+  String get footerSubscribed => 'Thanks! We\'ll keep you posted.';
+
+  @override
   String get footerRights => '© ZoonZE Beauty. All rights reserved.';
 
   @override

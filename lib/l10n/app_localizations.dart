@@ -1286,6 +1286,12 @@ abstract class AppLocalizations {
   /// **'Subscribe'**
   String get footerSubscribe;
 
+  /// No description provided for @footerSubscribed.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks! We\'ll keep you posted.'**
+  String get footerSubscribed;
+
   /// No description provided for @footerRights.
   ///
   /// In en, this message translates to:
