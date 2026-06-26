@@ -1,0 +1,19 @@
+# build_runner configuration.
+#
+# Phase 0 relies on riverpod_generator, which runs with sane defaults and needs
+# no target configuration here.
+#
+# Phase 1 will introduce graphql_codegen once the live schema has been
+# introspected into a local schema file (see tool/introspect.sh). At that point
+# add a target like:
+#
+# targets:
+#   $default:
+#     builders:
+#       graphql_codegen:
+#         options:
+#           schema: lib/core/graphql/schema.graphql
+#           naming:
+#             enumValueCase: camelCase
+#           scalars:
+#             # map custom Magento scalars here

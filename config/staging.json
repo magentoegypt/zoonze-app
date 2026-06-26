@@ -1,0 +1,10 @@
+{
+  "FLAVOR": "staging",
+  "GRAPHQL_ENDPOINT": "https://zoonze.com/graphql",
+  "DEFAULT_LOCALE": "en",
+  "BOOTSTRAP_STORE_CODE": "uae-en",
+  "STORE_CODE_EN": "uae-en",
+  "STORE_CODE_AR": "uae-ar",
+  "CURRENCY": "AED",
+  "USER_AGENT": "ZoonzeApp-staging/0.1.0 (Flutter)"
+}

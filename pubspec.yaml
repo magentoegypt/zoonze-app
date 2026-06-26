@@ -1,0 +1,60 @@
+name: zoonze_app
+description: "ZoonZE Beauty — Flutter storefront client for Magento Open Source (zoonze.com), UAE, bilingual EN/AR, AED."
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: any
+
+  # State management + DI
+  flutter_riverpod: ^2.5.0
+
+  # GraphQL (primary backend transport)
+  graphql_flutter: ^5.1.0
+
+  # Routing
+  go_router: ^14.0.0
+
+  # Storage
+  flutter_secure_storage: ^9.0.0
+  shared_preferences: ^2.2.0
+  hive_ce: ^2.0.0
+  hive_ce_flutter: ^2.0.0
+
+  # Networking (non-GraphQL) + images
+  dio: ^5.4.0
+  cached_network_image: ^3.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  # NOTE: build_runner + riverpod_generator + graphql_codegen are introduced in
+  # Phase 1 (alongside the introspected schema.graphql). Phase 0 uses plain
+  # Riverpod providers and hand-written GraphQL documents, so no codegen runs.
+
+flutter:
+  uses-material-design: true
+  generate: true
+  assets:
+    - assets/branding/
+    - assets/images/
+  fonts:
+    # Variable fonts (all weights in a single file). Inter + Playfair Display for
+    # Latin/EN; Cairo for Arabic/AR. See docs/FIGMA_DESIGN.md.
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter.ttf
+    - family: Cairo
+      fonts:
+        - asset: assets/fonts/Cairo.ttf
+    - family: Playfair Display
+      fonts:
+        - asset: assets/fonts/PlayfairDisplay.ttf
