@@ -55,7 +55,7 @@ class WelcomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               TextButton(
-                onPressed: () => context.go(AppRoutes.account),
+                onPressed: () => context.push(AppRoutes.signIn),
                 child: Text(l10n.welcomeSignIn),
               ),
               TextButton(

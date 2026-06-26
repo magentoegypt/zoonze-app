@@ -1,0 +1,84 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../core/graphql/graphql_client.dart';
+import '../../../core/storage/secure_token_store.dart';
+import '../data/auth_repository.dart';
+import '../domain/customer.dart';
+
+enum AuthStatus { unknown, authenticated, guest }
+
+class AuthState {
+  const AuthState({this.customer, this.status = AuthStatus.unknown});
+
+  final Customer? customer;
+  final AuthStatus status;
+
+  bool get isAuthenticated => status == AuthStatus.authenticated;
+}
+
+/// Owns the customer session: restores a persisted token on startup, and drives
+/// login / register / logout / password-reset. The token lives in secure
+/// storage; [AuthLink] reads it per request.
+class AuthController extends Notifier<AuthState> {
+  @override
+  AuthState build() {
+    Future.microtask(_restore);
+    return const AuthState();
+  }
+
+  SecureTokenStore get _tokens => ref.read(secureTokenStoreProvider);
+  AuthRepository get _repo => ref.read(authRepositoryProvider);
+
+  Future<void> _restore() async {
+    final token = await _tokens.read();
+    if (token == null) {
+      state = const AuthState(status: AuthStatus.guest);
+      return;
+    }
+    try {
+      final customer = await _repo.fetchCustomer();
+      state = AuthState(customer: customer, status: AuthStatus.authenticated);
+    } on Object {
+      // Token invalid/expired -> drop it and continue as guest.
+      await _tokens.clear();
+      state = const AuthState(status: AuthStatus.guest);
+    }
+  }
+
+  Future<void> login(String email, String password) async {
+    final token = await _repo.login(email, password);
+    await _tokens.write(token);
+    // Reset the cache so guest data is dropped; AuthLink now sends the bearer.
+    ref.invalidate(graphqlClientProvider);
+    final customer = await _repo.fetchCustomer();
+    state = AuthState(customer: customer, status: AuthStatus.authenticated);
+  }
+
+  Future<void> register({
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String password,
+  }) async {
+    await _repo.register(
+      firstName: firstName,
+      lastName: lastName,
+      email: email,
+      password: password,
+    );
+    await login(email, password);
+  }
+
+  Future<void> logout() async {
+    await _repo.revokeToken();
+    await _tokens.clear();
+    ref.invalidate(graphqlClientProvider);
+    state = const AuthState(status: AuthStatus.guest);
+  }
+
+  Future<void> requestPasswordReset(String email) =>
+      _repo.requestPasswordReset(email);
+}
+
+final authControllerProvider =
+    NotifierProvider<AuthController, AuthState>(AuthController.new);

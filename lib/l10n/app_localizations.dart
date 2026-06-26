@@ -380,6 +380,144 @@ abstract class AppLocalizations {
   /// **'This section arrives in a later phase.'**
   String get comingSoonBody;
 
+  /// No description provided for @authSignInTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign In'**
+  String get authSignInTitle;
+
+  /// No description provided for @authSignUpTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Account'**
+  String get authSignUpTitle;
+
+  /// No description provided for @authForgotTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Password'**
+  String get authForgotTitle;
+
+  /// No description provided for @fieldEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get fieldEmail;
+
+  /// No description provided for @fieldPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get fieldPassword;
+
+  /// No description provided for @fieldFirstName.
+  ///
+  /// In en, this message translates to:
+  /// **'First name'**
+  String get fieldFirstName;
+
+  /// No description provided for @fieldLastName.
+  ///
+  /// In en, this message translates to:
+  /// **'Last name'**
+  String get fieldLastName;
+
+  /// No description provided for @authForgotLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot password?'**
+  String get authForgotLink;
+
+  /// No description provided for @authNoAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t have an account?'**
+  String get authNoAccount;
+
+  /// No description provided for @authHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Already have an account?'**
+  String get authHaveAccount;
+
+  /// No description provided for @authSignUpLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign Up'**
+  String get authSignUpLink;
+
+  /// No description provided for @authForgotIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your email and we\'ll send you a reset link.'**
+  String get authForgotIntro;
+
+  /// No description provided for @authForgotSent.
+  ///
+  /// In en, this message translates to:
+  /// **'If that email is registered, a reset link is on its way.'**
+  String get authForgotSent;
+
+  /// No description provided for @authSignInError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t sign you in. Please check your details.'**
+  String get authSignInError;
+
+  /// No description provided for @validationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get validationRequired;
+
+  /// No description provided for @validationEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email'**
+  String get validationEmail;
+
+  /// No description provided for @validationPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Use at least 8 characters'**
+  String get validationPassword;
+
+  /// No description provided for @accountGuestTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your ZoonZE account'**
+  String get accountGuestTitle;
+
+  /// No description provided for @accountGuestBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to track orders, save addresses and check out faster.'**
+  String get accountGuestBody;
+
+  /// No description provided for @accountSignOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign Out'**
+  String get accountSignOut;
+
+  /// No description provided for @accountOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'My Orders'**
+  String get accountOrders;
+
+  /// No description provided for @accountAddresses.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved Addresses'**
+  String get accountAddresses;
+
+  /// No description provided for @accountHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Help & FAQ'**
+  String get accountHelp;
+
   /// No description provided for @badgeNew.
   ///
   /// In en, this message translates to:

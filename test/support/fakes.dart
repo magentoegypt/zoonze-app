@@ -1,7 +1,11 @@
+import 'package:zoonze_app/core/error/failure.dart';
 import 'package:zoonze_app/core/storage/local_cache.dart';
 import 'package:zoonze_app/core/storage/locale_prefs.dart';
+import 'package:zoonze_app/core/storage/secure_token_store.dart';
 import 'package:zoonze_app/core/store/store_repository.dart';
 import 'package:zoonze_app/core/store/store_view.dart';
+import 'package:zoonze_app/features/auth/data/auth_repository.dart';
+import 'package:zoonze_app/features/auth/domain/customer.dart';
 import 'package:zoonze_app/features/catalog/data/catalog_repository.dart';
 import 'package:zoonze_app/features/catalog/domain/aggregation.dart';
 import 'package:zoonze_app/features/catalog/domain/category.dart';
@@ -38,6 +42,56 @@ class FakeStoreRepository implements StoreRepository {
 
   @override
   Future<List<StoreView>> fetchAvailableStores() async => stores;
+}
+
+class FakeSecureTokenStore implements SecureTokenStore {
+  FakeSecureTokenStore([this._token]);
+  String? _token;
+
+  @override
+  Future<String?> read() async => _token;
+
+  @override
+  Future<void> write(String token) async => _token = token;
+
+  @override
+  Future<void> clear() async => _token = null;
+}
+
+const Customer kSampleCustomer = Customer(
+  firstName: 'Layla',
+  lastName: 'Hassan',
+  email: 'layla@example.com',
+);
+
+class FakeAuthRepository implements AuthRepository {
+  FakeAuthRepository({this.loginFails = false, this.customer = kSampleCustomer});
+
+  final bool loginFails;
+  final Customer customer;
+
+  @override
+  Future<String> login(String email, String password) async {
+    if (loginFails) throw const Failure(FailureKind.auth);
+    return 'fake-token';
+  }
+
+  @override
+  Future<void> register({
+    required String firstName,
+    required String lastName,
+    required String email,
+    required String password,
+  }) async {}
+
+  @override
+  Future<void> revokeToken() async {}
+
+  @override
+  Future<void> requestPasswordReset(String email) async {}
+
+  @override
+  Future<Customer> fetchCustomer() async => customer;
 }
 
 class FakeCatalogRepository implements CatalogRepository {

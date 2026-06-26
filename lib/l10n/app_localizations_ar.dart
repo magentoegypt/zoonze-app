@@ -153,6 +153,78 @@ class AppLocalizationsAr extends AppLocalizations {
   String get comingSoonBody => 'سيتوفّر هذا القسم في مرحلة لاحقة.';
 
   @override
+  String get authSignInTitle => 'تسجيل الدخول';
+
+  @override
+  String get authSignUpTitle => 'إنشاء حساب';
+
+  @override
+  String get authForgotTitle => 'إعادة تعيين كلمة المرور';
+
+  @override
+  String get fieldEmail => 'البريد الإلكتروني';
+
+  @override
+  String get fieldPassword => 'كلمة المرور';
+
+  @override
+  String get fieldFirstName => 'الاسم الأول';
+
+  @override
+  String get fieldLastName => 'اسم العائلة';
+
+  @override
+  String get authForgotLink => 'نسيت كلمة المرور؟';
+
+  @override
+  String get authNoAccount => 'ليس لديك حساب؟';
+
+  @override
+  String get authHaveAccount => 'لديك حساب بالفعل؟';
+
+  @override
+  String get authSignUpLink => 'إنشاء حساب';
+
+  @override
+  String get authForgotIntro =>
+      'أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة التعيين.';
+
+  @override
+  String get authForgotSent =>
+      'إذا كان هذا البريد مسجّلاً، فسيصلك رابط إعادة التعيين قريبًا.';
+
+  @override
+  String get authSignInError => 'تعذّر تسجيل الدخول. يرجى التحقّق من بياناتك.';
+
+  @override
+  String get validationRequired => 'مطلوب';
+
+  @override
+  String get validationEmail => 'أدخل بريدًا إلكترونيًا صحيحًا';
+
+  @override
+  String get validationPassword => 'استخدم 8 أحرف على الأقل';
+
+  @override
+  String get accountGuestTitle => 'حساب زونزي الخاص بك';
+
+  @override
+  String get accountGuestBody =>
+      'سجّل الدخول لتتبّع الطلبات وحفظ العناوين وإتمام الشراء بشكل أسرع.';
+
+  @override
+  String get accountSignOut => 'تسجيل الخروج';
+
+  @override
+  String get accountOrders => 'طلباتي';
+
+  @override
+  String get accountAddresses => 'العناوين المحفوظة';
+
+  @override
+  String get accountHelp => 'المساعدة والأسئلة الشائعة';
+
+  @override
   String get badgeNew => 'جديد';
 
   @override

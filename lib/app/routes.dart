@@ -8,6 +8,9 @@ abstract final class AppRoutes {
   static const String wishlist = '/wishlist';
   static const String account = '/account';
   static const String search = '/search';
+  static const String signIn = '/signin';
+  static const String signUp = '/signup';
+  static const String forgotPassword = '/forgot';
 
   static String category(String uid) => '/category/$uid';
   static String product(String urlKey) => '/product/$urlKey';

@@ -155,6 +155,79 @@ class AppLocalizationsEn extends AppLocalizations {
   String get comingSoonBody => 'This section arrives in a later phase.';
 
   @override
+  String get authSignInTitle => 'Sign In';
+
+  @override
+  String get authSignUpTitle => 'Create Account';
+
+  @override
+  String get authForgotTitle => 'Reset Password';
+
+  @override
+  String get fieldEmail => 'Email';
+
+  @override
+  String get fieldPassword => 'Password';
+
+  @override
+  String get fieldFirstName => 'First name';
+
+  @override
+  String get fieldLastName => 'Last name';
+
+  @override
+  String get authForgotLink => 'Forgot password?';
+
+  @override
+  String get authNoAccount => 'Don\'t have an account?';
+
+  @override
+  String get authHaveAccount => 'Already have an account?';
+
+  @override
+  String get authSignUpLink => 'Sign Up';
+
+  @override
+  String get authForgotIntro =>
+      'Enter your email and we\'ll send you a reset link.';
+
+  @override
+  String get authForgotSent =>
+      'If that email is registered, a reset link is on its way.';
+
+  @override
+  String get authSignInError =>
+      'Couldn\'t sign you in. Please check your details.';
+
+  @override
+  String get validationRequired => 'Required';
+
+  @override
+  String get validationEmail => 'Enter a valid email';
+
+  @override
+  String get validationPassword => 'Use at least 8 characters';
+
+  @override
+  String get accountGuestTitle => 'Your ZoonZE account';
+
+  @override
+  String get accountGuestBody =>
+      'Sign in to track orders, save addresses and check out faster.';
+
+  @override
+  String get accountSignOut => 'Sign Out';
+
+  @override
+  String get accountOrders => 'My Orders';
+
+  @override
+  String get accountAddresses => 'Saved Addresses';
+
+  @override
+  String get accountHelp => 'Help & FAQ';
+
+  @override
   String get badgeNew => 'NEW';
 
   @override
