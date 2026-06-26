@@ -302,6 +302,66 @@ abstract class AppLocalizations {
   /// **'See all'**
   String get homeSeeAll;
 
+  /// No description provided for @filtersLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get filtersLabel;
+
+  /// No description provided for @sortLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort'**
+  String get sortLabel;
+
+  /// No description provided for @sortRelevance.
+  ///
+  /// In en, this message translates to:
+  /// **'Relevance'**
+  String get sortRelevance;
+
+  /// No description provided for @sortPriceLowHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'Price: Low to High'**
+  String get sortPriceLowHigh;
+
+  /// No description provided for @sortPriceHighLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Price: High to Low'**
+  String get sortPriceHighLow;
+
+  /// No description provided for @sortNameAz.
+  ///
+  /// In en, this message translates to:
+  /// **'Name: A–Z'**
+  String get sortNameAz;
+
+  /// No description provided for @sortNewest.
+  ///
+  /// In en, this message translates to:
+  /// **'Newest'**
+  String get sortNewest;
+
+  /// No description provided for @applyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get applyLabel;
+
+  /// No description provided for @clearLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get clearLabel;
+
+  /// No description provided for @resultsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} results'**
+  String resultsCount(int count);
+
   /// No description provided for @searchHint.
   ///
   /// In en, this message translates to:

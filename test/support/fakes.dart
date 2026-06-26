@@ -3,6 +3,7 @@ import 'package:zoonze_app/core/storage/locale_prefs.dart';
 import 'package:zoonze_app/core/store/store_repository.dart';
 import 'package:zoonze_app/core/store/store_view.dart';
 import 'package:zoonze_app/features/catalog/data/catalog_repository.dart';
+import 'package:zoonze_app/features/catalog/domain/aggregation.dart';
 import 'package:zoonze_app/features/catalog/domain/category.dart';
 import 'package:zoonze_app/features/catalog/domain/money.dart';
 import 'package:zoonze_app/features/catalog/domain/product.dart';
@@ -43,10 +44,12 @@ class FakeCatalogRepository implements CatalogRepository {
   FakeCatalogRepository({
     this.categories = kSampleCategories,
     this.products = kSampleProducts,
+    this.aggregations = kSampleAggregations,
   });
 
   final List<Category> categories;
   final List<Product> products;
+  final List<Aggregation> aggregations;
 
   @override
   Future<List<Category>> fetchCategoryTree() async => categories;
@@ -55,6 +58,7 @@ class FakeCatalogRepository implements CatalogRepository {
   Future<ProductPage> fetchProducts({
     String? search,
     String? categoryUid,
+    Map<String, Set<String>> attributeFilters = const {},
     ProductSortField sort = ProductSortField.relevance,
     int pageSize = 20,
     int currentPage = 1,
@@ -62,8 +66,9 @@ class FakeCatalogRepository implements CatalogRepository {
       ProductPage(
         items: products,
         totalCount: products.length,
-        currentPage: 1,
+        currentPage: currentPage,
         totalPages: 1,
+        aggregations: aggregations,
       );
 
   @override
@@ -151,3 +156,14 @@ const ProductDetail kSampleDetail = ProductDetail(
     ),
   ],
 );
+
+const List<Aggregation> kSampleAggregations = <Aggregation>[
+  Aggregation(
+    attributeCode: 'brand',
+    label: 'Brand',
+    options: <AggregationOption>[
+      AggregationOption(label: 'Chanel', value: '101', count: 4),
+      AggregationOption(label: 'Dior', value: '102', count: 3),
+    ],
+  ),
+];

@@ -39,6 +39,7 @@ class CatalogRepository {
   Future<ProductPage> fetchProducts({
     String? search,
     String? categoryUid,
+    Map<String, Set<String>> attributeFilters = const {},
     ProductSortField sort = ProductSortField.relevance,
     int pageSize = 20,
     int currentPage = 1,
@@ -48,14 +49,22 @@ class CatalogRepository {
       'products query requires a non-empty search or a categoryUid',
     );
     final sortInput = _sortInput(sort);
+    final filter = <String, dynamic>{};
+    if (categoryUid != null) {
+      filter['category_uid'] = <String, dynamic>{'eq': categoryUid};
+    }
+    attributeFilters.forEach((code, values) {
+      // 'price' uses a range input (handled separately); apply equal-type
+      // filters for the rest as `{in: [...]}`.
+      if (code != 'price' && values.isNotEmpty) {
+        filter[code] = <String, dynamic>{'in': values.toList()};
+      }
+    });
     final variables = <String, dynamic>{
       'pageSize': pageSize,
       'currentPage': currentPage,
       if (search != null && search.isNotEmpty) 'search': search,
-      if (categoryUid != null)
-        'filter': <String, dynamic>{
-          'category_uid': <String, dynamic>{'eq': categoryUid},
-        },
+      if (filter.isNotEmpty) 'filter': filter,
       if (sortInput != null) 'sort': sortInput,
     };
     final data = await _query(CatalogQueries.products, variables);

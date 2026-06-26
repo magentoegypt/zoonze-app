@@ -42,6 +42,20 @@
   "homeFeatured": "Featured",
   "homeSeeAll": "See all",
 
+  "filtersLabel": "Filters",
+  "sortLabel": "Sort",
+  "sortRelevance": "Relevance",
+  "sortPriceLowHigh": "Price: Low to High",
+  "sortPriceHighLow": "Price: High to Low",
+  "sortNameAz": "Name: A–Z",
+  "sortNewest": "Newest",
+  "applyLabel": "Apply",
+  "clearLabel": "Clear",
+  "resultsCount": "{count} results",
+  "@resultsCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+
   "searchHint": "Search products",
   "comingSoon": "Coming soon",
   "comingSoonBody": "This section arrives in a later phase.",

@@ -114,6 +114,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeSeeAll => 'See all';
 
   @override
+  String get filtersLabel => 'Filters';
+
+  @override
+  String get sortLabel => 'Sort';
+
+  @override
+  String get sortRelevance => 'Relevance';
+
+  @override
+  String get sortPriceLowHigh => 'Price: Low to High';
+
+  @override
+  String get sortPriceHighLow => 'Price: High to Low';
+
+  @override
+  String get sortNameAz => 'Name: A–Z';
+
+  @override
+  String get sortNewest => 'Newest';
+
+  @override
+  String get applyLabel => 'Apply';
+
+  @override
+  String get clearLabel => 'Clear';
+
+  @override
+  String resultsCount(int count) {
+    return '$count results';
+  }
+
+  @override
   String get searchHint => 'Search products';
 
   @override

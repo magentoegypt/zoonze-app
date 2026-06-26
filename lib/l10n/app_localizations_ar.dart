@@ -112,6 +112,38 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeSeeAll => 'عرض الكل';
 
   @override
+  String get filtersLabel => 'تصفية';
+
+  @override
+  String get sortLabel => 'ترتيب';
+
+  @override
+  String get sortRelevance => 'الصلة';
+
+  @override
+  String get sortPriceLowHigh => 'السعر: من الأقل للأعلى';
+
+  @override
+  String get sortPriceHighLow => 'السعر: من الأعلى للأقل';
+
+  @override
+  String get sortNameAz => 'الاسم: أ–ي';
+
+  @override
+  String get sortNewest => 'الأحدث';
+
+  @override
+  String get applyLabel => 'تطبيق';
+
+  @override
+  String get clearLabel => 'مسح';
+
+  @override
+  String resultsCount(int count) {
+    return '$count نتيجة';
+  }
+
+  @override
   String get searchHint => 'ابحث عن المنتجات';
 
   @override

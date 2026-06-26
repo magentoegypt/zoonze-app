@@ -26,17 +26,6 @@ final featuredProductsProvider =
   return page.items;
 });
 
-/// First page of products for a category (PLP). Pagination + filters land in the
-/// PLP slice; this returns page 1 with default sort.
-final categoryProductsProvider =
-    FutureProvider.autoDispose.family<ProductPage, String>((ref, categoryUid) {
-  ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
-  return ref.watch(catalogRepositoryProvider).fetchProducts(
-        categoryUid: categoryUid,
-        pageSize: 20,
-      );
-});
-
 /// Full product detail for the PDP (by url_key). Refetches on store switch.
 final productDetailProvider =
     FutureProvider.autoDispose.family<ProductDetail?, String>((ref, urlKey) {
