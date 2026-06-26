@@ -39,6 +39,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.4
   # NOTE: build_runner + riverpod_generator + graphql_codegen are introduced in
   # Phase 1 (alongside the introspected schema.graphql). Phase 0 uses plain
   # Riverpod providers and hand-written GraphQL documents, so no codegen runs.
@@ -61,3 +62,15 @@ flutter:
     - family: Playfair Display
       fonts:
         - asset: assets/fonts/PlayfairDisplay.ttf
+
+# App launcher icons. Owner: drop a 1024×1024 square PNG at the path below
+# (the foreground should keep ~20% padding for the adaptive circle mask), then
+# run:  dart run flutter_launcher_icons
+flutter_launcher_icons:
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  min_sdk_android: 21
+  image_path: "assets/branding/app_icon.png"
+  adaptive_icon_background: "#9E1B3F"
+  adaptive_icon_foreground: "assets/branding/app_icon.png"
