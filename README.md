@@ -4,10 +4,17 @@ Production-grade **Flutter** app — a bilingual (English/LTR + Arabic/RTL) head
 storefront client for the **ZoonZE Beauty** Magento Open Source 2.4.8-p5 backend
 (`zoonze.com`, UAE, AED). Pure GraphQL client; no Magento PHP.
 
-**Status:** Phase 0 (foundation) complete — flavors, `AppConfig`, GraphQL link
-chain with a dynamic `Store` header, dynamic store resolution, theming (Figma
-tokens + Inter/Cairo/Playfair), bilingual ARB + RTL/LTR + language switcher,
-secure storage + Hive, and a live `storeConfig` health-check screen.
+**Status (EN + AR/RTL throughout; `flutter analyze` clean, tests green):**
+- **Phase 0 — Foundation** ✅ flavors, `AppConfig`, GraphQL link chain (dynamic
+  `Store` header), dynamic store resolution, theme (Figma tokens +
+  Inter/Cairo/Playfair), ARB + language switcher, secure storage + Hive, diagnostics.
+- **Phase 1 — Catalog browse** ✅ app shell (drawer, bottom nav, footer),
+  splash/welcome, home, PLP (filters/sort/pagination), PDP, search.
+- **Phase 2 — Cart + Auth** ✅ guest cart, coupons, merge-on-login; sign in/up/reset, account.
+- **Phase 3 — Checkout + payments** ⏸️ on hold pending the gateway-exposure answer (Open Q §2).
+- **Phase 4 — Account/Wishlist/Reviews** ✅ wishlist, orders, addresses, edit profile, reviews.
+- **Phase 5 — Push + release** 🔄 app-side push plumbing + deep links + release docs done;
+  Firebase config, signing, iOS schemes, and store submission are owner/platform steps.
 
 See `CLAUDE.md` (binding spec), `docs/PLAN.md` (phased roadmap + ETAs),
 `docs/FIGMA_DESIGN.md` (UI source of truth), and `docs/decisions/`.
