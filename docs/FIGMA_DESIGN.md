@@ -23,8 +23,11 @@ between the Figma source of truth and the Flutter implementation in this repo.
 > app bar (the duplicate in-body logo on Sign In was removed), and the "Free 3-hour
 > delivery across the UAE" line was removed from the Launch splash.
 > The same Welcome logo lockup (scaled to fit) is now used across **all** screens —
-> every nav app bar (Home, Categories, PLP, PDP, Wishlist, fixed at 52 px) and the
-> Menu Drawer brand header. Sign Up shows a "Create Account" heading under the logo.
+> every nav app bar (Home, Categories, PLP, PDP, Wishlist, fixed at 52 px), the
+> Menu Drawer brand header, and Cart / Checkout / Empty Cart / Order Success. Sign Up
+> shows a "Create Account" heading under the logo, and Sign In / Sign Up carry a
+> circular icon badge (lock / person) matching the Forgot Password style. The canvas
+> sections use a uniform 200 px gap.
 
 The canvas holds **26 screens** organized into four labelled sections (Figma
 *Sections*), stacked top-to-bottom in app-flow order:
