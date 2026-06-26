@@ -21,6 +21,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageToggleLabel => 'Language';
 
   @override
+  String get settingsTitle => 'Settings';
+
+  @override
   String get actionRetry => 'Retry';
 
   @override

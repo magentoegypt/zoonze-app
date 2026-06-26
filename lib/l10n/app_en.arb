@@ -6,6 +6,7 @@
   "languageEnglish": "English",
   "languageArabic": "العربية",
   "languageToggleLabel": "Language",
+  "settingsTitle": "Settings",
 
   "actionRetry": "Retry",
   "stateLoading": "Loading…",

@@ -21,6 +21,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get languageToggleLabel => 'اللغة';
 
   @override
+  String get settingsTitle => 'الإعدادات';
+
+  @override
   String get actionRetry => 'إعادة المحاولة';
 
   @override

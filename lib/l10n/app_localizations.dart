@@ -122,6 +122,12 @@ abstract class AppLocalizations {
   /// **'Language'**
   String get languageToggleLabel;
 
+  /// No description provided for @settingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsTitle;
+
   /// No description provided for @actionRetry.
   ///
   /// In en, this message translates to:

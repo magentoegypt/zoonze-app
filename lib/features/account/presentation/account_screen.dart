@@ -118,6 +118,12 @@ class _Authenticated extends StatelessWidget {
           onTap: () => context.push(AppRoutes.notifications),
         ),
         ListTile(
+          leading: const Icon(Icons.settings_outlined),
+          title: Text(l10n.settingsTitle),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push(AppRoutes.settings),
+        ),
+        ListTile(
           leading: const Icon(Icons.help_outline),
           title: Text(l10n.accountHelp),
           trailing: const Icon(Icons.chevron_right),
