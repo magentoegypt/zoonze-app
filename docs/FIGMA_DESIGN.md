@@ -22,6 +22,9 @@ between the Figma source of truth and the Flutter implementation in this repo.
 > Splash — Welcome logo lockup** (Z-mark over the `ZOONZE` wordmark) centered in the
 > app bar (the duplicate in-body logo on Sign In was removed), and the "Free 3-hour
 > delivery across the UAE" line was removed from the Launch splash.
+> The same Welcome logo lockup (scaled to fit) is now used across **all** screens —
+> every nav app bar (Home, Categories, PLP, PDP, Wishlist, fixed at 52 px) and the
+> Menu Drawer brand header. Sign Up shows a "Create Account" heading under the logo.
 
 The canvas holds **26 screens** organized into four labelled sections (Figma
 *Sections*), stacked top-to-bottom in app-flow order:
