@@ -112,10 +112,19 @@ class CheckoutRepository {
   /// when the backend `paymentSession` resolver is not deployed yet (Open Q §2)
   /// or surfaces no session, so checkout shows the awaiting-payment state rather
   /// than a fabricated payment UI.
-  Future<PaymentSession?> fetchPaymentSession(String orderNumber) async {
+  /// [email] + [lastname] are the guest's billing details, sent so the resolver
+  /// can authorize a guest (no customer bearer) for the order they just placed;
+  /// both null for logged-in customers (the bearer authorizes).
+  Future<PaymentSession?> fetchPaymentSession(
+    String orderNumber, {
+    String? email,
+    String? lastname,
+  }) async {
     try {
       final data = await _query(CheckoutQueries.paymentSession, {
         'orderNumber': orderNumber,
+        'email': email,
+        'lastname': lastname,
       });
       final json = data['paymentSession'] as Map<String, dynamic>?;
       if (json == null) return null;

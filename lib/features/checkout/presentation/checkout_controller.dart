@@ -9,6 +9,8 @@ import '../domain/payment_session.dart';
 class CheckoutState {
   const CheckoutState({
     this.email = '',
+    this.lastname = '',
+    this.isGuest = false,
     this.shippingMethods = const <ShippingMethodOption>[],
     this.selectedShipping,
     this.paymentMethods = const <PaymentMethodOption>[],
@@ -18,7 +20,11 @@ class CheckoutState {
     this.error,
   });
 
+  /// Billing email + lastname captured at the address step — sent to
+  /// `paymentSession` so a guest order can reach the gateway.
   final String email;
+  final String lastname;
+  final bool isGuest;
   final List<ShippingMethodOption> shippingMethods;
   final ShippingMethodOption? selectedShipping;
   final List<PaymentMethodOption> paymentMethods;
@@ -36,6 +42,8 @@ class CheckoutState {
 
   CheckoutState copyWith({
     String? email,
+    String? lastname,
+    bool? isGuest,
     List<ShippingMethodOption>? shippingMethods,
     Object? selectedShipping = _keep,
     List<PaymentMethodOption>? paymentMethods,
@@ -45,6 +53,8 @@ class CheckoutState {
     Object? error = _keep,
   }) => CheckoutState(
     email: email ?? this.email,
+    lastname: lastname ?? this.lastname,
+    isGuest: isGuest ?? this.isGuest,
     shippingMethods: shippingMethods ?? this.shippingMethods,
     selectedShipping: identical(selectedShipping, _keep)
         ? this.selectedShipping
@@ -88,6 +98,8 @@ class CheckoutController extends Notifier<CheckoutState> {
       final methods = await _repo.setShippingAddress(cartId, address);
       state = state.copyWith(
         email: email,
+        lastname: (address['lastname'] as String?) ?? '',
+        isGuest: isGuest,
         shippingMethods: methods,
         selectedShipping: null,
         paymentMethods: const [],
@@ -163,12 +175,20 @@ class CheckoutController extends Notifier<CheckoutState> {
 
   /// Loads the gateway session for a placed order. A `PENDING` session isn't yet
   /// launchable, so we back-off poll a few times before giving up (the contract's
-  /// PENDING flow). Null when the backend resolver isn't deployed.
+  /// PENDING flow). For a guest order the billing email + lastname captured at
+  /// checkout authorize the call (no customer bearer); a logged-in customer sends
+  /// only the order number. Null when the backend resolver isn't deployed.
   Future<PaymentSession?> loadPaymentSession(String orderNumber) async {
+    final email = state.isGuest ? state.email : null;
+    final lastname = state.isGuest ? state.lastname : null;
     const maxAttempts = 4;
     PaymentSession? session;
     for (var attempt = 0; attempt < maxAttempts; attempt++) {
-      session = await _repo.fetchPaymentSession(orderNumber);
+      session = await _repo.fetchPaymentSession(
+        orderNumber,
+        email: email,
+        lastname: lastname,
+      );
       if (session == null ||
           session.status != PaymentSessionStatus.pending ||
           attempt == maxAttempts - 1) {

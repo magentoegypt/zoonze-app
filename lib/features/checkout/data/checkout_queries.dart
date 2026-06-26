@@ -91,8 +91,8 @@ mutation PlaceOrder($cartId: String!) {
   /// serves both gateways. Until deployed this errors and the repository degrades
   /// to null (checkout shows "awaiting payment").
   static const String paymentSession = r'''
-query PaymentSession($orderNumber: String!) {
-  paymentSession(order_number: $orderNumber) {
+query PaymentSession($orderNumber: String!, $email: String, $lastname: String) {
+  paymentSession(order_number: $orderNumber, email: $email, lastname: $lastname) {
     order_number
     method_code
     gateway

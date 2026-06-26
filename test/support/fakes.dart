@@ -214,6 +214,8 @@ class FakeCheckoutRepository implements CheckoutRepository {
   Map<String, dynamic>? lastAddress;
   String? selectedShippingMethod;
   String? selectedPaymentCode;
+  String? lastSessionEmail;
+  String? lastSessionLastname;
 
   @override
   Future<void> setGuestEmail(String cartId, String email) async {
@@ -263,8 +265,15 @@ class FakeCheckoutRepository implements CheckoutRepository {
   }
 
   @override
-  Future<PaymentSession?> fetchPaymentSession(String orderNumber) async =>
-      paymentSession;
+  Future<PaymentSession?> fetchPaymentSession(
+    String orderNumber, {
+    String? email,
+    String? lastname,
+  }) async {
+    lastSessionEmail = email;
+    lastSessionLastname = lastname;
+    return paymentSession;
+  }
 
   @override
   Future<TabbyConfig?> fetchTabbyConfig() async => tabbyConfig;

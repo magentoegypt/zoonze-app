@@ -108,7 +108,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         _goSuccess(result.orderNumber, pending: false);
         return;
       }
-      // Gateway method: fetch the session and route by its status.
+      // Gateway method: fetch the session (the controller sends the guest's
+      // billing email + lastname to authorize a guest order) and route by status.
       final session = await _controller.loadPaymentSession(result.orderNumber);
       if (!mounted) return;
       await _drive(session, result.orderNumber, state.grandTotal);

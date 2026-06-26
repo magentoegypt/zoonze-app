@@ -23,7 +23,7 @@ Two GraphQL queries + one Flutter `MethodChannel`:
 
 ```graphql
 type Query {
-    paymentSession(order_number: String!): PaymentSessionOutput
+    paymentSession(order_number: String!, email: String, lastname: String): PaymentSessionOutput
         @resolver(class: "MagentoEgypt\\PaymentGraphQl\\Model\\Resolver\\PaymentSession")
         @doc(description: "Create or return the gateway payment session for an already-placed order (keyed by increment id). Requires the customer/guest who owns the order.")
 }
@@ -57,6 +57,18 @@ enum PaymentSessionStatus {
 }
 ```
 
+### Authorization (guest vs logged-in)
+
+A guest places the order without a customer bearer, so it must prove ownership of the order to
+reach the gateway. The two optional args carry the **billing email + lastname the app collected
+at checkout**:
+
+- **Logged-in customer:** `Authorization: Bearer <token>` is sent; the resolver matches the order
+  to the customer and **ignores** `email`/`lastname` (the app sends only `order_number`).
+- **Guest:** no bearer. The resolver authorizes by matching `email` + `lastname` against the
+  order's **billing address** (the classic Magento guest-order lookup). Mismatch → GraphQL
+  authorization error. The app sends both for any order it placed as a guest.
+
 ### `isReady` contract
 
 The app's `isReady()` is **exactly** `status == READY`. Only `READY` may launch the native SDK.
@@ -70,7 +82,7 @@ The app's `isReady()` is **exactly** `status == READY`. Only `READY` may launch 
 
 ### Per-gateway resolver behaviour
 
-**Resolution flow:** load order by `order_number` → assert it belongs to the current customer/guest (else GraphQL authorization error) → read `order.payment.method` → dispatch to the gateway builder below → normalise to `PaymentSessionOutput`.
+**Resolution flow:** load order by `order_number` → assert ownership (logged-in: bearer matches the order's customer; guest: `email` + `lastname` match the order's billing address) else GraphQL authorization error → read `order.payment.method` → dispatch to the gateway builder below → normalise to `PaymentSessionOutput`.
 
 #### N-Genius (`ngeniusonline`)
 
@@ -271,6 +283,7 @@ finalises the order server-side) before showing the success screen.
 | Contract | App |
 |---|---|
 | `paymentSession` SDL | `CheckoutQueries.paymentSession` → `CheckoutRepository.fetchPaymentSession` → `PaymentSession` (`domain/payment_session.dart`) |
+| guest `email`/`lastname` args | captured at the address step (`CheckoutState.email`/`lastname`/`isGuest`); `CheckoutController.loadPaymentSession` sends them for guest orders, omits them for customers |
 | `isReady == READY` | `PaymentSession.isReady` (`status == ready`) |
 | `PENDING` poll | `CheckoutController.loadPaymentSession` (back-off, 4 attempts) |
 | `REJECTED` / `FAILED` | checkout `_drive`: rejected → terminal "choose another method"; failed → retry |

@@ -148,6 +148,44 @@ void main() {
       expect(state.addressDone, isFalse);
     });
 
+    test(
+      'loadPaymentSession sends the guest billing email + lastname',
+      () async {
+        final repo = FakeCheckoutRepository();
+        final container = await _seededContainer(repo);
+        final checkout = container.read(checkoutControllerProvider.notifier);
+
+        await checkout.submitAddress(
+          email: 'guest@example.com',
+          address: _address,
+          isGuest: true,
+        );
+        await checkout.loadPaymentSession('000000123');
+
+        expect(repo.lastSessionEmail, 'guest@example.com');
+        expect(repo.lastSessionLastname, 'Hassan');
+      },
+    );
+
+    test(
+      'loadPaymentSession sends no billing details for a customer order',
+      () async {
+        final repo = FakeCheckoutRepository();
+        final container = await _seededContainer(repo);
+        final checkout = container.read(checkoutControllerProvider.notifier);
+
+        await checkout.submitAddress(
+          email: 'layla@example.com',
+          address: _address,
+          isGuest: false,
+        );
+        await checkout.loadPaymentSession('000000123');
+
+        expect(repo.lastSessionEmail, isNull);
+        expect(repo.lastSessionLastname, isNull);
+      },
+    );
+
     test('submitAddress is a no-op without a cart', () async {
       // No addToCart → cart id stays empty → checkout cannot proceed.
       final repo = FakeCheckoutRepository();

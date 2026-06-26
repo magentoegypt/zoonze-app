@@ -76,11 +76,18 @@ enum PaymentGateway { NGENIUS  TABBY }
 enum PaymentSessionStatus { READY  PENDING  REJECTED  FAILED }
 ```
 
-`isReady` is **exactly** `status == READY`. N-Genius wraps the existing gateway create-order call
-(returns the `_links.payment-authorization` href + full order JSON in `additional_data.order_response`);
-Tabby wraps `Model\SessionData::createSession()` (returns `payment_id` + `web_url`). The app already
+The query is `paymentSession(order_number: String!, email: String, lastname: String)`. `isReady`
+is **exactly** `status == READY`. N-Genius wraps the existing gateway create-order call (returns the
+`_links.payment-authorization` href + full order JSON in `additional_data.order_response`); Tabby
+wraps `Model\SessionData::createSession()` (returns `payment_id` + `web_url`). The app already
 consumes this shape (`checkout_queries.paymentSession`) and **degrades to "awaiting payment" if the
 field is absent**, so deploying it is non-breaking.
+
+**Guest orders reach the gateway** via the optional `email` + `lastname` args: a logged-in customer
+is authorized by the bearer (app sends only `order_number`); a guest is authorized by matching the
+billing `email` + `lastname` it entered at checkout against the order's billing address. The app
+captures these at the address step (`CheckoutState.email`/`lastname`/`isGuest`) and
+`loadPaymentSession` sends them only for guest orders.
 
 ### Tabby config — three products, backend-driven enable + thresholds + promo
 
