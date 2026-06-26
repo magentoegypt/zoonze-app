@@ -62,8 +62,9 @@ void main() {
       expect(state.shippingMethods, hasLength(1));
       expect(repo.guestEmail, 'guest@example.com');
 
-      final shippingOk =
-          await checkout.selectShipping(state.shippingMethods.first);
+      final shippingOk = await checkout.selectShipping(
+        state.shippingMethods.first,
+      );
       expect(shippingOk, isTrue);
       state = container.read(checkoutControllerProvider);
       expect(state.shippingDone, isTrue);
@@ -83,44 +84,51 @@ void main() {
       expect(container.read(checkoutControllerProvider).isBusy, isFalse);
     });
 
-    test('resetPayment clears the selection but keeps the shipping step',
-        () async {
-      final repo = FakeCheckoutRepository();
-      final container = await _seededContainer(repo);
-      final checkout = container.read(checkoutControllerProvider.notifier);
+    test(
+      'resetPayment clears the selection but keeps the shipping step',
+      () async {
+        final repo = FakeCheckoutRepository();
+        final container = await _seededContainer(repo);
+        final checkout = container.read(checkoutControllerProvider.notifier);
 
-      await checkout.submitAddress(
-          email: 'guest@example.com', address: _address, isGuest: true);
-      var state = container.read(checkoutControllerProvider);
-      await checkout.selectShipping(state.shippingMethods.first);
-      state = container.read(checkoutControllerProvider);
-      await checkout.selectPayment(state.paymentMethods.first);
-      expect(container.read(checkoutControllerProvider).paymentDone, isTrue);
+        await checkout.submitAddress(
+          email: 'guest@example.com',
+          address: _address,
+          isGuest: true,
+        );
+        var state = container.read(checkoutControllerProvider);
+        await checkout.selectShipping(state.shippingMethods.first);
+        state = container.read(checkoutControllerProvider);
+        await checkout.selectPayment(state.paymentMethods.first);
+        expect(container.read(checkoutControllerProvider).paymentDone, isTrue);
 
-      // A redirect reject/cancel bounces the user back to method selection.
-      checkout.resetPayment();
-      state = container.read(checkoutControllerProvider);
-      expect(state.paymentDone, isFalse);
-      expect(state.selectedPayment, isNull);
-      expect(state.shippingDone, isTrue);
-      expect(state.paymentMethods, hasLength(2));
-    });
+        // A redirect reject/cancel bounces the user back to method selection.
+        checkout.resetPayment();
+        state = container.read(checkoutControllerProvider);
+        expect(state.paymentDone, isFalse);
+        expect(state.selectedPayment, isNull);
+        expect(state.shippingDone, isTrue);
+        expect(state.paymentMethods, hasLength(2));
+      },
+    );
 
-    test('does not set the guest email for an authenticated customer',
-        () async {
-      final repo = FakeCheckoutRepository();
-      final container = await _seededContainer(repo);
-      final checkout = container.read(checkoutControllerProvider.notifier);
+    test(
+      'does not set the guest email for an authenticated customer',
+      () async {
+        final repo = FakeCheckoutRepository();
+        final container = await _seededContainer(repo);
+        final checkout = container.read(checkoutControllerProvider.notifier);
 
-      await checkout.submitAddress(
-        email: 'layla@example.com',
-        address: _address,
-        isGuest: false,
-      );
+        await checkout.submitAddress(
+          email: 'layla@example.com',
+          address: _address,
+          isGuest: false,
+        );
 
-      expect(repo.guestEmail, isNull);
-      expect(repo.lastAddress, _address);
-    });
+        expect(repo.guestEmail, isNull);
+        expect(repo.lastAddress, _address);
+      },
+    );
 
     test('returns false and records the error when a step fails', () async {
       final repo = FakeCheckoutRepository(fail: true);

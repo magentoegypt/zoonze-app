@@ -86,40 +86,43 @@ mutation PlaceOrder($cartId: String!) {
 }
 ''';
 
-  /// Custom resolver the backend adds to surface a provider session reference
-  /// for a placed order, keyed by order number (Open Q §2 / native-SDK flow —
-  /// see docs/decisions/payments.md). One resolver serves both gateways. Until
-  /// it is deployed this query errors and the repository degrades to "pending".
+  /// `MagentoEgypt_PaymentGraphQl` resolver — create/return the gateway session
+  /// for an already-placed order (docs/backend/payment-contract.md). One resolver
+  /// serves both gateways. Until deployed this errors and the repository degrades
+  /// to null (checkout shows "awaiting payment").
   static const String paymentSession = r'''
 query PaymentSession($orderNumber: String!) {
   paymentSession(order_number: $orderNumber) {
     order_number
     method_code
+    gateway
     status
-    session_reference
-    redirect_url
-    client_token
-    public_key
-    expires_at
+    payment_id
+    web_url
+    publishable_key
     additional_data { key value }
   }
 }
 ''';
 
-  /// Tabby "Pay in 4" settings, read from Magento config (enable flag +
-  /// thresholds — never hardcoded). Custom resolver the backend exposes (see
-  /// docs/decisions/payments.md); store-scoped via the Store header. Until it is
+  /// Tabby eligibility + promo metadata (`tabbyConfig`), read from Magento config
+  /// (enable flags + thresholds — never hardcoded). Eligibility/promo only;
+  /// checkout availability still comes from cart available_payment_methods. Until
   /// deployed this errors and the repository degrades to null (promo hidden).
   static const String tabbyConfig = r'''
 query TabbyConfig {
   tabbyConfig {
+    enabled
+    publishable_key
+    merchant_code
     currency
     products {
       type
+      method_code
       enabled
-      installments
-      min_order_total { value currency }
-      max_order_total { value currency }
+      min_amount
+      max_amount
+      promo_enabled
     }
   }
 }

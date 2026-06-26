@@ -7,6 +7,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../core/validation/validators.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../auth/presentation/auth_controller.dart';
+import '../../../catalog/domain/money.dart';
 import '../../domain/checkout.dart';
 import '../../domain/payment_session.dart';
 import '../../domain/tabby_config.dart';
@@ -100,30 +101,65 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         _snack(AppLocalizations.of(context).errorGeneric);
         return;
       }
-      final payment = ref.read(checkoutControllerProvider).selectedPayment;
+      final state = ref.read(checkoutControllerProvider);
+      final payment = state.selectedPayment;
       if (payment == null || !payment.isRedirect) {
-        // Non-redirect method (e.g. cash on delivery) completes immediately.
+        // Non-SDK method (e.g. cash on delivery) completes immediately.
         _goSuccess(result.orderNumber, pending: false);
         return;
       }
-      // Redirect / native-SDK method: fetch the provider session and present it
-      // through the matching gateway.
+      // Gateway method: fetch the session and route by its status.
       final session = await _controller.loadPaymentSession(result.orderNumber);
       if (!mounted) return;
-      final gateway = session == null
-          ? null
-          : ref.read(paymentGatewayResolverProvider).resolve(session);
-      if (gateway == null || session == null) {
-        // Backend has not surfaced a usable session yet (Open Q §2). The order is
-        // placed and awaiting payment — never fake a card/installment UI.
-        _goSuccess(result.orderNumber, pending: true);
-        return;
-      }
-      final outcome = await gateway.present(context, session);
-      if (!mounted) return;
-      _handleOutcome(outcome, result.orderNumber);
+      await _drive(session, result.orderNumber, state.grandTotal);
     } finally {
       _placing = false;
+    }
+  }
+
+  Future<void> _drive(
+    PaymentSession? session,
+    String orderNumber,
+    Money? amount,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    // No session: backend resolver not deployed yet → order awaiting payment.
+    if (session == null) {
+      _goSuccess(orderNumber, pending: true);
+      return;
+    }
+    switch (session.status) {
+      case PaymentSessionStatus.ready:
+        final gateway = ref
+            .read(paymentGatewayResolverProvider)
+            .resolve(session);
+        if (gateway == null) {
+          _goSuccess(orderNumber, pending: true);
+          return;
+        }
+        try {
+          final outcome = await gateway.present(
+            context,
+            session,
+            amount: amount,
+          );
+          if (!mounted) return;
+          _handleOutcome(outcome, orderNumber);
+        } on PaymentGatewayUnavailable {
+          // Native module not installed yet — order awaiting payment.
+          if (!mounted) return;
+          _goSuccess(orderNumber, pending: true);
+        }
+      case PaymentSessionStatus.pending:
+        // Still not launchable after the back-off poll.
+        _goSuccess(orderNumber, pending: true);
+      case PaymentSessionStatus.rejected:
+        // Terminal — the gateway refused this order; pick another method.
+        _controller.resetPayment();
+        _snack(l10n.paymentSessionUnavailable);
+      case PaymentSessionStatus.failed:
+        // Retryable — keep the selection so the user can place again.
+        _snack(l10n.paymentFailed);
     }
   }
 
@@ -408,8 +444,11 @@ class _PaymentCard extends StatelessWidget {
         ),
         title: Text(method.title),
         subtitle: switch (method.tabbyProduct) {
-          TabbyProductType.payIn4 => Text(l10n.checkoutPayIn4),
+          TabbyProductType.installments => Text(l10n.checkoutPayIn4),
           TabbyProductType.payLater => Text(l10n.checkoutPayLater),
+          TabbyProductType.creditCardInstallments => Text(
+            l10n.checkoutCardInstalments,
+          ),
           null => null,
         },
         trailing: method.isTabby

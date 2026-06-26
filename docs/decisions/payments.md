@@ -2,16 +2,16 @@
 
 **Status:** Accepted (owner confirmed "a native SDK in phase 3").
 **Resolves:** Open Question §2 (payment gateway exposure).
-**Scope:** N-Genius (Network International, cards) + Tabby (BNPL, "Pay in 4").
+**Scope:** N-Genius (Network International, cards) + Tabby (BNPL: installments / pay later / card installments).
+
+> **Authoritative contract:** `docs/backend/payment-contract.md` (module `MagentoEgypt_PaymentGraphQl`).
+> This decision doc is the app-side rationale; where they differ, the contract wins. The Dart side
+> already matches the contract field-for-field.
 
 The app integrates both gateways through **native mobile SDKs**, not a hand-rolled
 WebView redirect. The Dart side is built and tested now; the native modules, SDK
-dependencies, merchant credentials, and the one backend resolver below are the
+dependencies, merchant credentials, and the two backend resolvers are the
 on-platform steps (they need a device/Xcode build + secrets we don't hold here).
-
-This decision is grounded in the live SDK/extension sources as of 2026 — see the
-research notes at the bottom. **Introspect, don't assume**: pin the exact SDK
-versions and the live `paymentSession` shape against the deployed store before release.
 
 ---
 
@@ -21,20 +21,25 @@ A provider-agnostic seam so the screen never talks to an SDK directly:
 
 ```
 checkout_screen._placeOrder()
-  → placeOrder (Magento)                      → order_number
-  → CheckoutController.loadPaymentSession()    → PaymentSession (backend resolver)
-  → PaymentGatewayResolver.resolve(session)    → which gateway, or null
-      ngenius + session_reference  → NativePaymentGateway  (MethodChannel → native SDK)
-      redirect_url present         → RedirectPaymentGateway (in-app WebView; Tabby web_url / N-Genius HPP)
-      not ready / nothing to open  → null → "awaiting payment" screen (no fake UI)
-  → gateway.present() → PaymentOutcome {success, cancelled, rejected, failed, expired}
-  → _handleOutcome(): reject/expire/cancel bounce back to method selection (§5)
+  → placeOrder (Magento)                        → order_number
+  → CheckoutController.loadPaymentSession()      → PaymentSession (back-off poll while PENDING)
+  → _drive(session) routes by status:
+      READY     → PaymentGatewayResolver.resolve → NativePaymentGateway (channel zoonze/payments)
+                    .present() → PaymentOutcome {success, cancelled, rejected, failed, expired}
+                    → _handleOutcome(): reject/expire/cancel bounce back to method selection (§5)
+      PENDING   → "awaiting payment" screen (not launchable)
+      REJECTED  → terminal: reset payment + "choose another method"
+      FAILED    → retryable: keep selection + retry
+      (no session / module missing) → "awaiting payment" screen (no fake UI)
 ```
 
-Files: `domain/payment_session.dart` (`PaymentSession`, `PaymentOutcome`,
-`PaymentSessionStatus`), `payments/payment_gateway.dart` (interface + resolver),
-`payments/native_payment_gateway.dart`, `payments/redirect_payment_gateway.dart`,
-`presentation/screens/payment_redirect_screen.dart`.
+Both gateways are driven through the **single native channel** (`zoonze/payments`); the native
+module hosts the N-Genius SDK and the Tabby SDK (Tabby's SDK renders its own hosted webview).
+There is no Flutter-side WebView redirect engine — it was removed in favour of the native path.
+
+Files: `domain/payment_session.dart` (`PaymentSession`, `PaymentProvider`, `PaymentOutcome`,
+`PaymentSessionStatus`), `payments/payment_gateway.dart` (interface + resolver + `PaymentGatewayUnavailable`),
+`payments/native_payment_gateway.dart`.
 
 Server-side order-status re-query before showing success is still **mandatory** —
 never trust the client return alone (CLAUDE.md §5).
@@ -53,72 +58,70 @@ Neither extension exposes the SDK session reference to a headless client out of 
   `POST /V1/guest-carts/:cartId/tabby/session-data/` returns `{ status, payment_id,
   available_products }`. Reachable headlessly, but vendor-shaped.
 
-**Recommended contract — one custom GraphQL query** keyed by order number, serving both
-gateways (runs *after* `placeOrder`, so it doesn't touch the cart mutation contract):
+**Final contract — `paymentSession(order_number)`** (full SDL + per-gateway resolver behaviour
+in `docs/backend/payment-contract.md` §①):
 
 ```graphql
-type Query { paymentSession(order_number: String!): PaymentSessionOutput }
-
 type PaymentSessionOutput {
   order_number: String!
-  method_code: String!            # "ngenius_online" | "tabby_checkout" | ...
-  status: PaymentSessionStatus!   # PENDING | READY | FAILED | REJECTED | EXPIRED
-  session_reference: String       # N-Genius order ref · Tabby payment_id
-  redirect_url: String            # Tabby web_url · N-Genius HPP (null for pure native)
-  client_token: String            # short-lived access token, if any
-  public_key: String              # Tabby publishable key for SDK init
-  expires_at: String              # ISO-8601, optional
-  additional_data: [KeyValue!]    # provider extras (e.g. Tabby available_products)
+  method_code: String!            # ngeniusonline | tabby_installments | tabby_cc_installments | tabby_checkout
+  gateway: PaymentGateway!        # NGENIUS | TABBY
+  status: PaymentSessionStatus!   # READY | PENDING | REJECTED | FAILED
+  payment_id: String              # N-Genius order ref · Tabby payment.id
+  web_url: String                 # N-Genius payment-authorization href · Tabby product web_url
+  publishable_key: String         # Tabby public key (native SDK); null for N-Genius
+  additional_data: [PaymentSessionData!]!   # full order JSON, hrefs, outlet ref, selected product…
 }
-type KeyValue { key: String!  value: String }
-enum PaymentSessionStatus { PENDING  READY  FAILED  REJECTED  EXPIRED }
+enum PaymentGateway { NGENIUS  TABBY }
+enum PaymentSessionStatus { READY  PENDING  REJECTED  FAILED }
 ```
 
-Resolver effort is small: N-Genius wraps the existing gateway create-order call; Tabby
-wraps `Model\SessionData::createSession()` (already returns `payment_id`). The app already
-consumes this exact shape (`checkout_queries.paymentSession`) and **degrades to "awaiting
-payment" if the field is absent**, so deploying it is non-breaking.
+`isReady` is **exactly** `status == READY`. N-Genius wraps the existing gateway create-order call
+(returns the `_links.payment-authorization` href + full order JSON in `additional_data.order_response`);
+Tabby wraps `Model\SessionData::createSession()` (returns `payment_id` + `web_url`). The app already
+consumes this shape (`checkout_queries.paymentSession`) and **degrades to "awaiting payment" if the
+field is absent**, so deploying it is non-breaking.
 
-### Tabby config — both products, backend-driven enable + thresholds
+### Tabby config — three products, backend-driven enable + thresholds + promo
 
-Tabby offers two products — **"Pay in 4"** and **"Pay Later"** — each enabled independently
-in Magento config with its own min/max thresholds. **Nothing is hardcoded in the app**: a
-small store-scoped resolver returns the products, and the promo + checkout reflect whichever
-the backend enables. The resolver is read, cached, and refetched on a store switch.
+Tabby carries three products — **INSTALLMENTS** ("Pay in 4"), **PAY_LATER**, and
+**CREDIT_CARD_INSTALLMENTS** — each enabled independently with its own AED thresholds and a
+separate `promo_enabled` toggle. **Nothing is hardcoded in the app.** Full SDL + type-string
+normalisation in `docs/backend/payment-contract.md` §②:
 
 ```graphql
-type Query { tabbyConfig: TabbyConfigOutput }
-
 type TabbyConfigOutput {
-  currency: String!                  # thresholds currency (AED)
-  products: [TabbyProductConfig!]!
-}
-type TabbyProductConfig {
-  type: TabbyProductType!            # PAY_IN_4 | PAY_LATER
   enabled: Boolean!
-  installments: Int!                 # Pay in 4 → 4; Pay Later → 1
-  min_order_total: Money             # inclusive lower bound (null = unbounded)
-  max_order_total: Money             # inclusive upper bound (null = unbounded)
+  publishable_key: String
+  merchant_code: String
+  currency: String!                  # AED
+  products: [TabbyProduct!]!         # one entry per ENABLED product
 }
-enum TabbyProductType { PAY_IN_4  PAY_LATER }
+type TabbyProduct {
+  type: TabbyProductType!            # INSTALLMENTS | PAY_LATER | CREDIT_CARD_INSTALLMENTS
+  method_code: String!               # tabby_installments | tabby_cc_installments | tabby_checkout
+  enabled: Boolean!
+  min_amount: Float                  # inclusive AED bound (null = unbounded)
+  max_amount: Float                  # inclusive AED bound (null = unbounded)
+  promo_enabled: Boolean!            # product_promotions (PDP) / cart_promotions (cart)
+}
 ```
 
 App side (`domain/tabby_config.dart`, `payments/tabby_promo.dart`):
 - `tabbyConfigProvider` (FutureProvider) reads `fetchTabbyConfig()`; null when the resolver
   isn't deployed or Tabby is unconfigured → **promo hidden** (no fabricated eligibility).
-- `TabbyProduct.isEligible(price, currency)` gates per product on enable + currency + min/max;
-  `TabbyConfig.eligibleFor(price)` returns the enabled, in-range products.
-- `TabbyPromo(price:)` renders **one line per eligible product** on the **PDP** (under the
+- `TabbyProduct.isPromoEligible(price, currency)` gates a promo on enable **+ promo_enabled** +
+  currency + min/max; `TabbyConfig.promoFor(price)` returns the promo-eligible products.
+- `TabbyPromo(price:)` renders **one line per promo-eligible product** on the **PDP** (under the
   price) and **cart** (under the grand total): "or 4 interest-free payments of AED X" for
-  Pay in 4, "or pay later, interest-free" for Pay Later. Hidden when none qualify.
-- Checkout labels reflect the product too: `PaymentMethodOption.tabbyProduct` ("later" in the
-  method code → Pay Later, else Pay in 4) drives the payment-card subtitle. The method list
-  itself still comes only from `cart { available_payment_methods }`, so the backend ultimately
-  controls which Tabby products appear at checkout.
-- Backend wiring: read the values from the Tabby extension config (`tabby/m2-payments` store
-  config). The official `tabby_flutter_inapp_sdk` ships `TabbyProductPageSnippet` (a richer,
-  dynamic promo) — swap `TabbyPromo` for it once the SDK + publishable key are wired; the
-  config gate stays the source of truth either way.
+  installments (count 4 by Tabby definition), "or pay later, interest-free", "or pay by card in
+  instalments". Hidden when none qualify.
+- Checkout labels reflect the product too: `PaymentMethodOption.tabbyProduct` (from the method
+  code) drives the payment-card subtitle. The method list itself still comes only from
+  `cart { available_payment_methods }`, so the backend controls which products appear at checkout.
+- The official `tabby_flutter_inapp_sdk` ships `TabbyProductPageSnippet` (a richer, dynamic promo)
+  — swap `TabbyPromo` for it once the SDK + publishable key are wired; the config gate stays the
+  source of truth either way.
 
 ---
 
@@ -132,25 +135,23 @@ App side (`domain/tabby_config.dart`, `payments/tabby_promo.dart`):
   → check `session.status` (`created`/`rejected`) → `TabbyWebView.showWebView(context:, webUrl: session.availableProducts.installments.webUrl, onResult:)`.
 - `WebViewResult` → our `PaymentOutcome`: `authorized→success`, `rejected→rejected`,
   `expired→expired`, `close→cancelled`. Pre-`created` rejection bounces back **before** the WebView.
-- Today the app presents Tabby's `web_url` through `RedirectPaymentGateway` (works once the
-  backend returns it); swap to the official SDK for the promo widget (`TabbyProductPageSnippet`)
-  and native callbacks. The publishable key comes from the session (`public_key`) — **no secret in the repo**.
+- The native module hosts this SDK and is invoked via the `zoonze/payments` channel with the
+  Tabby `web_url` + `publishable_key` + `payment_id` from the session — **no secret in the repo**.
 
 ### N-Genius — native SDKs + a thin platform channel
 - Android `payment-sdk-android` (**v5.0.1**, JitPack: `com.github.network-international.payment-sdk-android:payment-sdk[-core]`), min API 21.
 - iOS `NISdk` (**v6.0.1**, CocoaPods), iOS 13+.
-- No official Flutter plugin — we own a thin bridge on `MethodChannel('com.zoonze.shop/payments')`.
+- No official Flutter plugin — we own a thin bridge on `MethodChannel('zoonze/payments')`,
+  method `pay` (full arg map + result in `docs/backend/payment-contract.md` §③).
   - Android: `PaymentClient(activity).launchCardPayment(CardPaymentRequest.Builder(gatewayUrl = payment-authorization href))`
     → `onActivityResult` → `CardPaymentData.getFromIntent(data)`; `executeThreeDS(...)` when needed.
   - iOS: `NISdk.sharedInstance.showCardPaymentViewWith(...)` with the full order response; conform to
     `CardPaymentDelegate.paymentDidComplete(with:)`.
-  - Channel `invokeMethod('pay', { provider:'ngenius', orderNumber, gatewayUrl, sessionReference, clientToken, ... })`
-    returns a status string mapped in `NativePaymentGateway._mapStatus`
-    (`success|authorised|captured→success`, `cancelled→cancelled`, `rejected|declined→rejected`,
-    `expired→expired`, else `failed`).
-- Android needs the **`payment-authorization` href** (`redirect_url`/`session_reference`);
-  iOS needs the **full order response** — surface the whole order-creation JSON in
-  `session_reference`/`additional_data` so both platforms have what they need.
+  - `pay` returns a **result map**; `NativePaymentGateway._mapStatus` maps the canonical `status`
+    (`SUCCESS|AUTHORISED|CAPTURED|PURCHASED|POST_AUTH_REVIEW→success`, `CANCELLED|ABORTED|CLOSED→cancelled`,
+    `DECLINED|AUTH_FAILED|THREE_DS_FAILURE|REJECTED→rejected`, `EXPIRED→expired`, else `failed`).
+- Android consumes `paymentAuthorizationHref` (= `web_url`); iOS consumes `orderResponse`
+  (the full order JSON in `additional_data.order_response`).
 
 ---
 
@@ -166,12 +167,14 @@ App side (`domain/tabby_config.dart`, `payments/tabby_promo.dart`):
 
 ## 5. Open items before go-live
 
-1. **Add the `paymentSession` GraphQL resolver** (both gateways) — the hard blocker.
-2. Add the native modules + SDK deps + merchant credentials (env/secret, never committed);
-   add `tabby_flutter_inapp_sdk` if/when the Tabby promo widget + native callbacks are wanted.
-3. Confirm Tabby visibility comes **only** from `cart { available_payment_methods }`; treat
-   mid-flow **reject as a normal return**.
-4. Verify exact SDK versions + the live `paymentSession`/Tabby return keys against the
+1. **Build module `MagentoEgypt_PaymentGraphQl`** with the `paymentSession` + `tabbyConfig`
+   resolvers (`docs/backend/payment-contract.md` §①–②) — the hard blocker.
+2. Implement the native `zoonze/payments` modules (Android `payment-sdk-android`, iOS `NISdk`,
+   Tabby SDK) per the channel contract (§③); add SDK deps + merchant credentials (env/secret,
+   never committed). Optionally add `tabby_flutter_inapp_sdk` for the richer promo widget.
+3. Confirm Tabby checkout visibility comes **only** from `cart { available_payment_methods }`;
+   treat mid-flow **reject as a normal return**.
+4. Verify exact SDK versions + the live `paymentSession`/`tabbyConfig` shapes against the
    deployed store (`tool/introspect.sh` + a device build).
 
 ---

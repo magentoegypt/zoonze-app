@@ -145,6 +145,7 @@
   "checkoutPlaceOrder": "Place Order",
   "checkoutPayIn4": "or 4 interest-free payments",
   "checkoutPayLater": "Pay later, interest-free",
+  "checkoutCardInstalments": "Pay by card in instalments",
   "promoTabbyPayIn4": "or {count} interest-free payments of {amount}",
   "@promoTabbyPayIn4": {
     "placeholders": {
@@ -153,6 +154,8 @@
     }
   },
   "promoTabbyPayLater": "or pay later, interest-free",
+  "promoTabbyCardInstalments": "or pay by card in instalments",
+  "paymentSessionUnavailable": "Tabby is unavailable for this order. Please choose another payment method.",
   "fieldCountryLabel": "Country",
   "countryUae": "United Arab Emirates",
   "paymentDeclined": "Payment was declined. Please choose another payment method.",

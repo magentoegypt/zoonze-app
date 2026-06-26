@@ -122,12 +122,11 @@ class CheckoutRepository {
       return PaymentSession(
         orderNumber: (json['order_number'] as String?) ?? orderNumber,
         methodCode: (json['method_code'] as String?) ?? '',
+        gateway: _gateway(json['gateway'] as String?),
         status: _sessionStatus(json['status'] as String?),
-        sessionReference: json['session_reference'] as String?,
-        redirectUrl: json['redirect_url'] as String?,
-        clientToken: json['client_token'] as String?,
-        publicKey: json['public_key'] as String?,
-        expiresAt: json['expires_at'] as String?,
+        paymentId: json['payment_id'] as String?,
+        webUrl: json['web_url'] as String?,
+        publishableKey: json['publishable_key'] as String?,
         additionalData: _keyValues(json['additional_data'] as List<dynamic>?),
       );
     } on Failure {
@@ -135,9 +134,13 @@ class CheckoutRepository {
     }
   }
 
-  /// Fetches the backend-configured Tabby products ("Pay in 4" + "Pay Later")
-  /// with their enable flags and thresholds. Returns null when the resolver
-  /// isn't deployed or Tabby is unconfigured, so the promo/labels hide.
+  PaymentProvider _gateway(String? raw) => raw?.toUpperCase() == 'TABBY'
+      ? PaymentProvider.tabby
+      : PaymentProvider.ngenius;
+
+  /// Fetches the backend-configured Tabby products (installments / pay later /
+  /// card instalments) with enable flags, thresholds and promo toggles. Returns
+  /// null when the resolver isn't deployed or Tabby is unconfigured.
   Future<TabbyConfig?> fetchTabbyConfig() async {
     try {
       final data = await _query(CheckoutQueries.tabbyConfig, const {});
@@ -151,7 +154,10 @@ class CheckoutRepository {
               .toList() ??
           const <TabbyProduct>[];
       return TabbyConfig(
+        enabled: (json['enabled'] as bool?) ?? false,
         currency: (json['currency'] as String?) ?? 'AED',
+        publishableKey: json['publishable_key'] as String?,
+        merchantCode: json['merchant_code'] as String?,
         products: products,
       );
     } on Failure {
@@ -164,28 +170,31 @@ class CheckoutRepository {
     if (type == null) return null;
     return TabbyProduct(
       type: type,
+      methodCode: (json['method_code'] as String?) ?? '',
       enabled: (json['enabled'] as bool?) ?? false,
-      installments:
-          (json['installments'] as num?)?.toInt() ??
-          (type == TabbyProductType.payIn4 ? 4 : 1),
-      minOrderTotal: moneyFromJson(
-        json['min_order_total'] as Map<String, dynamic>?,
-      )?.amount,
-      maxOrderTotal: moneyFromJson(
-        json['max_order_total'] as Map<String, dynamic>?,
-      )?.amount,
+      promoEnabled: (json['promo_enabled'] as bool?) ?? false,
+      minAmount: (json['min_amount'] as num?)?.toDouble(),
+      maxAmount: (json['max_amount'] as num?)?.toDouble(),
     );
   }
 
+  /// Normalises Tabby's many type spellings (case-insensitive) per the contract.
   TabbyProductType? _tabbyType(String? raw) {
-    switch (raw?.toUpperCase()) {
-      case 'PAY_IN_4':
-      case 'PAY_IN_INSTALLMENTS':
-      case 'INSTALLMENTS':
-        return TabbyProductType.payIn4;
-      case 'PAY_LATER':
-      case 'PAYLATER':
+    switch (raw?.toLowerCase().replaceAll('-', '_').replaceAll(' ', '_')) {
+      case 'installments':
+      case 'installment':
+      case 'pay_in_4':
+      case 'split':
+        return TabbyProductType.installments;
+      case 'pay_later':
+      case 'paylater':
+      case 'pay_in_14':
+      case 'tabby_checkout':
         return TabbyProductType.payLater;
+      case 'credit_card_installments':
+      case 'cc_installments':
+      case 'creditcard_installments':
+        return TabbyProductType.creditCardInstallments;
       default:
         return null;
     }
@@ -195,12 +204,10 @@ class CheckoutRepository {
     switch (raw?.toUpperCase()) {
       case 'READY':
         return PaymentSessionStatus.ready;
-      case 'FAILED':
-        return PaymentSessionStatus.failed;
       case 'REJECTED':
         return PaymentSessionStatus.rejected;
-      case 'EXPIRED':
-        return PaymentSessionStatus.expired;
+      case 'FAILED':
+        return PaymentSessionStatus.failed;
       default:
         return PaymentSessionStatus.pending;
     }

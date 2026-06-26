@@ -25,7 +25,7 @@ class TabbyPromo extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final config = ref.watch(tabbyConfigProvider).valueOrNull;
-    final eligible = config?.eligibleFor(price) ?? const <TabbyProduct>[];
+    final eligible = config?.promoFor(price) ?? const <TabbyProduct>[];
     if (eligible.isEmpty) return const SizedBox.shrink();
     final l10n = AppLocalizations.of(context);
     return Padding(
@@ -58,14 +58,18 @@ class TabbyPromo extends ConsumerWidget {
     );
   }
 
-  String _message(AppLocalizations l10n, TabbyProduct product) =>
-      switch (product.type) {
-        TabbyProductType.payIn4 => l10n.promoTabbyPayIn4(
-          product.installments,
-          product.perInstallment(price).formatted(),
-        ),
-        TabbyProductType.payLater => l10n.promoTabbyPayLater,
-      };
+  String _message(AppLocalizations l10n, TabbyProduct product) {
+    final per = product.perInstallment(price);
+    return switch (product.type) {
+      TabbyProductType.installments when per != null => l10n.promoTabbyPayIn4(
+        product.type.installmentCount ?? 4,
+        per.formatted(),
+      ),
+      TabbyProductType.installments => l10n.promoTabbyPayLater,
+      TabbyProductType.payLater => l10n.promoTabbyPayLater,
+      TabbyProductType.creditCardInstallments => l10n.promoTabbyCardInstalments,
+    };
+  }
 }
 
 class _TabbyChip extends StatelessWidget {

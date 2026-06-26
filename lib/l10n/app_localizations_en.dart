@@ -400,12 +400,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get checkoutPayLater => 'Pay later, interest-free';
 
   @override
+  String get checkoutCardInstalments => 'Pay by card in instalments';
+
+  @override
   String promoTabbyPayIn4(int count, String amount) {
     return 'or $count interest-free payments of $amount';
   }
 
   @override
   String get promoTabbyPayLater => 'or pay later, interest-free';
+
+  @override
+  String get promoTabbyCardInstalments => 'or pay by card in instalments';
+
+  @override
+  String get paymentSessionUnavailable =>
+      'Tabby is unavailable for this order. Please choose another payment method.';
 
   @override
   String get fieldCountryLabel => 'Country';

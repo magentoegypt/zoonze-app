@@ -396,12 +396,22 @@ class AppLocalizationsAr extends AppLocalizations {
   String get checkoutPayLater => 'ادفع لاحقًا بدون فوائد';
 
   @override
+  String get checkoutCardInstalments => 'ادفع بالبطاقة على أقساط';
+
+  @override
   String promoTabbyPayIn4(int count, String amount) {
     return 'أو $count دفعات بدون فوائد بقيمة $amount';
   }
 
   @override
   String get promoTabbyPayLater => 'أو ادفع لاحقًا بدون فوائد';
+
+  @override
+  String get promoTabbyCardInstalments => 'أو ادفع بالبطاقة على أقساط';
+
+  @override
+  String get paymentSessionUnavailable =>
+      'تابي غير متاح لهذا الطلب. يرجى اختيار طريقة دفع أخرى.';
 
   @override
   String get fieldCountryLabel => 'الدولة';

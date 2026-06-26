@@ -161,10 +161,23 @@ class CheckoutController extends Notifier<CheckoutState> {
   /// the user back to method selection with the other options intact (§5).
   void resetPayment() => state = state.copyWith(selectedPayment: null);
 
-  /// Loads the provider session for a placed order (native-SDK / redirect flow).
-  /// Null when the backend has not surfaced one yet (Open Q §2).
-  Future<PaymentSession?> loadPaymentSession(String orderNumber) =>
-      _repo.fetchPaymentSession(orderNumber);
+  /// Loads the gateway session for a placed order. A `PENDING` session isn't yet
+  /// launchable, so we back-off poll a few times before giving up (the contract's
+  /// PENDING flow). Null when the backend resolver isn't deployed.
+  Future<PaymentSession?> loadPaymentSession(String orderNumber) async {
+    const maxAttempts = 4;
+    PaymentSession? session;
+    for (var attempt = 0; attempt < maxAttempts; attempt++) {
+      session = await _repo.fetchPaymentSession(orderNumber);
+      if (session == null ||
+          session.status != PaymentSessionStatus.pending ||
+          attempt == maxAttempts - 1) {
+        return session;
+      }
+      await Future<void>.delayed(Duration(seconds: 1 + attempt));
+    }
+    return session;
+  }
 }
 
 final checkoutControllerProvider =

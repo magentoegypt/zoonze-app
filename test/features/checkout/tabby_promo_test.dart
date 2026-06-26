@@ -9,22 +9,30 @@ import 'package:zoonze_app/l10n/l10n.dart';
 
 const _aed = Money(amount: 200, currency: 'AED');
 
-TabbyProduct _payIn4({bool enabled = true, double? min, double? max = 5000}) =>
-    TabbyProduct(
-      type: TabbyProductType.payIn4,
-      enabled: enabled,
-      installments: 4,
-      minOrderTotal: min,
-      maxOrderTotal: max,
-    );
+TabbyProduct _installments({
+  bool enabled = true,
+  bool promo = true,
+  double? min,
+  double? max = 5000,
+}) => TabbyProduct(
+  type: TabbyProductType.installments,
+  methodCode: 'tabby_installments',
+  enabled: enabled,
+  promoEnabled: promo,
+  minAmount: min,
+  maxAmount: max,
+);
 
-TabbyProduct _payLater({bool enabled = true, double? min, double? max}) =>
+TabbyProduct _payLater({bool enabled = true, bool promo = true}) =>
     TabbyProduct(
       type: TabbyProductType.payLater,
+      methodCode: 'tabby_checkout',
       enabled: enabled,
-      minOrderTotal: min,
-      maxOrderTotal: max,
+      promoEnabled: promo,
     );
+
+TabbyConfig _config(List<TabbyProduct> products) =>
+    TabbyConfig(enabled: true, currency: 'AED', products: products);
 
 Future<void> _pump(
   WidgetTester tester,
@@ -51,55 +59,57 @@ Future<void> _pump(
 
 void main() {
   group('TabbyProduct / TabbyConfig', () {
-    test('per-product eligibility honours enable, currency and bounds', () {
-      final p = _payIn4(min: 100, max: 5000);
-      expect(
-        p.isEligible(const Money(amount: 200, currency: 'AED'), 'AED'),
-        isTrue,
-      );
-      expect(
-        p.isEligible(const Money(amount: 50, currency: 'AED'), 'AED'),
-        isFalse,
-      );
-      expect(
-        p.isEligible(const Money(amount: 9000, currency: 'AED'), 'AED'),
-        isFalse,
-      );
-      expect(
-        p.isEligible(const Money(amount: 200, currency: 'USD'), 'AED'),
-        isFalse,
-      );
-      expect(_payIn4(enabled: false).isEligible(_aed, 'AED'), isFalse);
+    test(
+      'promo eligibility honours enable, promo flag, currency and bounds',
+      () {
+        final p = _installments(min: 100, max: 5000);
+        expect(p.isPromoEligible(_aed, 'AED'), isTrue);
+        expect(
+          p.isPromoEligible(const Money(amount: 50, currency: 'AED'), 'AED'),
+          isFalse,
+        );
+        expect(
+          p.isPromoEligible(const Money(amount: 9000, currency: 'AED'), 'AED'),
+          isFalse,
+        );
+        expect(
+          p.isPromoEligible(const Money(amount: 200, currency: 'USD'), 'AED'),
+          isFalse,
+        );
+        expect(
+          _installments(enabled: false).isPromoEligible(_aed, 'AED'),
+          isFalse,
+        );
+        // Enabled product with promo off → eligible to pay, not to promote.
+        expect(_installments(promo: false).isEligible(_aed, 'AED'), isTrue);
+        expect(
+          _installments(promo: false).isPromoEligible(_aed, 'AED'),
+          isFalse,
+        );
+      },
+    );
+
+    test('promoFor returns only enabled, promo-on, in-range products', () {
+      final config = _config([_installments(max: 100), _payLater()]);
+      final promo = config.promoFor(_aed);
+      expect(promo, hasLength(1));
+      expect(promo.single.type, TabbyProductType.payLater);
     });
 
-    test('eligibleFor returns only enabled, in-range products', () {
-      final config = TabbyConfig(
-        currency: 'AED',
-        products: [_payIn4(max: 100), _payLater()],
-      );
-      // Pay in 4 capped at 100 → out; Pay Later unbounded → in.
-      final eligible = config.eligibleFor(_aed);
-      expect(eligible, hasLength(1));
-      expect(eligible.single.type, TabbyProductType.payLater);
-    });
-
-    test('perInstallment splits by the product instalment count', () {
+    test('installments split by the product count; pay later does not', () {
       expect(
-        _payIn4().perInstallment(const Money(amount: 200, currency: 'AED')),
+        _installments().perInstallment(
+          const Money(amount: 200, currency: 'AED'),
+        ),
         const Money(amount: 50, currency: 'AED'),
       );
+      expect(_payLater().perInstallment(_aed), isNull);
     });
   });
 
   group('TabbyPromo', () {
-    testWidgets('shows a line for each enabled, eligible product', (
-      tester,
-    ) async {
-      await _pump(
-        tester,
-        TabbyConfig(currency: 'AED', products: [_payIn4(), _payLater()]),
-        _aed,
-      );
+    testWidgets('shows a line for each promo-eligible product', (tester) async {
+      await _pump(tester, _config([_installments(), _payLater()]), _aed);
       expect(find.text('tabby'), findsNWidgets(2));
       expect(find.textContaining('interest-free payments of'), findsOneWidget);
       expect(find.textContaining('AED 50.00'), findsOneWidget); // 200 / 4
@@ -111,10 +121,7 @@ void main() {
     ) async {
       await _pump(
         tester,
-        TabbyConfig(
-          currency: 'AED',
-          products: [_payIn4(max: 100), _payLater()],
-        ),
+        _config([_installments(max: 100), _payLater()]),
         _aed,
       );
       expect(find.text('tabby'), findsOneWidget);
@@ -122,9 +129,12 @@ void main() {
       expect(find.textContaining('interest-free payments of'), findsNothing);
     });
 
-    testWidgets('hides entirely when nothing is enabled/configured', (
-      tester,
-    ) async {
+    testWidgets('hides a product whose promo flag is off', (tester) async {
+      await _pump(tester, _config([_installments(promo: false)]), _aed);
+      expect(find.text('tabby'), findsNothing);
+    });
+
+    testWidgets('hides entirely when nothing is configured', (tester) async {
       await _pump(tester, null, _aed);
       expect(find.text('tabby'), findsNothing);
     });

@@ -35,13 +35,19 @@ class PaymentMethodOption {
 
   bool get isTabby => code.toLowerCase().contains('tabby');
 
-  /// Which Tabby product this method is, so checkout can label it correctly.
-  /// "Pay Later" codes carry `later`; any other Tabby method is "Pay in 4".
+  /// Which Tabby product this method is, so checkout labels it correctly.
+  /// Codes: tabby_cc_installments → card instalments; tabby_checkout → pay later;
+  /// tabby_installments (or any other tabby) → pay in 4.
   TabbyProductType? get tabbyProduct {
     final c = code.toLowerCase();
     if (!c.contains('tabby')) return null;
-    if (c.contains('later')) return TabbyProductType.payLater;
-    return TabbyProductType.payIn4;
+    if (c.contains('cc_installments') || c.contains('credit')) {
+      return TabbyProductType.creditCardInstallments;
+    }
+    if (c.contains('checkout') || c.contains('later')) {
+      return TabbyProductType.payLater;
+    }
+    return TabbyProductType.installments;
   }
 }
 

@@ -1,55 +1,86 @@
 import '../../catalog/domain/money.dart';
 
-/// Tabby products a merchant can enable independently in Magento config.
-enum TabbyProductType { payIn4, payLater }
+/// Tabby products, matching `TabbyProductType` in the backend contract.
+enum TabbyProductType { installments, payLater, creditCardInstallments }
 
-/// One Tabby product's backend config — enable flag + eligibility bounds. All
-/// values come from Magento; nothing is hardcoded in the app.
+extension TabbyProductTypeX on TabbyProductType {
+  /// Equal payments for the promo: "Pay in 4" → 4; "Pay Later" → 1; card
+  /// instalments vary by issuer (unknown here) → null (generic message).
+  int? get installmentCount => switch (this) {
+    TabbyProductType.installments => 4,
+    TabbyProductType.payLater => 1,
+    TabbyProductType.creditCardInstallments => null,
+  };
+}
+
+/// One Tabby product's backend config — enable flag, thresholds (AED) and the
+/// promo toggle. All values come from Magento; nothing is hardcoded.
 class TabbyProduct {
   const TabbyProduct({
     required this.type,
+    required this.methodCode,
     required this.enabled,
-    this.installments = 1,
-    this.minOrderTotal,
-    this.maxOrderTotal,
+    required this.promoEnabled,
+    this.minAmount,
+    this.maxAmount,
   });
 
   final TabbyProductType type;
+
+  /// tabby_installments | tabby_cc_installments | tabby_checkout.
+  final String methodCode;
   final bool enabled;
 
-  /// Equal payments the total is split into ("Pay in 4" → 4; "Pay Later" → 1).
-  final int installments;
+  /// product_promotions (PDP) / cart_promotions — whether to show the promo.
+  final bool promoEnabled;
 
-  /// Inclusive eligibility bounds; null means unbounded on that side.
-  final double? minOrderTotal;
-  final double? maxOrderTotal;
+  /// Inclusive AED bounds; null means unbounded on that side.
+  final double? minAmount;
+  final double? maxAmount;
 
-  bool isEligible(Money price, String currency) {
-    if (!enabled || installments <= 0) return false;
+  bool _inRange(Money price, String currency) {
     if (price.currency != currency) return false;
-    if (minOrderTotal != null && price.amount < minOrderTotal!) return false;
-    if (maxOrderTotal != null && price.amount > maxOrderTotal!) return false;
+    if (minAmount != null && price.amount < minAmount!) return false;
+    if (maxAmount != null && price.amount > maxAmount!) return false;
     return true;
   }
 
-  /// Per-instalment amount for the promo (total ÷ instalments).
-  Money perInstallment(Money price) =>
-      Money(amount: price.amount / installments, currency: price.currency);
+  bool isEligible(Money price, String currency) =>
+      enabled && _inRange(price, currency);
+
+  bool isPromoEligible(Money price, String currency) =>
+      enabled && promoEnabled && _inRange(price, currency);
+
+  /// Per-instalment amount for the promo (null when the count is unknown).
+  Money? perInstallment(Money price) {
+    final count = type.installmentCount;
+    if (count == null || count <= 1) return null;
+    return Money(amount: price.amount / count, currency: price.currency);
+  }
 }
 
-/// Tabby "Pay in 4" + "Pay Later" settings, resolved **entirely from backend
-/// config** — each product's enable flag and min/max thresholds come from
-/// Magento, so nothing about Tabby eligibility is hardcoded. Drives both the
-/// PDP/cart promo and the checkout method labels. See docs/decisions/payments.md.
+/// Tabby eligibility + promo metadata for the store, resolved **entirely from
+/// backend config** (`tabbyConfig`). Eligibility/promo only — checkout
+/// availability still comes from `cart { available_payment_methods }`.
 class TabbyConfig {
-  const TabbyConfig({required this.currency, this.products = const []});
+  const TabbyConfig({
+    required this.enabled,
+    required this.currency,
+    this.publishableKey,
+    this.merchantCode,
+    this.products = const [],
+  });
 
+  final bool enabled;
   final String currency;
+  final String? publishableKey;
+  final String? merchantCode;
   final List<TabbyProduct> products;
 
-  /// Enabled products eligible for [price], in backend order.
-  List<TabbyProduct> eligibleFor(Money price) =>
-      products.where((p) => p.isEligible(price, currency)).toList();
+  /// Enabled, in-range products whose promo is on — one promo line per entry.
+  List<TabbyProduct> promoFor(Money price) => enabled
+      ? products.where((p) => p.isPromoEligible(price, currency)).toList()
+      : const [];
 
   TabbyProduct? product(TabbyProductType type) {
     for (final p in products) {

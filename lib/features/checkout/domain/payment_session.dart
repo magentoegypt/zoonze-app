@@ -1,55 +1,48 @@
-/// Normalized payment outcome across every gateway (native SDK or hosted
-/// redirect). Maps N-Genius `PaymentStatus`/`CardPaymentData` constants and
-/// Tabby `WebViewResult` onto one set the checkout flow can reason about.
+/// Normalized payment outcome the checkout flow reasons about, mapped from the
+/// native module's canonical status strings (see NativePaymentGateway).
 enum PaymentOutcome { success, cancelled, rejected, failed, expired }
 
-/// Lifecycle of a provider payment session as reported by the backend resolver.
-enum PaymentSessionStatus { pending, ready, failed, rejected, expired }
+/// Which gateway owns a session (the `gateway` field of `paymentSession`).
+enum PaymentProvider { ngenius, tabby }
 
-/// The provider session reference the app needs to present payment for an order
-/// that was already placed in Magento. Populated by a backend `paymentSession`
-/// resolver (Open Q §2) — see docs/decisions/payments.md. One shape serves both
-/// gateways: N-Genius fills [sessionReference]/[redirectUrl] (its order ref +
-/// payment-authorization link); Tabby fills [redirectUrl] (web_url),
-/// [sessionReference] (payment id) and [publicKey].
+/// Lifecycle of a gateway session as reported by the `paymentSession` resolver.
+enum PaymentSessionStatus { ready, pending, rejected, failed }
+
+/// The gateway session for an already-placed order, returned by the backend
+/// `paymentSession(order_number)` resolver (module `MagentoEgypt_PaymentGraphQl`).
+/// Mirrors `PaymentSessionOutput` — see docs/backend/payment-contract.md.
 class PaymentSession {
   const PaymentSession({
     required this.orderNumber,
     required this.methodCode,
+    required this.gateway,
     required this.status,
-    this.sessionReference,
-    this.redirectUrl,
-    this.clientToken,
-    this.publicKey,
-    this.expiresAt,
+    this.paymentId,
+    this.webUrl,
+    this.publishableKey,
     this.additionalData = const <String, String>{},
   });
 
   final String orderNumber;
+
+  /// ngeniusonline | tabby_installments | tabby_cc_installments | tabby_checkout.
   final String methodCode;
+  final PaymentProvider gateway;
   final PaymentSessionStatus status;
 
-  /// Provider order/payment reference (N-Genius order ref · Tabby payment id).
-  final String? sessionReference;
+  /// Tabby `payment.id` · N-Genius order reference.
+  final String? paymentId;
 
-  /// Hosted session URL to open in a WebView (Tabby web_url · N-Genius HPP).
-  final String? redirectUrl;
+  /// URL the native layer drives: N-Genius payment-authorization href · Tabby web_url.
+  final String? webUrl;
 
-  /// Short-lived access token the native SDK needs, if any.
-  final String? clientToken;
+  /// Tabby public key for the native Tabby SDK; null for N-Genius.
+  final String? publishableKey;
 
-  /// Provider publishable/merchant key for SDK init (Tabby).
-  final String? publicKey;
-
-  /// ISO-8601 expiry, if the provider sets one.
-  final String? expiresAt;
-
-  /// Escape hatch for provider-specific extras (e.g. Tabby available_products).
+  /// Raw gateway passthrough (full order JSON, hrefs, outlet ref, selected product…).
   final Map<String, String> additionalData;
 
-  /// A session can only be presented once the backend reports it ready and has
-  /// handed us something to open (a URL or a native reference).
-  bool get isReady =>
-      status == PaymentSessionStatus.ready &&
-      (redirectUrl != null || sessionReference != null);
+  /// Exactly `status == READY` per the contract — only a ready session may be
+  /// handed to the native SDK.
+  bool get isReady => status == PaymentSessionStatus.ready;
 }

@@ -854,6 +854,12 @@ abstract class AppLocalizations {
   /// **'Pay later, interest-free'**
   String get checkoutPayLater;
 
+  /// No description provided for @checkoutCardInstalments.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay by card in instalments'**
+  String get checkoutCardInstalments;
+
   /// No description provided for @promoTabbyPayIn4.
   ///
   /// In en, this message translates to:
@@ -865,6 +871,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'or pay later, interest-free'**
   String get promoTabbyPayLater;
+
+  /// No description provided for @promoTabbyCardInstalments.
+  ///
+  /// In en, this message translates to:
+  /// **'or pay by card in instalments'**
+  String get promoTabbyCardInstalments;
+
+  /// No description provided for @paymentSessionUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Tabby is unavailable for this order. Please choose another payment method.'**
+  String get paymentSessionUnavailable;
 
   /// No description provided for @fieldCountryLabel.
   ///
