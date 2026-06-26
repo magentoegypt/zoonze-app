@@ -16,17 +16,18 @@ between the Figma source of truth and the Flutter implementation in this repo.
 > Pending the reviewer's annotated screenshots: approved-logo rollout + per-page logo
 > placement (items 4–5). Out of scope for the design (code — Phase 3): payment
 > integration (item 11). Item 1 ("remove selected") could not be located in the file.
+> The Splash & Onboarding and Authentication sections were also merged into a single
+> **01 · Splash & Authentication** section, and the remaining sections renumbered.
 
-The canvas holds **26 screens** organized into five labelled sections (Figma
+The canvas holds **26 screens** organized into four labelled sections (Figma
 *Sections*), stacked top-to-bottom in app-flow order:
 
 | # | Section | Screens |
 |---|---------|---------|
-| 01 | Splash & Onboarding | Splash — Launch, Splash — Welcome |
-| 02 | Authentication | Sign In, Sign Up, Forgot Password |
-| 03 | Home & Discovery | Home (UAE / EN), Menu Drawer (side nav), Categories, Search, Search Results, Filters (Sheet), PLP — Fragrance |
-| 04 | Product · Wishlist · Cart | PDP (Coco Mademoiselle), Wishlist, Cart, Cart — Empty, Checkout, Order Success |
-| 05 | Orders & Account | My Orders, Order Tracking, My Account, Saved Addresses, Add Address, Notifications, Help & FAQ, Edit Profile |
+| 01 | Splash & Authentication | Splash — Launch, Splash — Welcome, Sign In, Sign Up, Forgot Password |
+| 02 | Home & Discovery | Home (UAE / EN), Menu Drawer (side nav), Categories, Search, Search Results, Filters (Sheet), PLP — Fragrance |
+| 03 | Product · Wishlist · Cart | PDP (Coco Mademoiselle), Wishlist, Cart, Cart — Empty, Checkout, Order Success |
+| 04 | Orders & Account | My Orders, Order Tracking, My Account, Saved Addresses, Add Address, Notifications, Help & FAQ, Edit Profile |
 
 Sign-up collects **name, email, password only** — no mobile number and no SMS/OTP
 verification step. Account details and preferences are edited on the **Edit Profile**
