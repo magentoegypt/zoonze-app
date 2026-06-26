@@ -6,6 +6,7 @@ import 'package:hive_ce_flutter/hive_ce_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app/app.dart';
+import 'core/notifications/notification_service.dart';
 import 'core/storage/local_cache.dart';
 import 'core/storage/locale_prefs.dart';
 import 'core/store/store_controller.dart';
@@ -30,6 +31,9 @@ Future<void> bootstrap() async {
   // Resolve store views in the background; UI paints with provisional/cached
   // mapping first and updates when this completes.
   unawaited(container.read(storeControllerProvider.notifier).loadStores());
+
+  // Push plumbing (no-op when no Firebase config is bundled).
+  unawaited(NotificationService.instance.init());
 
   runApp(
     UncontrolledProviderScope(
