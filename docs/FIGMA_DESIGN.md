@@ -29,10 +29,14 @@ between the Figma source of truth and the Flutter implementation in this repo.
 > circular icon badge (lock / person) matching the Forgot Password style. The canvas
 > sections use a uniform 200 px gap.
 > On the **PDP**, the app-bar share + wishlist icons were removed and the share icon
-> is now stacked directly beneath the wishlist heart on the gallery image. The bottom
-> navigation footer now also appears on Welcome and the auth screens (Sign In, Sign
-> Up, Forgot Password) — every standalone screen. It is intentionally omitted from the
-> Menu Drawer, the Filters bottom sheet, and the Launch splash (overlays / transient).
+> is now stacked directly beneath the wishlist heart on the gallery image.
+> The **bottom navigation bar** appears on every primary screen. The full **marketing
+> footer** (from Home — ZOONZE white logo ≈51 px, social links, About/Support columns,
+> newsletter, copyright) now sits above the nav on all main content screens (EN + AR).
+> The footer is intentionally omitted from the 1st-group screens (Splash, Welcome,
+> Sign In/Up, Forgot Password), the Menu Drawer, the Filters sheet, and the Launch
+> splash. Canvas sections were resized to fit their frames and re-stacked at a uniform
+> 200 px gap so nothing overlaps.
 
 The canvas holds **26 screens** organized into four labelled sections (Figma
 *Sections*), stacked top-to-bottom in app-flow order:
