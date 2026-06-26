@@ -42,7 +42,8 @@ class StoreRepository {
       if (result.hasException) {
         throw mapOperationException(result.exception!);
       }
-      final data = result.data?['availableStores'] as List<dynamic>? ??
+      final data =
+          result.data?['availableStores'] as List<dynamic>? ??
           const <dynamic>[];
       return data
           .whereType<Map<String, dynamic>>()

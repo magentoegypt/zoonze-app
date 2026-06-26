@@ -22,7 +22,13 @@ Widget _harness(String locale) {
         builder: (_, state) =>
             ProductDetailScreen(urlKey: state.pathParameters['urlKey']!),
       ),
-      for (final p in ['/home', '/categories', '/cart', '/wishlist', '/account'])
+      for (final p in [
+        '/home',
+        '/categories',
+        '/cart',
+        '/wishlist',
+        '/account',
+      ])
         GoRoute(path: p, builder: (_, __) => const Scaffold()),
     ],
   );
@@ -50,8 +56,9 @@ Widget _harness(String locale) {
 }
 
 void main() {
-  testWidgets('renders product detail and updates price on variant select',
-      (tester) async {
+  testWidgets('renders product detail and updates price on variant select', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(1200, 3600));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -67,8 +74,9 @@ void main() {
     expect(find.text('AED 299.00'), findsWidgets);
   });
 
-  testWidgets('reviews tab shows the empty state (store has zero reviews)',
-      (tester) async {
+  testWidgets('reviews tab shows the empty state (store has zero reviews)', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(1200, 3600));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 

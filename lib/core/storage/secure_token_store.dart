@@ -5,15 +5,17 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 /// shared_preferences.
 class SecureTokenStore {
   SecureTokenStore([FlutterSecureStorage? storage])
-      : _storage = storage ?? const FlutterSecureStorage();
+    : _storage = storage ?? const FlutterSecureStorage();
 
   final FlutterSecureStorage _storage;
   static const String _tokenKey = 'customer_token';
 
   Future<String?> read() => _storage.read(key: _tokenKey);
-  Future<void> write(String token) => _storage.write(key: _tokenKey, value: token);
+  Future<void> write(String token) =>
+      _storage.write(key: _tokenKey, value: token);
   Future<void> clear() => _storage.delete(key: _tokenKey);
 }
 
-final secureTokenStoreProvider =
-    Provider<SecureTokenStore>((ref) => SecureTokenStore());
+final secureTokenStoreProvider = Provider<SecureTokenStore>(
+  (ref) => SecureTokenStore(),
+);

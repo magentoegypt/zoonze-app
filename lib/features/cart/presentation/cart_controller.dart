@@ -27,13 +27,12 @@ class CartState {
     bool? isLoading,
     bool? isMutating,
     Object? error = _keep,
-  }) =>
-      CartState(
-        cart: cart ?? this.cart,
-        isLoading: isLoading ?? this.isLoading,
-        isMutating: isMutating ?? this.isMutating,
-        error: identical(error, _keep) ? this.error : error,
-      );
+  }) => CartState(
+    cart: cart ?? this.cart,
+    isLoading: isLoading ?? this.isLoading,
+    isMutating: isMutating ?? this.isMutating,
+    error: identical(error, _keep) ? this.error : error,
+  );
 }
 
 /// Owns the cart: lazily creates a guest cart (id persisted in Hive), add /
@@ -111,7 +110,8 @@ class CartController extends Notifier<CartState> {
         <String, dynamic>{
           'sku': sku,
           'quantity': quantity,
-          if (selectedOptionUids.isNotEmpty) 'selected_options': selectedOptionUids,
+          if (selectedOptionUids.isNotEmpty)
+            'selected_options': selectedOptionUids,
         },
       ]);
       state = state.copyWith(cart: cart, isMutating: false);
@@ -142,7 +142,9 @@ class CartController extends Notifier<CartState> {
     try {
       final id = await _ensureCartId();
       state = state.copyWith(
-          cart: await _repo.applyCoupon(id, code), isMutating: false);
+        cart: await _repo.applyCoupon(id, code),
+        isMutating: false,
+      );
     } catch (error) {
       state = state.copyWith(isMutating: false, error: error);
       rethrow;
@@ -154,8 +156,10 @@ class CartController extends Notifier<CartState> {
     if (id == null) return;
     state = state.copyWith(isMutating: true, error: null);
     try {
-      state =
-          state.copyWith(cart: await _repo.removeCoupon(id), isMutating: false);
+      state = state.copyWith(
+        cart: await _repo.removeCoupon(id),
+        isMutating: false,
+      );
     } catch (error) {
       state = state.copyWith(isMutating: false, error: error);
     }
@@ -190,5 +194,6 @@ class CartController extends Notifier<CartState> {
   }
 }
 
-final cartControllerProvider =
-    NotifierProvider<CartController, CartState>(CartController.new);
+final cartControllerProvider = NotifierProvider<CartController, CartState>(
+  CartController.new,
+);

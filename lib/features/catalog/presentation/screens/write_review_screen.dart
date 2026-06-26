@@ -54,7 +54,9 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
 
     setState(() => _busy = true);
     try {
-      await ref.read(catalogRepositoryProvider).createReview(
+      await ref
+          .read(catalogRepositoryProvider)
+          .createReview(
             sku: widget.sku,
             nickname: _nickname.text.trim(),
             summary: _summary.text.trim(),
@@ -73,8 +75,9 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
 
   void _snack(String message) {
     if (mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
@@ -95,8 +98,10 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(l10n.reviewRating,
-                    style: const TextStyle(fontWeight: FontWeight.w600)),
+                Text(
+                  l10n.reviewRating,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
                 Row(
                   children: [
                     for (var star = 1; star <= 5; star++)

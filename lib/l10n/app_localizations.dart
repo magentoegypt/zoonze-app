@@ -518,6 +518,30 @@ abstract class AppLocalizations {
   /// **'Help & FAQ'**
   String get accountHelp;
 
+  /// No description provided for @notificationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notificationsTitle;
+
+  /// No description provided for @notificationsPromoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Promotions & offers'**
+  String get notificationsPromoTitle;
+
+  /// No description provided for @notificationsPromoBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Get notified about sales, new arrivals and exclusive offers.'**
+  String get notificationsPromoBody;
+
+  /// No description provided for @notificationsOrdersNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Order updates are always sent for your purchases.'**
+  String get notificationsOrdersNote;
+
   /// No description provided for @cartTitle.
   ///
   /// In en, this message translates to:

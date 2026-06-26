@@ -15,17 +15,20 @@ class WishlistHeart extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final inWishlist =
-        ref.watch(wishlistControllerProvider.select((s) => s.contains(sku)));
+    final inWishlist = ref.watch(
+      wishlistControllerProvider.select((s) => s.contains(sku)),
+    );
     return IconButton(
       icon: Icon(
         inWishlist ? Icons.favorite : Icons.favorite_border,
-        color:
-            inWishlist ? AppColors.brandPrimary : (color ?? AppColors.inkHeading),
+        color: inWishlist
+            ? AppColors.brandPrimary
+            : (color ?? AppColors.inkHeading),
       ),
       onPressed: () async {
-        final ok =
-            await ref.read(wishlistControllerProvider.notifier).toggle(sku);
+        final ok = await ref
+            .read(wishlistControllerProvider.notifier)
+            .toggle(sku);
         if (!ok && context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

@@ -6,15 +6,13 @@ import 'package:zoonze_app/features/auth/presentation/auth_controller.dart';
 
 import '../../support/fakes.dart';
 
-ProviderContainer _container({
-  String? token,
-  bool loginFails = false,
-}) {
+ProviderContainer _container({String? token, bool loginFails = false}) {
   final container = ProviderContainer(
     overrides: [
       secureTokenStoreProvider.overrideWithValue(FakeSecureTokenStore(token)),
-      authRepositoryProvider
-          .overrideWithValue(FakeAuthRepository(loginFails: loginFails)),
+      authRepositoryProvider.overrideWithValue(
+        FakeAuthRepository(loginFails: loginFails),
+      ),
     ],
   );
   addTearDown(container.dispose);
@@ -41,10 +39,9 @@ void main() {
 
     test('login authenticates and exposes the customer', () async {
       final container = _container();
-      await container.read(authControllerProvider.notifier).login(
-            'layla@example.com',
-            'password1',
-          );
+      await container
+          .read(authControllerProvider.notifier)
+          .login('layla@example.com', 'password1');
       final state = container.read(authControllerProvider);
       expect(state.isAuthenticated, isTrue);
       expect(state.customer?.fullName, 'Layla Hassan');
@@ -53,9 +50,7 @@ void main() {
     test('login propagates a failure on bad credentials', () async {
       final container = _container(loginFails: true);
       await expectLater(
-        container
-            .read(authControllerProvider.notifier)
-            .login('x@y.com', 'bad'),
+        container.read(authControllerProvider.notifier).login('x@y.com', 'bad'),
         throwsA(isA<Object>()),
       );
     });

@@ -45,5 +45,7 @@ class LocalCache {
 
 /// Overridden in `bootstrap()` once Hive is initialised.
 final localCacheProvider = Provider<LocalCache>(
-  (ref) => throw UnimplementedError('localCacheProvider must be overridden in bootstrap()'),
+  (ref) => throw UnimplementedError(
+    'localCacheProvider must be overridden in bootstrap()',
+  ),
 );

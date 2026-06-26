@@ -33,9 +33,11 @@ fragment CartFields on Cart {
 
   static String _doc(String operation) => '$operation\n$_cartFields';
 
-  static const String createEmptyCart = 'mutation CreateEmptyCart { createEmptyCart }';
+  static const String createEmptyCart =
+      'mutation CreateEmptyCart { createEmptyCart }';
 
-  static const String customerCart = 'query CustomerCart { customerCart { id } }';
+  static const String customerCart =
+      'query CustomerCart { customerCart { id } }';
 
   static final String getCart = _doc(r'''
 query GetCart($cartId: String!) {

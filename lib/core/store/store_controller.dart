@@ -42,14 +42,13 @@ class StoreState {
     String? defaultLocale,
     String? currency,
     List<StoreView>? stores,
-  }) =>
-      StoreState(
-        activeLocale: activeLocale ?? this.activeLocale,
-        localeToCode: localeToCode ?? this.localeToCode,
-        defaultLocale: defaultLocale ?? this.defaultLocale,
-        currency: currency ?? this.currency,
-        stores: stores ?? this.stores,
-      );
+  }) => StoreState(
+    activeLocale: activeLocale ?? this.activeLocale,
+    localeToCode: localeToCode ?? this.localeToCode,
+    defaultLocale: defaultLocale ?? this.defaultLocale,
+    currency: currency ?? this.currency,
+    stores: stores ?? this.stores,
+  );
 }
 
 /// Owns the active store view + locale. Resolves the real `locale -> store_code`
@@ -79,7 +78,9 @@ class StoreController extends Notifier<StoreState> {
       _applyStores(cached.map(StoreView.fromJson).toList(growable: false));
     }
     try {
-      final stores = await ref.read(storeRepositoryProvider).fetchAvailableStores();
+      final stores = await ref
+          .read(storeRepositoryProvider)
+          .fetchAvailableStores();
       if (stores.isNotEmpty) {
         _applyStores(stores);
         await cache.writeStores(
@@ -125,5 +126,6 @@ class StoreController extends Notifier<StoreState> {
   }
 }
 
-final storeControllerProvider =
-    NotifierProvider<StoreController, StoreState>(StoreController.new);
+final storeControllerProvider = NotifierProvider<StoreController, StoreState>(
+  StoreController.new,
+);

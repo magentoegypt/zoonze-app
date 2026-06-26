@@ -34,13 +34,12 @@ class WishlistState {
     List<WishlistEntry>? entries,
     bool? isLoading,
     Object? error = _keep,
-  }) =>
-      WishlistState(
-        id: id ?? this.id,
-        entries: entries ?? this.entries,
-        isLoading: isLoading ?? this.isLoading,
-        error: identical(error, _keep) ? this.error : error,
-      );
+  }) => WishlistState(
+    id: id ?? this.id,
+    entries: entries ?? this.entries,
+    isLoading: isLoading ?? this.isLoading,
+    error: identical(error, _keep) ? this.error : error,
+  );
 }
 
 /// Customer-scoped wishlist. Loads on login, clears on logout. Toggling while

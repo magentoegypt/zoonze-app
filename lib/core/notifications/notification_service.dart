@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
@@ -20,6 +23,24 @@ class NotificationService {
 
   bool get fcmAvailable => _fcmAvailable;
 
+  /// Data payloads of notifications the user tapped (foreground-local or a
+  /// backgrounded FCM message). The app layer maps these to a route. Stays
+  /// UI-agnostic — core doesn't know about app routes.
+  final StreamController<Map<String, dynamic>> _opened =
+      StreamController<Map<String, dynamic>>.broadcast();
+
+  Stream<Map<String, dynamic>> get onNotificationOpened => _opened.stream;
+
+  Map<String, dynamic>? _initial;
+
+  /// The notification that cold-started the app, if any. Consumed once (so the
+  /// app navigates to it exactly once, after the first frame).
+  Map<String, dynamic>? takeInitialMessage() {
+    final message = _initial;
+    _initial = null;
+    return message;
+  }
+
   static const AndroidNotificationChannel _channel = AndroidNotificationChannel(
     'zoonze_default',
     'General',
@@ -37,9 +58,14 @@ class NotificationService {
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
       iOS: DarwinInitializationSettings(),
     );
-    await _local.initialize(settings: settings);
-    final android = _local.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
+    await _local.initialize(
+      settings: settings,
+      onDidReceiveNotificationResponse: _onLocalTap,
+    );
+    final android = _local
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     await android?.createNotificationChannel(_channel);
     await android?.requestNotificationsPermission();
   }
@@ -58,9 +84,31 @@ class NotificationService {
       FirebaseMessaging.onBackgroundMessage(firebaseBackgroundHandler);
       await FirebaseMessaging.instance.requestPermission();
       FirebaseMessaging.onMessage.listen(_showRemote);
+      // Tapped while backgrounded → navigate. Cold-start tap is captured once
+      // via getInitialMessage and replayed after the first frame.
+      FirebaseMessaging.onMessageOpenedApp.listen((m) => _emit(m.data));
+      final initial = await FirebaseMessaging.instance.getInitialMessage();
+      if (initial != null && initial.data.isNotEmpty) {
+        _initial = Map<String, dynamic>.from(initial.data);
+      }
     } catch (error) {
       debugPrint('FCM setup error: $error');
     }
+  }
+
+  void _onLocalTap(NotificationResponse response) {
+    final payload = response.payload;
+    if (payload == null || payload.isEmpty) return;
+    try {
+      final decoded = jsonDecode(payload);
+      if (decoded is Map) _emit(Map<String, dynamic>.from(decoded));
+    } catch (_) {
+      // Non-JSON payload — ignore.
+    }
+  }
+
+  void _emit(Map<String, dynamic> data) {
+    if (data.isNotEmpty) _opened.add(data);
   }
 
   Future<void> _showRemote(RemoteMessage message) async {
@@ -70,6 +118,8 @@ class NotificationService {
       id: notification.hashCode,
       title: notification.title,
       body: notification.body,
+      // Carry the data so tapping the foreground notification routes too.
+      payload: message.data.isEmpty ? null : jsonEncode(message.data),
       notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           _channel.id,

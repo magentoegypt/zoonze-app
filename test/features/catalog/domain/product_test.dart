@@ -5,9 +5,14 @@ import 'package:zoonze_app/features/catalog/domain/product.dart';
 void main() {
   group('Money', () {
     test('formats AED with Western digits and two decimals', () {
-      expect(const Money(amount: 199, currency: 'AED').formatted(), 'AED 199.00');
-      expect(const Money(amount: 1250.5, currency: 'AED').formatted(),
-          'AED 1,250.50');
+      expect(
+        const Money(amount: 199, currency: 'AED').formatted(),
+        'AED 199.00',
+      );
+      expect(
+        const Money(amount: 1250.5, currency: 'AED').formatted(),
+        'AED 1,250.50',
+      );
     });
   });
 

@@ -10,6 +10,7 @@ import 'core/notifications/notification_service.dart';
 import 'core/storage/local_cache.dart';
 import 'core/storage/locale_prefs.dart';
 import 'core/store/store_controller.dart';
+import 'features/notifications/presentation/notification_settings_controller.dart';
 
 /// Shared startup for every flavor entrypoint: init storage, build the provider
 /// container with concrete storage overrides, kick off store resolution, and run
@@ -32,13 +33,15 @@ Future<void> bootstrap() async {
   // mapping first and updates when this completes.
   unawaited(container.read(storeControllerProvider.notifier).loadStores());
 
-  // Push plumbing (no-op when no Firebase config is bundled).
-  unawaited(NotificationService.instance.init());
+  // Push plumbing (no-op when no Firebase config is bundled). Apply the saved
+  // topic subscriptions once FCM is up.
+  unawaited(
+    NotificationService.instance.init().then(
+      (_) => applyNotificationTopics(cache),
+    ),
+  );
 
   runApp(
-    UncontrolledProviderScope(
-      container: container,
-      child: const ZoonzeApp(),
-    ),
+    UncontrolledProviderScope(container: container, child: const ZoonzeApp()),
   );
 }

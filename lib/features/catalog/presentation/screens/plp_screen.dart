@@ -118,14 +118,16 @@ class _PlpScreenState extends ConsumerState<PlpScreen> {
     return CustomScrollView(
       controller: _scroll,
       slivers: [
-        SliverToBoxAdapter(child: _Header(
-          title: widget.title ?? l10n.navCategories,
-          state: state,
-          sortLabel: _sortLabel(l10n, state.sort),
-          onSort: _controller.setSort,
-          sortLabelFor: (s) => _sortLabel(l10n, s),
-          onFilters: () => _openFilters(state),
-        )),
+        SliverToBoxAdapter(
+          child: _Header(
+            title: widget.title ?? l10n.navCategories,
+            state: state,
+            sortLabel: _sortLabel(l10n, state.sort),
+            onSort: _controller.setSort,
+            sortLabelFor: (s) => _sortLabel(l10n, s),
+            onFilters: () => _openFilters(state),
+          ),
+        ),
         if (state.products.isEmpty)
           SliverToBoxAdapter(
             child: Padding(
@@ -143,17 +145,13 @@ class _PlpScreenState extends ConsumerState<PlpScreen> {
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
               ),
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final product = state.products[index];
-                  return ProductCard(
-                    product: product,
-                    onTap: () =>
-                        context.push(AppRoutes.product(product.urlKey)),
-                  );
-                },
-                childCount: state.products.length,
-              ),
+              delegate: SliverChildBuilderDelegate((context, index) {
+                final product = state.products[index];
+                return ProductCard(
+                  product: product,
+                  onTap: () => context.push(AppRoutes.product(product.urlKey)),
+                );
+              }, childCount: state.products.length),
             ),
           ),
         if (state.isLoadingMore)
@@ -196,8 +194,10 @@ class _Header extends StatelessWidget {
         children: [
           Text(title, style: Theme.of(context).textTheme.headlineSmall),
           const SizedBox(height: 4),
-          Text(l10n.resultsCount(state.totalCount),
-              style: const TextStyle(color: AppColors.inkMuted)),
+          Text(
+            l10n.resultsCount(state.totalCount),
+            style: const TextStyle(color: AppColors.inkMuted),
+          ),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -227,7 +227,8 @@ class _Header extends StatelessWidget {
                     height: 40,
                     decoration: BoxDecoration(
                       border: Border.all(
-                          color: AppColors.inkMuted.withValues(alpha: 0.4)),
+                        color: AppColors.inkMuted.withValues(alpha: 0.4),
+                      ),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     alignment: Alignment.center,
@@ -237,7 +238,10 @@ class _Header extends StatelessWidget {
                         const Icon(Icons.sort, size: 18),
                         const SizedBox(width: 8),
                         Flexible(
-                          child: Text(sortLabel, overflow: TextOverflow.ellipsis),
+                          child: Text(
+                            sortLabel,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ],
                     ),

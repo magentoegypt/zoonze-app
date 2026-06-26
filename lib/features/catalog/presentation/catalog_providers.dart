@@ -14,40 +14,39 @@ final categoryTreeProvider = FutureProvider.autoDispose<List<Category>>((ref) {
 });
 
 /// Featured products for the home screen — first page of the first category.
-final featuredProductsProvider =
-    FutureProvider.autoDispose<List<Product>>((ref) async {
+final featuredProductsProvider = FutureProvider.autoDispose<List<Product>>((
+  ref,
+) async {
   ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
   final categories = await ref.watch(categoryTreeProvider.future);
   if (categories.isEmpty) return const <Product>[];
-  final page = await ref.watch(catalogRepositoryProvider).fetchProducts(
-        categoryUid: categories.first.uid,
-        pageSize: 10,
-      );
+  final page = await ref
+      .watch(catalogRepositoryProvider)
+      .fetchProducts(categoryUid: categories.first.uid, pageSize: 10);
   return page.items;
 });
 
 /// Full product detail for the PDP (by url_key). Refetches on store switch.
-final productDetailProvider =
-    FutureProvider.autoDispose.family<ProductDetail?, String>((ref, urlKey) {
-  ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
-  return ref.watch(catalogRepositoryProvider).fetchProductDetail(urlKey);
-});
+final productDetailProvider = FutureProvider.autoDispose
+    .family<ProductDetail?, String>((ref, urlKey) {
+      ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
+      return ref.watch(catalogRepositoryProvider).fetchProductDetail(urlKey);
+    });
 
 /// Review rating metadata for the "Write a review" star selector.
 final reviewRatingsMetadataProvider =
     FutureProvider.autoDispose<List<ReviewRatingMetadata>>((ref) {
-  ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
-  return ref.watch(catalogRepositoryProvider).fetchReviewRatingsMetadata();
-});
+      ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
+      return ref.watch(catalogRepositoryProvider).fetchReviewRatingsMetadata();
+    });
 
 /// Search results for a query string (native `products(search:)`).
-final searchResultsProvider =
-    FutureProvider.autoDispose.family<ProductPage, String>((ref, query) {
-  ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
-  final trimmed = query.trim();
-  if (trimmed.isEmpty) return Future.value(ProductPage.empty);
-  return ref.watch(catalogRepositoryProvider).fetchProducts(
-        search: trimmed,
-        pageSize: 20,
-      );
-});
+final searchResultsProvider = FutureProvider.autoDispose
+    .family<ProductPage, String>((ref, query) {
+      ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
+      final trimmed = query.trim();
+      if (trimmed.isEmpty) return Future.value(ProductPage.empty);
+      return ref
+          .watch(catalogRepositoryProvider)
+          .fetchProducts(search: trimmed, pageSize: 20);
+    });

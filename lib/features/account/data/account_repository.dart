@@ -16,8 +16,10 @@ class AccountRepository {
 
   Future<List<CustomerOrder>> fetchOrders() async {
     final data = await _run(AccountQueries.orders, const {}, mutation: false);
-    final orders = ((data['customer'] as Map<String, dynamic>?)?['orders']
-        as Map<String, dynamic>?)?['items'] as List<dynamic>?;
+    final orders =
+        ((data['customer'] as Map<String, dynamic>?)?['orders']
+                as Map<String, dynamic>?)?['items']
+            as List<dynamic>?;
     return (orders ?? const [])
         .whereType<Map<String, dynamic>>()
         .map(_parseOrder)
@@ -25,22 +27,31 @@ class AccountRepository {
   }
 
   Future<List<CustomerAddress>> fetchAddresses() async {
-    final data = await _run(AccountQueries.addresses, const {}, mutation: false);
+    final data = await _run(
+      AccountQueries.addresses,
+      const {},
+      mutation: false,
+    );
     final addresses =
-        (data['customer'] as Map<String, dynamic>?)?['addresses'] as List<dynamic>?;
+        (data['customer'] as Map<String, dynamic>?)?['addresses']
+            as List<dynamic>?;
     return (addresses ?? const [])
         .whereType<Map<String, dynamic>>()
         .map(_parseAddress)
         .toList();
   }
 
-  Future<void> createAddress(CustomerAddress address) =>
-      _run(AccountQueries.createAddress, {'input': address.toInput()},
-          mutation: true);
+  Future<void> createAddress(CustomerAddress address) => _run(
+    AccountQueries.createAddress,
+    {'input': address.toInput()},
+    mutation: true,
+  );
 
-  Future<void> updateAddress(int id, CustomerAddress address) =>
-      _run(AccountQueries.updateAddress, {'id': id, 'input': address.toInput()},
-          mutation: true);
+  Future<void> updateAddress(int id, CustomerAddress address) => _run(
+    AccountQueries.updateAddress,
+    {'id': id, 'input': address.toInput()},
+    mutation: true,
+  );
 
   Future<void> deleteAddress(int id) =>
       _run(AccountQueries.deleteAddress, {'id': id}, mutation: true);
@@ -48,37 +59,37 @@ class AccountRepository {
   Future<void> updateProfile({
     required String firstName,
     required String lastName,
-  }) =>
-      _run(
-        AccountQueries.updateProfile,
-        {
-          'input': {'firstname': firstName, 'lastname': lastName},
-        },
-        mutation: true,
-      );
+  }) => _run(AccountQueries.updateProfile, {
+    'input': {'firstname': firstName, 'lastname': lastName},
+  }, mutation: true);
 
   Future<void> changePassword(String current, String next) => _run(
-        AccountQueries.changePassword,
-        {'currentPassword': current, 'newPassword': next},
-        mutation: true,
-      );
+    AccountQueries.changePassword,
+    {'currentPassword': current, 'newPassword': next},
+    mutation: true,
+  );
 
   CustomerOrder _parseOrder(Map<String, dynamic> json) {
     final lines = (json['items'] as List<dynamic>? ?? const [])
         .whereType<Map<String, dynamic>>()
-        .map((l) => OrderLine(
-              name: (l['product_name'] as String?) ?? '',
-              quantity: (l['quantity_ordered'] as num?)?.toDouble() ?? 1,
-              price: moneyFromJson(
-                  l['product_sale_price'] as Map<String, dynamic>?),
-            ))
+        .map(
+          (l) => OrderLine(
+            name: (l['product_name'] as String?) ?? '',
+            quantity: (l['quantity_ordered'] as num?)?.toDouble() ?? 1,
+            price: moneyFromJson(
+              l['product_sale_price'] as Map<String, dynamic>?,
+            ),
+          ),
+        )
         .toList();
     return CustomerOrder(
       number: (json['number'] as String?) ?? '',
       status: (json['status'] as String?) ?? '',
       date: (json['order_date'] as String?) ?? '',
-      total: moneyFromJson((json['total'] as Map<String, dynamic>?)?['grand_total']
-          as Map<String, dynamic>?),
+      total: moneyFromJson(
+        (json['total'] as Map<String, dynamic>?)?['grand_total']
+            as Map<String, dynamic>?,
+      ),
       lines: lines,
     );
   }
@@ -110,16 +121,20 @@ class AccountRepository {
   }) async {
     try {
       final result = mutation
-          ? await _client.mutate(MutationOptions(
-              document: gql(document),
-              variables: variables,
-              fetchPolicy: FetchPolicy.networkOnly,
-            ))
-          : await _client.query(QueryOptions(
-              document: gql(document),
-              variables: variables,
-              fetchPolicy: FetchPolicy.networkOnly,
-            ));
+          ? await _client.mutate(
+              MutationOptions(
+                document: gql(document),
+                variables: variables,
+                fetchPolicy: FetchPolicy.networkOnly,
+              ),
+            )
+          : await _client.query(
+              QueryOptions(
+                document: gql(document),
+                variables: variables,
+                fetchPolicy: FetchPolicy.networkOnly,
+              ),
+            );
       if (result.hasException) {
         throw mapOperationException(result.exception!);
       }
@@ -142,7 +157,8 @@ final ordersProvider = FutureProvider.autoDispose<List<CustomerOrder>>((ref) {
 });
 
 /// Saved addresses for the signed-in customer.
-final addressesProvider =
-    FutureProvider.autoDispose<List<CustomerAddress>>((ref) {
+final addressesProvider = FutureProvider.autoDispose<List<CustomerAddress>>((
+  ref,
+) {
   return ref.watch(accountRepositoryProvider).fetchAddresses();
 });

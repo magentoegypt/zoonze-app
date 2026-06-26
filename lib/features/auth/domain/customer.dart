@@ -13,8 +13,8 @@ class Customer {
   String get fullName => '$firstName $lastName'.trim();
 
   factory Customer.fromJson(Map<String, dynamic> json) => Customer(
-        firstName: (json['firstname'] as String?) ?? '',
-        lastName: (json['lastname'] as String?) ?? '',
-        email: (json['email'] as String?) ?? '',
-      );
+    firstName: (json['firstname'] as String?) ?? '',
+    lastName: (json['lastname'] as String?) ?? '',
+    email: (json['email'] as String?) ?? '',
+  );
 }

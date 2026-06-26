@@ -18,11 +18,19 @@ Widget _harness(String locale) {
     routes: [
       GoRoute(
         path: '/category/:uid',
-        builder: (_, state) =>
-            PlpScreen(categoryUid: state.pathParameters['uid']!, title: 'Fragrance'),
+        builder: (_, state) => PlpScreen(
+          categoryUid: state.pathParameters['uid']!,
+          title: 'Fragrance',
+        ),
       ),
       GoRoute(path: '/product/:urlKey', builder: (_, __) => const Scaffold()),
-      for (final p in ['/home', '/categories', '/cart', '/wishlist', '/account'])
+      for (final p in [
+        '/home',
+        '/categories',
+        '/cart',
+        '/wishlist',
+        '/account',
+      ])
         GoRoute(path: p, builder: (_, __) => const Scaffold()),
     ],
   );

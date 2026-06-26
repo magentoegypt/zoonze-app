@@ -75,8 +75,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     children: [
                       const Center(child: BrandLockup(fontSize: 28)),
                       const SizedBox(height: 24),
-                      Text(l10n.authForgotIntro,
-                          textAlign: TextAlign.center),
+                      Text(l10n.authForgotIntro, textAlign: TextAlign.center),
                       const SizedBox(height: 24),
                       TextFormField(
                         controller: _email,
@@ -92,8 +91,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : Text(l10n.authForgotTitle),
                       ),

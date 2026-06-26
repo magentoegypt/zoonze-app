@@ -33,7 +33,8 @@ Failure mapOperationException(OperationException exception) {
 
 bool _isAuthError(GraphQLError error) {
   final category = error.extensions?['category'];
-  if (category == 'graphql-authorization' || category == 'graphql-authentication') {
+  if (category == 'graphql-authorization' ||
+      category == 'graphql-authentication') {
     return true;
   }
   final message = error.message.toLowerCase();

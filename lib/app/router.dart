@@ -20,6 +20,7 @@ import '../features/catalog/presentation/screens/plp_screen.dart';
 import '../features/catalog/presentation/screens/product_detail_screen.dart';
 import '../features/catalog/presentation/screens/search_screen.dart';
 import '../features/catalog/presentation/screens/write_review_screen.dart';
+import '../features/notifications/presentation/notification_settings_screen.dart';
 import '../features/wishlist/presentation/screens/wishlist_screen.dart';
 import '../features/diagnostics/presentation/health_check_screen.dart';
 import '../features/onboarding/presentation/launch_splash_screen.dart';
@@ -109,6 +110,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.editProfile,
         builder: (context, state) => const EditProfileScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.notifications,
+        builder: (context, state) => const NotificationSettingsScreen(),
       ),
       GoRoute(
         path: AppRoutes.checkout,

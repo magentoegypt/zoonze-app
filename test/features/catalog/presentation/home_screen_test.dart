@@ -56,8 +56,9 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('renders categories + featured products in English / LTR',
-      (tester) async {
+  testWidgets('renders categories + featured products in English / LTR', (
+    tester,
+  ) async {
     await pumpHome(tester, 'en');
 
     // Appears in the section header and again as a footer link.
@@ -77,8 +78,9 @@ void main() {
 
     expect(find.text('تسوّق حسب الفئة'), findsWidgets);
 
-    final direction =
-        Directionality.of(tester.element(find.text('Fragrance').first));
+    final direction = Directionality.of(
+      tester.element(find.text('Fragrance').first),
+    );
     expect(direction, TextDirection.rtl);
   });
 }

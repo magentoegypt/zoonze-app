@@ -48,8 +48,10 @@ class _FilterSheetState extends State<FilterSheet> {
             padding: const EdgeInsetsDirectional.fromSTEB(16, 8, 8, 8),
             child: Row(
               children: [
-                Text(l10n.filtersLabel,
-                    style: Theme.of(context).textTheme.titleLarge),
+                Text(
+                  l10n.filtersLabel,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
                 const Spacer(),
                 TextButton(
                   onPressed: () => setState(_selection.clear),
@@ -76,15 +78,19 @@ class _FilterSheetState extends State<FilterSheet> {
                           children: [
                             for (final option in facet.options)
                               CheckboxListTile(
-                                value: _selection[facet.attributeCode]
-                                        ?.contains(option.value) ??
+                                value:
+                                    _selection[facet.attributeCode]?.contains(
+                                      option.value,
+                                    ) ??
                                     false,
                                 onChanged: (_) =>
                                     _toggle(facet.attributeCode, option.value),
                                 controlAffinity:
                                     ListTileControlAffinity.leading,
                                 dense: true,
-                                title: Text('${option.label} (${option.count})'),
+                                title: Text(
+                                  '${option.label} (${option.count})',
+                                ),
                               ),
                           ],
                         ),

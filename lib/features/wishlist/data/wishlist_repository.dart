@@ -9,7 +9,10 @@ import '../domain/wishlist_entry.dart';
 import 'wishlist_queries.dart';
 
 class WishlistData {
-  const WishlistData({required this.id, this.entries = const <WishlistEntry>[]});
+  const WishlistData({
+    required this.id,
+    this.entries = const <WishlistEntry>[],
+  });
   final String id;
   final List<WishlistEntry> entries;
 }
@@ -21,38 +24,35 @@ class WishlistRepository {
 
   /// The customer's default wishlist, or null when none is returned.
   Future<WishlistData?> fetchWishlist() async {
-    final data = await _run(WishlistQueries.getWishlist, const {}, mutation: false);
+    final data = await _run(
+      WishlistQueries.getWishlist,
+      const {},
+      mutation: false,
+    );
     final wishlists =
-        (data['customer'] as Map<String, dynamic>?)?['wishlists'] as List<dynamic>?;
+        (data['customer'] as Map<String, dynamic>?)?['wishlists']
+            as List<dynamic>?;
     if (wishlists == null || wishlists.isEmpty) return null;
     return _parse(wishlists.first as Map<String, dynamic>);
   }
 
   Future<WishlistData> addProduct(String wishlistId, String sku) async {
-    final data = await _run(
-      WishlistQueries.addToWishlist,
-      {
-        'wishlistId': wishlistId,
-        'items': [
-          {'sku': sku, 'quantity': 1},
-        ],
-      },
-      mutation: true,
-    );
+    final data = await _run(WishlistQueries.addToWishlist, {
+      'wishlistId': wishlistId,
+      'items': [
+        {'sku': sku, 'quantity': 1},
+      ],
+    }, mutation: true);
     final result = data['addProductsToWishlist'] as Map<String, dynamic>?;
     _checkUserErrors(result?['user_errors'] as List<dynamic>?);
     return _parse(result?['wishlist'] as Map<String, dynamic>?);
   }
 
   Future<WishlistData> removeItem(String wishlistId, String itemId) async {
-    final data = await _run(
-      WishlistQueries.removeFromWishlist,
-      {
-        'wishlistId': wishlistId,
-        'itemIds': [itemId],
-      },
-      mutation: true,
-    );
+    final data = await _run(WishlistQueries.removeFromWishlist, {
+      'wishlistId': wishlistId,
+      'itemIds': [itemId],
+    }, mutation: true);
     final result = data['removeProductsFromWishlist'] as Map<String, dynamic>?;
     return _parse(result?['wishlist'] as Map<String, dynamic>?);
   }
@@ -70,11 +70,14 @@ class WishlistRepository {
         (json['items_v2'] as Map<String, dynamic>?)?['items'] as List<dynamic>?;
     final entries = (items ?? const [])
         .whereType<Map<String, dynamic>>()
-        .map((it) => WishlistEntry(
-              id: it['id']?.toString() ?? '',
-              product: productFromJson(
-                  (it['product'] as Map<String, dynamic>?) ?? const {}),
-            ))
+        .map(
+          (it) => WishlistEntry(
+            id: it['id']?.toString() ?? '',
+            product: productFromJson(
+              (it['product'] as Map<String, dynamic>?) ?? const {},
+            ),
+          ),
+        )
         .toList();
     return WishlistData(id: json['id']?.toString() ?? '', entries: entries);
   }
@@ -86,16 +89,20 @@ class WishlistRepository {
   }) async {
     try {
       final result = mutation
-          ? await _client.mutate(MutationOptions(
-              document: gql(document),
-              variables: variables,
-              fetchPolicy: FetchPolicy.networkOnly,
-            ))
-          : await _client.query(QueryOptions(
-              document: gql(document),
-              variables: variables,
-              fetchPolicy: FetchPolicy.networkOnly,
-            ));
+          ? await _client.mutate(
+              MutationOptions(
+                document: gql(document),
+                variables: variables,
+                fetchPolicy: FetchPolicy.networkOnly,
+              ),
+            )
+          : await _client.query(
+              QueryOptions(
+                document: gql(document),
+                variables: variables,
+                fetchPolicy: FetchPolicy.networkOnly,
+              ),
+            );
       if (result.hasException) {
         throw mapOperationException(result.exception!);
       }

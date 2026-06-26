@@ -30,10 +30,9 @@ class CatalogRepository {
         .toList();
     // categoryList returns the root category(ies); the browsable set is the
     // root's children when present. Hide categories flagged out of navigation.
-    final source =
-        (roots.isNotEmpty && roots.first.children.isNotEmpty)
-            ? roots.first.children
-            : roots;
+    final source = (roots.isNotEmpty && roots.first.children.isNotEmpty)
+        ? roots.first.children
+        : roots;
     return source.where((c) => c.includeInMenu).toList(growable: false);
   }
 
@@ -75,12 +74,11 @@ class CatalogRepository {
 
   /// Single product by url_key (PDP). Returns null when not found.
   Future<ProductDetail?> fetchProductDetail(String urlKey) async {
-    final data = await _query(
-      CatalogQueries.productDetail,
-      <String, dynamic>{'urlKey': urlKey},
-    );
-    final items = (data['products'] as Map<String, dynamic>?)?['items']
-        as List<dynamic>?;
+    final data = await _query(CatalogQueries.productDetail, <String, dynamic>{
+      'urlKey': urlKey,
+    });
+    final items =
+        (data['products'] as Map<String, dynamic>?)?['items'] as List<dynamic>?;
     if (items == null || items.isEmpty) return null;
     final first = items.first;
     if (first is! Map<String, dynamic>) return null;
@@ -93,7 +91,8 @@ class CatalogRepository {
             as Map<String, dynamic>?;
 
     final gallery = <String>[];
-    final mainImage = (json['image'] as Map<String, dynamic>?)?['url'] as String?;
+    final mainImage =
+        (json['image'] as Map<String, dynamic>?)?['url'] as String?;
     if (mainImage != null && mainImage.isNotEmpty) gallery.add(mainImage);
     for (final g in (json['media_gallery'] as List<dynamic>? ?? const [])) {
       if (g is Map<String, dynamic> && g['url'] is String) {
@@ -103,93 +102,114 @@ class CatalogRepository {
 
     final options = (json['configurable_options'] as List<dynamic>? ?? const [])
         .whereType<Map<String, dynamic>>()
-        .map((o) => ConfigurableOption(
-              attributeCode: (o['attribute_code'] as String?) ?? '',
-              label: (o['label'] as String?) ?? '',
-              values: (o['values'] as List<dynamic>? ?? const [])
-                  .whereType<Map<String, dynamic>>()
-                  .map((v) => SwatchValue(
-                        valueIndex: (v['value_index'] as int?) ?? 0,
-                        label: (v['label'] as String?) ?? '',
-                        uid: v['uid'] as String?,
-                        swatchColor: (v['swatch_data']
-                            as Map<String, dynamic>?)?['value'] as String?,
-                      ))
-                  .toList(),
-            ))
+        .map(
+          (o) => ConfigurableOption(
+            attributeCode: (o['attribute_code'] as String?) ?? '',
+            label: (o['label'] as String?) ?? '',
+            values: (o['values'] as List<dynamic>? ?? const [])
+                .whereType<Map<String, dynamic>>()
+                .map(
+                  (v) => SwatchValue(
+                    valueIndex: (v['value_index'] as int?) ?? 0,
+                    label: (v['label'] as String?) ?? '',
+                    uid: v['uid'] as String?,
+                    swatchColor:
+                        (v['swatch_data'] as Map<String, dynamic>?)?['value']
+                            as String?,
+                  ),
+                )
+                .toList(),
+          ),
+        )
         .toList();
 
     final variants = (json['variants'] as List<dynamic>? ?? const [])
         .whereType<Map<String, dynamic>>()
         .map((vt) {
-      final attrs = <String, int>{};
-      for (final a in (vt['attributes'] as List<dynamic>? ?? const [])) {
-        if (a is Map<String, dynamic> && a['code'] is String) {
-          attrs[a['code'] as String] = (a['value_index'] as int?) ?? 0;
-        }
-      }
-      final product = vt['product'] as Map<String, dynamic>?;
-      final variantMin =
-          (product?['price_range'] as Map<String, dynamic>?)?['minimum_price']
-              as Map<String, dynamic>?;
-      return ProductVariant(
-        sku: (product?['sku'] as String?) ?? '',
-        attributes: attrs,
-        price: _parseMoney(variantMin?['final_price'] as Map<String, dynamic>?),
-        inStock: (product?['stock_status'] as String?) != 'OUT_OF_STOCK',
-        imageUrl: (product?['image'] as Map<String, dynamic>?)?['url'] as String?,
-      );
-    }).toList();
+          final attrs = <String, int>{};
+          for (final a in (vt['attributes'] as List<dynamic>? ?? const [])) {
+            if (a is Map<String, dynamic> && a['code'] is String) {
+              attrs[a['code'] as String] = (a['value_index'] as int?) ?? 0;
+            }
+          }
+          final product = vt['product'] as Map<String, dynamic>?;
+          final variantMin =
+              (product?['price_range']
+                      as Map<String, dynamic>?)?['minimum_price']
+                  as Map<String, dynamic>?;
+          return ProductVariant(
+            sku: (product?['sku'] as String?) ?? '',
+            attributes: attrs,
+            price: _parseMoney(
+              variantMin?['final_price'] as Map<String, dynamic>?,
+            ),
+            inStock: (product?['stock_status'] as String?) != 'OUT_OF_STOCK',
+            imageUrl:
+                (product?['image'] as Map<String, dynamic>?)?['url'] as String?,
+          );
+        })
+        .toList();
 
     return ProductDetail(
       sku: (json['sku'] as String?) ?? '',
       name: (json['name'] as String?) ?? '',
       urlKey: (json['url_key'] as String?) ?? '',
-      description:
-          _stripHtml((json['description'] as Map<String, dynamic>?)?['html']
-              as String?),
+      description: _stripHtml(
+        (json['description'] as Map<String, dynamic>?)?['html'] as String?,
+      ),
       gallery: gallery.toSet().toList(growable: false),
-      regularPrice:
-          _parseMoney(minPrice?['regular_price'] as Map<String, dynamic>?),
-      finalPrice: _parseMoney(minPrice?['final_price'] as Map<String, dynamic>?),
+      regularPrice: _parseMoney(
+        minPrice?['regular_price'] as Map<String, dynamic>?,
+      ),
+      finalPrice: _parseMoney(
+        minPrice?['final_price'] as Map<String, dynamic>?,
+      ),
       inStock: (json['stock_status'] as String?) != 'OUT_OF_STOCK',
       options: options,
       variants: variants,
       ratingSummary: (json['rating_summary'] as int?) ?? 0,
       reviewCount: (json['review_count'] as int?) ?? 0,
-      reviews: ((json['reviews'] as Map<String, dynamic>?)?['items']
-                  as List<dynamic>? ??
-              const [])
-          .whereType<Map<String, dynamic>>()
-          .map((r) => ProductReview(
-                nickname: (r['nickname'] as String?) ?? '',
-                summary: (r['summary'] as String?) ?? '',
-                text: (r['text'] as String?) ?? '',
-                averageRating: (r['average_rating'] as num?)?.toInt() ?? 0,
-                date: (r['created_at'] as String?) ?? '',
-              ))
-          .toList(),
+      reviews:
+          ((json['reviews'] as Map<String, dynamic>?)?['items']
+                      as List<dynamic>? ??
+                  const [])
+              .whereType<Map<String, dynamic>>()
+              .map(
+                (r) => ProductReview(
+                  nickname: (r['nickname'] as String?) ?? '',
+                  summary: (r['summary'] as String?) ?? '',
+                  text: (r['text'] as String?) ?? '',
+                  averageRating: (r['average_rating'] as num?)?.toInt() ?? 0,
+                  date: (r['created_at'] as String?) ?? '',
+                ),
+              )
+              .toList(),
     );
   }
 
   Future<List<ReviewRatingMetadata>> fetchReviewRatingsMetadata() async {
-    final data =
-        await _query(CatalogQueries.reviewRatingsMetadata, const {});
-    final items = (data['productReviewRatingsMetadata']
-        as Map<String, dynamic>?)?['items'] as List<dynamic>?;
+    final data = await _query(CatalogQueries.reviewRatingsMetadata, const {});
+    final items =
+        (data['productReviewRatingsMetadata']
+                as Map<String, dynamic>?)?['items']
+            as List<dynamic>?;
     return (items ?? const [])
         .whereType<Map<String, dynamic>>()
-        .map((m) => ReviewRatingMetadata(
-              id: m['id']?.toString() ?? '',
-              name: (m['name'] as String?) ?? '',
-              values: (m['values'] as List<dynamic>? ?? const [])
-                  .whereType<Map<String, dynamic>>()
-                  .map((v) => ReviewRatingValue(
-                        valueId: v['value_id']?.toString() ?? '',
-                        value: (v['value'] as num?)?.toInt() ?? 0,
-                      ))
-                  .toList(),
-            ))
+        .map(
+          (m) => ReviewRatingMetadata(
+            id: m['id']?.toString() ?? '',
+            name: (m['name'] as String?) ?? '',
+            values: (m['values'] as List<dynamic>? ?? const [])
+                .whereType<Map<String, dynamic>>()
+                .map(
+                  (v) => ReviewRatingValue(
+                    valueId: v['value_id']?.toString() ?? '',
+                    value: (v['value'] as num?)?.toInt() ?? 0,
+                  ),
+                )
+                .toList(),
+          ),
+        )
         .toList();
   }
 
@@ -219,11 +239,13 @@ class CatalogRepository {
     Map<String, dynamic> variables,
   ) async {
     try {
-      final result = await _client.mutate(MutationOptions(
-        document: gql(document),
-        variables: variables,
-        fetchPolicy: FetchPolicy.networkOnly,
-      ));
+      final result = await _client.mutate(
+        MutationOptions(
+          document: gql(document),
+          variables: variables,
+          fetchPolicy: FetchPolicy.networkOnly,
+        ),
+      );
       if (result.hasException) {
         throw mapOperationException(result.exception!);
       }

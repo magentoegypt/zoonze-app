@@ -14,5 +14,7 @@ class LocalePrefs {
 
 /// Overridden in `bootstrap()` once SharedPreferences is initialised.
 final localePrefsProvider = Provider<LocalePrefs>(
-  (ref) => throw UnimplementedError('localePrefsProvider must be overridden in bootstrap()'),
+  (ref) => throw UnimplementedError(
+    'localePrefsProvider must be overridden in bootstrap()',
+  ),
 );

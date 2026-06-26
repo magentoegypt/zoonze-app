@@ -28,5 +28,6 @@ class Failure implements Exception {
   final String? detail;
 
   @override
-  String toString() => 'Failure(${kind.name}${detail != null ? ': $detail' : ''})';
+  String toString() =>
+      'Failure(${kind.name}${detail != null ? ': $detail' : ''})';
 }

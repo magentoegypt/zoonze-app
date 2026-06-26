@@ -18,8 +18,9 @@ class PriceView extends StatelessWidget {
     if (effective == null) return const SizedBox.shrink();
 
     return Column(
-      crossAxisAlignment:
-          alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      crossAxisAlignment: alignEnd
+          ? CrossAxisAlignment.end
+          : CrossAxisAlignment.start,
       children: [
         Text(
           effective.formatted(),

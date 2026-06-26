@@ -225,6 +225,20 @@ class AppLocalizationsAr extends AppLocalizations {
   String get accountHelp => 'المساعدة والأسئلة الشائعة';
 
   @override
+  String get notificationsTitle => 'الإشعارات';
+
+  @override
+  String get notificationsPromoTitle => 'العروض والتخفيضات';
+
+  @override
+  String get notificationsPromoBody =>
+      'تلقَّ إشعارات بالتخفيضات والمنتجات الجديدة والعروض الحصرية.';
+
+  @override
+  String get notificationsOrdersNote =>
+      'تُرسَل تحديثات الطلبات دائمًا لعمليات الشراء الخاصة بك.';
+
+  @override
   String get cartTitle => 'السلة';
 
   @override

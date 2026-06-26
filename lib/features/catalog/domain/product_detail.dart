@@ -141,8 +141,9 @@ class ProductDetail {
   ProductVariant? variantFor(Map<String, int> selection) {
     if (selection.length != options.length) return null;
     for (final variant in variants) {
-      final matches = selection.entries
-          .every((e) => variant.attributes[e.key] == e.value);
+      final matches = selection.entries.every(
+        (e) => variant.attributes[e.key] == e.value,
+      );
       if (matches) return variant;
     }
     return null;

@@ -37,7 +37,10 @@ class ProductCard extends StatelessWidget {
                     PositionedDirectional(
                       top: 8,
                       start: 8,
-                      child: _Badge(label: '-$discount%', color: AppColors.accentSale),
+                      child: _Badge(
+                        label: '-$discount%',
+                        color: AppColors.accentSale,
+                      ),
                     ),
                   PositionedDirectional(
                     top: 4,
@@ -95,11 +98,11 @@ class _ImagePlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        color: AppColors.surfaceTint,
-        child: const Center(
-          child: Icon(Icons.image_outlined, color: AppColors.inkMuted),
-        ),
-      );
+    color: AppColors.surfaceTint,
+    child: const Center(
+      child: Icon(Icons.image_outlined, color: AppColors.inkMuted),
+    ),
+  );
 }
 
 class _Badge extends StatelessWidget {
@@ -109,18 +112,18 @@ class _Badge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    decoration: BoxDecoration(
+      color: color,
+      borderRadius: BorderRadius.circular(6),
+    ),
+    child: Text(
+      label,
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
+  );
 }

@@ -36,7 +36,9 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _busy = true);
     try {
-      await ref.read(authControllerProvider.notifier).register(
+      await ref
+          .read(authControllerProvider.notifier)
+          .register(
             firstName: _firstName.text.trim(),
             lastName: _lastName.text.trim(),
             email: _email.text.trim(),
@@ -70,8 +72,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 const Center(child: BrandLockup(fontSize: 28)),
                 const SizedBox(height: 8),
                 Center(
-                  child: Text(l10n.authSignUpTitle,
-                      style: Theme.of(context).textTheme.titleMedium),
+                  child: Text(
+                    l10n.authSignUpTitle,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 TextFormField(

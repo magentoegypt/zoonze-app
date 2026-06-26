@@ -47,7 +47,10 @@ void main() {
       final uid = container.read(cartControllerProvider).cart.items.single.uid;
 
       await notifier.setQuantity(uid, 4);
-      expect(container.read(cartControllerProvider).cart.items.single.quantity, 4);
+      expect(
+        container.read(cartControllerProvider).cart.items.single.quantity,
+        4,
+      );
 
       await notifier.removeItem(uid);
       expect(container.read(cartControllerProvider).cart.isEmpty, isTrue);
@@ -58,14 +61,18 @@ void main() {
       final notifier = container.read(cartControllerProvider.notifier);
       await notifier.addToCart(sku: 'SKU1');
       await notifier.applyCoupon('SAVE10');
-      expect(container.read(cartControllerProvider).cart.totals.appliedCoupon,
-          'SAVE10');
+      expect(
+        container.read(cartControllerProvider).cart.totals.appliedCoupon,
+        'SAVE10',
+      );
     });
 
     test('merges the guest cart into the customer cart on login', () async {
       final repo = FakeCartRepository();
       final container = _container(repo);
-      await container.read(cartControllerProvider.notifier).addToCart(sku: 'SKU1');
+      await container
+          .read(cartControllerProvider.notifier)
+          .addToCart(sku: 'SKU1');
 
       await container
           .read(authControllerProvider.notifier)

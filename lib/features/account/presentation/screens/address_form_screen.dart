@@ -112,17 +112,32 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
             key: _formKey,
             child: Column(
               children: [
-                _field(_firstName, l10n.fieldFirstName,
-                    validator: (v) => Validators.required(context, v)),
-                _field(_lastName, l10n.fieldLastName,
-                    validator: (v) => Validators.required(context, v)),
-                _field(_phone, l10n.fieldPhone,
-                    keyboard: TextInputType.phone,
-                    validator: (v) => Validators.required(context, v)),
-                _field(_street, l10n.fieldStreet,
-                    validator: (v) => Validators.required(context, v)),
-                _field(_city, l10n.fieldCity,
-                    validator: (v) => Validators.required(context, v)),
+                _field(
+                  _firstName,
+                  l10n.fieldFirstName,
+                  validator: (v) => Validators.required(context, v),
+                ),
+                _field(
+                  _lastName,
+                  l10n.fieldLastName,
+                  validator: (v) => Validators.required(context, v),
+                ),
+                _field(
+                  _phone,
+                  l10n.fieldPhone,
+                  keyboard: TextInputType.phone,
+                  validator: (v) => Validators.required(context, v),
+                ),
+                _field(
+                  _street,
+                  l10n.fieldStreet,
+                  validator: (v) => Validators.required(context, v),
+                ),
+                _field(
+                  _city,
+                  l10n.fieldCity,
+                  validator: (v) => Validators.required(context, v),
+                ),
                 _field(_region, l10n.fieldRegion),
                 _field(_postcode, l10n.fieldPostcode),
                 _field(_country, l10n.fieldCountry),
@@ -159,14 +174,13 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
     String label, {
     TextInputType? keyboard,
     String? Function(String?)? validator,
-  }) =>
-      Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: TextFormField(
-          controller: controller,
-          keyboardType: keyboard,
-          decoration: InputDecoration(labelText: label),
-          validator: validator,
-        ),
-      );
+  }) => Padding(
+    padding: const EdgeInsets.only(bottom: 12),
+    child: TextFormField(
+      controller: controller,
+      keyboardType: keyboard,
+      decoration: InputDecoration(labelText: label),
+      validator: validator,
+    ),
+  );
 }

@@ -32,7 +32,9 @@ class HomeScreen extends ConsumerWidget {
           try {
             await ref.read(categoryTreeProvider.future);
             await ref.read(featuredProductsProvider.future);
-          } catch (_) {/* ignore: handled in body */}
+          } catch (_) {
+            /* ignore: handled in body */
+          }
         },
         child: ListView(
           padding: EdgeInsets.zero,
@@ -64,7 +66,10 @@ class HomeScreen extends ConsumerWidget {
                   }
                   return ListView.separated(
                     scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsetsDirectional.only(start: 16, end: 16),
+                    padding: const EdgeInsetsDirectional.only(
+                      start: 16,
+                      end: 16,
+                    ),
                     itemCount: items.length,
                     separatorBuilder: (_, __) => const SizedBox(width: 12),
                     itemBuilder: (context, index) {
@@ -96,8 +101,7 @@ class HomeScreen extends ConsumerWidget {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   padding: const EdgeInsets.all(16),
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     childAspectRatio: 0.58,
                     crossAxisSpacing: 16,
@@ -129,9 +133,9 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 8),
-        child: Text(title, style: Theme.of(context).textTheme.titleLarge),
-      );
+    padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 8),
+    child: Text(title, style: Theme.of(context).textTheme.titleLarge),
+  );
 }
 
 class _CategoryChip extends StatelessWidget {

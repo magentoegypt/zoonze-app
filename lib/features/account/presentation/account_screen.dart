@@ -74,10 +74,11 @@ class _Authenticated extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(name,
-                        style: Theme.of(context).textTheme.titleLarge),
-                    Text(email,
-                        style: const TextStyle(color: AppColors.inkMuted)),
+                    Text(name, style: Theme.of(context).textTheme.titleLarge),
+                    Text(
+                      email,
+                      style: const TextStyle(color: AppColors.inkMuted),
+                    ),
                   ],
                 ),
               ),
@@ -111,6 +112,12 @@ class _Authenticated extends StatelessWidget {
           onTap: () => context.go(AppRoutes.wishlist),
         ),
         ListTile(
+          leading: const Icon(Icons.notifications_none),
+          title: Text(l10n.notificationsTitle),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push(AppRoutes.notifications),
+        ),
+        ListTile(
           leading: const Icon(Icons.help_outline),
           title: Text(l10n.accountHelp),
           trailing: const Icon(Icons.chevron_right),
@@ -142,16 +149,23 @@ class _Guest extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.person_outline,
-                size: 56, color: AppColors.brandPrimary),
+            const Icon(
+              Icons.person_outline,
+              size: 56,
+              color: AppColors.brandPrimary,
+            ),
             const SizedBox(height: 16),
-            Text(l10n.accountGuestTitle,
-                style: Theme.of(context).textTheme.titleLarge,
-                textAlign: TextAlign.center),
+            Text(
+              l10n.accountGuestTitle,
+              style: Theme.of(context).textTheme.titleLarge,
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 8),
-            Text(l10n.accountGuestBody,
-                style: const TextStyle(color: AppColors.inkMuted),
-                textAlign: TextAlign.center),
+            Text(
+              l10n.accountGuestBody,
+              style: const TextStyle(color: AppColors.inkMuted),
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,

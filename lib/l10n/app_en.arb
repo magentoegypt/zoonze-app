@@ -84,6 +84,11 @@
   "accountAddresses": "Saved Addresses",
   "accountHelp": "Help & FAQ",
 
+  "notificationsTitle": "Notifications",
+  "notificationsPromoTitle": "Promotions & offers",
+  "notificationsPromoBody": "Get notified about sales, new arrivals and exclusive offers.",
+  "notificationsOrdersNote": "Order updates are always sent for your purchases.",
+
   "cartTitle": "Cart",
   "cartEmptyTitle": "Your cart is empty",
   "cartEmptyBody": "Browse the catalogue and add your favourites.",

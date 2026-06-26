@@ -69,23 +69,28 @@ class _Empty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.favorite_border,
-                  size: 56, color: AppColors.brandPrimary),
-              const SizedBox(height: 16),
-              Text(title, style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 8),
-              Text(body,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.inkMuted)),
-            ],
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.favorite_border,
+            size: 56,
+            color: AppColors.brandPrimary,
           ),
-        ),
-      );
+          const SizedBox(height: 16),
+          Text(title, style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 8),
+          Text(
+            body,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: AppColors.inkMuted),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _Prompt extends StatelessWidget {
@@ -103,26 +108,31 @@ class _Prompt extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.favorite_border,
-                  size: 56, color: AppColors.brandPrimary),
-              const SizedBox(height: 16),
-              Text(title, style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 8),
-              Text(body,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.inkMuted)),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(onPressed: onTap, child: Text(cta)),
-              ),
-            ],
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.favorite_border,
+            size: 56,
+            color: AppColors.brandPrimary,
           ),
-        ),
-      );
+          const SizedBox(height: 16),
+          Text(title, style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 8),
+          Text(
+            body,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: AppColors.inkMuted),
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(onPressed: onTap, child: Text(cta)),
+          ),
+        ],
+      ),
+    ),
+  );
 }

@@ -78,8 +78,10 @@ class _AddressCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: Text(address.fullName,
-                      style: const TextStyle(fontWeight: FontWeight.w700)),
+                  child: Text(
+                    address.fullName,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
                 ),
                 if (address.defaultShipping)
                   Chip(
@@ -89,11 +91,15 @@ class _AddressCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 4),
-            Text(address.summary,
-                style: const TextStyle(color: AppColors.inkMuted)),
+            Text(
+              address.summary,
+              style: const TextStyle(color: AppColors.inkMuted),
+            ),
             if (address.telephone.isNotEmpty)
-              Text(address.telephone,
-                  style: const TextStyle(color: AppColors.inkMuted)),
+              Text(
+                address.telephone,
+                style: const TextStyle(color: AppColors.inkMuted),
+              ),
             const SizedBox(height: 8),
             Row(
               children: [

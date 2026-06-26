@@ -26,8 +26,9 @@ void main() {
   group('WishlistController', () {
     test('toggle returns false (prompt sign-in) when signed out', () async {
       final container = _container(FakeWishlistRepository());
-      final ok =
-          await container.read(wishlistControllerProvider.notifier).toggle('S1');
+      final ok = await container
+          .read(wishlistControllerProvider.notifier)
+          .toggle('S1');
       expect(ok, isFalse);
     });
 
@@ -43,12 +44,16 @@ void main() {
       final notifier = container.read(wishlistControllerProvider.notifier);
       final added = await notifier.toggle('CHANEL-COCO');
       expect(added, isTrue);
-      expect(container.read(wishlistControllerProvider).contains('CHANEL-COCO'),
-          isTrue);
+      expect(
+        container.read(wishlistControllerProvider).contains('CHANEL-COCO'),
+        isTrue,
+      );
 
       await notifier.toggle('CHANEL-COCO');
-      expect(container.read(wishlistControllerProvider).contains('CHANEL-COCO'),
-          isFalse);
+      expect(
+        container.read(wishlistControllerProvider).contains('CHANEL-COCO'),
+        isFalse,
+      );
     });
 
     test('clears the wishlist on logout', () async {

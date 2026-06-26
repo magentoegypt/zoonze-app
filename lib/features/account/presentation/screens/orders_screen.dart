@@ -45,30 +45,40 @@ class _OrderCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: ExpansionTile(
         shape: const Border(),
-        title: Text(l10n.orderNumber(order.number),
-            style: const TextStyle(fontWeight: FontWeight.w700)),
-        subtitle: Text('${order.date} · ${order.status}',
-            style: const TextStyle(color: AppColors.inkMuted)),
+        title: Text(
+          l10n.orderNumber(order.number),
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        subtitle: Text(
+          '${order.date} · ${order.status}',
+          style: const TextStyle(color: AppColors.inkMuted),
+        ),
         trailing: order.total != null
-            ? Text(order.total!.formatted(),
+            ? Text(
+                order.total!.formatted(),
                 textDirection: TextDirection.ltr,
                 style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.brandPrimary))
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.brandPrimary,
+                ),
+              )
             : null,
-        childrenPadding:
-            const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 12),
+        childrenPadding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 12),
         children: [
           for (final line in order.lines)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Row(
                 children: [
-                  Expanded(child: Text('${line.quantity.toInt()} × ${line.name}')),
+                  Expanded(
+                    child: Text('${line.quantity.toInt()} × ${line.name}'),
+                  ),
                   if (line.price != null)
-                    Text(line.price!.formatted(),
-                        textDirection: TextDirection.ltr,
-                        style: const TextStyle(color: AppColors.inkMuted)),
+                    Text(
+                      line.price!.formatted(),
+                      textDirection: TextDirection.ltr,
+                      style: const TextStyle(color: AppColors.inkMuted),
+                    ),
                 ],
               ),
             ),

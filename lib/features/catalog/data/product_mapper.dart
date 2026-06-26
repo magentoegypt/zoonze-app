@@ -14,15 +14,20 @@ Money? moneyFromJson(Map<String, dynamic>? json) {
 
 Product productFromJson(Map<String, dynamic> json) {
   final image = json['image'] as Map<String, dynamic>?;
-  final minPrice = (json['price_range'] as Map<String, dynamic>?)?['minimum_price']
-      as Map<String, dynamic>?;
+  final minPrice =
+      (json['price_range'] as Map<String, dynamic>?)?['minimum_price']
+          as Map<String, dynamic>?;
   return Product(
     sku: (json['sku'] as String?) ?? '',
     name: (json['name'] as String?) ?? '',
     urlKey: (json['url_key'] as String?) ?? '',
     imageUrl: image?['url'] as String?,
-    regularPrice: moneyFromJson(minPrice?['regular_price'] as Map<String, dynamic>?),
-    finalPrice: moneyFromJson(minPrice?['final_price'] as Map<String, dynamic>?),
+    regularPrice: moneyFromJson(
+      minPrice?['regular_price'] as Map<String, dynamic>?,
+    ),
+    finalPrice: moneyFromJson(
+      minPrice?['final_price'] as Map<String, dynamic>?,
+    ),
     inStock: (json['stock_status'] as String?) != 'OUT_OF_STOCK',
   );
 }

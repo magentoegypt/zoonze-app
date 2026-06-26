@@ -45,7 +45,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     setState(() => _savingProfile = true);
     final l10n = AppLocalizations.of(context);
     try {
-      await ref.read(accountRepositoryProvider).updateProfile(
+      await ref
+          .read(accountRepositoryProvider)
+          .updateProfile(
             firstName: _firstName.text.trim(),
             lastName: _lastName.text.trim(),
           );
@@ -78,8 +80,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   void _snack(String message) {
     if (mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
@@ -100,15 +103,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   children: [
                     TextFormField(
                       controller: _firstName,
-                      decoration:
-                          InputDecoration(labelText: l10n.fieldFirstName),
+                      decoration: InputDecoration(
+                        labelText: l10n.fieldFirstName,
+                      ),
                       validator: (v) => Validators.required(context, v),
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _lastName,
-                      decoration:
-                          InputDecoration(labelText: l10n.fieldLastName),
+                      decoration: InputDecoration(
+                        labelText: l10n.fieldLastName,
+                      ),
                       validator: (v) => Validators.required(context, v),
                     ),
                     const SizedBox(height: 16),
@@ -126,8 +131,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 ),
               ),
               const Divider(height: 40),
-              Text(l10n.profilePasswordSection,
-                  style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                l10n.profilePasswordSection,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const SizedBox(height: 12),
               Form(
                 key: _passwordKey,
@@ -136,16 +143,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     TextFormField(
                       controller: _currentPassword,
                       obscureText: true,
-                      decoration:
-                          InputDecoration(labelText: l10n.fieldCurrentPassword),
+                      decoration: InputDecoration(
+                        labelText: l10n.fieldCurrentPassword,
+                      ),
                       validator: (v) => Validators.required(context, v),
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: _newPassword,
                       obscureText: true,
-                      decoration:
-                          InputDecoration(labelText: l10n.fieldNewPassword),
+                      decoration: InputDecoration(
+                        labelText: l10n.fieldNewPassword,
+                      ),
                       validator: (v) => Validators.password(context, v),
                     ),
                     const SizedBox(height: 16),

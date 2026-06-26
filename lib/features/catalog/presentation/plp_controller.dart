@@ -49,19 +49,18 @@ class PlpState {
     bool? isLoading,
     bool? isLoadingMore,
     Object? error = _keep,
-  }) =>
-      PlpState(
-        products: products ?? this.products,
-        aggregations: aggregations ?? this.aggregations,
-        selectedFilters: selectedFilters ?? this.selectedFilters,
-        sort: sort ?? this.sort,
-        totalCount: totalCount ?? this.totalCount,
-        currentPage: currentPage ?? this.currentPage,
-        totalPages: totalPages ?? this.totalPages,
-        isLoading: isLoading ?? this.isLoading,
-        isLoadingMore: isLoadingMore ?? this.isLoadingMore,
-        error: identical(error, _keep) ? this.error : error,
-      );
+  }) => PlpState(
+    products: products ?? this.products,
+    aggregations: aggregations ?? this.aggregations,
+    selectedFilters: selectedFilters ?? this.selectedFilters,
+    sort: sort ?? this.sort,
+    totalCount: totalCount ?? this.totalCount,
+    currentPage: currentPage ?? this.currentPage,
+    totalPages: totalPages ?? this.totalPages,
+    isLoading: isLoading ?? this.isLoading,
+    isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+    error: identical(error, _keep) ? this.error : error,
+  );
 }
 
 /// Owns one category's PLP: first-page load, append-on-scroll pagination,
@@ -90,8 +89,9 @@ class PlpController extends AutoDisposeFamilyNotifier<PlpState, String> {
       );
       state = state.copyWith(
         products: page.items,
-        aggregations:
-            page.aggregations.isNotEmpty ? page.aggregations : state.aggregations,
+        aggregations: page.aggregations.isNotEmpty
+            ? page.aggregations
+            : state.aggregations,
         totalCount: page.totalCount,
         currentPage: page.currentPage,
         totalPages: page.totalPages,
@@ -149,7 +149,5 @@ class PlpController extends AutoDisposeFamilyNotifier<PlpState, String> {
   Future<void> refresh() => _loadFirst();
 }
 
-final plpControllerProvider =
-    NotifierProvider.autoDispose.family<PlpController, PlpState, String>(
-  PlpController.new,
-);
+final plpControllerProvider = NotifierProvider.autoDispose
+    .family<PlpController, PlpState, String>(PlpController.new);

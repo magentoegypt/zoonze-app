@@ -36,7 +36,10 @@ void main() {
     });
 
     test('maps an empty exception to unknown', () {
-      expect(mapOperationException(OperationException()).kind, FailureKind.unknown);
+      expect(
+        mapOperationException(OperationException()).kind,
+        FailureKind.unknown,
+      );
     });
   });
 }

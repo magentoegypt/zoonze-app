@@ -55,7 +55,10 @@ void main() {
       final container = _container(_PagingRepo());
       final notifier = container.read(plpControllerProvider('cat').notifier);
       await notifier.refresh();
-      expect(container.read(plpControllerProvider('cat')).products, hasLength(1));
+      expect(
+        container.read(plpControllerProvider('cat')).products,
+        hasLength(1),
+      );
       expect(container.read(plpControllerProvider('cat')).hasMore, isTrue);
 
       await notifier.loadMore();
@@ -72,7 +75,8 @@ class _PagingRepo implements CatalogRepository {
   Future<List<Category>> fetchCategoryTree() async => kSampleCategories;
 
   @override
-  Future<ProductDetail?> fetchProductDetail(String urlKey) async => kSampleDetail;
+  Future<ProductDetail?> fetchProductDetail(String urlKey) async =>
+      kSampleDetail;
 
   @override
   Future<ProductPage> fetchProducts({
@@ -82,15 +86,18 @@ class _PagingRepo implements CatalogRepository {
     ProductSortField sort = ProductSortField.relevance,
     int pageSize = 20,
     int currentPage = 1,
-  }) async =>
-      ProductPage(
-        items: [
-          Product(sku: 'p$currentPage', name: 'Product $currentPage', urlKey: 'p$currentPage'),
-        ],
-        totalCount: 2,
-        currentPage: currentPage,
-        totalPages: 2,
-      );
+  }) async => ProductPage(
+    items: [
+      Product(
+        sku: 'p$currentPage',
+        name: 'Product $currentPage',
+        urlKey: 'p$currentPage',
+      ),
+    ],
+    totalCount: 2,
+    currentPage: currentPage,
+    totalPages: 2,
+  );
 
   @override
   Future<List<ReviewRatingMetadata>> fetchReviewRatingsMetadata() async =>

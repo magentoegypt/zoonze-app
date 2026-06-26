@@ -12,7 +12,9 @@ ProviderContainer _container({String? persistedLocale}) {
     overrides: [
       localCacheProvider.overrideWithValue(FakeLocalCache()),
       localePrefsProvider.overrideWithValue(FakeLocalePrefs(persistedLocale)),
-      storeRepositoryProvider.overrideWithValue(FakeStoreRepository(kSampleStores)),
+      storeRepositoryProvider.overrideWithValue(
+        FakeStoreRepository(kSampleStores),
+      ),
     ],
   );
   addTearDown(container.dispose);
@@ -37,18 +39,20 @@ void main() {
       expect(state.activeStoreCode, 'uae-ar');
     });
 
-    test('resolves locale->code, default view and currency from availableStores',
-        () async {
-      final container = _container();
-      await container.read(storeControllerProvider.notifier).loadStores();
-      final state = container.read(storeControllerProvider);
+    test(
+      'resolves locale->code, default view and currency from availableStores',
+      () async {
+        final container = _container();
+        await container.read(storeControllerProvider.notifier).loadStores();
+        final state = container.read(storeControllerProvider);
 
-      expect(state.stores, hasLength(2));
-      expect(state.localeToCode['en'], 'uae-en');
-      expect(state.localeToCode['ar'], 'uae-ar');
-      expect(state.defaultLocale, 'en');
-      expect(state.currency, 'AED');
-    });
+        expect(state.stores, hasLength(2));
+        expect(state.localeToCode['en'], 'uae-en');
+        expect(state.localeToCode['ar'], 'uae-ar');
+        expect(state.defaultLocale, 'en');
+        expect(state.currency, 'AED');
+      },
+    );
 
     test('switchLocale flips the active store code', () async {
       final container = _container();

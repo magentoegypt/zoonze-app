@@ -27,21 +27,24 @@ class CustomerAddress {
 
   String get fullName => '$firstName $lastName'.trim();
 
-  String get summary => [street, city, postcode, countryCode]
-      .where((p) => p.isNotEmpty)
-      .join(', ');
+  String get summary => [
+    street,
+    city,
+    postcode,
+    countryCode,
+  ].where((p) => p.isNotEmpty).join(', ');
 
   /// Magento `CustomerAddressInput`.
   Map<String, dynamic> toInput() => <String, dynamic>{
-        'firstname': firstName,
-        'lastname': lastName,
-        'telephone': telephone,
-        'street': [street],
-        'city': city,
-        if (postcode.isNotEmpty) 'postcode': postcode,
-        'country_code': countryCode,
-        if (region.isNotEmpty) 'region': <String, dynamic>{'region': region},
-        'default_shipping': defaultShipping,
-        'default_billing': defaultBilling,
-      };
+    'firstname': firstName,
+    'lastname': lastName,
+    'telephone': telephone,
+    'street': [street],
+    'city': city,
+    if (postcode.isNotEmpty) 'postcode': postcode,
+    'country_code': countryCode,
+    if (region.isNotEmpty) 'region': <String, dynamic>{'region': region},
+    'default_shipping': defaultShipping,
+    'default_billing': defaultBilling,
+  };
 }

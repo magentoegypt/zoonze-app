@@ -64,8 +64,9 @@ void main() {
     expect(find.text('Create Account'), findsWidgets);
   });
 
-  testWidgets('authenticated session shows the customer and sign-out',
-      (tester) async {
+  testWidgets('authenticated session shows the customer and sign-out', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(800, 1400));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 

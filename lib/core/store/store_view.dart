@@ -34,27 +34,27 @@ class StoreView {
       displayCurrencyCode.isNotEmpty ? displayCurrencyCode : baseCurrencyCode;
 
   factory StoreView.fromJson(Map<String, dynamic> json) => StoreView(
-        storeCode: (json['store_code'] as String?) ?? '',
-        storeName: (json['store_name'] as String?) ?? '',
-        locale: (json['locale'] as String?) ?? '',
-        isDefault: (json['is_default_store'] as bool?) ?? false,
-        baseCurrencyCode: (json['base_currency_code'] as String?) ?? '',
-        displayCurrencyCode:
-            (json['default_display_currency_code'] as String?) ?? '',
-        baseUrl: (json['base_url'] as String?) ?? '',
-        secureBaseUrl: (json['secure_base_url'] as String?) ?? '',
-        baseMediaUrl: (json['base_media_url'] as String?) ?? '',
-      );
+    storeCode: (json['store_code'] as String?) ?? '',
+    storeName: (json['store_name'] as String?) ?? '',
+    locale: (json['locale'] as String?) ?? '',
+    isDefault: (json['is_default_store'] as bool?) ?? false,
+    baseCurrencyCode: (json['base_currency_code'] as String?) ?? '',
+    displayCurrencyCode:
+        (json['default_display_currency_code'] as String?) ?? '',
+    baseUrl: (json['base_url'] as String?) ?? '',
+    secureBaseUrl: (json['secure_base_url'] as String?) ?? '',
+    baseMediaUrl: (json['base_media_url'] as String?) ?? '',
+  );
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-        'store_code': storeCode,
-        'store_name': storeName,
-        'locale': locale,
-        'is_default_store': isDefault,
-        'base_currency_code': baseCurrencyCode,
-        'default_display_currency_code': displayCurrencyCode,
-        'base_url': baseUrl,
-        'secure_base_url': secureBaseUrl,
-        'base_media_url': baseMediaUrl,
-      };
+    'store_code': storeCode,
+    'store_name': storeName,
+    'locale': locale,
+    'is_default_store': isDefault,
+    'base_currency_code': baseCurrencyCode,
+    'default_display_currency_code': displayCurrencyCode,
+    'base_url': baseUrl,
+    'secure_base_url': secureBaseUrl,
+    'base_media_url': baseMediaUrl,
+  };
 }

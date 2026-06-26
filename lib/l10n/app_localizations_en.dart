@@ -228,6 +228,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountHelp => 'Help & FAQ';
 
   @override
+  String get notificationsTitle => 'Notifications';
+
+  @override
+  String get notificationsPromoTitle => 'Promotions & offers';
+
+  @override
+  String get notificationsPromoBody =>
+      'Get notified about sales, new arrivals and exclusive offers.';
+
+  @override
+  String get notificationsOrdersNote =>
+      'Order updates are always sent for your purchases.';
+
+  @override
   String get cartTitle => 'Cart';
 
   @override

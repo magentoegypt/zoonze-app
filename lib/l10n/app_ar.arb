@@ -79,6 +79,11 @@
   "accountAddresses": "العناوين المحفوظة",
   "accountHelp": "المساعدة والأسئلة الشائعة",
 
+  "notificationsTitle": "الإشعارات",
+  "notificationsPromoTitle": "العروض والتخفيضات",
+  "notificationsPromoBody": "تلقَّ إشعارات بالتخفيضات والمنتجات الجديدة والعروض الحصرية.",
+  "notificationsOrdersNote": "تُرسَل تحديثات الطلبات دائمًا لعمليات الشراء الخاصة بك.",
+
   "cartTitle": "السلة",
   "cartEmptyTitle": "سلتك فارغة",
   "cartEmptyBody": "تصفّح المنتجات وأضف ما يعجبك.",

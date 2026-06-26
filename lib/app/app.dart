@@ -1,19 +1,55 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/notifications/notification_service.dart';
 import '../core/store/store_controller.dart';
 import '../l10n/l10n.dart';
+import 'notification_routes.dart';
 import 'router.dart';
 import 'theme/app_theme.dart';
 
 /// Root widget. Locale, theme (incl. font), and text direction are all driven by
-/// the active store view, so a language switch rebuilds the whole tree.
-class ZoonzeApp extends ConsumerWidget {
+/// the active store view, so a language switch rebuilds the whole tree. Also
+/// listens for tapped notifications and deep-links to the matching route.
+class ZoonzeApp extends ConsumerStatefulWidget {
   const ZoonzeApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ZoonzeApp> createState() => _ZoonzeAppState();
+}
+
+class _ZoonzeAppState extends ConsumerState<ZoonzeApp> {
+  StreamSubscription<Map<String, dynamic>>? _openedSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _openedSub = NotificationService.instance.onNotificationOpened.listen(
+      _handleNotification,
+    );
+    // Replay a cold-start tap once the router is mounted.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final initial = NotificationService.instance.takeInitialMessage();
+      if (initial != null) _handleNotification(initial);
+    });
+  }
+
+  void _handleNotification(Map<String, dynamic> data) {
+    final route = notificationRoute(data);
+    if (route != null) ref.read(routerProvider).go(route);
+  }
+
+  @override
+  void dispose() {
+    _openedSub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final store = ref.watch(storeControllerProvider);
     final router = ref.watch(routerProvider);
 

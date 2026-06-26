@@ -21,26 +21,23 @@ const _config = StoreConfigData(
 );
 
 Widget _harness(String locale) => ProviderScope(
-      overrides: [
-        localCacheProvider.overrideWithValue(FakeLocalCache()),
-        localePrefsProvider.overrideWithValue(FakeLocalePrefs(locale)),
-        storeConfigProvider.overrideWith((ref) async => _config),
-        // Boot the app directly on the diagnostics screen (the real router
-        // starts at /splash).
-        routerProvider.overrideWithValue(
-          GoRouter(
-            initialLocation: '/',
-            routes: [
-              GoRoute(
-                path: '/',
-                builder: (_, __) => const HealthCheckScreen(),
-              ),
-            ],
-          ),
-        ),
-      ],
-      child: const ZoonzeApp(),
-    );
+  overrides: [
+    localCacheProvider.overrideWithValue(FakeLocalCache()),
+    localePrefsProvider.overrideWithValue(FakeLocalePrefs(locale)),
+    storeConfigProvider.overrideWith((ref) async => _config),
+    // Boot the app directly on the diagnostics screen (the real router
+    // starts at /splash).
+    routerProvider.overrideWithValue(
+      GoRouter(
+        initialLocation: '/',
+        routes: [
+          GoRoute(path: '/', builder: (_, __) => const HealthCheckScreen()),
+        ],
+      ),
+    ),
+  ],
+  child: const ZoonzeApp(),
+);
 
 void main() {
   testWidgets('renders storeConfig in English / LTR', (tester) async {
@@ -50,7 +47,9 @@ void main() {
     expect(find.text('Store code'), findsOneWidget);
     expect(find.text('uae-en'), findsWidgets);
 
-    final direction = Directionality.of(tester.element(find.text('Store code')));
+    final direction = Directionality.of(
+      tester.element(find.text('Store code')),
+    );
     expect(direction, TextDirection.ltr);
   });
 
@@ -61,8 +60,9 @@ void main() {
     // fieldStoreCode in Arabic.
     expect(find.text('رمز المتجر'), findsOneWidget);
 
-    final direction =
-        Directionality.of(tester.element(find.text('رمز المتجر')));
+    final direction = Directionality.of(
+      tester.element(find.text('رمز المتجر')),
+    );
     expect(direction, TextDirection.rtl);
   });
 }

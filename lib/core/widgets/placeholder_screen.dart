@@ -23,15 +23,22 @@ class PlaceholderScreen extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.auto_awesome_outlined,
-                size: 48, color: AppColors.inkMuted),
+            const Icon(
+              Icons.auto_awesome_outlined,
+              size: 48,
+              color: AppColors.inkMuted,
+            ),
             const SizedBox(height: 16),
-            Text(l10n.comingSoon,
-                style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              l10n.comingSoon,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 8),
-            Text(l10n.comingSoonBody,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.inkMuted)),
+            Text(
+              l10n.comingSoonBody,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.inkMuted),
+            ),
           ],
         ),
       ),
@@ -41,6 +48,9 @@ class PlaceholderScreen extends StatelessWidget {
     if (currentTab != null) {
       return ZoonzeScaffold(currentTab: currentTab, body: body);
     }
-    return Scaffold(appBar: AppBar(title: Text(title)), body: body);
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: body,
+    );
   }
 }

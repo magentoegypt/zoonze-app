@@ -40,12 +40,18 @@ class AppConfig {
       defaultValue: 'https://zoonze.com/graphql',
     ),
     defaultLocale: String.fromEnvironment('DEFAULT_LOCALE', defaultValue: 'en'),
-    bootstrapStoreCode:
-        String.fromEnvironment('BOOTSTRAP_STORE_CODE', defaultValue: 'uae-en'),
-    storeCodeEn:
-        String.fromEnvironment('STORE_CODE_EN', defaultValue: 'uae-en'),
-    storeCodeAr:
-        String.fromEnvironment('STORE_CODE_AR', defaultValue: 'uae-ar'),
+    bootstrapStoreCode: String.fromEnvironment(
+      'BOOTSTRAP_STORE_CODE',
+      defaultValue: 'uae-en',
+    ),
+    storeCodeEn: String.fromEnvironment(
+      'STORE_CODE_EN',
+      defaultValue: 'uae-en',
+    ),
+    storeCodeAr: String.fromEnvironment(
+      'STORE_CODE_AR',
+      defaultValue: 'uae-ar',
+    ),
     currency: String.fromEnvironment('CURRENCY', defaultValue: 'AED'),
     userAgent: String.fromEnvironment(
       'USER_AGENT',
@@ -57,9 +63,9 @@ class AppConfig {
 
   /// Provisional `language -> store_code` fallback (`en`/`ar`).
   Map<String, String> get provisionalStoreCodes => <String, String>{
-        'en': storeCodeEn,
-        'ar': storeCodeAr,
-      };
+    'en': storeCodeEn,
+    'ar': storeCodeAr,
+  };
 }
 
 final appConfigProvider = Provider<AppConfig>((ref) => AppConfig.current);

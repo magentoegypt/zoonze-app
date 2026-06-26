@@ -11,8 +11,21 @@ started (non-blocking) from `bootstrap()`.
   `google-services.json` / `GoogleService-Info.plist`, FCM silently stays
   disabled (`fcmAvailable == false`) and the app still runs. Foreground messages
   are surfaced as local notifications; a background handler is registered.
-- **Topics:** `subscribeToTopic` / `unsubscribeFromTopic` (intended topics:
-  `orders`, `promos`) — no-ops until FCM is configured.
+- **Topics:** the **promotions** topic is opt-in. `notificationSettingsProvider`
+  persists the choice (`notif_promotions`, default on) and subscribes /
+  unsubscribes `promotions`; `bootstrap()` applies the saved subscription after
+  FCM init. Surfaced in **Account → Notifications**
+  (`NotificationSettingsScreen`). Order updates are **token-targeted** by the
+  backend (not a topic), so they're always delivered.
+- **Deep links:** a tapped notification routes into the app. The service emits
+  the data payload (`onNotificationOpened` stream + `takeInitialMessage()` for a
+  cold-start tap) from `onMessageOpenedApp`, `getInitialMessage`, and the local
+  notification tap (data is JSON-encoded into the local payload). `ZoonzeApp`
+  listens and navigates via `notificationRoute(data)` (`lib/app/notification_routes.dart`),
+  which maps an explicit `route` path or a typed `{type,id}` pair
+  (order/product/category/cart/wishlist/promo) to an `AppRoutes` location.
+  Platform deep-link config (Android intent-filters / iOS associated domains) is
+  the owner step; the routes already exist.
 
 ## ⚠️ Owner-provided (Open Q §9)
 To turn FCM on:

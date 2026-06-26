@@ -8,8 +8,8 @@ abstract final class Validators {
 
   static String? required(BuildContext context, String? value) =>
       (value == null || value.trim().isEmpty)
-          ? AppLocalizations.of(context).validationRequired
-          : null;
+      ? AppLocalizations.of(context).validationRequired
+      : null;
 
   static String? email(BuildContext context, String? value) {
     final l10n = AppLocalizations.of(context);

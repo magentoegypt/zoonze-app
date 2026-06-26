@@ -63,8 +63,10 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                 const Center(child: BrandLockup(fontSize: 28)),
                 const SizedBox(height: 8),
                 Center(
-                  child: Text(l10n.authSignInTitle,
-                      style: Theme.of(context).textTheme.titleMedium),
+                  child: Text(
+                    l10n.authSignInTitle,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 TextFormField(
