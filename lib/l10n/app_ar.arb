@@ -20,5 +20,47 @@
   "fieldDefaultView": "العرض الافتراضي",
   "fieldBaseUrl": "الرابط الأساسي",
   "fieldMediaUrl": "رابط الوسائط",
-  "availableStoresTitle": "طرق عرض المتجر المتاحة"
+  "availableStoresTitle": "طرق عرض المتجر المتاحة",
+
+  "navHome": "الرئيسية",
+  "navCategories": "الفئات",
+  "navCart": "السلة",
+  "navWishlist": "المفضلة",
+  "navAccount": "حسابي",
+
+  "launchTagline": "الجمال والعطور",
+  "welcomeGetStarted": "ابدأ الآن",
+  "welcomeSignIn": "تسجيل الدخول",
+  "welcomeContinueGuest": "المتابعة كزائر",
+  "welcomeHeadline": "الجمال والعطور، توصيل في جميع أنحاء الإمارات",
+  "welcomeSubtitle": "علامات أصلية، مختارة لك",
+
+  "homeShopByCategory": "تسوّق حسب الفئة",
+  "homeFeatured": "مميّزة",
+  "homeSeeAll": "عرض الكل",
+
+  "searchHint": "ابحث عن المنتجات",
+  "comingSoon": "قريبًا",
+  "comingSoonBody": "سيتوفّر هذا القسم في مرحلة لاحقة.",
+
+  "badgeNew": "جديد",
+  "badgeBestseller": "الأكثر مبيعًا",
+  "priceFrom": "ابتداءً من",
+  "productAddToCart": "أضف إلى السلة",
+  "productOutOfStock": "غير متوفّر",
+
+  "menuShop": "تسوّق",
+  "menuAccountSection": "الحساب",
+  "menuLogOut": "تسجيل الخروج",
+
+  "footerShop": "تسوّق",
+  "footerSupport": "الدعم",
+  "footerNewsletterTitle": "اشترك في نشرتنا البريدية",
+  "footerNewsletterHint": "البريد الإلكتروني",
+  "footerSubscribe": "اشتراك",
+  "footerRights": "© زونزي بيوتي. جميع الحقوق محفوظة.",
+  "footerAbout": "من نحن",
+  "footerContact": "اتصل بنا",
+  "footerShipping": "الشحن",
+  "footerReturns": "الإرجاع"
 }

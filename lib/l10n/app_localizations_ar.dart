@@ -65,4 +65,109 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get availableStoresTitle => 'طرق عرض المتجر المتاحة';
+
+  @override
+  String get navHome => 'الرئيسية';
+
+  @override
+  String get navCategories => 'الفئات';
+
+  @override
+  String get navCart => 'السلة';
+
+  @override
+  String get navWishlist => 'المفضلة';
+
+  @override
+  String get navAccount => 'حسابي';
+
+  @override
+  String get launchTagline => 'الجمال والعطور';
+
+  @override
+  String get welcomeGetStarted => 'ابدأ الآن';
+
+  @override
+  String get welcomeSignIn => 'تسجيل الدخول';
+
+  @override
+  String get welcomeContinueGuest => 'المتابعة كزائر';
+
+  @override
+  String get welcomeHeadline => 'الجمال والعطور، توصيل في جميع أنحاء الإمارات';
+
+  @override
+  String get welcomeSubtitle => 'علامات أصلية، مختارة لك';
+
+  @override
+  String get homeShopByCategory => 'تسوّق حسب الفئة';
+
+  @override
+  String get homeFeatured => 'مميّزة';
+
+  @override
+  String get homeSeeAll => 'عرض الكل';
+
+  @override
+  String get searchHint => 'ابحث عن المنتجات';
+
+  @override
+  String get comingSoon => 'قريبًا';
+
+  @override
+  String get comingSoonBody => 'سيتوفّر هذا القسم في مرحلة لاحقة.';
+
+  @override
+  String get badgeNew => 'جديد';
+
+  @override
+  String get badgeBestseller => 'الأكثر مبيعًا';
+
+  @override
+  String get priceFrom => 'ابتداءً من';
+
+  @override
+  String get productAddToCart => 'أضف إلى السلة';
+
+  @override
+  String get productOutOfStock => 'غير متوفّر';
+
+  @override
+  String get menuShop => 'تسوّق';
+
+  @override
+  String get menuAccountSection => 'الحساب';
+
+  @override
+  String get menuLogOut => 'تسجيل الخروج';
+
+  @override
+  String get footerShop => 'تسوّق';
+
+  @override
+  String get footerSupport => 'الدعم';
+
+  @override
+  String get footerNewsletterTitle => 'اشترك في نشرتنا البريدية';
+
+  @override
+  String get footerNewsletterHint => 'البريد الإلكتروني';
+
+  @override
+  String get footerSubscribe => 'اشتراك';
+
+  @override
+  String get footerRights => '© زونزي بيوتي. جميع الحقوق محفوظة.';
+
+  @override
+  String get footerAbout => 'من نحن';
+
+  @override
+  String get footerContact => 'اتصل بنا';
+
+  @override
+  String get footerShipping => 'الشحن';
+
+  @override
+  String get footerReturns => 'الإرجاع';
 }

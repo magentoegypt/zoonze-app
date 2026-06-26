@@ -67,4 +67,109 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get availableStoresTitle => 'Available store views';
+
+  @override
+  String get navHome => 'Home';
+
+  @override
+  String get navCategories => 'Categories';
+
+  @override
+  String get navCart => 'Cart';
+
+  @override
+  String get navWishlist => 'Wishlist';
+
+  @override
+  String get navAccount => 'Account';
+
+  @override
+  String get launchTagline => 'BEAUTY & FRAGRANCE';
+
+  @override
+  String get welcomeGetStarted => 'Get Started';
+
+  @override
+  String get welcomeSignIn => 'Sign In';
+
+  @override
+  String get welcomeContinueGuest => 'Continue as guest';
+
+  @override
+  String get welcomeHeadline => 'Beauty & fragrance, delivered across the UAE';
+
+  @override
+  String get welcomeSubtitle => 'Authentic brands, curated for you';
+
+  @override
+  String get homeShopByCategory => 'Shop by category';
+
+  @override
+  String get homeFeatured => 'Featured';
+
+  @override
+  String get homeSeeAll => 'See all';
+
+  @override
+  String get searchHint => 'Search products';
+
+  @override
+  String get comingSoon => 'Coming soon';
+
+  @override
+  String get comingSoonBody => 'This section arrives in a later phase.';
+
+  @override
+  String get badgeNew => 'NEW';
+
+  @override
+  String get badgeBestseller => 'BESTSELLER';
+
+  @override
+  String get priceFrom => 'From';
+
+  @override
+  String get productAddToCart => 'Add to Cart';
+
+  @override
+  String get productOutOfStock => 'Out of stock';
+
+  @override
+  String get menuShop => 'Shop';
+
+  @override
+  String get menuAccountSection => 'Account';
+
+  @override
+  String get menuLogOut => 'Log Out';
+
+  @override
+  String get footerShop => 'Shop';
+
+  @override
+  String get footerSupport => 'Support';
+
+  @override
+  String get footerNewsletterTitle => 'Join our newsletter';
+
+  @override
+  String get footerNewsletterHint => 'Email address';
+
+  @override
+  String get footerSubscribe => 'Subscribe';
+
+  @override
+  String get footerRights => '© ZoonZE Beauty. All rights reserved.';
+
+  @override
+  String get footerAbout => 'About';
+
+  @override
+  String get footerContact => 'Contact';
+
+  @override
+  String get footerShipping => 'Shipping';
+
+  @override
+  String get footerReturns => 'Returns';
 }

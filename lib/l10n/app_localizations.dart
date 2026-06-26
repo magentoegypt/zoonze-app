@@ -104,113 +104,323 @@ abstract class AppLocalizations {
   /// **'ZoonZE Beauty'**
   String get appTitle;
 
-  /// Name of the English language option.
+  /// No description provided for @languageEnglish.
   ///
   /// In en, this message translates to:
   /// **'English'**
   String get languageEnglish;
 
-  /// Name of the Arabic language option, always shown in Arabic.
+  /// No description provided for @languageArabic.
   ///
   /// In en, this message translates to:
   /// **'العربية'**
   String get languageArabic;
 
-  /// Label for the language switcher.
+  /// No description provided for @languageToggleLabel.
   ///
   /// In en, this message translates to:
   /// **'Language'**
   String get languageToggleLabel;
 
-  /// Generic retry button.
+  /// No description provided for @actionRetry.
   ///
   /// In en, this message translates to:
   /// **'Retry'**
   String get actionRetry;
 
-  /// Generic loading message.
+  /// No description provided for @stateLoading.
   ///
   /// In en, this message translates to:
   /// **'Loading…'**
   String get stateLoading;
 
-  /// Generic empty-state message.
+  /// No description provided for @stateEmpty.
   ///
   /// In en, this message translates to:
   /// **'Nothing here yet'**
   String get stateEmpty;
 
-  /// Generic, user-friendly error message.
+  /// No description provided for @errorGeneric.
   ///
   /// In en, this message translates to:
   /// **'Something went wrong. Please try again.'**
   String get errorGeneric;
 
-  /// Network/connectivity failure message.
+  /// No description provided for @errorNetwork.
   ///
   /// In en, this message translates to:
   /// **'We couldn\'t reach the store. Check your connection and try again.'**
   String get errorNetwork;
 
-  /// Shown when the edge returns a non-JSON/HTML response (WAF/CDN).
+  /// No description provided for @errorService.
   ///
   /// In en, this message translates to:
   /// **'The store is temporarily unavailable. Please try again shortly.'**
   String get errorService;
 
-  /// Title of the Phase 0 diagnostics screen.
+  /// No description provided for @healthCheckTitle.
   ///
   /// In en, this message translates to:
   /// **'Store health check'**
   String get healthCheckTitle;
 
-  /// Subtitle on the diagnostics screen.
+  /// No description provided for @healthCheckSubtitle.
   ///
   /// In en, this message translates to:
   /// **'Live storeConfig for the active store view'**
   String get healthCheckSubtitle;
 
-  /// Label for the store_code value.
+  /// No description provided for @fieldStoreCode.
   ///
   /// In en, this message translates to:
   /// **'Store code'**
   String get fieldStoreCode;
 
-  /// Label for the locale value.
+  /// No description provided for @fieldLocale.
   ///
   /// In en, this message translates to:
   /// **'Locale'**
   String get fieldLocale;
 
-  /// Label for the currency value.
+  /// No description provided for @fieldCurrency.
   ///
   /// In en, this message translates to:
   /// **'Currency'**
   String get fieldCurrency;
 
-  /// Label indicating the default store view.
+  /// No description provided for @fieldDefaultView.
   ///
   /// In en, this message translates to:
   /// **'Default view'**
   String get fieldDefaultView;
 
-  /// Label for the base URL value.
+  /// No description provided for @fieldBaseUrl.
   ///
   /// In en, this message translates to:
   /// **'Base URL'**
   String get fieldBaseUrl;
 
-  /// Label for the media base URL value.
+  /// No description provided for @fieldMediaUrl.
   ///
   /// In en, this message translates to:
   /// **'Media URL'**
   String get fieldMediaUrl;
 
-  /// Heading for the resolved store views list.
+  /// No description provided for @availableStoresTitle.
   ///
   /// In en, this message translates to:
   /// **'Available store views'**
   String get availableStoresTitle;
+
+  /// No description provided for @navHome.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get navHome;
+
+  /// No description provided for @navCategories.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get navCategories;
+
+  /// No description provided for @navCart.
+  ///
+  /// In en, this message translates to:
+  /// **'Cart'**
+  String get navCart;
+
+  /// No description provided for @navWishlist.
+  ///
+  /// In en, this message translates to:
+  /// **'Wishlist'**
+  String get navWishlist;
+
+  /// No description provided for @navAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get navAccount;
+
+  /// No description provided for @launchTagline.
+  ///
+  /// In en, this message translates to:
+  /// **'BEAUTY & FRAGRANCE'**
+  String get launchTagline;
+
+  /// No description provided for @welcomeGetStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Started'**
+  String get welcomeGetStarted;
+
+  /// No description provided for @welcomeSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign In'**
+  String get welcomeSignIn;
+
+  /// No description provided for @welcomeContinueGuest.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue as guest'**
+  String get welcomeContinueGuest;
+
+  /// No description provided for @welcomeHeadline.
+  ///
+  /// In en, this message translates to:
+  /// **'Beauty & fragrance, delivered across the UAE'**
+  String get welcomeHeadline;
+
+  /// No description provided for @welcomeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Authentic brands, curated for you'**
+  String get welcomeSubtitle;
+
+  /// No description provided for @homeShopByCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop by category'**
+  String get homeShopByCategory;
+
+  /// No description provided for @homeFeatured.
+  ///
+  /// In en, this message translates to:
+  /// **'Featured'**
+  String get homeFeatured;
+
+  /// No description provided for @homeSeeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'See all'**
+  String get homeSeeAll;
+
+  /// No description provided for @searchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search products'**
+  String get searchHint;
+
+  /// No description provided for @comingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming soon'**
+  String get comingSoon;
+
+  /// No description provided for @comingSoonBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This section arrives in a later phase.'**
+  String get comingSoonBody;
+
+  /// No description provided for @badgeNew.
+  ///
+  /// In en, this message translates to:
+  /// **'NEW'**
+  String get badgeNew;
+
+  /// No description provided for @badgeBestseller.
+  ///
+  /// In en, this message translates to:
+  /// **'BESTSELLER'**
+  String get badgeBestseller;
+
+  /// No description provided for @priceFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get priceFrom;
+
+  /// No description provided for @productAddToCart.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to Cart'**
+  String get productAddToCart;
+
+  /// No description provided for @productOutOfStock.
+  ///
+  /// In en, this message translates to:
+  /// **'Out of stock'**
+  String get productOutOfStock;
+
+  /// No description provided for @menuShop.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop'**
+  String get menuShop;
+
+  /// No description provided for @menuAccountSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get menuAccountSection;
+
+  /// No description provided for @menuLogOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Log Out'**
+  String get menuLogOut;
+
+  /// No description provided for @footerShop.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop'**
+  String get footerShop;
+
+  /// No description provided for @footerSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Support'**
+  String get footerSupport;
+
+  /// No description provided for @footerNewsletterTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Join our newsletter'**
+  String get footerNewsletterTitle;
+
+  /// No description provided for @footerNewsletterHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Email address'**
+  String get footerNewsletterHint;
+
+  /// No description provided for @footerSubscribe.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscribe'**
+  String get footerSubscribe;
+
+  /// No description provided for @footerRights.
+  ///
+  /// In en, this message translates to:
+  /// **'© ZoonZE Beauty. All rights reserved.'**
+  String get footerRights;
+
+  /// No description provided for @footerAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get footerAbout;
+
+  /// No description provided for @footerContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact'**
+  String get footerContact;
+
+  /// No description provided for @footerShipping.
+  ///
+  /// In en, this message translates to:
+  /// **'Shipping'**
+  String get footerShipping;
+
+  /// No description provided for @footerReturns.
+  ///
+  /// In en, this message translates to:
+  /// **'Returns'**
+  String get footerReturns;
 }
 
 class _AppLocalizationsDelegate

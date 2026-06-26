@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:zoonze_app/app/app.dart';
+import 'package:zoonze_app/app/router.dart';
 import 'package:zoonze_app/core/storage/local_cache.dart';
 import 'package:zoonze_app/core/storage/locale_prefs.dart';
 import 'package:zoonze_app/features/diagnostics/data/store_config_repository.dart';
+import 'package:zoonze_app/features/diagnostics/presentation/health_check_screen.dart';
 
 import '../../support/fakes.dart';
 
@@ -22,6 +25,19 @@ Widget _harness(String locale) => ProviderScope(
         localCacheProvider.overrideWithValue(FakeLocalCache()),
         localePrefsProvider.overrideWithValue(FakeLocalePrefs(locale)),
         storeConfigProvider.overrideWith((ref) async => _config),
+        // Boot the app directly on the diagnostics screen (the real router
+        // starts at /splash).
+        routerProvider.overrideWithValue(
+          GoRouter(
+            initialLocation: '/',
+            routes: [
+              GoRoute(
+                path: '/',
+                builder: (_, __) => const HealthCheckScreen(),
+              ),
+            ],
+          ),
+        ),
       ],
       child: const ZoonzeApp(),
     );
