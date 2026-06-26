@@ -84,11 +84,21 @@ class _Image extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (url == null || url!.isEmpty) return const _ImagePlaceholder();
-    return CachedNetworkImage(
-      imageUrl: url!,
-      fit: BoxFit.cover,
-      placeholder: (_, __) => const _ImagePlaceholder(),
-      errorWidget: (_, __, ___) => const _ImagePlaceholder(),
+    final dpr = MediaQuery.devicePixelRatioOf(context);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Decode at the on-screen size (× DPR), not the source's full
+        // resolution — a large memory/jank win across product grids.
+        final w = constraints.maxWidth;
+        final cacheWidth = (w.isFinite && w > 0) ? (w * dpr).round() : null;
+        return CachedNetworkImage(
+          imageUrl: url!,
+          fit: BoxFit.cover,
+          memCacheWidth: cacheWidth,
+          placeholder: (_, __) => const _ImagePlaceholder(),
+          errorWidget: (_, __, ___) => const _ImagePlaceholder(),
+        );
+      },
     );
   }
 }

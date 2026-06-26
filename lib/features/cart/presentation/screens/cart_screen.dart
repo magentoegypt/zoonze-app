@@ -196,6 +196,9 @@ class _CartItemTile extends StatelessWidget {
                   : CachedNetworkImage(
                       imageUrl: item.imageUrl!,
                       fit: BoxFit.cover,
+                      // 72pt thumbnail — decode at display size, not full res.
+                      memCacheWidth:
+                          (72 * MediaQuery.devicePixelRatioOf(context)).round(),
                       placeholder: (_, __) =>
                           Container(color: AppColors.surfaceTint),
                       errorWidget: (_, __, ___) =>

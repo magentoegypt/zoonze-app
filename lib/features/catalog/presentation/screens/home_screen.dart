@@ -48,6 +48,11 @@ class HomeScreen extends ConsumerWidget {
                   child: Image.asset(
                     AppImages.banner,
                     fit: BoxFit.cover,
+                    // Decode the bundled banner at screen width, not its full size.
+                    cacheWidth:
+                        (MediaQuery.sizeOf(context).width *
+                                MediaQuery.devicePixelRatioOf(context))
+                            .round(),
                     errorBuilder: (_, __, ___) =>
                         Container(color: AppColors.surfaceTint),
                   ),

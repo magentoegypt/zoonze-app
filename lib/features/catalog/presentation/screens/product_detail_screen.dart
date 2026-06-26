@@ -158,6 +158,11 @@ class _GalleryState extends State<_Gallery> {
   @override
   Widget build(BuildContext context) {
     final images = widget.images;
+    // The gallery spans the full screen width — decode at that size, not full res.
+    final cacheWidth =
+        (MediaQuery.sizeOf(context).width *
+                MediaQuery.devicePixelRatioOf(context))
+            .round();
     return Column(
       children: [
         AspectRatio(
@@ -173,6 +178,7 @@ class _GalleryState extends State<_Gallery> {
                       itemBuilder: (_, i) => CachedNetworkImage(
                         imageUrl: images[i],
                         fit: BoxFit.cover,
+                        memCacheWidth: cacheWidth,
                         placeholder: (_, __) =>
                             Container(color: AppColors.surfaceTint),
                         errorWidget: (_, __, ___) =>
