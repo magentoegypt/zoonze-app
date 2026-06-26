@@ -121,6 +121,7 @@ query ProductDetail($urlKey: String!) {
           attribute_code
           label
           values {
+            uid
             value_index
             label
             swatch_data {

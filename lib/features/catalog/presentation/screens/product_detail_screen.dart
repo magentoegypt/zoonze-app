@@ -8,6 +8,7 @@ import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/widgets/async_value_view.dart';
 import '../../../../l10n/l10n.dart';
+import '../../../cart/presentation/cart_controller.dart';
 import '../../domain/money.dart';
 import '../../domain/product_detail.dart';
 import '../catalog_providers.dart';
@@ -72,10 +73,8 @@ class _Content extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     final variant = product.variantFor(selection);
     final price = variant?.price ?? product.finalPrice ?? product.regularPrice;
-    final inStock = variant?.inStock ?? product.inStock;
     final images = <String>[
       if (variant?.imageUrl != null) variant!.imageUrl!,
       ...product.gallery,
@@ -105,16 +104,11 @@ class _Content extends StatelessWidget {
                   onSelect: (value) => onSelect(option.attributeCode, value),
                 ),
               const SizedBox(height: 8),
-              if (!inStock)
-                Text(l10n.productOutOfStock,
-                    style: const TextStyle(color: AppColors.accentSale))
-              else
-                FilledButton(
-                  onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(l10n.comingSoon)),
-                  ),
-                  child: Text(l10n.productAddToCart),
-                ),
+              _AddToCartButton(
+                product: product,
+                selection: selection,
+                variant: variant,
+              ),
               const SizedBox(height: 24),
               _Tabs(current: tab, onTab: onTab),
               const SizedBox(height: 12),
@@ -325,6 +319,73 @@ class _Tabs extends StatelessWidget {
           ),
       ],
     );
+  }
+}
+
+class _AddToCartButton extends ConsumerWidget {
+  const _AddToCartButton({
+    required this.product,
+    required this.selection,
+    required this.variant,
+  });
+
+  final ProductDetail product;
+  final Map<String, int> selection;
+  final ProductVariant? variant;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final inStock = variant?.inStock ?? product.inStock;
+    if (!inStock) {
+      return Text(l10n.productOutOfStock,
+          style: const TextStyle(color: AppColors.accentSale));
+    }
+    final needsSelection = product.isConfigurable && variant == null;
+    final isMutating =
+        ref.watch(cartControllerProvider.select((s) => s.isMutating));
+    final enabled = !needsSelection && !isMutating;
+
+    return FilledButton(
+      onPressed: enabled ? () => _add(context, ref, l10n) : null,
+      child: isMutating
+          ? const SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : Text(l10n.productAddToCart),
+    );
+  }
+
+  Future<void> _add(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations l10n,
+  ) async {
+    final uids = <String>[];
+    for (final option in product.options) {
+      final selectedIndex = selection[option.attributeCode];
+      for (final value in option.values) {
+        if (value.valueIndex == selectedIndex && value.uid != null) {
+          uids.add(value.uid!);
+        }
+      }
+    }
+    try {
+      await ref
+          .read(cartControllerProvider.notifier)
+          .addToCart(sku: product.sku, selectedOptionUids: uids);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l10n.cartAdded)));
+      }
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l10n.errorGeneric)));
+      }
+    }
   }
 }
 

@@ -6,11 +6,15 @@ class SwatchValue {
   const SwatchValue({
     required this.valueIndex,
     required this.label,
+    this.uid,
     this.swatchColor,
   });
 
   final int valueIndex;
   final String label;
+
+  /// Option-value uid used for `addProductsToCart` selected_options.
+  final String? uid;
   final String? swatchColor;
 }
 

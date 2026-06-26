@@ -1,0 +1,182 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../core/storage/local_cache.dart';
+import '../../auth/presentation/auth_controller.dart';
+import '../data/cart_repository.dart';
+import '../domain/cart.dart';
+
+class CartState {
+  const CartState({
+    this.cart = Cart.empty,
+    this.isLoading = false,
+    this.isMutating = false,
+    this.error,
+  });
+
+  final Cart cart;
+  final bool isLoading;
+  final bool isMutating;
+  final Object? error;
+
+  int get itemCount => cart.itemCount;
+
+  static const Object _keep = Object();
+
+  CartState copyWith({
+    Cart? cart,
+    bool? isLoading,
+    bool? isMutating,
+    Object? error = _keep,
+  }) =>
+      CartState(
+        cart: cart ?? this.cart,
+        isLoading: isLoading ?? this.isLoading,
+        isMutating: isMutating ?? this.isMutating,
+        error: identical(error, _keep) ? this.error : error,
+      );
+}
+
+/// Owns the cart: lazily creates a guest cart (id persisted in Hive), add /
+/// update / remove / coupon, and merges the guest cart into the customer cart
+/// on login (and clears it on logout).
+class CartController extends Notifier<CartState> {
+  static const String _guestKey = 'guest_cart_id';
+  String? _cartId;
+
+  @override
+  CartState build() {
+    ref.listen<AuthState>(authControllerProvider, (prev, next) {
+      final wasAuthed = prev?.isAuthenticated ?? false;
+      if (next.isAuthenticated && !wasAuthed) {
+        _onLogin();
+      } else if (next.status == AuthStatus.guest && wasAuthed) {
+        _onLogout();
+      }
+    });
+    Future.microtask(_restore);
+    return const CartState();
+  }
+
+  LocalCache get _cache => ref.read(localCacheProvider);
+  CartRepository get _repo => ref.read(cartRepositoryProvider);
+
+  Future<void> _restore() async {
+    final id = _cache.readString(_guestKey);
+    if (id == null) return;
+    _cartId = id;
+    await _reload();
+  }
+
+  Future<String> _ensureCartId() async {
+    final existing = _cartId;
+    if (existing != null) return existing;
+    final id = await _repo.createGuestCart();
+    _cartId = id;
+    await _cache.writeString(_guestKey, id);
+    return id;
+  }
+
+  Future<void> _reload() async {
+    final id = _cartId;
+    if (id == null) return;
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      state = state.copyWith(cart: await _repo.getCart(id), isLoading: false);
+    } catch (error) {
+      state = state.copyWith(isLoading: false, error: error);
+    }
+  }
+
+  Future<void> addToCart({
+    required String sku,
+    int quantity = 1,
+    List<String> selectedOptionUids = const [],
+  }) async {
+    state = state.copyWith(isMutating: true, error: null);
+    try {
+      final id = await _ensureCartId();
+      final cart = await _repo.addProducts(id, [
+        <String, dynamic>{
+          'sku': sku,
+          'quantity': quantity,
+          if (selectedOptionUids.isNotEmpty) 'selected_options': selectedOptionUids,
+        },
+      ]);
+      state = state.copyWith(cart: cart, isMutating: false);
+    } catch (error) {
+      state = state.copyWith(isMutating: false, error: error);
+      rethrow;
+    }
+  }
+
+  Future<void> setQuantity(String uid, int quantity) async {
+    final id = _cartId;
+    if (id == null) return;
+    state = state.copyWith(isMutating: true);
+    try {
+      final cart = quantity <= 0
+          ? await _repo.removeItem(id, uid)
+          : await _repo.updateItem(id, uid, quantity);
+      state = state.copyWith(cart: cart, isMutating: false);
+    } catch (error) {
+      state = state.copyWith(isMutating: false, error: error);
+    }
+  }
+
+  Future<void> removeItem(String uid) => setQuantity(uid, 0);
+
+  Future<void> applyCoupon(String code) async {
+    state = state.copyWith(isMutating: true, error: null);
+    try {
+      final id = await _ensureCartId();
+      state = state.copyWith(
+          cart: await _repo.applyCoupon(id, code), isMutating: false);
+    } catch (error) {
+      state = state.copyWith(isMutating: false, error: error);
+      rethrow;
+    }
+  }
+
+  Future<void> removeCoupon() async {
+    final id = _cartId;
+    if (id == null) return;
+    state = state.copyWith(isMutating: true);
+    try {
+      state =
+          state.copyWith(cart: await _repo.removeCoupon(id), isMutating: false);
+    } catch (error) {
+      state = state.copyWith(isMutating: false, error: error);
+    }
+  }
+
+  Future<void> refresh() => _reload();
+
+  Future<void> _onLogin() async {
+    try {
+      final customerId = await _repo.customerCartId();
+      if (customerId == null) return;
+      final guestId = _cartId;
+      if (guestId != null && guestId != customerId) {
+        try {
+          await _repo.mergeCarts(guestId, customerId);
+        } on Object {
+          // Merge is best-effort; fall through to the customer cart.
+        }
+      }
+      _cartId = customerId;
+      await _cache.deleteKey(_guestKey);
+      await _reload();
+    } on Object {
+      // ignore: keep current state on merge failure
+    }
+  }
+
+  Future<void> _onLogout() async {
+    _cartId = null;
+    await _cache.deleteKey(_guestKey);
+    state = const CartState();
+  }
+}
+
+final cartControllerProvider =
+    NotifierProvider<CartController, CartState>(CartController.new);

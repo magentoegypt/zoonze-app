@@ -32,6 +32,15 @@ class LocalCache {
 
   Future<void> writeStores(List<Map<String, dynamic>> stores) =>
       _box.put(_storesKey, jsonEncode(stores));
+
+  String? readString(String key) {
+    final value = _box.get(key);
+    return value is String ? value : null;
+  }
+
+  Future<void> writeString(String key, String value) => _box.put(key, value);
+
+  Future<void> deleteKey(String key) => _box.delete(key);
 }
 
 /// Overridden in `bootstrap()` once Hive is initialised.

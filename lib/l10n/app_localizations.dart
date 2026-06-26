@@ -518,6 +518,78 @@ abstract class AppLocalizations {
   /// **'Help & FAQ'**
   String get accountHelp;
 
+  /// No description provided for @cartTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cart'**
+  String get cartTitle;
+
+  /// No description provided for @cartEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your cart is empty'**
+  String get cartEmptyTitle;
+
+  /// No description provided for @cartEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse the catalogue and add your favourites.'**
+  String get cartEmptyBody;
+
+  /// No description provided for @cartContinueShopping.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue shopping'**
+  String get cartContinueShopping;
+
+  /// No description provided for @cartSubtotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtotal'**
+  String get cartSubtotal;
+
+  /// No description provided for @cartDiscount.
+  ///
+  /// In en, this message translates to:
+  /// **'Discount'**
+  String get cartDiscount;
+
+  /// No description provided for @cartTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get cartTotal;
+
+  /// No description provided for @cartCheckout.
+  ///
+  /// In en, this message translates to:
+  /// **'Checkout'**
+  String get cartCheckout;
+
+  /// No description provided for @cartCouponHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Promo code'**
+  String get cartCouponHint;
+
+  /// No description provided for @cartApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get cartApply;
+
+  /// No description provided for @cartAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Added to cart'**
+  String get cartAdded;
+
+  /// No description provided for @cartCouponError.
+  ///
+  /// In en, this message translates to:
+  /// **'That code didn\'t work.'**
+  String get cartCouponError;
+
   /// No description provided for @badgeNew.
   ///
   /// In en, this message translates to:

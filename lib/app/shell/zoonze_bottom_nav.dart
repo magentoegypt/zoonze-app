@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/cart/presentation/cart_controller.dart';
 import '../../l10n/l10n.dart';
 import '../routes.dart';
 
-/// Persistent bottom navigation (Home · Categories · Cart · Wishlist · Account).
-/// Cart/wishlist count badges are wired with live counts in Phases 2/4.
-class ZoonzeBottomNav extends StatelessWidget {
+/// Persistent bottom navigation (Home · Categories · Cart · Wishlist · Account)
+/// with a live cart count badge.
+class ZoonzeBottomNav extends ConsumerWidget {
   const ZoonzeBottomNav({super.key, required this.current});
 
   final AppTab current;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final cartCount =
+        ref.watch(cartControllerProvider.select((s) => s.itemCount));
+
     return NavigationBar(
       selectedIndex: current.index,
       // Always navigate to the tab root, even when re-tapping the active tab,
@@ -31,8 +36,16 @@ class ZoonzeBottomNav extends StatelessWidget {
           label: l10n.navCategories,
         ),
         NavigationDestination(
-          icon: const Icon(Icons.shopping_bag_outlined),
-          selectedIcon: const Icon(Icons.shopping_bag),
+          icon: Badge(
+            isLabelVisible: cartCount > 0,
+            label: Text('$cartCount'),
+            child: const Icon(Icons.shopping_bag_outlined),
+          ),
+          selectedIcon: Badge(
+            isLabelVisible: cartCount > 0,
+            label: Text('$cartCount'),
+            child: const Icon(Icons.shopping_bag),
+          ),
           label: l10n.navCart,
         ),
         NavigationDestination(

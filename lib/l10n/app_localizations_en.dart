@@ -228,6 +228,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountHelp => 'Help & FAQ';
 
   @override
+  String get cartTitle => 'Cart';
+
+  @override
+  String get cartEmptyTitle => 'Your cart is empty';
+
+  @override
+  String get cartEmptyBody => 'Browse the catalogue and add your favourites.';
+
+  @override
+  String get cartContinueShopping => 'Continue shopping';
+
+  @override
+  String get cartSubtotal => 'Subtotal';
+
+  @override
+  String get cartDiscount => 'Discount';
+
+  @override
+  String get cartTotal => 'Total';
+
+  @override
+  String get cartCheckout => 'Checkout';
+
+  @override
+  String get cartCouponHint => 'Promo code';
+
+  @override
+  String get cartApply => 'Apply';
+
+  @override
+  String get cartAdded => 'Added to cart';
+
+  @override
+  String get cartCouponError => 'That code didn\'t work.';
+
+  @override
   String get badgeNew => 'NEW';
 
   @override

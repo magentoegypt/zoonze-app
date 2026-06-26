@@ -225,6 +225,42 @@ class AppLocalizationsAr extends AppLocalizations {
   String get accountHelp => 'المساعدة والأسئلة الشائعة';
 
   @override
+  String get cartTitle => 'السلة';
+
+  @override
+  String get cartEmptyTitle => 'سلتك فارغة';
+
+  @override
+  String get cartEmptyBody => 'تصفّح المنتجات وأضف ما يعجبك.';
+
+  @override
+  String get cartContinueShopping => 'متابعة التسوّق';
+
+  @override
+  String get cartSubtotal => 'المجموع الفرعي';
+
+  @override
+  String get cartDiscount => 'الخصم';
+
+  @override
+  String get cartTotal => 'الإجمالي';
+
+  @override
+  String get cartCheckout => 'إتمام الشراء';
+
+  @override
+  String get cartCouponHint => 'رمز الخصم';
+
+  @override
+  String get cartApply => 'تطبيق';
+
+  @override
+  String get cartAdded => 'تمت الإضافة إلى السلة';
+
+  @override
+  String get cartCouponError => 'هذا الرمز غير صالح.';
+
+  @override
   String get badgeNew => 'جديد';
 
   @override

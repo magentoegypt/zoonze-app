@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../core/widgets/placeholder_screen.dart';
 import '../features/account/presentation/account_screen.dart';
 import '../features/auth/presentation/screens/forgot_password_screen.dart';
+import '../features/cart/presentation/screens/cart_screen.dart';
 import '../features/auth/presentation/screens/sign_in_screen.dart';
 import '../features/auth/presentation/screens/sign_up_screen.dart';
 import '../features/catalog/presentation/screens/categories_screen.dart';
@@ -56,8 +57,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.cart,
-        builder: (context, state) =>
-            const PlaceholderScreen(title: 'Cart', tab: AppTab.cart),
+        builder: (context, state) => const CartScreen(),
       ),
       GoRoute(
         path: AppRoutes.wishlist,

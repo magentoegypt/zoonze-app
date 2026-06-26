@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:zoonze_app/core/storage/local_cache.dart';
 import 'package:zoonze_app/core/storage/locale_prefs.dart';
+import 'package:zoonze_app/core/storage/secure_token_store.dart';
 import 'package:zoonze_app/features/catalog/data/catalog_repository.dart';
 import 'package:zoonze_app/features/catalog/presentation/screens/product_detail_screen.dart';
 import 'package:zoonze_app/l10n/l10n.dart';
@@ -28,6 +29,7 @@ Widget _harness(String locale) {
     overrides: [
       localCacheProvider.overrideWithValue(FakeLocalCache()),
       localePrefsProvider.overrideWithValue(FakeLocalePrefs(locale)),
+      secureTokenStoreProvider.overrideWithValue(FakeSecureTokenStore()),
       catalogRepositoryProvider.overrideWithValue(FakeCatalogRepository()),
     ],
     child: MaterialApp.router(

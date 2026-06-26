@@ -6,6 +6,8 @@ import 'package:zoonze_app/core/store/store_repository.dart';
 import 'package:zoonze_app/core/store/store_view.dart';
 import 'package:zoonze_app/features/auth/data/auth_repository.dart';
 import 'package:zoonze_app/features/auth/domain/customer.dart';
+import 'package:zoonze_app/features/cart/data/cart_repository.dart';
+import 'package:zoonze_app/features/cart/domain/cart.dart';
 import 'package:zoonze_app/features/catalog/data/catalog_repository.dart';
 import 'package:zoonze_app/features/catalog/domain/aggregation.dart';
 import 'package:zoonze_app/features/catalog/domain/category.dart';
@@ -17,12 +19,22 @@ import 'package:zoonze_app/features/catalog/domain/product_page.dart';
 class FakeLocalCache implements LocalCache {
   FakeLocalCache([this._stores]);
   final List<Map<String, dynamic>>? _stores;
+  final Map<String, String> _kv = {};
 
   @override
   List<Map<String, dynamic>>? readStores() => _stores;
 
   @override
   Future<void> writeStores(List<Map<String, dynamic>> stores) async {}
+
+  @override
+  String? readString(String key) => _kv[key];
+
+  @override
+  Future<void> writeString(String key, String value) async => _kv[key] = value;
+
+  @override
+  Future<void> deleteKey(String key) async => _kv.remove(key);
 }
 
 class FakeLocalePrefs implements LocalePrefs {
@@ -63,6 +75,98 @@ const Customer kSampleCustomer = Customer(
   lastName: 'Hassan',
   email: 'layla@example.com',
 );
+
+class FakeCartRepository implements CartRepository {
+  Cart _cart = const Cart(id: 'guest-1');
+  String? customerCart = 'customer-1';
+  int createCalls = 0;
+  int mergeCalls = 0;
+
+  @override
+  Future<String> createGuestCart() async {
+    createCalls++;
+    return 'guest-1';
+  }
+
+  @override
+  Future<String?> customerCartId() async => customerCart;
+
+  @override
+  Future<Cart> getCart(String cartId) async => _cart;
+
+  @override
+  Future<Cart> addProducts(
+      String cartId, List<Map<String, dynamic>> items) async {
+    final sku = items.first['sku'] as String;
+    final qty = (items.first['quantity'] as int?) ?? 1;
+    _cart = Cart(
+      id: cartId,
+      items: [
+        CartItem(
+          uid: 'i-$sku',
+          sku: sku,
+          name: sku,
+          quantity: qty,
+          rowTotal: const Money(amount: 100, currency: 'AED'),
+        ),
+      ],
+    );
+    return _cart;
+  }
+
+  @override
+  Future<Cart> updateItem(String cartId, String uid, int quantity) async {
+    _cart = Cart(
+      id: cartId,
+      items: [
+        for (final item in _cart.items)
+          if (item.uid == uid)
+            CartItem(
+              uid: item.uid,
+              sku: item.sku,
+              name: item.name,
+              quantity: quantity,
+              rowTotal: item.rowTotal,
+            )
+          else
+            item,
+      ],
+    );
+    return _cart;
+  }
+
+  @override
+  Future<Cart> removeItem(String cartId, String uid) async {
+    _cart = Cart(
+      id: cartId,
+      items: _cart.items.where((i) => i.uid != uid).toList(),
+    );
+    return _cart;
+  }
+
+  @override
+  Future<Cart> applyCoupon(String cartId, String code) async {
+    _cart = Cart(
+      id: cartId,
+      items: _cart.items,
+      totals: CartTotals(appliedCoupon: code),
+    );
+    return _cart;
+  }
+
+  @override
+  Future<Cart> removeCoupon(String cartId) async {
+    _cart = Cart(id: cartId, items: _cart.items);
+    return _cart;
+  }
+
+  @override
+  Future<Cart> mergeCarts(String source, String destination) async {
+    mergeCalls++;
+    _cart = Cart(id: destination, items: _cart.items);
+    return _cart;
+  }
+}
 
 class FakeAuthRepository implements AuthRepository {
   FakeAuthRepository({this.loginFails = false, this.customer = kSampleCustomer});

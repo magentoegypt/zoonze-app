@@ -110,6 +110,7 @@ class CatalogRepository {
                   .map((v) => SwatchValue(
                         valueIndex: (v['value_index'] as int?) ?? 0,
                         label: (v['label'] as String?) ?? '',
+                        uid: v['uid'] as String?,
                         swatchColor: (v['swatch_data']
                             as Map<String, dynamic>?)?['value'] as String?,
                       ))
