@@ -177,10 +177,13 @@ type Mutation {
 
 input SetOrderPaymentMethodInput {
     order_number: String!
-    method_code: String!     # the new method (must be valid for the order/store)
-    email: String            # guest auth: billing email + lastname (no guest_token)
+    payment_method: String!  # the new method (must be valid for the order/store)
+    email: String            # guest auth: order token OR billing email + lastname
     lastname: String
+    token: String            # guest order token (placeOrder.orderV2.token)
 }
+# Live-confirmed inputFields: [email, lastname, order_number, payment_method, token].
+# NOTE: the method field is `payment_method` (not `method_code`); PaymentSessionData is {key, value}.
 ```
 
 - Assert ownership (same as `paymentSession`) → set the order's payment method to `method_code` (the order

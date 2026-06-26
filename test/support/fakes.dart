@@ -285,6 +285,7 @@ class FakeCheckoutRepository implements CheckoutRepository {
     String methodCode, {
     String? email,
     String? lastname,
+    String? token,
   }) async {
     switchedToMethod = methodCode;
     return paymentSession;

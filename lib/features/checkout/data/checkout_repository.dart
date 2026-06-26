@@ -156,6 +156,7 @@ class CheckoutRepository {
     String methodCode, {
     String? email,
     String? lastname,
+    String? token,
   }) async {
     try {
       final data = await _mutate(CheckoutQueries.setOrderPaymentMethod, {
@@ -163,6 +164,7 @@ class CheckoutRepository {
         'methodCode': methodCode,
         'email': email,
         'lastname': lastname,
+        'token': token,
       });
       return _parseSession(
         data['setOrderPaymentMethod'] as Map<String, dynamic>?,

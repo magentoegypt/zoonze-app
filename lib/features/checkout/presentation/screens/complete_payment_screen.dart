@@ -77,6 +77,7 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
               code,
               email: _args.email,
               lastname: _args.lastname,
+              token: _args.orderToken,
             );
       if (!mounted) return;
       if (session != null && code != _activeCode) _activeCode = code;

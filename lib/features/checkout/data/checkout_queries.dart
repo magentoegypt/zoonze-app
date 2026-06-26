@@ -126,13 +126,15 @@ mutation SetOrderPaymentMethod(
   $methodCode: String!
   $email: String
   $lastname: String
+  $token: String
 ) {
   setOrderPaymentMethod(
     input: {
       order_number: $orderNumber
-      method_code: $methodCode
+      payment_method: $methodCode
       email: $email
       lastname: $lastname
+      token: $token
     }
   ) {
     order_number
