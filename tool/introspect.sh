@@ -96,6 +96,18 @@ for t in ("PaymentGateway", "PaymentSessionStatus", "TabbyProductType"):
     ty = (r.get("data") or {}).get("__type")
     vals = [e["name"] for e in (ty.get("enumValues") or [])] if ty else None
     print("  enum %s: %s" % (t, vals))
+# Object/input shapes the app selects on: additional_data element ({key,value}?)
+# and the setOrderPaymentMethod input fields.
+for t in ("PaymentSessionData", "SetOrderPaymentMethodInput"):
+    r = q('{ __type(name:"%s"){ kind fields{ name } inputFields{ name } } }' % t)
+    ty = (r.get("data") or {}).get("__type")
+    if ty:
+        fields = [x["name"] for x in (ty.get("fields") or [])]
+        inputs = [x["name"] for x in (ty.get("inputFields") or [])]
+        print("  %s: kind=%s fields=%s inputFields=%s"
+              % (t, ty.get("kind"), fields or None, inputs or None))
+    else:
+        print("  %s: (type not found — element name may differ)" % t)
 PY
 echo
 

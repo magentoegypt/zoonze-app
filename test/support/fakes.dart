@@ -216,6 +216,7 @@ class FakeCheckoutRepository implements CheckoutRepository {
   String? selectedPaymentCode;
   String? lastSessionEmail;
   String? lastSessionLastname;
+  String? lastSessionToken;
   String? switchedToMethod;
 
   @override
@@ -270,9 +271,11 @@ class FakeCheckoutRepository implements CheckoutRepository {
     String orderNumber, {
     String? email,
     String? lastname,
+    String? token,
   }) async {
     lastSessionEmail = email;
     lastSessionLastname = lastname;
+    lastSessionToken = token;
     return paymentSession;
   }
 

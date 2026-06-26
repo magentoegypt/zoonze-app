@@ -171,13 +171,19 @@ class CheckoutController extends Notifier<CheckoutState> {
 
   /// Loads the gateway session for a placed order. A `PENDING` session isn't yet
   /// launchable, so we back-off poll a few times before giving up (the contract's
-  /// PENDING flow). A guest order authorizes via the billing email + lastname
-  /// captured at checkout; a logged-in customer sends only the order number (the
-  /// bearer authorizes). Null when the backend resolver isn't deployed.
-  Future<PaymentSession?> loadPaymentSession(String orderNumber) async {
+  /// PENDING flow). A guest order authorizes via **either** the Magento order
+  /// [orderToken] (`placeOrder.orderV2.token`) **or** the billing email +
+  /// lastname captured at checkout; both are sent. A logged-in customer sends
+  /// only the order number (the bearer authorizes). Null when the resolver
+  /// isn't deployed.
+  Future<PaymentSession?> loadPaymentSession(
+    String orderNumber, {
+    String? orderToken,
+  }) async {
     final guest = state.isGuest;
     final email = guest ? state.email : null;
     final lastname = guest ? state.lastname : null;
+    final token = guest ? orderToken : null;
     const maxAttempts = 4;
     PaymentSession? session;
     for (var attempt = 0; attempt < maxAttempts; attempt++) {
@@ -185,6 +191,7 @@ class CheckoutController extends Notifier<CheckoutState> {
         orderNumber,
         email: email,
         lastname: lastname,
+        token: token,
       );
       if (session == null ||
           session.status != PaymentSessionStatus.pending ||

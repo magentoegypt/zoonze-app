@@ -23,6 +23,7 @@ class CompletePaymentArgs {
     this.amount,
     this.email,
     this.lastname,
+    this.orderToken,
   });
 
   final String orderNumber;
@@ -31,6 +32,7 @@ class CompletePaymentArgs {
   final Money? amount;
   final String? email;
   final String? lastname;
+  final String? orderToken;
 }
 
 /// Reached after a payment attempt fails on an already-placed order. Lets the
@@ -68,6 +70,7 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
               _args.orderNumber,
               email: _args.email,
               lastname: _args.lastname,
+              token: _args.orderToken,
             )
           : await repo.setOrderPaymentMethod(
               _args.orderNumber,

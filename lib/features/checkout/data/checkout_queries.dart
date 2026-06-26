@@ -82,7 +82,7 @@ mutation SetPayment($cartId: String!, $code: String!) {
 mutation PlaceOrder($cartId: String!) {
   placeOrder(input: { cart_id: $cartId }) {
     order { order_number }
-    orderV2 { number }
+    orderV2 { number token }
   }
 }
 ''';
@@ -96,11 +96,13 @@ query PaymentSession(
   $orderNumber: String!
   $email: String
   $lastname: String
+  $token: String
 ) {
   paymentSession(
     order_number: $orderNumber
     email: $email
     lastname: $lastname
+    token: $token
   ) {
     order_number
     method_code

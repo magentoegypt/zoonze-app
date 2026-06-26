@@ -106,7 +106,11 @@ class CheckoutRepository {
     if (number == null || number.isEmpty) {
       throw const Failure(FailureKind.unknown);
     }
-    return PlaceOrderResult(orderNumber: number);
+    final token = orderV2?['token'] as String?;
+    return PlaceOrderResult(
+      orderNumber: number,
+      orderToken: (token != null && token.isNotEmpty) ? token : null,
+    );
   }
 
   /// Fetches the provider session reference for a placed order. Returns null
@@ -114,19 +118,22 @@ class CheckoutRepository {
   /// or surfaces no session, so checkout shows the awaiting-payment state rather
   /// than a fabricated payment UI.
   /// A guest (no customer bearer) authorizes the call for the order they just
-  /// placed with the billing [email] + [lastname] entered at checkout (the
-  /// live `paymentSession` resolver's guest-auth args). Both null for logged-in
-  /// customers (the bearer authorizes).
+  /// placed by **either** the Magento order [token] (`placeOrder.orderV2.token`)
+  /// **or** the billing [email] + [lastname] entered at checkout — the live
+  /// `paymentSession(... email, lastname, token)` resolver uses whichever
+  /// validates. All null for logged-in customers (the bearer authorizes).
   Future<PaymentSession?> fetchPaymentSession(
     String orderNumber, {
     String? email,
     String? lastname,
+    String? token,
   }) async {
     try {
       final data = await _query(CheckoutQueries.paymentSession, {
         'orderNumber': orderNumber,
         'email': email,
         'lastname': lastname,
+        'token': token,
       });
       return _parseSession(
         data['paymentSession'] as Map<String, dynamic>?,

@@ -29,15 +29,15 @@ them; the app never injects `free`.
 ### SDL
 
 > **Confirmed against the live schema (2026-06-26, CI introspection):** the
-> deployed `paymentSession` takes **`(order_number, email, lastname)`** — there
-> is **no `guest_token` argument**. The app was aligned to this: guests
-> authorize with billing **email + lastname**; the order-token path was removed.
-> (If the backend later adds `guest_token`, re-add it to the query + the
-> `loadPaymentSession`/repository plumbing.)
+> deployed `paymentSession` takes **`(order_number, email, lastname, token)`**.
+> The guest order-token arg is named **`token`** (not `guest_token`). A guest
+> authorizes with **either** the order `token` (`placeOrder.orderV2.token`)
+> **or** billing **email + lastname**; a customer sends only `order_number`
+> (bearer). The app sends `token` + `email` + `lastname` for guest orders.
 
 ```graphql
 type Query {
-    paymentSession(order_number: String!, email: String, lastname: String): PaymentSessionOutput
+    paymentSession(order_number: String!, email: String, lastname: String, token: String): PaymentSessionOutput
         @resolver(class: "MagentoEgypt\\PaymentGraphQl\\Model\\Resolver\\PaymentSession")
         @doc(description: "Create or return the gateway payment session for an already-placed order (keyed by increment id). Requires the customer/guest who owns the order.")
 }
@@ -329,7 +329,7 @@ finalises the order server-side) before showing the success screen.
 | Contract | App |
 |---|---|
 | `paymentSession` SDL | `CheckoutQueries.paymentSession` → `CheckoutRepository.fetchPaymentSession` → `PaymentSession` (`domain/payment_session.dart`) |
-| guest auth args (`email` / `lastname`) | Billing `email`/`lastname` captured at the address step (`CheckoutState`). `CheckoutController.loadPaymentSession` sends them for guest orders, none for customers (bearer). No `guest_token` — the live schema doesn't define it |
+| guest auth args (`token` / `email` / `lastname`) | Order `token` from `placeOrder.orderV2.token` (`PlaceOrderResult.orderToken`); billing `email`/`lastname` from `CheckoutState`. `CheckoutController.loadPaymentSession` sends all three for guest orders, none for customers (bearer). Arg is `token`, **not** `guest_token` |
 | `isReady == READY` | `PaymentSession.isReady` (`status == ready`) |
 | `PENDING` poll | `CheckoutController.loadPaymentSession` (back-off, 4 attempts) |
 | post-order recovery | a failed/declined/cancelled payment routes to `CompletePaymentScreen` (pay now / switch method / pay later); driven by the shared `runPaymentSession` |

@@ -113,10 +113,19 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         return;
       }
       // Gateway method: fetch the session (the controller sends the guest's
-      // billing email/lastname to authorize a guest order) and route by status.
-      final session = await _controller.loadPaymentSession(result.orderNumber);
+      // order token + billing email/lastname to authorize a guest order) and
+      // route by status.
+      final session = await _controller.loadPaymentSession(
+        result.orderNumber,
+        orderToken: result.orderToken,
+      );
       if (!mounted) return;
-      await _drive(session, result.orderNumber, state.grandTotal);
+      await _drive(
+        session,
+        result.orderNumber,
+        state.grandTotal,
+        result.orderToken,
+      );
     } finally {
       if (mounted) setState(() => _placing = false);
     }
@@ -126,6 +135,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     PaymentSession? session,
     String orderNumber,
     Money? amount,
+    String? orderToken,
   ) async {
     final result = await runPaymentSession(
       context: context,
@@ -143,11 +153,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         } else {
           // Reject / cancel / expiry / failure on a placed order — let the user
           // retry or switch method (or pay later) on the complete-payment screen.
-          _goCompletePayment(orderNumber, amount);
+          _goCompletePayment(orderNumber, amount, orderToken);
         }
       case PaymentStep.rejected:
       case PaymentStep.failed:
-        _goCompletePayment(orderNumber, amount);
+        _goCompletePayment(orderNumber, amount, orderToken);
       case PaymentStep.pending:
       case PaymentStep.unavailable:
         // Not launchable / no native module yet — order is placed, awaiting payment.
@@ -155,7 +165,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     }
   }
 
-  void _goCompletePayment(String orderNumber, Money? amount) {
+  void _goCompletePayment(String orderNumber, Money? amount, String? orderToken) {
     final s = ref.read(checkoutControllerProvider);
     context.go(
       AppRoutes.completePayment,
@@ -166,6 +176,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         amount: amount,
         email: s.isGuest ? s.email : null,
         lastname: s.isGuest ? s.lastname : null,
+        orderToken: s.isGuest ? orderToken : null,
       ),
     );
   }
