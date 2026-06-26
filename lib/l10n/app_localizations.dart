@@ -242,6 +242,12 @@ abstract class AppLocalizations {
   /// **'Account'**
   String get navAccount;
 
+  /// No description provided for @navSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get navSearch;
+
   /// No description provided for @launchTagline.
   ///
   /// In en, this message translates to:

@@ -6,6 +6,7 @@ class Category {
     required this.urlKey,
     this.image,
     this.productCount = 0,
+    this.includeInMenu = true,
     this.children = const <Category>[],
   });
 
@@ -14,5 +15,8 @@ class Category {
   final String urlKey;
   final String? image;
   final int productCount;
+
+  /// Whether Magento flags this category for navigation surfaces.
+  final bool includeInMenu;
   final List<Category> children;
 }

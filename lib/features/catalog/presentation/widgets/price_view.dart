@@ -23,6 +23,8 @@ class PriceView extends StatelessWidget {
       children: [
         Text(
           effective.formatted(),
+          // Keep the "AED 1,234.00" token LTR even inside an RTL paragraph.
+          textDirection: TextDirection.ltr,
           style: const TextStyle(
             fontWeight: FontWeight.w700,
             color: AppColors.brandPrimary,
@@ -32,6 +34,7 @@ class PriceView extends StatelessWidget {
         if (product.isOnSale && regular != null)
           Text(
             regular.formatted(),
+            textDirection: TextDirection.ltr,
             style: const TextStyle(
               decoration: TextDecoration.lineThrough,
               color: AppColors.inkMuted,

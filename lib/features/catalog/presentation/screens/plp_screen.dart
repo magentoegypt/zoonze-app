@@ -51,7 +51,7 @@ class PlpScreen extends ConsumerWidget {
                   gridDelegate:
                       const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    childAspectRatio: 0.62,
+                    childAspectRatio: 0.58,
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
                   ),

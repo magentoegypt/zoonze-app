@@ -27,11 +27,12 @@ class CatalogRepository {
         .map(_parseCategory)
         .toList();
     // categoryList returns the root category(ies); the browsable set is the
-    // root's children when present.
-    if (roots.isNotEmpty && roots.first.children.isNotEmpty) {
-      return roots.first.children;
-    }
-    return roots;
+    // root's children when present. Hide categories flagged out of navigation.
+    final source =
+        (roots.isNotEmpty && roots.first.children.isNotEmpty)
+            ? roots.first.children
+            : roots;
+    return source.where((c) => c.includeInMenu).toList(growable: false);
   }
 
   Future<ProductPage> fetchProducts({
@@ -41,6 +42,11 @@ class CatalogRepository {
     int pageSize = 20,
     int currentPage = 1,
   }) async {
+    assert(
+      (search != null && search.isNotEmpty) || categoryUid != null,
+      'products query requires a non-empty search or a categoryUid',
+    );
+    final sortInput = _sortInput(sort);
     final variables = <String, dynamic>{
       'pageSize': pageSize,
       'currentPage': currentPage,
@@ -49,7 +55,7 @@ class CatalogRepository {
         'filter': <String, dynamic>{
           'category_uid': <String, dynamic>{'eq': categoryUid},
         },
-      if (_sortInput(sort) != null) 'sort': _sortInput(sort),
+      if (sortInput != null) 'sort': sortInput,
     };
     final data = await _query(CatalogQueries.products, variables);
     final products = data['products'] as Map<String, dynamic>?;
@@ -105,6 +111,7 @@ class CatalogRepository {
       urlKey: (json['url_key'] as String?) ?? '',
       image: json['image'] as String?,
       productCount: (json['product_count'] as int?) ?? 0,
+      includeInMenu: (json['include_in_menu'] as bool?) ?? true,
       children: children,
     );
   }

@@ -82,6 +82,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get navAccount => 'حسابي';
 
   @override
+  String get navSearch => 'بحث';
+
+  @override
   String get launchTagline => 'الجمال والعطور';
 
   @override

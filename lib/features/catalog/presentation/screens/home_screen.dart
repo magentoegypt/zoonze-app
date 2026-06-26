@@ -27,6 +27,12 @@ class HomeScreen extends ConsumerWidget {
         onRefresh: () async {
           ref.invalidate(categoryTreeProvider);
           ref.invalidate(featuredProductsProvider);
+          // Keep the indicator up until the real reload finishes; errors are
+          // surfaced in-body by AsyncValueView.
+          try {
+            await ref.read(categoryTreeProvider.future);
+            await ref.read(featuredProductsProvider.future);
+          } catch (_) {/* ignore: handled in body */}
         },
         child: ListView(
           padding: EdgeInsets.zero,
@@ -93,7 +99,7 @@ class HomeScreen extends ConsumerWidget {
                   gridDelegate:
                       const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    childAspectRatio: 0.62,
+                    childAspectRatio: 0.58,
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
                   ),

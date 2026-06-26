@@ -16,10 +16,9 @@ class ZoonzeBottomNav extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return NavigationBar(
       selectedIndex: current.index,
-      onDestinationSelected: (index) {
-        final tab = AppTab.values[index];
-        if (tab != current) context.go(tab.route);
-      },
+      // Always navigate to the tab root, even when re-tapping the active tab,
+      // so a pushed detail (e.g. PLP) can be left via the bottom nav.
+      onDestinationSelected: (index) => context.go(AppTab.values[index].route),
       destinations: [
         NavigationDestination(
           icon: const Icon(Icons.home_outlined),

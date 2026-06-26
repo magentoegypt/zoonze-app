@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/widgets/placeholder_screen.dart';
+import '../l10n/l10n.dart';
 import '../features/catalog/presentation/screens/categories_screen.dart';
 import '../features/catalog/presentation/screens/home_screen.dart';
 import '../features/catalog/presentation/screens/plp_screen.dart';
@@ -46,7 +47,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.search,
-        builder: (context, state) => const PlaceholderScreen(title: 'Search'),
+        builder: (context, state) =>
+            PlaceholderScreen(title: AppLocalizations.of(context).navSearch),
       ),
       GoRoute(
         path: AppRoutes.cart,

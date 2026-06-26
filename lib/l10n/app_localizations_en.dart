@@ -84,6 +84,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navAccount => 'Account';
 
   @override
+  String get navSearch => 'Search';
+
+  @override
   String get launchTagline => 'BEAUTY & FRAGRANCE';
 
   @override
