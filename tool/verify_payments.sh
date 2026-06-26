@@ -24,15 +24,19 @@
 set -euo pipefail
 
 ENDPOINT="${ENDPOINT:-https://zoonze.com/graphql}"
-STORE="${STORE:-uae-en}"
+# Default to NO Store header (default view) — an unknown code makes Magento
+# reject the whole request with "Requested store is not found". Set STORE=<code>
+# (from `tool/introspect.sh`) only to target a specific view.
+STORE="${STORE:-}"
 UA="${USER_AGENT:-ZoonzeApp/0.1.0 (Flutter)}"
 
 post() { # $1 = json body
-  local auth=()
+  local auth=() hdr=()
   [ -n "${TOKEN:-}" ] && auth=(-H "Authorization: Bearer ${TOKEN}")
+  [ -n "${STORE:-}" ] && hdr=(-H "Store: ${STORE}")
   curl -sS --max-time 40 -X POST "$ENDPOINT" \
     -H "Content-Type: application/json" \
-    -H "Store: $STORE" \
+    "${hdr[@]}" \
     -H "User-Agent: $UA" \
     "${auth[@]}" \
     --data "$1"
