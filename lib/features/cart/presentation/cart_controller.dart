@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/storage/local_cache.dart';
+import '../../../core/store/store_controller.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../data/cart_repository.dart';
 import '../domain/cart.dart';
@@ -56,6 +57,17 @@ class CartController extends Notifier<CartState> {
         }
       }
     });
+    // A language/store switch flips the `Store` header and resets the GraphQL
+    // cache; refetch the cart so item names/prices reflect the new store view
+    // (CLAUDE.md §3.2 — "re-evaluate cart after a store switch").
+    ref.listen<String>(
+      storeControllerProvider.select((s) => s.activeStoreCode),
+      (prev, next) {
+        if (prev != null && prev != next && _cartId != null) {
+          Future.microtask(_reload);
+        }
+      },
+    );
     // Handle an already-settled auth state (no transition for the listener to
     // observe) so the guest and customer restore paths never race.
     final auth = ref.read(authControllerProvider);
