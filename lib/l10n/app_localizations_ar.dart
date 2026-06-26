@@ -136,6 +136,29 @@ class AppLocalizationsAr extends AppLocalizations {
   String get productOutOfStock => 'غير متوفّر';
 
   @override
+  String get tabDescription => 'الوصف';
+
+  @override
+  String get tabDetails => 'التفاصيل';
+
+  @override
+  String get tabReviews => 'المراجعات';
+
+  @override
+  String get specSku => 'رقم المنتج';
+
+  @override
+  String get reviewsEmptyTitle => 'لا توجد مراجعات بعد';
+
+  @override
+  String get reviewsEmptyBody => 'كن أوّل من يقيّم هذا المنتج.';
+
+  @override
+  String reviewsSummary(int rating, int count) {
+    return 'تقييم $rating% · $count مراجعة';
+  }
+
+  @override
   String get menuShop => 'تسوّق';
 
   @override

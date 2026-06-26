@@ -138,6 +138,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get productOutOfStock => 'Out of stock';
 
   @override
+  String get tabDescription => 'Description';
+
+  @override
+  String get tabDetails => 'Details';
+
+  @override
+  String get tabReviews => 'Reviews';
+
+  @override
+  String get specSku => 'SKU';
+
+  @override
+  String get reviewsEmptyTitle => 'No reviews yet';
+
+  @override
+  String get reviewsEmptyBody => 'Be the first to review this product.';
+
+  @override
+  String reviewsSummary(int rating, int count) {
+    return '$rating% rating · $count reviews';
+  }
+
+  @override
   String get menuShop => 'Shop';
 
   @override

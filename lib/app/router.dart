@@ -2,10 +2,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/widgets/placeholder_screen.dart';
-import '../l10n/l10n.dart';
 import '../features/catalog/presentation/screens/categories_screen.dart';
 import '../features/catalog/presentation/screens/home_screen.dart';
 import '../features/catalog/presentation/screens/plp_screen.dart';
+import '../features/catalog/presentation/screens/product_detail_screen.dart';
+import '../features/catalog/presentation/screens/search_screen.dart';
 import '../features/diagnostics/presentation/health_check_screen.dart';
 import '../features/onboarding/presentation/launch_splash_screen.dart';
 import '../features/onboarding/presentation/welcome_screen.dart';
@@ -43,12 +44,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/product/:urlKey',
         builder: (context, state) =>
-            PlaceholderScreen(title: state.pathParameters['urlKey'] ?? ''),
+            ProductDetailScreen(urlKey: state.pathParameters['urlKey']!),
       ),
       GoRoute(
         path: AppRoutes.search,
-        builder: (context, state) =>
-            PlaceholderScreen(title: AppLocalizations.of(context).navSearch),
+        builder: (context, state) => const SearchScreen(),
       ),
       GoRoute(
         path: AppRoutes.cart,

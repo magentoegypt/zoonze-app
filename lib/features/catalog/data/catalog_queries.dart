@@ -80,4 +80,82 @@ query Products(
   }
 }
 ''';
+
+  /// Single product by url_key for the PDP, including configurable options +
+  /// variants, gallery, description, and review metadata.
+  static const String productDetail = r'''
+query ProductDetail($urlKey: String!) {
+  products(filter: { url_key: { eq: $urlKey } }, pageSize: 1) {
+    items {
+      __typename
+      sku
+      name
+      url_key
+      stock_status
+      rating_summary
+      review_count
+      description {
+        html
+      }
+      image {
+        url
+      }
+      media_gallery {
+        url
+        label
+      }
+      price_range {
+        minimum_price {
+          regular_price {
+            value
+            currency
+          }
+          final_price {
+            value
+            currency
+          }
+        }
+      }
+      ... on ConfigurableProduct {
+        configurable_options {
+          attribute_code
+          label
+          values {
+            value_index
+            label
+            swatch_data {
+              value
+            }
+          }
+        }
+        variants {
+          attributes {
+            code
+            value_index
+          }
+          product {
+            sku
+            stock_status
+            image {
+              url
+            }
+            price_range {
+              minimum_price {
+                regular_price {
+                  value
+                  currency
+                }
+                final_price {
+                  value
+                  currency
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+''';
 }

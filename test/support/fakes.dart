@@ -6,6 +6,7 @@ import 'package:zoonze_app/features/catalog/data/catalog_repository.dart';
 import 'package:zoonze_app/features/catalog/domain/category.dart';
 import 'package:zoonze_app/features/catalog/domain/money.dart';
 import 'package:zoonze_app/features/catalog/domain/product.dart';
+import 'package:zoonze_app/features/catalog/domain/product_detail.dart';
 import 'package:zoonze_app/features/catalog/domain/product_page.dart';
 
 class FakeLocalCache implements LocalCache {
@@ -64,6 +65,9 @@ class FakeCatalogRepository implements CatalogRepository {
         currentPage: 1,
         totalPages: 1,
       );
+
+  @override
+  Future<ProductDetail?> fetchProductDetail(String urlKey) async => kSampleDetail;
 }
 
 const List<StoreView> kSampleStores = <StoreView>[
@@ -115,3 +119,35 @@ const List<Product> kSampleProducts = <Product>[
     finalPrice: Money(amount: 300, currency: 'AED'),
   ),
 ];
+
+const ProductDetail kSampleDetail = ProductDetail(
+  sku: 'CHANEL-COCO',
+  name: 'Coco Mademoiselle EDP',
+  urlKey: 'coco-mademoiselle',
+  brand: 'Chanel',
+  description: 'A vibrant oriental fragrance.',
+  regularPrice: Money(amount: 250, currency: 'AED'),
+  finalPrice: Money(amount: 199, currency: 'AED'),
+  options: <ConfigurableOption>[
+    ConfigurableOption(
+      attributeCode: 'size',
+      label: 'Size',
+      values: <SwatchValue>[
+        SwatchValue(valueIndex: 1, label: '50ml'),
+        SwatchValue(valueIndex: 2, label: '100ml'),
+      ],
+    ),
+  ],
+  variants: <ProductVariant>[
+    ProductVariant(
+      sku: 'COCO-50',
+      attributes: {'size': 1},
+      price: Money(amount: 199, currency: 'AED'),
+    ),
+    ProductVariant(
+      sku: 'COCO-100',
+      attributes: {'size': 2},
+      price: Money(amount: 299, currency: 'AED'),
+    ),
+  ],
+);

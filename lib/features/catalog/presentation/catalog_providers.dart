@@ -4,6 +4,7 @@ import '../../../core/store/store_controller.dart';
 import '../data/catalog_repository.dart';
 import '../domain/category.dart';
 import '../domain/product.dart';
+import '../domain/product_detail.dart';
 import '../domain/product_page.dart';
 
 /// Top-level category tree. Refetches when the active store view changes.
@@ -32,6 +33,25 @@ final categoryProductsProvider =
   ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
   return ref.watch(catalogRepositoryProvider).fetchProducts(
         categoryUid: categoryUid,
+        pageSize: 20,
+      );
+});
+
+/// Full product detail for the PDP (by url_key). Refetches on store switch.
+final productDetailProvider =
+    FutureProvider.autoDispose.family<ProductDetail?, String>((ref, urlKey) {
+  ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
+  return ref.watch(catalogRepositoryProvider).fetchProductDetail(urlKey);
+});
+
+/// Search results for a query string (native `products(search:)`).
+final searchResultsProvider =
+    FutureProvider.autoDispose.family<ProductPage, String>((ref, query) {
+  ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
+  final trimmed = query.trim();
+  if (trimmed.isEmpty) return Future.value(ProductPage.empty);
+  return ref.watch(catalogRepositoryProvider).fetchProducts(
+        search: trimmed,
         pageSize: 20,
       );
 });

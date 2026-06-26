@@ -350,6 +350,48 @@ abstract class AppLocalizations {
   /// **'Out of stock'**
   String get productOutOfStock;
 
+  /// No description provided for @tabDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get tabDescription;
+
+  /// No description provided for @tabDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get tabDetails;
+
+  /// No description provided for @tabReviews.
+  ///
+  /// In en, this message translates to:
+  /// **'Reviews'**
+  String get tabReviews;
+
+  /// No description provided for @specSku.
+  ///
+  /// In en, this message translates to:
+  /// **'SKU'**
+  String get specSku;
+
+  /// No description provided for @reviewsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No reviews yet'**
+  String get reviewsEmptyTitle;
+
+  /// No description provided for @reviewsEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Be the first to review this product.'**
+  String get reviewsEmptyBody;
+
+  /// No description provided for @reviewsSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{rating}% rating · {count} reviews'**
+  String reviewsSummary(int rating, int count);
+
   /// No description provided for @menuShop.
   ///
   /// In en, this message translates to:

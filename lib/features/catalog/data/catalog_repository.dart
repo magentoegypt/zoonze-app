@@ -8,6 +8,7 @@ import '../domain/aggregation.dart';
 import '../domain/category.dart';
 import '../domain/money.dart';
 import '../domain/product.dart';
+import '../domain/product_detail.dart';
 import '../domain/product_page.dart';
 import 'catalog_queries.dart';
 
@@ -60,6 +61,101 @@ class CatalogRepository {
     final data = await _query(CatalogQueries.products, variables);
     final products = data['products'] as Map<String, dynamic>?;
     return products == null ? ProductPage.empty : _parseProductPage(products);
+  }
+
+  /// Single product by url_key (PDP). Returns null when not found.
+  Future<ProductDetail?> fetchProductDetail(String urlKey) async {
+    final data = await _query(
+      CatalogQueries.productDetail,
+      <String, dynamic>{'urlKey': urlKey},
+    );
+    final items = (data['products'] as Map<String, dynamic>?)?['items']
+        as List<dynamic>?;
+    if (items == null || items.isEmpty) return null;
+    final first = items.first;
+    if (first is! Map<String, dynamic>) return null;
+    return _parseProductDetail(first);
+  }
+
+  ProductDetail _parseProductDetail(Map<String, dynamic> json) {
+    final minPrice =
+        (json['price_range'] as Map<String, dynamic>?)?['minimum_price']
+            as Map<String, dynamic>?;
+
+    final gallery = <String>[];
+    final mainImage = (json['image'] as Map<String, dynamic>?)?['url'] as String?;
+    if (mainImage != null && mainImage.isNotEmpty) gallery.add(mainImage);
+    for (final g in (json['media_gallery'] as List<dynamic>? ?? const [])) {
+      if (g is Map<String, dynamic> && g['url'] is String) {
+        gallery.add(g['url'] as String);
+      }
+    }
+
+    final options = (json['configurable_options'] as List<dynamic>? ?? const [])
+        .whereType<Map<String, dynamic>>()
+        .map((o) => ConfigurableOption(
+              attributeCode: (o['attribute_code'] as String?) ?? '',
+              label: (o['label'] as String?) ?? '',
+              values: (o['values'] as List<dynamic>? ?? const [])
+                  .whereType<Map<String, dynamic>>()
+                  .map((v) => SwatchValue(
+                        valueIndex: (v['value_index'] as int?) ?? 0,
+                        label: (v['label'] as String?) ?? '',
+                        swatchColor: (v['swatch_data']
+                            as Map<String, dynamic>?)?['value'] as String?,
+                      ))
+                  .toList(),
+            ))
+        .toList();
+
+    final variants = (json['variants'] as List<dynamic>? ?? const [])
+        .whereType<Map<String, dynamic>>()
+        .map((vt) {
+      final attrs = <String, int>{};
+      for (final a in (vt['attributes'] as List<dynamic>? ?? const [])) {
+        if (a is Map<String, dynamic> && a['code'] is String) {
+          attrs[a['code'] as String] = (a['value_index'] as int?) ?? 0;
+        }
+      }
+      final product = vt['product'] as Map<String, dynamic>?;
+      final variantMin =
+          (product?['price_range'] as Map<String, dynamic>?)?['minimum_price']
+              as Map<String, dynamic>?;
+      return ProductVariant(
+        sku: (product?['sku'] as String?) ?? '',
+        attributes: attrs,
+        price: _parseMoney(variantMin?['final_price'] as Map<String, dynamic>?),
+        inStock: (product?['stock_status'] as String?) != 'OUT_OF_STOCK',
+        imageUrl: (product?['image'] as Map<String, dynamic>?)?['url'] as String?,
+      );
+    }).toList();
+
+    return ProductDetail(
+      sku: (json['sku'] as String?) ?? '',
+      name: (json['name'] as String?) ?? '',
+      urlKey: (json['url_key'] as String?) ?? '',
+      description:
+          _stripHtml((json['description'] as Map<String, dynamic>?)?['html']
+              as String?),
+      gallery: gallery.toSet().toList(growable: false),
+      regularPrice:
+          _parseMoney(minPrice?['regular_price'] as Map<String, dynamic>?),
+      finalPrice: _parseMoney(minPrice?['final_price'] as Map<String, dynamic>?),
+      inStock: (json['stock_status'] as String?) != 'OUT_OF_STOCK',
+      options: options,
+      variants: variants,
+      ratingSummary: (json['rating_summary'] as int?) ?? 0,
+      reviewCount: (json['review_count'] as int?) ?? 0,
+    );
+  }
+
+  String? _stripHtml(String? html) {
+    if (html == null || html.isEmpty) return null;
+    final text = html
+        .replaceAll(RegExp('<[^>]*>'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    return text.isEmpty ? null : text;
   }
 
   Map<String, dynamic>? _sortInput(ProductSortField sort) {
