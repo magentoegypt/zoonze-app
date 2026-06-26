@@ -411,6 +411,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Payment couldn\'t be completed. Please try again.';
 
   @override
+  String get paymentExpired =>
+      'Your payment session expired. Please try again.';
+
+  @override
   String get orderSuccessTitle => 'Order placed!';
 
   @override

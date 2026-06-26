@@ -872,6 +872,12 @@ abstract class AppLocalizations {
   /// **'Payment couldn\'t be completed. Please try again.'**
   String get paymentFailed;
 
+  /// No description provided for @paymentExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'Your payment session expired. Please try again.'**
+  String get paymentExpired;
+
   /// No description provided for @orderSuccessTitle.
   ///
   /// In en, this message translates to:

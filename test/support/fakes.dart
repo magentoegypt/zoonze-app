@@ -10,6 +10,7 @@ import 'package:zoonze_app/features/cart/data/cart_repository.dart';
 import 'package:zoonze_app/features/cart/domain/cart.dart';
 import 'package:zoonze_app/features/checkout/data/checkout_repository.dart';
 import 'package:zoonze_app/features/checkout/domain/checkout.dart';
+import 'package:zoonze_app/features/checkout/domain/payment_session.dart';
 import 'package:zoonze_app/features/wishlist/data/wishlist_repository.dart';
 import 'package:zoonze_app/features/wishlist/domain/wishlist_entry.dart';
 import 'package:zoonze_app/features/catalog/data/catalog_repository.dart';
@@ -100,7 +101,9 @@ class FakeCartRepository implements CartRepository {
 
   @override
   Future<Cart> addProducts(
-      String cartId, List<Map<String, dynamic>> items) async {
+    String cartId,
+    List<Map<String, dynamic>> items,
+  ) async {
     final sku = items.first['sku'] as String;
     final qty = (items.first['quantity'] as int?) ?? 1;
     _cart = Cart(
@@ -188,6 +191,7 @@ class FakeCheckoutRepository implements CheckoutRepository {
     ],
     this.grandTotal = const Money(amount: 219, currency: 'AED'),
     this.orderResult = const PlaceOrderResult(orderNumber: '000000123'),
+    this.paymentSession,
     this.fail = false,
   });
 
@@ -195,6 +199,10 @@ class FakeCheckoutRepository implements CheckoutRepository {
   final List<PaymentMethodOption> paymentMethods;
   final Money? grandTotal;
   final PlaceOrderResult orderResult;
+
+  /// Provider session returned by [fetchPaymentSession]; null mimics a backend
+  /// without the resolver deployed (Open Q §2).
+  final PaymentSession? paymentSession;
   final bool fail;
 
   String? guestEmail;
@@ -210,7 +218,9 @@ class FakeCheckoutRepository implements CheckoutRepository {
 
   @override
   Future<List<ShippingMethodOption>> setShippingAddress(
-      String cartId, Map<String, dynamic> address) async {
+    String cartId,
+    Map<String, dynamic> address,
+  ) async {
     if (fail) throw const Failure(FailureKind.unknown);
     lastAddress = address;
     return shippingMethods;
@@ -218,7 +228,10 @@ class FakeCheckoutRepository implements CheckoutRepository {
 
   @override
   Future<Money?> setShippingMethod(
-      String cartId, String carrier, String method) async {
+    String cartId,
+    String carrier,
+    String method,
+  ) async {
     if (fail) throw const Failure(FailureKind.unknown);
     selectedShippingMethod = '$carrier|$method';
     return grandTotal;
@@ -226,7 +239,8 @@ class FakeCheckoutRepository implements CheckoutRepository {
 
   @override
   Future<List<PaymentMethodOption>> setBillingSameAsShipping(
-      String cartId) async {
+    String cartId,
+  ) async {
     if (fail) throw const Failure(FailureKind.unknown);
     return paymentMethods;
   }
@@ -242,6 +256,10 @@ class FakeCheckoutRepository implements CheckoutRepository {
     if (fail) throw const Failure(FailureKind.unknown);
     return orderResult;
   }
+
+  @override
+  Future<PaymentSession?> fetchPaymentSession(String orderNumber) async =>
+      paymentSession;
 }
 
 class FakeWishlistRepository implements WishlistRepository {
@@ -276,7 +294,10 @@ class FakeWishlistRepository implements WishlistRepository {
 }
 
 class FakeAuthRepository implements AuthRepository {
-  FakeAuthRepository({this.loginFails = false, this.customer = kSampleCustomer});
+  FakeAuthRepository({
+    this.loginFails = false,
+    this.customer = kSampleCustomer,
+  });
 
   final bool loginFails;
   final Customer customer;
@@ -327,17 +348,17 @@ class FakeCatalogRepository implements CatalogRepository {
     ProductSortField sort = ProductSortField.relevance,
     int pageSize = 20,
     int currentPage = 1,
-  }) async =>
-      ProductPage(
-        items: products,
-        totalCount: products.length,
-        currentPage: currentPage,
-        totalPages: 1,
-        aggregations: aggregations,
-      );
+  }) async => ProductPage(
+    items: products,
+    totalCount: products.length,
+    currentPage: currentPage,
+    totalPages: 1,
+    aggregations: aggregations,
+  );
 
   @override
-  Future<ProductDetail?> fetchProductDetail(String urlKey) async => kSampleDetail;
+  Future<ProductDetail?> fetchProductDetail(String urlKey) async =>
+      kSampleDetail;
 
   @override
   Future<List<ReviewRatingMetadata>> fetchReviewRatingsMetadata() async =>

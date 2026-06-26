@@ -142,6 +142,7 @@
   "countryUae": "الإمارات العربية المتحدة",
   "paymentDeclined": "تم رفض الدفع. يرجى اختيار طريقة دفع أخرى.",
   "paymentFailed": "تعذّر إتمام الدفع. يرجى المحاولة مرة أخرى.",
+  "paymentExpired": "انتهت صلاحية جلسة الدفع. يرجى المحاولة مرة أخرى.",
   "orderSuccessTitle": "تم تنفيذ الطلب!",
   "orderPendingTitle": "تم استلام طلبك",
   "orderSuccessBody": "شكرًا لك. رقم طلبك هو {number}.",

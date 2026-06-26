@@ -85,4 +85,24 @@ mutation PlaceOrder($cartId: String!) {
   }
 }
 ''';
+
+  /// Custom resolver the backend adds to surface a provider session reference
+  /// for a placed order, keyed by order number (Open Q §2 / native-SDK flow —
+  /// see docs/decisions/payments.md). One resolver serves both gateways. Until
+  /// it is deployed this query errors and the repository degrades to "pending".
+  static const String paymentSession = r'''
+query PaymentSession($orderNumber: String!) {
+  paymentSession(order_number: $orderNumber) {
+    order_number
+    method_code
+    status
+    session_reference
+    redirect_url
+    client_token
+    public_key
+    expires_at
+    additional_data { key value }
+  }
+}
+''';
 }

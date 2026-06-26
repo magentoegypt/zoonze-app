@@ -36,10 +36,7 @@ class PaymentMethodOption {
 }
 
 class PlaceOrderResult {
-  const PlaceOrderResult({required this.orderNumber, this.redirectUrl});
+  const PlaceOrderResult({required this.orderNumber});
 
   final String orderNumber;
-
-  /// Off-site redirect URL when the gateway extension exposes one via GraphQL.
-  final String? redirectUrl;
 }

@@ -7,6 +7,7 @@ import '../../../core/graphql/graphql_client.dart';
 import '../../catalog/data/product_mapper.dart';
 import '../../catalog/domain/money.dart';
 import '../domain/checkout.dart';
+import '../domain/payment_session.dart';
 import 'checkout_queries.dart';
 
 class CheckoutRepository {
@@ -106,6 +107,54 @@ class CheckoutRepository {
     return PlaceOrderResult(orderNumber: number);
   }
 
+  /// Fetches the provider session reference for a placed order. Returns null
+  /// when the backend `paymentSession` resolver is not deployed yet (Open Q §2)
+  /// or surfaces no session, so checkout shows the awaiting-payment state rather
+  /// than a fabricated payment UI.
+  Future<PaymentSession?> fetchPaymentSession(String orderNumber) async {
+    try {
+      final data = await _query(CheckoutQueries.paymentSession, {
+        'orderNumber': orderNumber,
+      });
+      final json = data['paymentSession'] as Map<String, dynamic>?;
+      if (json == null) return null;
+      return PaymentSession(
+        orderNumber: (json['order_number'] as String?) ?? orderNumber,
+        methodCode: (json['method_code'] as String?) ?? '',
+        status: _sessionStatus(json['status'] as String?),
+        sessionReference: json['session_reference'] as String?,
+        redirectUrl: json['redirect_url'] as String?,
+        clientToken: json['client_token'] as String?,
+        publicKey: json['public_key'] as String?,
+        expiresAt: json['expires_at'] as String?,
+        additionalData: _keyValues(json['additional_data'] as List<dynamic>?),
+      );
+    } on Failure {
+      return null;
+    }
+  }
+
+  PaymentSessionStatus _sessionStatus(String? raw) {
+    switch (raw?.toUpperCase()) {
+      case 'READY':
+        return PaymentSessionStatus.ready;
+      case 'FAILED':
+        return PaymentSessionStatus.failed;
+      case 'REJECTED':
+        return PaymentSessionStatus.rejected;
+      case 'EXPIRED':
+        return PaymentSessionStatus.expired;
+      default:
+        return PaymentSessionStatus.pending;
+    }
+  }
+
+  Map<String, String> _keyValues(List<dynamic>? list) => <String, String>{
+    for (final e in (list ?? const []).whereType<Map<String, dynamic>>())
+      if (e['key'] is String)
+        (e['key'] as String): (e['value'] as String?) ?? '',
+  };
+
   ShippingMethodOption _parseShipping(Map<String, dynamic> json) =>
       ShippingMethodOption(
         carrierCode: (json['carrier_code'] as String?) ?? '',
@@ -124,6 +173,29 @@ class CheckoutRepository {
     try {
       final result = await _client.mutate(
         MutationOptions(
+          document: gql(document),
+          variables: variables,
+          fetchPolicy: FetchPolicy.networkOnly,
+        ),
+      );
+      if (result.hasException) {
+        throw mapOperationException(result.exception!);
+      }
+      return result.data ?? const <String, dynamic>{};
+    } on Failure {
+      rethrow;
+    } catch (error) {
+      throw Failure(FailureKind.unknown, detail: error.toString());
+    }
+  }
+
+  Future<Map<String, dynamic>> _query(
+    String document,
+    Map<String, dynamic> variables,
+  ) async {
+    try {
+      final result = await _client.query(
+        QueryOptions(
           document: gql(document),
           variables: variables,
           fetchPolicy: FetchPolicy.networkOnly,

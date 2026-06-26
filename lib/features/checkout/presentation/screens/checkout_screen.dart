@@ -8,8 +8,9 @@ import '../../../../core/validation/validators.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../domain/checkout.dart';
+import '../../domain/payment_session.dart';
+import '../../payments/payment_gateway.dart';
 import '../checkout_controller.dart';
-import 'payment_redirect_screen.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key});
@@ -99,28 +100,36 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
         return;
       }
       final payment = ref.read(checkoutControllerProvider).selectedPayment;
-      if (payment != null && payment.isRedirect && result.redirectUrl != null) {
-        final outcome = await Navigator.of(context).push<PaymentOutcome>(
-          MaterialPageRoute(
-            builder: (_) => PaymentRedirectScreen(url: result.redirectUrl!),
-          ),
-        );
-        if (!mounted) return;
-        _handleOutcome(outcome, result.orderNumber);
-      } else {
-        // Non-redirect method completes immediately; a redirect method without
-        // an exposed URL leaves the order pending payment (Open Q §2).
-        _goSuccess(result.orderNumber, pending: payment?.isRedirect ?? false);
+      if (payment == null || !payment.isRedirect) {
+        // Non-redirect method (e.g. cash on delivery) completes immediately.
+        _goSuccess(result.orderNumber, pending: false);
+        return;
       }
+      // Redirect / native-SDK method: fetch the provider session and present it
+      // through the matching gateway.
+      final session = await _controller.loadPaymentSession(result.orderNumber);
+      if (!mounted) return;
+      final gateway = session == null
+          ? null
+          : ref.read(paymentGatewayResolverProvider).resolve(session);
+      if (gateway == null || session == null) {
+        // Backend has not surfaced a usable session yet (Open Q §2). The order is
+        // placed and awaiting payment — never fake a card/installment UI.
+        _goSuccess(result.orderNumber, pending: true);
+        return;
+      }
+      final outcome = await gateway.present(context, session);
+      if (!mounted) return;
+      _handleOutcome(outcome, result.orderNumber);
     } finally {
       _placing = false;
     }
   }
 
-  /// Maps the redirect-gateway outcome to the right next step. A Tabby/N-Genius
-  /// reject or cancel is a normal path (§5): bounce back to method selection
+  /// Maps the gateway outcome to the right next step. A Tabby/N-Genius reject,
+  /// cancel or expiry is a normal path (§5): bounce back to method selection
   /// with the other options intact rather than showing a generic failure.
-  void _handleOutcome(PaymentOutcome? outcome, String orderNumber) {
+  void _handleOutcome(PaymentOutcome outcome, String orderNumber) {
     final l10n = AppLocalizations.of(context);
     switch (outcome) {
       case PaymentOutcome.success:
@@ -130,11 +139,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       case PaymentOutcome.rejected:
         _controller.resetPayment();
         _snack(l10n.paymentDeclined);
+      case PaymentOutcome.expired:
+        _controller.resetPayment();
+        _snack(l10n.paymentExpired);
       case PaymentOutcome.failed:
         _controller.resetPayment();
         _snack(l10n.paymentFailed);
       case PaymentOutcome.cancelled:
-      case null:
         // User backed out — quietly return to payment selection, no error.
         _controller.resetPayment();
     }

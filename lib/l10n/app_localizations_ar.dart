@@ -405,6 +405,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get paymentFailed => 'تعذّر إتمام الدفع. يرجى المحاولة مرة أخرى.';
 
   @override
+  String get paymentExpired =>
+      'انتهت صلاحية جلسة الدفع. يرجى المحاولة مرة أخرى.';
+
+  @override
   String get orderSuccessTitle => 'تم تنفيذ الطلب!';
 
   @override

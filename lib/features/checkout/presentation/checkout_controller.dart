@@ -4,6 +4,7 @@ import '../../cart/presentation/cart_controller.dart';
 import '../../catalog/domain/money.dart';
 import '../data/checkout_repository.dart';
 import '../domain/checkout.dart';
+import '../domain/payment_session.dart';
 
 class CheckoutState {
   const CheckoutState({
@@ -159,6 +160,11 @@ class CheckoutController extends Notifier<CheckoutState> {
   /// Clears the selected payment method so a rejected/cancelled redirect bounces
   /// the user back to method selection with the other options intact (§5).
   void resetPayment() => state = state.copyWith(selectedPayment: null);
+
+  /// Loads the provider session for a placed order (native-SDK / redirect flow).
+  /// Null when the backend has not surfaced one yet (Open Q §2).
+  Future<PaymentSession?> loadPaymentSession(String orderNumber) =>
+      _repo.fetchPaymentSession(orderNumber);
 }
 
 final checkoutControllerProvider =
