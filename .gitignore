@@ -43,3 +43,14 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Secrets — Firebase config & signing (owner-provided, never commit)
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+**/firebase_options.dart
+android/key.properties
+**/*.jks
+**/*.keystore
+*.p8
+*.p12
+*.mobileprovision
