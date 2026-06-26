@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Push notifications (FCM/APNs). "development" works for debug + TestFlight;
+	     the App Store build is automatically promoted to production by Apple. -->
+	<key>aps-environment</key>
+	<string>development</string>
+</dict>
+</plist>

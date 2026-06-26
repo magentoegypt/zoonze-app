@@ -66,5 +66,20 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.zoonze.shop</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>zoonze</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
