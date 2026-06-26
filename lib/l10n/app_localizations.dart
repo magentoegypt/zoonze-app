@@ -752,6 +752,48 @@ abstract class AppLocalizations {
   /// **'Order #{number}'**
   String orderNumber(String number);
 
+  /// No description provided for @orderDetailsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Details'**
+  String get orderDetailsTitle;
+
+  /// No description provided for @orderItemsSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Items'**
+  String get orderItemsSection;
+
+  /// No description provided for @orderTrackingSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Tracking'**
+  String get orderTrackingSection;
+
+  /// No description provided for @orderShippingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Shipping'**
+  String get orderShippingLabel;
+
+  /// No description provided for @orderNoTracking.
+  ///
+  /// In en, this message translates to:
+  /// **'Tracking details appear here once your order ships.'**
+  String get orderNoTracking;
+
+  /// No description provided for @orderTrackingCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Tracking number copied'**
+  String get orderTrackingCopied;
+
+  /// No description provided for @orderViewDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'View details'**
+  String get orderViewDetails;
+
   /// No description provided for @addressesEmpty.
   ///
   /// In en, this message translates to:

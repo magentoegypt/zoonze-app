@@ -6,7 +6,9 @@ import '../features/account/presentation/account_screen.dart';
 import '../features/account/presentation/screens/address_form_screen.dart';
 import '../features/account/presentation/screens/addresses_screen.dart';
 import '../features/account/presentation/screens/edit_profile_screen.dart';
+import '../features/account/domain/order.dart';
 import '../features/account/presentation/screens/help_screen.dart';
+import '../features/account/presentation/screens/order_detail_screen.dart';
 import '../features/account/presentation/screens/orders_screen.dart';
 import '../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../features/cart/presentation/screens/cart_screen.dart';
@@ -98,6 +100,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.orders,
         builder: (context, state) => const OrdersScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.orderDetail,
+        builder: (context, state) =>
+            OrderDetailScreen(order: state.extra as CustomerOrder),
       ),
       GoRoute(
         path: AppRoutes.addresses,

@@ -12,6 +12,7 @@ abstract final class AppRoutes {
   static const String signUp = '/signup';
   static const String forgotPassword = '/forgot';
   static const String orders = '/orders';
+  static const String orderDetail = '/order-detail';
   static const String addresses = '/addresses';
   static const String addressForm = '/address';
   static const String editProfile = '/profile';

@@ -2,20 +2,29 @@
 /// profile).
 abstract final class AccountQueries {
   static const String orders = r'''
-query CustomerOrders {
+query CustomerOrders($pageSize: Int!, $currentPage: Int!) {
   customer {
-    orders(pageSize: 20, currentPage: 1) {
+    orders(pageSize: $pageSize, currentPage: $currentPage) {
+      total_count
+      page_info { current_page total_pages }
       items {
         number
         order_date
         status
+        shipping_method
+        carrier
         total {
+          subtotal { value currency }
+          total_shipping { value currency }
           grand_total { value currency }
         }
         items {
           product_name
           quantity_ordered
           product_sale_price { value currency }
+        }
+        shipments {
+          tracking { title number carrier }
         }
       }
     }

@@ -356,6 +356,28 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get orderDetailsTitle => 'Order Details';
+
+  @override
+  String get orderItemsSection => 'Items';
+
+  @override
+  String get orderTrackingSection => 'Tracking';
+
+  @override
+  String get orderShippingLabel => 'Shipping';
+
+  @override
+  String get orderNoTracking =>
+      'Tracking details appear here once your order ships.';
+
+  @override
+  String get orderTrackingCopied => 'Tracking number copied';
+
+  @override
+  String get orderViewDetails => 'View details';
+
+  @override
   String get addressesEmpty => 'No saved addresses yet.';
 
   @override

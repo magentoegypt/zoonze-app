@@ -351,6 +351,27 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String get orderDetailsTitle => 'تفاصيل الطلب';
+
+  @override
+  String get orderItemsSection => 'العناصر';
+
+  @override
+  String get orderTrackingSection => 'التتبّع';
+
+  @override
+  String get orderShippingLabel => 'الشحن';
+
+  @override
+  String get orderNoTracking => 'تظهر تفاصيل التتبّع هنا بمجرد شحن طلبك.';
+
+  @override
+  String get orderTrackingCopied => 'تم نسخ رقم التتبّع';
+
+  @override
+  String get orderViewDetails => 'عرض التفاصيل';
+
+  @override
   String get addressesEmpty => 'لا توجد عناوين محفوظة بعد.';
 
   @override

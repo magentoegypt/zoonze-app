@@ -14,16 +14,26 @@ class AccountRepository {
 
   final GraphQLClient _client;
 
-  Future<List<CustomerOrder>> fetchOrders() async {
-    final data = await _run(AccountQueries.orders, const {}, mutation: false);
+  Future<OrderPage> fetchOrders({int pageSize = 10, int currentPage = 1}) async {
+    final data = await _run(AccountQueries.orders, {
+      'pageSize': pageSize,
+      'currentPage': currentPage,
+    }, mutation: false);
     final orders =
-        ((data['customer'] as Map<String, dynamic>?)?['orders']
-                as Map<String, dynamic>?)?['items']
-            as List<dynamic>?;
-    return (orders ?? const [])
+        (data['customer'] as Map<String, dynamic>?)?['orders']
+            as Map<String, dynamic>?;
+    if (orders == null) return OrderPage.empty;
+    final items = (orders['items'] as List<dynamic>? ?? const [])
         .whereType<Map<String, dynamic>>()
         .map(_parseOrder)
         .toList();
+    final pageInfo = orders['page_info'] as Map<String, dynamic>?;
+    return OrderPage(
+      items: items,
+      totalCount: (orders['total_count'] as int?) ?? items.length,
+      currentPage: (pageInfo?['current_page'] as int?) ?? currentPage,
+      totalPages: (pageInfo?['total_pages'] as int?) ?? 1,
+    );
   }
 
   Future<List<CustomerAddress>> fetchAddresses() async {
@@ -82,15 +92,36 @@ class AccountRepository {
           ),
         )
         .toList();
+    final totals = json['total'] as Map<String, dynamic>?;
+    final trackings = <OrderTracking>[];
+    for (final shipment in (json['shipments'] as List<dynamic>? ?? const [])) {
+      if (shipment is! Map<String, dynamic>) continue;
+      for (final t in (shipment['tracking'] as List<dynamic>? ?? const [])) {
+        if (t is! Map<String, dynamic>) continue;
+        final number = (t['number'] as String?) ?? '';
+        if (number.isEmpty) continue;
+        trackings.add(
+          OrderTracking(
+            title: (t['title'] as String?) ?? '',
+            number: number,
+            carrier: (t['carrier'] as String?) ?? '',
+          ),
+        );
+      }
+    }
     return CustomerOrder(
       number: (json['number'] as String?) ?? '',
       status: (json['status'] as String?) ?? '',
       date: (json['order_date'] as String?) ?? '',
-      total: moneyFromJson(
-        (json['total'] as Map<String, dynamic>?)?['grand_total']
-            as Map<String, dynamic>?,
+      total: moneyFromJson(totals?['grand_total'] as Map<String, dynamic>?),
+      subtotal: moneyFromJson(totals?['subtotal'] as Map<String, dynamic>?),
+      shippingAmount: moneyFromJson(
+        totals?['total_shipping'] as Map<String, dynamic>?,
       ),
+      shippingMethod: json['shipping_method'] as String?,
+      carrier: json['carrier'] as String?,
       lines: lines,
+      trackings: trackings,
     );
   }
 
@@ -151,10 +182,98 @@ final accountRepositoryProvider = Provider<AccountRepository>(
   (ref) => AccountRepository(ref.watch(graphqlClientProvider)),
 );
 
-/// Orders for the signed-in customer (empty when not authenticated).
-final ordersProvider = FutureProvider.autoDispose<List<CustomerOrder>>((ref) {
-  return ref.watch(accountRepositoryProvider).fetchOrders();
-});
+/// Paginated orders list state for the signed-in customer.
+class OrdersState {
+  const OrdersState({
+    this.orders = const <CustomerOrder>[],
+    this.currentPage = 0,
+    this.totalPages = 0,
+    this.isLoading = true,
+    this.isLoadingMore = false,
+    this.error,
+  });
+
+  final List<CustomerOrder> orders;
+  final int currentPage;
+  final int totalPages;
+  final bool isLoading;
+  final bool isLoadingMore;
+  final Object? error;
+
+  bool get hasMore => currentPage < totalPages;
+
+  OrdersState copyWith({
+    List<CustomerOrder>? orders,
+    int? currentPage,
+    int? totalPages,
+    bool? isLoading,
+    bool? isLoadingMore,
+    Object? error = _keep,
+  }) => OrdersState(
+    orders: orders ?? this.orders,
+    currentPage: currentPage ?? this.currentPage,
+    totalPages: totalPages ?? this.totalPages,
+    isLoading: isLoading ?? this.isLoading,
+    isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+    error: identical(error, _keep) ? this.error : error,
+  );
+
+  static const Object _keep = Object();
+}
+
+/// Owns the customer's orders list with append-on-scroll pagination.
+class OrdersController extends AutoDisposeNotifier<OrdersState> {
+  static const int _pageSize = 10;
+
+  @override
+  OrdersState build() {
+    Future.microtask(_loadFirst);
+    return const OrdersState();
+  }
+
+  AccountRepository get _repo => ref.read(accountRepositoryProvider);
+
+  Future<void> _loadFirst() async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      final page = await _repo.fetchOrders(pageSize: _pageSize, currentPage: 1);
+      state = state.copyWith(
+        orders: page.items,
+        currentPage: page.currentPage,
+        totalPages: page.totalPages,
+        isLoading: false,
+      );
+    } catch (error) {
+      state = state.copyWith(isLoading: false, error: error);
+    }
+  }
+
+  Future<void> loadMore() async {
+    if (state.isLoading || state.isLoadingMore || !state.hasMore) return;
+    state = state.copyWith(isLoadingMore: true);
+    try {
+      final page = await _repo.fetchOrders(
+        pageSize: _pageSize,
+        currentPage: state.currentPage + 1,
+      );
+      state = state.copyWith(
+        orders: [...state.orders, ...page.items],
+        currentPage: page.currentPage,
+        totalPages: page.totalPages,
+        isLoadingMore: false,
+      );
+    } catch (_) {
+      state = state.copyWith(isLoadingMore: false);
+    }
+  }
+
+  Future<void> refresh() => _loadFirst();
+}
+
+final ordersControllerProvider =
+    AutoDisposeNotifierProvider<OrdersController, OrdersState>(
+      OrdersController.new,
+    );
 
 /// Saved addresses for the signed-in customer.
 final addressesProvider = FutureProvider.autoDispose<List<CustomerAddress>>((
