@@ -370,6 +370,45 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reviewSubmitted => 'Thank you! Your review is awaiting approval.';
 
   @override
+  String get checkoutContact => 'Contact';
+
+  @override
+  String get checkoutShippingAddress => 'Shipping Address';
+
+  @override
+  String get checkoutShippingMethod => 'Shipping Method';
+
+  @override
+  String get checkoutPayment => 'Payment';
+
+  @override
+  String get checkoutSummary => 'Order Summary';
+
+  @override
+  String get checkoutContinue => 'Continue';
+
+  @override
+  String get checkoutPlaceOrder => 'Place Order';
+
+  @override
+  String get checkoutPayIn4 => 'or 4 interest-free payments';
+
+  @override
+  String get orderSuccessTitle => 'Order placed!';
+
+  @override
+  String orderSuccessBody(String number) {
+    return 'Thank you. Your order number is $number.';
+  }
+
+  @override
+  String get paymentRedirectTitle => 'Complete payment';
+
+  @override
+  String get paymentRedirectPending =>
+      'Your order is placed and awaiting payment. The in-app redirect for this gateway needs backend setup — see docs.';
+
+  @override
   String get badgeNew => 'NEW';
 
   @override

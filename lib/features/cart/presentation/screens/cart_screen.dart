@@ -142,9 +142,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         ),
         const SizedBox(height: 16),
         FilledButton(
-          onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.comingSoon)),
-          ),
+          onPressed: () => context.push(AppRoutes.checkout),
           child: Text(l10n.cartCheckout),
         ),
       ],

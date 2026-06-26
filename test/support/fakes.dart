@@ -8,6 +8,8 @@ import 'package:zoonze_app/features/auth/data/auth_repository.dart';
 import 'package:zoonze_app/features/auth/domain/customer.dart';
 import 'package:zoonze_app/features/cart/data/cart_repository.dart';
 import 'package:zoonze_app/features/cart/domain/cart.dart';
+import 'package:zoonze_app/features/checkout/data/checkout_repository.dart';
+import 'package:zoonze_app/features/checkout/domain/checkout.dart';
 import 'package:zoonze_app/features/wishlist/data/wishlist_repository.dart';
 import 'package:zoonze_app/features/wishlist/domain/wishlist_entry.dart';
 import 'package:zoonze_app/features/catalog/data/catalog_repository.dart';
@@ -167,6 +169,78 @@ class FakeCartRepository implements CartRepository {
     mergeCalls++;
     _cart = Cart(id: destination, items: _cart.items);
     return _cart;
+  }
+}
+
+class FakeCheckoutRepository implements CheckoutRepository {
+  FakeCheckoutRepository({
+    this.shippingMethods = const <ShippingMethodOption>[
+      ShippingMethodOption(
+        carrierCode: 'flatrate',
+        methodCode: 'flatrate',
+        title: 'Flat Rate · Fixed',
+        amount: Money(amount: 20, currency: 'AED'),
+      ),
+    ],
+    this.paymentMethods = const <PaymentMethodOption>[
+      PaymentMethodOption(code: 'cashondelivery', title: 'Cash on Delivery'),
+      PaymentMethodOption(code: 'tabby', title: 'Tabby — Pay later'),
+    ],
+    this.grandTotal = const Money(amount: 219, currency: 'AED'),
+    this.orderResult = const PlaceOrderResult(orderNumber: '000000123'),
+    this.fail = false,
+  });
+
+  final List<ShippingMethodOption> shippingMethods;
+  final List<PaymentMethodOption> paymentMethods;
+  final Money? grandTotal;
+  final PlaceOrderResult orderResult;
+  final bool fail;
+
+  String? guestEmail;
+  Map<String, dynamic>? lastAddress;
+  String? selectedShippingMethod;
+  String? selectedPaymentCode;
+
+  @override
+  Future<void> setGuestEmail(String cartId, String email) async {
+    if (fail) throw const Failure(FailureKind.unknown);
+    guestEmail = email;
+  }
+
+  @override
+  Future<List<ShippingMethodOption>> setShippingAddress(
+      String cartId, Map<String, dynamic> address) async {
+    if (fail) throw const Failure(FailureKind.unknown);
+    lastAddress = address;
+    return shippingMethods;
+  }
+
+  @override
+  Future<Money?> setShippingMethod(
+      String cartId, String carrier, String method) async {
+    if (fail) throw const Failure(FailureKind.unknown);
+    selectedShippingMethod = '$carrier|$method';
+    return grandTotal;
+  }
+
+  @override
+  Future<List<PaymentMethodOption>> setBillingSameAsShipping(
+      String cartId) async {
+    if (fail) throw const Failure(FailureKind.unknown);
+    return paymentMethods;
+  }
+
+  @override
+  Future<void> setPaymentMethod(String cartId, String code) async {
+    if (fail) throw const Failure(FailureKind.unknown);
+    selectedPaymentCode = code;
+  }
+
+  @override
+  Future<PlaceOrderResult> placeOrder(String cartId) async {
+    if (fail) throw const Failure(FailureKind.unknown);
+    return orderResult;
   }
 }
 

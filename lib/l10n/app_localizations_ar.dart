@@ -366,6 +366,45 @@ class AppLocalizationsAr extends AppLocalizations {
   String get reviewSubmitted => 'شكرًا لك! مراجعتك قيد المراجعة.';
 
   @override
+  String get checkoutContact => 'معلومات الاتصال';
+
+  @override
+  String get checkoutShippingAddress => 'عنوان الشحن';
+
+  @override
+  String get checkoutShippingMethod => 'طريقة الشحن';
+
+  @override
+  String get checkoutPayment => 'الدفع';
+
+  @override
+  String get checkoutSummary => 'ملخّص الطلب';
+
+  @override
+  String get checkoutContinue => 'متابعة';
+
+  @override
+  String get checkoutPlaceOrder => 'تأكيد الطلب';
+
+  @override
+  String get checkoutPayIn4 => 'أو 4 دفعات بدون فوائد';
+
+  @override
+  String get orderSuccessTitle => 'تم تنفيذ الطلب!';
+
+  @override
+  String orderSuccessBody(String number) {
+    return 'شكرًا لك. رقم طلبك هو $number.';
+  }
+
+  @override
+  String get paymentRedirectTitle => 'إتمام الدفع';
+
+  @override
+  String get paymentRedirectPending =>
+      'تم تنفيذ طلبك وهو بانتظار الدفع. يحتاج التوجيه داخل التطبيق لهذه البوابة إلى إعداد من الخادم — راجع المستندات.';
+
+  @override
   String get badgeNew => 'جديد';
 
   @override

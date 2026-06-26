@@ -794,6 +794,78 @@ abstract class AppLocalizations {
   /// **'Thank you! Your review is awaiting approval.'**
   String get reviewSubmitted;
 
+  /// No description provided for @checkoutContact.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact'**
+  String get checkoutContact;
+
+  /// No description provided for @checkoutShippingAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Shipping Address'**
+  String get checkoutShippingAddress;
+
+  /// No description provided for @checkoutShippingMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Shipping Method'**
+  String get checkoutShippingMethod;
+
+  /// No description provided for @checkoutPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment'**
+  String get checkoutPayment;
+
+  /// No description provided for @checkoutSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Summary'**
+  String get checkoutSummary;
+
+  /// No description provided for @checkoutContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get checkoutContinue;
+
+  /// No description provided for @checkoutPlaceOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Place Order'**
+  String get checkoutPlaceOrder;
+
+  /// No description provided for @checkoutPayIn4.
+  ///
+  /// In en, this message translates to:
+  /// **'or 4 interest-free payments'**
+  String get checkoutPayIn4;
+
+  /// No description provided for @orderSuccessTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Order placed!'**
+  String get orderSuccessTitle;
+
+  /// No description provided for @orderSuccessBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Thank you. Your order number is {number}.'**
+  String orderSuccessBody(String number);
+
+  /// No description provided for @paymentRedirectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete payment'**
+  String get paymentRedirectTitle;
+
+  /// No description provided for @paymentRedirectPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Your order is placed and awaiting payment. The in-app redirect for this gateway needs backend setup — see docs.'**
+  String get paymentRedirectPending;
+
   /// No description provided for @badgeNew.
   ///
   /// In en, this message translates to:

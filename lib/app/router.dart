@@ -9,6 +9,8 @@ import '../features/account/presentation/screens/edit_profile_screen.dart';
 import '../features/account/presentation/screens/orders_screen.dart';
 import '../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../features/cart/presentation/screens/cart_screen.dart';
+import '../features/checkout/presentation/screens/checkout_screen.dart';
+import '../features/checkout/presentation/screens/order_success_screen.dart';
 import '../features/auth/presentation/screens/sign_in_screen.dart';
 import '../features/auth/presentation/screens/sign_up_screen.dart';
 import '../features/catalog/presentation/screens/categories_screen.dart';
@@ -106,6 +108,20 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.editProfile,
         builder: (context, state) => const EditProfileScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.checkout,
+        builder: (context, state) => const CheckoutScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.orderSuccess,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return OrderSuccessScreen(
+            orderNumber: (extra?['number'] as String?) ?? '',
+            pendingPayment: (extra?['pending'] as bool?) ?? false,
+          );
+        },
       ),
       GoRoute(
         path: '/diagnostics',
