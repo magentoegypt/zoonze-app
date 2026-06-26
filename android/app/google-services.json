@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "430391293935",
+    "project_id": "zoonze",
+    "storage_bucket": "zoonze.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:430391293935:android:f1172aa3cacdc517e9681a",
+        "android_client_info": {
+          "package_name": "com.zoonze.shop"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD4azsO5UoiQIcmmbvmyUWDNU6iAJ9WHEc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:430391293935:android:bc06ac28d97d4bf2e9681a",
+        "android_client_info": {
+          "package_name": "com.zoonze.shop.dev"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD4azsO5UoiQIcmmbvmyUWDNU6iAJ9WHEc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:430391293935:android:e992d78729fb974be9681a",
+        "android_client_info": {
+          "package_name": "com.zoonze.shop.staging"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD4azsO5UoiQIcmmbvmyUWDNU6iAJ9WHEc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
