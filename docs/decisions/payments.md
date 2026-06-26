@@ -34,6 +34,19 @@ checkout_screen._placeOrder()
 The shared `runPaymentSession` (payments/payment_runner.dart) normalises session-status + native
 outcome into one result, used by both the initial checkout and the retry screen.
 
+**Non-gateway methods (no SDK, no session).** Methods where `isRedirect == false` skip the whole
+session/native path and complete the moment `placeOrder` returns — `_placeOrder` routes them straight
+to the order-success screen (`pending: false`). This covers:
+- **Zero Subtotal Checkout** (`PaymentMethodOption.isFree`, Magento code **`free`**): surfaced in
+  `available_payment_methods` **only when the cart grand total is 0** (fully covered by a coupon or
+  100%-off items). It has no gateway — `placeOrder` finalises the order as paid immediately. The
+  payment card shows a friendly "no payment needed" subtitle (`checkoutFreeOrder`, EN+AR); there is no
+  redirect, no `paymentSession` call, and never a "complete payment" follow-up.
+- Cash on delivery, check/money-order, and any other inline method, identically.
+
+As always, the visible method list comes **only** from `cart { available_payment_methods }`, so the
+backend decides whether `free` appears — the app never injects it.
+
 **Post-order recovery (CompletePaymentScreen).** Because `placeOrder` consumes the cart *before*
 payment, a failed/declined/cancelled/expired attempt can't be recovered by re-running checkout. So
 any non-success routes to **CompletePaymentScreen**, which is both:

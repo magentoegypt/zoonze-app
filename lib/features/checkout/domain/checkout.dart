@@ -23,9 +23,9 @@ class PaymentMethodOption {
   final String code;
   final String title;
 
-  /// Redirect (off-site) gateways need the shared WebView engine. Detected by
-  /// well-known method codes; the redirect URL itself comes from the gateway
-  /// extension (Open Q §2).
+  /// Redirect (off-site) gateways need the native payment SDK / session flow.
+  /// Detected by well-known method codes; the redirect URL itself comes from the
+  /// gateway extension (Open Q §2).
   bool get isRedirect {
     final c = code.toLowerCase();
     return c.contains('ngenius') ||
@@ -34,6 +34,12 @@ class PaymentMethodOption {
   }
 
   bool get isTabby => code.toLowerCase().contains('tabby');
+
+  /// Magento's **Zero Subtotal Checkout** (`free`) — surfaced only when the cart
+  /// grand total is 0 (e.g. fully covered by a coupon or 100%-off items). It has
+  /// no gateway: `placeOrder` completes the order as paid immediately, so it
+  /// falls into the non-redirect, instant-success path at checkout.
+  bool get isFree => code.toLowerCase() == 'free';
 
   /// Which Tabby product this method is, so checkout labels it correctly.
   /// Codes: tabby_cc_installments → card instalments; tabby_checkout → pay later;

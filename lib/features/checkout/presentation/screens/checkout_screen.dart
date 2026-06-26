@@ -107,7 +107,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       final state = ref.read(checkoutControllerProvider);
       final payment = state.selectedPayment;
       if (payment == null || !payment.isRedirect) {
-        // Non-SDK method (e.g. cash on delivery) completes immediately.
+        // Non-gateway methods complete immediately with no payment step:
+        // Zero Subtotal Checkout (`free`, total = 0), cash on delivery, etc.
         _goSuccess(result.orderNumber, pending: false);
         return;
       }

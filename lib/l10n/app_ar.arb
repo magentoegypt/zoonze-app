@@ -145,6 +145,7 @@
   "checkoutPayIn4": "أو 4 دفعات بدون فوائد",
   "checkoutPayLater": "ادفع لاحقًا بدون فوائد",
   "checkoutCardInstalments": "ادفع بالبطاقة على أقساط",
+  "checkoutFreeOrder": "لا حاجة للدفع — إجمالي طلبك مجاني",
   "promoTabbyPayIn4": "أو {count} دفعات بدون فوائد بقيمة {amount}",
   "promoTabbyPayLater": "أو ادفع لاحقًا بدون فوائد",
   "promoTabbyCardInstalments": "أو ادفع بالبطاقة على أقساط",

@@ -15,6 +15,13 @@ Two GraphQL queries + one Flutter `MethodChannel`:
 2. `tabbyConfig` — Tabby eligibility + promo metadata (NOT checkout gating).
 3. `zoonze/payments` MethodChannel — hand the session to the native N-Genius / Tabby SDK and map the result.
 
+**Non-gateway methods need none of the above.** Methods with no off-site step — Magento's
+**Zero Subtotal Checkout** (`free`, offered only when the grand total is 0), cash on delivery,
+check/money-order — finalise on `placeOrder`. The app detects them as `!isRedirect`
+(`PaymentMethodOption`; `free` also flagged `isFree`) and goes straight to order-success with **no**
+`paymentSession` call. They still appear in checkout only if `Cart.available_payment_methods` returns
+them; the app never injects `free`.
+
 ---
 
 ## ① `paymentSession(order_number)`

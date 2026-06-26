@@ -38,14 +38,7 @@ class PaymentMethodCard extends StatelessWidget {
           color: selected ? AppColors.brandPrimary : AppColors.inkMuted,
         ),
         title: Text(method.title),
-        subtitle: switch (method.tabbyProduct) {
-          TabbyProductType.installments => Text(l10n.checkoutPayIn4),
-          TabbyProductType.payLater => Text(l10n.checkoutPayLater),
-          TabbyProductType.creditCardInstallments => Text(
-            l10n.checkoutCardInstalments,
-          ),
-          null => null,
-        },
+        subtitle: _subtitle(l10n),
         trailing: method.isTabby
             ? Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -64,5 +57,19 @@ class PaymentMethodCard extends StatelessWidget {
             : null,
       ),
     );
+  }
+
+  /// Subtitle copy: the friendly "no payment needed" line for Zero Subtotal
+  /// Checkout (`free`), otherwise the Tabby product line, otherwise none.
+  Widget? _subtitle(AppLocalizations l10n) {
+    if (method.isFree) return Text(l10n.checkoutFreeOrder);
+    return switch (method.tabbyProduct) {
+      TabbyProductType.installments => Text(l10n.checkoutPayIn4),
+      TabbyProductType.payLater => Text(l10n.checkoutPayLater),
+      TabbyProductType.creditCardInstallments => Text(
+        l10n.checkoutCardInstalments,
+      ),
+      null => null,
+    };
   }
 }

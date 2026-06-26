@@ -413,6 +413,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get checkoutCardInstalments => 'ادفع بالبطاقة على أقساط';
 
   @override
+  String get checkoutFreeOrder => 'لا حاجة للدفع — إجمالي طلبك مجاني';
+
+  @override
   String promoTabbyPayIn4(int count, String amount) {
     return 'أو $count دفعات بدون فوائد بقيمة $amount';
   }

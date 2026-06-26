@@ -289,8 +289,8 @@ Home (categories + featured), category PLP with aggregations-driven filters + so
 **Phase 2 — Cart + Auth**
 Guest cart (`createEmptyCart`, `addProductsToCart`), cart screen (update/remove, coupons, totals), login/register/reset, **cart merge on login**, customer state across app.
 
-**Phase 3 — Checkout + payments (N-Genius + Tabby)**
-Address (saved + new), shipping methods, payment selection driven by `available_payment_methods`, `placeOrder`, one shared redirect-WebView engine + return/**reject** handling + server-side order confirmation, Tabby eligibility gating + "Pay in 4" promo on PDP/cart (if in scope). (Resolve the payment Open Questions first.)
+**Phase 3 — Checkout + payments (N-Genius + Tabby)** _(app side delivered; native modules + backend `MagentoEgypt_PaymentGraphQl` are the on-platform steps)_
+Address (saved + new), shipping methods, payment selection driven **only** by `available_payment_methods`, `placeOrder`, one shared native-SDK payment seam (`zoonze/payments` channel + `runPaymentSession`) + return/**reject** handling via `CompletePaymentScreen` + server-side order confirmation, Tabby eligibility gating + "Pay in 4" promo on PDP/cart. **Non-gateway methods** — Magento **Zero Subtotal Checkout** (`free`, total = 0) + cash on delivery — are detected as `!isRedirect` and finalise on `placeOrder` with no payment step. (Payment Open Questions §2/§3 resolved.)
 
 **Phase 4 — Account + Wishlist + Reviews**
 Profile, address book, order history + detail, wishlist, write/read reviews (graceful empty states), language switch in settings.

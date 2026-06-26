@@ -417,6 +417,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get checkoutCardInstalments => 'Pay by card in instalments';
 
   @override
+  String get checkoutFreeOrder =>
+      'No payment needed — your order total is free';
+
+  @override
   String promoTabbyPayIn4(int count, String amount) {
     return 'or $count interest-free payments of $amount';
   }

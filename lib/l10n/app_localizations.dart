@@ -884,6 +884,12 @@ abstract class AppLocalizations {
   /// **'Pay by card in instalments'**
   String get checkoutCardInstalments;
 
+  /// No description provided for @checkoutFreeOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'No payment needed — your order total is free'**
+  String get checkoutFreeOrder;
+
   /// No description provided for @promoTabbyPayIn4.
   ///
   /// In en, this message translates to:

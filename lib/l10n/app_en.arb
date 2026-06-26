@@ -151,6 +151,7 @@
   "checkoutPayIn4": "or 4 interest-free payments",
   "checkoutPayLater": "Pay later, interest-free",
   "checkoutCardInstalments": "Pay by card in instalments",
+  "checkoutFreeOrder": "No payment needed — your order total is free",
   "promoTabbyPayIn4": "or {count} interest-free payments of {amount}",
   "@promoTabbyPayIn4": {
     "placeholders": {
