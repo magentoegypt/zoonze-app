@@ -24,6 +24,16 @@ so the release workflows don't inject it. Only signing material comes from secre
 The job decodes the keystore + writes `android/key.properties`; the Gradle config
 already reads it. Output: `appbundle-<flavor>` artifact → upload to Play Console.
 
+**Without the secrets** the keystore step is skipped and the build falls back to
+the **debug key** (a warning is logged) — the pipeline still produces an AAB so
+you can validate the build, but it is **not** Play-uploadable until the `ANDROID_*`
+secrets are set.
+
+> **Core library desugaring** is enabled in `android/app/build.gradle.kts`
+> (`isCoreLibraryDesugaringEnabled = true` + `desugar_jdk_libs`), required by
+> `flutter_local_notifications`. Without it the release build fails at
+> `checkProdReleaseAarMetadata`.
+
 ### iOS (release-ios.yml)
 Uses **fastlane** with an **App Store Connect API key** + **`match`** (so no Mac and
 no manual certificate/CSR are needed).

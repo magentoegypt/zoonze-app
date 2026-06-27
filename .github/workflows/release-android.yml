@@ -26,14 +26,21 @@ jobs:
           cache: true
       - run: flutter pub get
 
-      # google-services.json is committed; only the keystore is injected.
-      - name: Write keystore + key.properties
+      # google-services.json is committed; only the keystore is injected. When
+      # no keystore secret is set, this step is skipped and the Gradle config
+      # falls back to the debug key, so the pipeline still builds (the AAB is
+      # NOT Play-uploadable until the ANDROID_* secrets are added).
+      - name: Write keystore + key.properties (when configured)
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
         run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "::warning::ANDROID_KEYSTORE_BASE64 not set — building with the debug key (not Play-uploadable). Add the ANDROID_* secrets to produce a signed bundle."
+            exit 0
+          fi
           echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/release.jks
           cat > android/key.properties <<EOF
           storePassword=$ANDROID_STORE_PASSWORD
