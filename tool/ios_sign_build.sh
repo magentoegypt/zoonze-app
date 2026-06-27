@@ -95,7 +95,13 @@ flutter build ios --release --config-only --no-codesign \
   -t lib/main_prod.dart \
   --dart-define-from-file=config/prod.json
 
-# 5b) Archive with manual signing pinned to our cert + ad-hoc profile.
+# 5b) Archive WITHOUT code signing.
+# Command-line build settings (KEY=VALUE) apply to EVERY target in the
+# workspace, so pinning a PROVISIONING_PROFILE_SPECIFIER here makes the archive
+# fail — the framework/library targets (Firebase, GoogleUtilities, plugins,
+# Pods) "do not support provisioning profiles". Instead archive unsigned and do
+# all signing at the export step below, where the export-options plist scopes
+# the profile to the app's bundle id only.
 xcodebuild archive \
   -workspace ios/Runner.xcworkspace \
   -scheme Runner \
@@ -103,13 +109,12 @@ xcodebuild archive \
   -sdk iphoneos \
   -destination 'generic/platform=iOS' \
   -archivePath "${ARCHIVE}" \
-  CODE_SIGN_STYLE=Manual \
-  DEVELOPMENT_TEAM="${TEAM_ID}" \
-  PROVISIONING_PROFILE_SPECIFIER="${PROFILE_NAME}" \
-  "CODE_SIGN_IDENTITY=Apple Distribution" \
-  OTHER_CODE_SIGN_FLAGS="--keychain ${KEYCHAIN}"
+  CODE_SIGNING_ALLOWED=NO \
+  CODE_SIGNING_REQUIRED=NO
 
-# 5c) Export the signed ad-hoc IPA.
+# 5c) Export + sign the ad-hoc IPA. -exportArchive re-signs the app and its
+# embedded frameworks with the distribution identity from the dedicated
+# keychain, using the ad-hoc profile mapped to com.zoonze.shop in EXPORT_PLIST.
 mkdir -p build/ios/ipa
 xcodebuild -exportArchive \
   -archivePath "${ARCHIVE}" \
