@@ -65,13 +65,13 @@ echo "-- products(search) --"
 post "$STORE_EN" '{"query":"query($s:String){ products(search:$s, pageSize:3, currentPage:1){ total_count items{ sku name url_key stock_status image{ url } price_range{ minimum_price{ final_price{ value currency } } } } } }","variables":{"s":"a"}}'
 echo; echo
 
-echo "== StoreConfig fields — confirm the home 'Special Offer Banner' names =="
-# The app reads the admin Special Offer Banner (enabled / text / coupon) from
+echo "== StoreConfig fields — confirm the home banner / offer field names =="
+# The app reads the admin announcement message + Special Offer Banner from
 # storeConfig (lib/features/catalog/data/special_offer_provider.dart). Print the
-# real StoreConfig field names so the query can match the module's schema.
+# real StoreConfig field names so the queries can match the module's schema.
 post "" '{"query":"{ __type(name:\"StoreConfig\"){ fields{ name } } }"}' \
-  | tr ',' '\n' | grep -iE 'offer|coupon|special|banner' \
-  || echo "  (no offer/coupon fields on StoreConfig — module not deployed yet?)"
+  | tr ',' '\n' | grep -iE 'offer|coupon|special|banner|announcement|message|magentoegypt' \
+  || echo "  (no announcement/offer fields on StoreConfig — module not deployed yet?)"
 echo
 
 echo "== Phase 3 payment contract — MagentoEgypt_PaymentGraphQl (no Store header) =="
