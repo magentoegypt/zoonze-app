@@ -22,6 +22,10 @@ APK_DIR="${APK_DIR:-dist/apk}"
 IPA_DIR="${IPA_DIR:-dist/ipa}"
 APP_NAME="${APPSONAIR_APP_NAME:-Zoonze}"
 
+# Keep the CLI fully non-interactive in CI (skip its self-update check).
+export APPSONAIR_DISABLE_UPDATE_CHECK=1
+export CI=true
+
 echo "Installing @appsonair/appsonair-cli…"
 npm install -g @appsonair/appsonair-cli
 
