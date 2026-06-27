@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui' show Color;
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -55,7 +56,9 @@ class NotificationService {
 
   Future<void> _initLocal() async {
     const settings = InitializationSettings(
-      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      // White status-bar silhouette (res/drawable/ic_stat_notify) — the colour
+      // launcher icon would render as a white square in the status bar.
+      android: AndroidInitializationSettings('ic_stat_notify'),
       iOS: DarwinInitializationSettings(),
     );
     await _local.initialize(
@@ -127,6 +130,8 @@ class NotificationService {
           channelDescription: _channel.description,
           importance: Importance.high,
           priority: Priority.high,
+          icon: 'ic_stat_notify',
+          color: Color(0xFF9E1B3F),
         ),
         iOS: const DarwinNotificationDetails(),
       ),
