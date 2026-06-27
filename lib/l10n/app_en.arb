@@ -175,6 +175,10 @@
   "wishlistGuestBody": "Sign in to keep your wishlist across devices.",
 
   "ordersEmpty": "You have no orders yet.",
+  "ordersFilterAll": "All",
+  "ordersFilterToReceive": "To Receive",
+  "ordersFilterDelivered": "Delivered",
+  "ordersFilterCancelled": "Cancelled",
   "orderStatus": "Status",
   "orderNumber": "Order #{number}",
   "@orderNumber": { "placeholders": { "number": { "type": "String" } } },

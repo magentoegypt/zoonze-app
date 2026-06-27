@@ -492,6 +492,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get ordersEmpty => 'ليس لديك طلبات بعد.';
 
   @override
+  String get ordersFilterAll => 'الكل';
+
+  @override
+  String get ordersFilterToReceive => 'قيد الاستلام';
+
+  @override
+  String get ordersFilterDelivered => 'تم التسليم';
+
+  @override
+  String get ordersFilterCancelled => 'ملغى';
+
+  @override
   String get orderStatus => 'الحالة';
 
   @override

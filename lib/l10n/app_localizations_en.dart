@@ -498,6 +498,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get ordersEmpty => 'You have no orders yet.';
 
   @override
+  String get ordersFilterAll => 'All';
+
+  @override
+  String get ordersFilterToReceive => 'To Receive';
+
+  @override
+  String get ordersFilterDelivered => 'Delivered';
+
+  @override
+  String get ordersFilterCancelled => 'Cancelled';
+
+  @override
   String get orderStatus => 'Status';
 
   @override

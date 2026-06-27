@@ -992,6 +992,30 @@ abstract class AppLocalizations {
   /// **'You have no orders yet.'**
   String get ordersEmpty;
 
+  /// No description provided for @ordersFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get ordersFilterAll;
+
+  /// No description provided for @ordersFilterToReceive.
+  ///
+  /// In en, this message translates to:
+  /// **'To Receive'**
+  String get ordersFilterToReceive;
+
+  /// No description provided for @ordersFilterDelivered.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivered'**
+  String get ordersFilterDelivered;
+
+  /// No description provided for @ordersFilterCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get ordersFilterCancelled;
+
   /// No description provided for @orderStatus.
   ///
   /// In en, this message translates to:

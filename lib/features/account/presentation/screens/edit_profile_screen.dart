@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../app/theme/app_colors.dart';
 import '../../../../core/validation/validators.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../auth/presentation/auth_controller.dart';
@@ -86,9 +87,17 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     }
   }
 
+  String _initials(String name) {
+    final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty);
+    final letters = parts.take(2).map((p) => p.substring(0, 1).toUpperCase());
+    final joined = letters.join();
+    return joined.isEmpty ? '?' : joined;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final customer = ref.watch(authControllerProvider).customer;
     return Scaffold(
       appBar: AppBar(title: Text(l10n.profileTitle)),
       body: SafeArea(
@@ -97,6 +106,21 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Center(
+                child: CircleAvatar(
+                  radius: 36,
+                  backgroundColor: AppColors.surfaceTint,
+                  child: Text(
+                    _initials(customer?.fullName ?? ''),
+                    style: const TextStyle(
+                      color: AppColors.brandPrimary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 24,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
               Form(
                 key: _profileKey,
                 child: Column(
@@ -105,6 +129,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       controller: _firstName,
                       decoration: InputDecoration(
                         labelText: l10n.fieldFirstName,
+                        prefixIcon: const Icon(Icons.person_outline),
                       ),
                       validator: (v) => Validators.required(context, v),
                     ),
@@ -113,8 +138,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       controller: _lastName,
                       decoration: InputDecoration(
                         labelText: l10n.fieldLastName,
+                        prefixIcon: const Icon(Icons.person_outline),
                       ),
                       validator: (v) => Validators.required(context, v),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      enabled: false,
+                      initialValue: customer?.email ?? '',
+                      decoration: InputDecoration(
+                        labelText: l10n.fieldEmail,
+                        prefixIcon: const Icon(Icons.mail_outline),
+                      ),
                     ),
                     const SizedBox(height: 16),
                     FilledButton(

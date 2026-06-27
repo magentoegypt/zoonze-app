@@ -164,6 +164,10 @@
   "wishlistGuestBody": "سجّل الدخول للاحتفاظ بقائمة المفضلة عبر أجهزتك.",
 
   "ordersEmpty": "ليس لديك طلبات بعد.",
+  "ordersFilterAll": "الكل",
+  "ordersFilterToReceive": "قيد الاستلام",
+  "ordersFilterDelivered": "تم التسليم",
+  "ordersFilterCancelled": "ملغى",
   "orderStatus": "الحالة",
   "orderNumber": "الطلب رقم {number}",
   "orderDetailsTitle": "تفاصيل الطلب",

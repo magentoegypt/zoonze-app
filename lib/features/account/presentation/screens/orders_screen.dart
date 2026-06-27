@@ -18,8 +18,35 @@ class OrdersScreen extends ConsumerStatefulWidget {
   ConsumerState<OrdersScreen> createState() => _OrdersScreenState();
 }
 
+/// Order status buckets for the filter tabs (Figma). Mapped from Magento's
+/// free-text status, which varies by config — matched loosely on keywords.
+enum _OrderFilter { all, toReceive, delivered, cancelled }
+
+bool _statusMatches(_OrderFilter f, String status) {
+  final s = status.toLowerCase();
+  final delivered = s.contains('complet') || s.contains('deliver');
+  final cancelled =
+      s.contains('cancel') || s.contains('refund') || s.contains('closed');
+  return switch (f) {
+    _OrderFilter.all => true,
+    _OrderFilter.delivered => delivered,
+    _OrderFilter.cancelled => cancelled,
+    _OrderFilter.toReceive => !delivered && !cancelled,
+  };
+}
+
+Color _statusColor(String status) {
+  final s = status.toLowerCase();
+  if (s.contains('complet') || s.contains('deliver')) return AppColors.accentGold;
+  if (s.contains('cancel') || s.contains('refund') || s.contains('closed')) {
+    return AppColors.inkMuted;
+  }
+  return AppColors.brandPrimary;
+}
+
 class _OrdersScreenState extends ConsumerState<OrdersScreen> {
   final ScrollController _scroll = ScrollController();
+  _OrderFilter _filter = _OrderFilter.all;
 
   @override
   void initState() {
@@ -84,19 +111,73 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
         title: l10n.ordersEmpty,
       );
     }
-    return ListView.builder(
-      controller: _scroll,
-      padding: const EdgeInsets.all(16),
-      itemCount: state.orders.length + (state.isLoadingMore ? 1 : 0),
-      itemBuilder: (context, index) {
-        if (index >= state.orders.length) {
-          return const Padding(
-            padding: EdgeInsets.all(16),
-            child: Center(child: CircularProgressIndicator()),
-          );
-        }
-        return _OrderCard(order: state.orders[index]);
-      },
+    final filtered = state.orders
+        .where((o) => _statusMatches(_filter, o.status))
+        .toList();
+    return Column(
+      children: [
+        _FilterBar(
+          current: _filter,
+          onChanged: (f) => setState(() => _filter = f),
+        ),
+        Expanded(
+          child: filtered.isEmpty
+              ? EmptyState(
+                  icon: Icons.receipt_long_outlined,
+                  title: l10n.ordersEmpty,
+                )
+              : ListView.builder(
+                  controller: _scroll,
+                  padding: const EdgeInsets.all(16),
+                  itemCount: filtered.length + (state.isLoadingMore ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index >= filtered.length) {
+                      return const Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+                    return _OrderCard(order: filtered[index]);
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Horizontal status filter chips (All / To Receive / Delivered / Cancelled).
+class _FilterBar extends StatelessWidget {
+  const _FilterBar({required this.current, required this.onChanged});
+  final _OrderFilter current;
+  final ValueChanged<_OrderFilter> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final labels = <_OrderFilter, String>{
+      _OrderFilter.all: l10n.ordersFilterAll,
+      _OrderFilter.toReceive: l10n.ordersFilterToReceive,
+      _OrderFilter.delivered: l10n.ordersFilterDelivered,
+      _OrderFilter.cancelled: l10n.ordersFilterCancelled,
+    };
+    return SizedBox(
+      height: 48,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        children: [
+          for (final entry in labels.entries)
+            Padding(
+              padding: const EdgeInsetsDirectional.only(end: 8),
+              child: ChoiceChip(
+                label: Text(entry.value),
+                selected: current == entry.key,
+                onSelected: (_) => onChanged(entry.key),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -119,9 +200,16 @@ class _OrderCard extends StatelessWidget {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              '${order.date} · ${order.status}',
-              style: const TextStyle(color: AppColors.inkMuted),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Text(
+                  order.date,
+                  style: const TextStyle(color: AppColors.inkMuted),
+                ),
+                const SizedBox(width: 8),
+                _StatusBadge(status: order.status),
+              ],
             ),
             if (order.hasTracking)
               Padding(
@@ -157,6 +245,33 @@ class _OrderCard extends StatelessWidget {
               )
             : const Icon(Icons.chevron_right),
         isThreeLine: order.hasTracking,
+      ),
+    );
+  }
+}
+
+/// Coloured status pill (Figma): gold = delivered, muted = cancelled,
+/// burgundy = in progress.
+class _StatusBadge extends StatelessWidget {
+  const _StatusBadge({required this.status});
+  final String status;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _statusColor(status);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        status,
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
