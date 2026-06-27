@@ -22,7 +22,13 @@ class WelcomeScreen extends StatelessWidget {
           child: Column(
             children: [
               const SizedBox(height: 8),
-              const BrandLockup(fontSize: 28),
+              // Brand logo (burgundy on transparent → reads on the light
+              // background); falls back to the wordmark if the asset is missing.
+              Image.asset(
+                AppImages.logo,
+                height: 52,
+                errorBuilder: (_, __, ___) => const BrandLockup(fontSize: 28),
+              ),
               const SizedBox(height: 24),
               Expanded(
                 child: ClipRRect(
