@@ -8,6 +8,7 @@ import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/store/store_controller.dart';
+import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/failure_message.dart';
 import '../../../../l10n/l10n.dart';
 import '../../data/catalog_repository.dart';
@@ -141,9 +142,9 @@ class _PlpScreenState extends ConsumerState<PlpScreen> {
         ),
         if (state.products.isEmpty)
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(40),
-              child: Center(child: Text(l10n.stateEmpty)),
+            child: EmptyState(
+              icon: Icons.inventory_2_outlined,
+              title: l10n.stateEmpty,
             ),
           )
         else
