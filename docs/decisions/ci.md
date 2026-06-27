@@ -52,15 +52,27 @@ no manual certificate/CSR are needed).
 | `MATCH_GIT_BASIC_AUTHORIZATION` | `base64 -w0 <<< "user:personal_access_token"` (read/write to the match repo) |
 | `MATCH_PASSWORD` | passphrase you choose to encrypt the match repo |
 
+**Distribution** (the `distribution` input):
+- **`adhoc`** (default) → builds an ad-hoc **`.ipa`** artifact (`ipa-adhoc-prod`)
+  for **Diawi** / direct device install. Lane `adhoc`, `ExportOptions-AdHoc.plist`.
+- **`testflight`** → archives + uploads to **TestFlight**. Lane `beta`,
+  `ExportOptions.plist`.
+
 **One-time setup (no Mac needed):**
 1. Create the empty private "match" repo (→ `MATCH_GIT_URL`).
 2. Enrol in the Apple Developer Program; create the App ID `com.zoonze.shop` with
    **Push Notifications** enabled, and an **APNs key** (upload it to Firebase → Cloud Messaging).
-3. Seed signing once: from any machine with Ruby, in `ios/`:
-   `bundle install && bundle exec fastlane match appstore` (creates the cert +
-   profile and pushes them, encrypted, to the match repo).
-4. Put your **Team ID** in `ios/ExportOptions.plist` (`YOUR_TEAM_ID`).
-5. Run **Release · iOS** from the Actions tab → it builds and pushes to TestFlight.
+3. **Register test-device UDIDs** (Apple Developer → Devices) — **required for
+   ad-hoc/Diawi**: an ad-hoc IPA only installs on devices in its profile.
+4. Seed signing once: from any machine with Ruby, in `ios/` —
+   `bundle install` then `bundle exec fastlane match appstore` **and**
+   `bundle exec fastlane match adhoc` (the latter bakes the registered devices
+   into the ad-hoc profile; re-run it whenever you add a device).
+5. Put your **Team ID** in `ios/ExportOptions.plist` **and**
+   `ios/ExportOptions-AdHoc.plist` (`YOUR_TEAM_ID`).
+6. Run **Release · iOS** from the Actions tab:
+   - `adhoc` → download the `ipa-adhoc-prod` artifact → upload the `.ipa` to **diawi.com**.
+   - `testflight` → it builds and pushes to TestFlight.
 
 > First iOS run often needs a small tweak (Team ID, profile name, ipa path).
 > Android + the CI job work as-is.

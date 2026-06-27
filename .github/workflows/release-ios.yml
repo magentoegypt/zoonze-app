@@ -1,10 +1,20 @@
 name: Release · iOS
 
-# Builds the prod app and uploads to TestFlight from a hosted macOS runner —
-# no local Mac needed. Requires the secrets in docs/decisions/ci.md and a
-# one-time `fastlane match appstore` to seed signing. Run from the Actions tab.
+# Builds the prod iOS app from a hosted macOS runner — no local Mac needed.
+#   - testflight → uploads to TestFlight (App Store distribution)
+#   - adhoc      → builds an ad-hoc .ipa artifact for Diawi / device install
+# Requires the Apple secrets in docs/decisions/ci.md and a one-time
+# `fastlane match appstore` (and `match adhoc` for the adhoc path) to seed
+# signing. Ad-hoc installs only on devices whose UDIDs are registered in the
+# Apple Developer portal and included in the ad-hoc profile.
 on:
   workflow_dispatch:
+    inputs:
+      distribution:
+        description: "testflight (App Store) or adhoc (Diawi / device install)"
+        type: choice
+        default: adhoc
+        options: [adhoc, testflight]
 
 jobs:
   build:
@@ -18,7 +28,7 @@ jobs:
           cache: true
       - run: flutter pub get
 
-      - name: Build + upload to TestFlight (fastlane)
+      - name: Build (fastlane)
         working-directory: ios
         env:
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -29,4 +39,13 @@ jobs:
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
         run: |
           bundle install
-          bundle exec fastlane beta
+          bundle exec fastlane ${{ inputs.distribution == 'testflight' && 'beta' || 'adhoc' }}
+
+      # Ad-hoc only — publish the installable .ipa for Diawi.
+      - name: Upload IPA (ad-hoc → Diawi)
+        if: ${{ inputs.distribution == 'adhoc' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ipa-adhoc-prod
+          path: build/ios/ipa/*.ipa
+          if-no-files-found: error

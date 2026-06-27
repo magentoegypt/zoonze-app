@@ -1,39 +1,48 @@
 default_platform(:ios)
 
+APP_ID = "com.zoonze.shop"
+
+# App Store Connect API key (no Apple ID / 2FA needed).
+def asc_api_key
+  app_store_connect_api_key(
+    key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
+    issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
+    key_content: ENV["APP_STORE_CONNECT_KEY_CONTENT"],
+    is_key_content_base64: true,
+  )
+end
+
+# fastlane runs lanes from the `ios/` dir; Flutter must build from the project
+# root, so build inside `Dir.chdir("..")`. Returns the produced .ipa path.
+def build_ipa(export_options)
+  Dir.chdir("..") do
+    sh(
+      "flutter", "build", "ipa", "--release",
+      "--export-options-plist", "ios/#{export_options}",
+      "--target", "lib/main_prod.dart",
+      "--dart-define-from-file=config/prod.json",
+    )
+  end
+  Dir["../build/ios/ipa/*.ipa"].first
+end
+
 platform :ios do
   desc "Build the prod flavor and upload to TestFlight"
   lane :beta do
-    api_key = app_store_connect_api_key(
-      key_id: ENV["APP_STORE_CONNECT_KEY_ID"],
-      issuer_id: ENV["APP_STORE_CONNECT_ISSUER_ID"],
-      key_content: ENV["APP_STORE_CONNECT_KEY_CONTENT"],
-      is_key_content_base64: true,
-    )
+    key = asc_api_key
+    # Distribution cert + App Store profile from the private `match` repo.
+    # Seed once (any machine, no Mac CSR): cd ios && bundle exec fastlane match appstore
+    match(type: "appstore", app_identifier: APP_ID, api_key: key, readonly: true)
+    ipa = build_ipa("ExportOptions.plist")
+    upload_to_testflight(api_key: key, ipa: ipa, skip_waiting_for_build_processing: true)
+  end
 
-    # Distribution certificate + provisioning profile, stored in a private git
-    # repo by `match`. Seed it once (from any machine, no Mac CSR needed):
-    #   cd ios && bundle exec fastlane match appstore
-    match(
-      type: "appstore",
-      app_identifier: "com.zoonze.shop",
-      api_key: api_key,
-      readonly: true,
-    )
-
-    # Flutter drives the entrypoint + dart-defines; signing comes from match via
-    # ExportOptions.plist (set teamID there).
-    sh(
-      "flutter", "build", "ipa", "--release",
-      "--export-options-plist", "ExportOptions.plist",
-      "--target", "../lib/main_prod.dart",
-      "--dart-define-from-file=../config/prod.json",
-    )
-
-    ipa = Dir["../build/ios/ipa/*.ipa"].first
-    upload_to_testflight(
-      api_key: api_key,
-      ipa: ipa,
-      skip_waiting_for_build_processing: true,
-    )
+  desc "Build a prod ad-hoc IPA for Diawi / device install (no upload)"
+  lane :adhoc do
+    # Ad-hoc cert + profile (includes the portal's registered device UDIDs).
+    # Seed once: cd ios && bundle exec fastlane match adhoc
+    match(type: "adhoc", app_identifier: APP_ID, api_key: asc_api_key, readonly: true)
+    ipa = build_ipa("ExportOptions-AdHoc.plist")
+    UI.success("Ad-hoc IPA ready: #{ipa} — upload it to Diawi.")
   end
 end
