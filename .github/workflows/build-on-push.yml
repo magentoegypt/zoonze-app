@@ -6,6 +6,8 @@ name: Build · main (APK + IPA)
 #     signed ad-hoc IPA (Diawi-installable on registered devices); without them
 #     it's an UNSIGNED IPA (sideload/resign via AltStore or Sideloadly).
 # Artifacts: apk-prod / ipa-prod (download from the run, e.g. for Diawi).
+# Both builds are also auto-uploaded to AppsOnAir for OTA distribution once the
+# APPSONAIR_* secrets are set (see the `appsonair` job + docs/decisions/ci.md).
 on:
   push:
     branches: [main]
@@ -101,10 +103,17 @@ jobs:
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
           MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           if [ -n "$APP_STORE_CONNECT_KEY_ID" ]; then
             # Signed ad-hoc IPA via fastlane match → build/ios/ipa/*.ipa.
-            # Installs directly via Diawi on devices registered in the profile.
+            # Installs OTA (AppsOnAir / Diawi) on devices registered in the
+            # ad-hoc profile. Inject the Team ID into the export options so no
+            # manual plist edit is needed (falls back to the committed value).
+            if [ -n "$APPLE_TEAM_ID" ]; then
+              sed -i '' "s/YOUR_TEAM_ID/$APPLE_TEAM_ID/g" \
+                ios/ExportOptions-AdHoc.plist ios/ExportOptions.plist
+            fi
             (cd ios && bundle install && bundle exec fastlane adhoc)
           else
             echo "::warning::No Apple signing secrets — producing an UNSIGNED IPA. It will NOT install via Diawi as-is; sideload/resign it with your own Apple ID (AltStore / Sideloadly), or add APP_STORE_CONNECT_*/MATCH_* secrets for a signed ad-hoc IPA."
@@ -126,3 +135,48 @@ jobs:
           name: ipa-prod
           path: build/ios/ipa/*.ipa
           if-no-files-found: error
+
+  # Publish both builds to AppsOnAir for OTA distribution. Runs after both
+  # platform jobs regardless of their outcome (uploads whatever was produced).
+  # No-op until the APPSONAIR_* secrets are set, so it never breaks the build.
+  # NOTE: an unsigned IPA uploads but won't OTA-install — set the Apple signing
+  # secrets so the ios job emits a *signed* ad-hoc IPA that installs on devices.
+  appsonair:
+    name: Upload to AppsOnAir
+    needs: [android-apk, ios]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download APK artifact
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: apk-prod
+          path: dist/apk
+      - name: Download IPA artifact
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: ipa-prod
+          path: dist/ipa
+      - name: Upload builds to AppsOnAir
+        env:
+          APPSONAIR_UPLOAD_URL: ${{ secrets.APPSONAIR_UPLOAD_URL }}
+          APPSONAIR_API_KEY: ${{ secrets.APPSONAIR_API_KEY }}
+          APPSONAIR_APP_KEY: ${{ secrets.APPSONAIR_APP_KEY }}
+          APPSONAIR_FILE_FIELD: ${{ vars.APPSONAIR_FILE_FIELD }}
+        run: |
+          if [ -z "$APPSONAIR_UPLOAD_URL" ]; then
+            echo "::warning::AppsOnAir not configured — set APPSONAIR_UPLOAD_URL / APPSONAIR_API_KEY / APPSONAIR_APP_KEY secrets (see docs/decisions/ci.md). Skipping."
+            exit 0
+          fi
+          shopt -s nullglob
+          builds=(dist/apk/*.apk dist/ipa/*.ipa)
+          if [ ${#builds[@]} -eq 0 ]; then
+            echo "::warning::No APK/IPA artifacts found to upload to AppsOnAir."
+            exit 0
+          fi
+          for f in "${builds[@]}"; do
+            bash tool/appsonair_upload.sh "$f"
+          done

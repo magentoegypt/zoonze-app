@@ -5,7 +5,7 @@ Workflows in `.github/workflows/`:
 | Workflow | Trigger | Runner | Does |
 |---|---|---|---|
 | `ci.yml` | every push to `main` + PRs | ubuntu | `flutter analyze` + `flutter test` |
-| `build-on-push.yml` | every push to `main` | ubuntu + macos-15 | **APK** (`apk-prod`) always; **iOS IPA** (`ipa-prod`) always — signed ad-hoc once Apple secrets exist, else an **unsigned** IPA (sideload/resign) |
+| `build-on-push.yml` | every push to `main` | ubuntu + macos-15 | **APK** (`apk-prod`) always; **iOS IPA** (`ipa-prod`) always — signed ad-hoc once Apple secrets exist, else an **unsigned** IPA (sideload/resign); then **auto-uploads both to AppsOnAir** when its secrets are set |
 | `release-android.yml` | manual (pick flavor/format) | ubuntu | APK or Play **.aab** → artifact |
 | `release-ios.yml` | manual | **macOS** | ad-hoc **.ipa** (Diawi) or TestFlight |
 | `introspect.yml` | manual | ubuntu | live GraphQL introspection (store codes, schema, payment contract) |
@@ -59,6 +59,10 @@ no manual certificate/CSR are needed).
 | `MATCH_GIT_URL` | a **private** git repo URL that stores the signing cert/profile |
 | `MATCH_GIT_BASIC_AUTHORIZATION` | `base64 -w0 <<< "user:personal_access_token"` (read/write to the match repo) |
 | `MATCH_PASSWORD` | passphrase you choose to encrypt the match repo |
+| `APPLE_TEAM_ID` | your 10-char Apple Developer **Team ID** (Apple Developer → Membership). The workflow injects it into the `ExportOptions*.plist` so you don't edit them by hand. |
+
+These same secrets drive the iOS build in **`build-on-push.yml`**: once they're set,
+every push produces a **signed ad-hoc IPA** (`ipa-prod`) — no manual run needed.
 
 **Distribution** (the `distribution` input):
 - **`adhoc`** (default) → builds an ad-hoc **`.ipa`** artifact (`ipa-adhoc-prod`)
@@ -76,8 +80,8 @@ no manual certificate/CSR are needed).
    `bundle install` then `bundle exec fastlane match appstore` **and**
    `bundle exec fastlane match adhoc` (the latter bakes the registered devices
    into the ad-hoc profile; re-run it whenever you add a device).
-5. Put your **Team ID** in `ios/ExportOptions.plist` **and**
-   `ios/ExportOptions-AdHoc.plist` (`YOUR_TEAM_ID`).
+5. Set the **`APPLE_TEAM_ID`** secret (the workflows substitute it into both
+   `ExportOptions*.plist` at build time — no manual `YOUR_TEAM_ID` edit needed).
 6. Run **Release · iOS** from the Actions tab:
    - `adhoc` → download the `ipa-adhoc-prod` artifact → upload the `.ipa` to **diawi.com**.
    - `testflight` → it builds and pushes to TestFlight.
@@ -120,6 +124,29 @@ no manual certificate/CSR are needed).
 >   job produces a signed `ipa-prod` that installs straight from Diawi.
 > So: unsigned IPA = generated today, sideload to test. Signed ad-hoc IPA =
 > needs the one-time Apple signing setup, then Diawi-installable.
+
+### AppsOnAir distribution (build-on-push.yml → `appsonair` job)
+
+On every push to `main`, after the APK and IPA build, the **`appsonair`** job
+publishes **both** builds to [AppsOnAir](https://www.appsonair.com) for OTA
+distribution (`tool/appsonair_upload.sh`). It's a no-op until these secrets are
+set, so it never breaks the build.
+
+| Secret | Where to find it |
+|---|---|
+| `APPSONAIR_API_KEY` | AppsOnAir → your app → **App Settings → API Key** (sent as the `x-api-key` header) |
+| `APPSONAIR_APP_KEY` | AppsOnAir → your app → **App Settings → App ID** (sent as the `x-app-key` header) |
+| `APPSONAIR_UPLOAD_URL` | the build-upload endpoint from AppsOnAir's **API / CI-CD** snippet in the dashboard (we don't hardcode it — paste the exact URL they show) |
+
+Optional repo **variable** `APPSONAIR_FILE_FIELD` overrides the multipart file
+field name (default `file`) if AppsOnAir's snippet uses a different one.
+
+> AppsOnAir publishes **no** GitHub Action / fastlane plugin / CLI for build
+> distribution (only CodePush for RN and the in-app AppSync SDK), so we upload
+> via their REST API with `curl`. Auth is `x-api-key` (API Key) + `x-app-key`
+> (App ID). **iOS caveat:** AppsOnAir installs over-the-air, which needs a
+> **signed** IPA — so set the Apple signing secrets above (the `ios` job then
+> emits a signed ad-hoc IPA). An unsigned IPA uploads but won't install.
 
 ## Notes
 - Pinned **Flutter 3.44.4** (matches the project's Dart `^3.12` constraint) — bump
