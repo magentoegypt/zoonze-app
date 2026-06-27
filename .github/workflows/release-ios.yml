@@ -26,6 +26,12 @@ jobs:
           flutter-version: 3.44.4
           channel: stable
           cache: true
+
+      # Flutter 3.44's SPM plugin copy rsyncs into build/ios/SourcePackages/
+      # during pub get; pre-create it so the copy doesn't fail on a fresh
+      # checkout (see build-on-push.yml for the full note).
+      - name: Pre-create SPM SourcePackages dir (flutter/flutter rsync workaround)
+        run: mkdir -p build/ios/SourcePackages
       - run: flutter pub get
 
       - name: Build (fastlane)

@@ -68,6 +68,17 @@ jobs:
           flutter-version: 3.44.4
           channel: stable
           cache: true
+
+      # Flutter 3.44 enables Swift Package Manager by default and, during
+      # `flutter pub get`, copies SPM-compatible plugins (firebase_messaging,
+      # firebase_core) into build/ios/SourcePackages/ via rsync. On a fresh
+      # checkout that parent dir doesn't exist and rsync won't create it, so
+      # pub get fails with "Failed to copy plugin … mkdir … No such file or
+      # directory". Pre-creating the dir lets the copy succeed. The project
+      # genuinely uses SPM (Runner.xcodeproj references the generated package,
+      # no Podfile), so disabling SPM is not an option.
+      - name: Pre-create SPM SourcePackages dir (flutter/flutter rsync workaround)
+        run: mkdir -p build/ios/SourcePackages
       - run: flutter pub get
 
       - name: Build iOS (ad-hoc IPA when signed, else unsigned compile)

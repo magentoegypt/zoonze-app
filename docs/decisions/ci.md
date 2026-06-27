@@ -85,6 +85,15 @@ no manual certificate/CSR are needed).
 > First iOS run often needs a small tweak (Team ID, profile name, ipa path).
 > Android + the CI job work as-is.
 
+> **Swift Package Manager + `flutter pub get`:** the iOS project uses SPM
+> (`Runner.xcodeproj` references the Flutter-generated Swift package; there is
+> **no Podfile**). Flutter 3.44 copies SPM plugins (firebase_*) into
+> `build/ios/SourcePackages/` via rsync during `pub get`, which fails on a
+> fresh checkout because that parent dir doesn't exist yet (`Failed to copy
+> plugin … mkdir … No such file or directory`). Both macOS jobs run
+> `mkdir -p build/ios/SourcePackages` before `flutter pub get` to work around
+> it. Do **not** disable SPM (no Podfile to fall back to).
+
 ## Notes
 - Pinned **Flutter 3.44.4** (matches the project's Dart `^3.12` constraint) — bump
   in all three workflows together if you change it.
