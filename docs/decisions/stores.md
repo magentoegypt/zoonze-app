@@ -1,8 +1,9 @@
 # Decision — Store views & dynamic resolution
 
-_Last updated: store codes confirmed against the live endpoint (CI introspection run)._
+_Last updated: 2026-06-27 — store codes, catalog modeling, and the payment
+contract all re-confirmed against the live endpoint (Introspect run #4)._
 
-## ✅ Confirmed values (live `availableStores`, 2026-06-26)
+## ✅ Confirmed values (live `availableStores`, 2026-06-27)
 
 Discovered via the **Introspect Live GraphQL** GitHub Actions workflow
 (`tool/introspect.sh`, header-less `availableStores`):
@@ -20,6 +21,26 @@ Discovered via the **Introspect Live GraphQL** GitHub Actions workflow
 > (`Requested store is not found`), so `availableStores` must be queried with
 > **no `Store` header** (default view) for discovery. `config/*.json`,
 > `AppConfig` defaults, and the tool scripts are set to these values.
+
+## ✅ Also verified live (Introspect run #4, 2026-06-27)
+
+The same run exercised the app's real queries and the payment module — all
+match the code already in the repo, so no changes were needed:
+
+- **Catalog is properly modeled** (resolves Open Q §5): `categoryList` returns
+  real categories with counts — Fragrance (737), Skincare (247), New Arrivals
+  (120), Bestsellers (35), Makeup (10), plus not-in-menu Clearance/Bundle Sets.
+  `products(search:)` returns real SKUs with `price_range` in **AED** and
+  `stock_status`. `include_in_menu` comes back as **Int `1`/`0`** (handled by
+  `_asBool`), and `base_media_url` is **`http://`** (upgraded by `httpsMediaUrl`).
+- **Payment contract matches `docs/backend/payment-contract.md`** (Open Q §2):
+  `paymentSession(order_number, email, lastname, token)`, `tabbyConfig()`,
+  `SetOrderPaymentMethodInput { email, lastname, order_number, payment_method,
+  token }`; enums `PaymentGateway [NGENIUS, TABBY]`, `PaymentSessionStatus
+  [READY, PENDING, REJECTED, FAILED]`, `TabbyProductType [INSTALLMENTS,
+  PAY_LATER, CREDIT_CARD_INSTALLMENTS]`; `PaymentSessionData { key, value }`.
+- The full schema was uploaded as the run's **`introspection`** artifact
+  (`schema.introspection.json`) — convert to SDL for Phase 1 codegen when needed.
 
 ## Approach: resolve, don't hardcode
 Per owner: the app **does not hardcode** store codes. It bootstraps with a
