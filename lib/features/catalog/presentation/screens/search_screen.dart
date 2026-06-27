@@ -12,7 +12,10 @@ import '../widgets/product_card.dart';
 /// Native catalogue search (`products(search:)`). If Live Search is later
 /// confirmed (Open Q §4), swap the provider to the productSearch schema.
 class SearchScreen extends ConsumerStatefulWidget {
-  const SearchScreen({super.key});
+  const SearchScreen({super.key, this.initialQuery});
+
+  /// Optional pre-filled query (e.g. tapping a brand on the home screen).
+  final String? initialQuery;
 
   @override
   ConsumerState<SearchScreen> createState() => _SearchScreenState();
@@ -21,6 +24,16 @@ class SearchScreen extends ConsumerStatefulWidget {
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   final TextEditingController _controller = TextEditingController();
   String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    final initial = widget.initialQuery?.trim() ?? '';
+    if (initial.isNotEmpty) {
+      _controller.text = initial;
+      _query = initial;
+    }
+  }
 
   @override
   void dispose() {

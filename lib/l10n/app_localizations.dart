@@ -362,11 +362,29 @@ abstract class AppLocalizations {
   /// **'New Arrivals'**
   String get homeNewArrivals;
 
+  /// No description provided for @homeBestsellers.
+  ///
+  /// In en, this message translates to:
+  /// **'Bestsellers'**
+  String get homeBestsellers;
+
+  /// No description provided for @homeExploreBrands.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore Our Brands'**
+  String get homeExploreBrands;
+
   /// No description provided for @homeSeeAll.
   ///
   /// In en, this message translates to:
   /// **'See all'**
   String get homeSeeAll;
+
+  /// No description provided for @homeSeeMore.
+  ///
+  /// In en, this message translates to:
+  /// **'See More'**
+  String get homeSeeMore;
 
   /// No description provided for @homeAnnouncement.
   ///
@@ -398,6 +416,18 @@ abstract class AppLocalizations {
   /// **'On orders over AED 150'**
   String get homeTrustDeliveryBody;
 
+  /// No description provided for @homeTrustFastTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery in 3 Hours'**
+  String get homeTrustFastTitle;
+
+  /// No description provided for @homeTrustFastBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Dubai, Sharjah & Ajman · rest of UAE in 24h'**
+  String get homeTrustFastBody;
+
   /// No description provided for @homeTrustServiceTitle.
   ///
   /// In en, this message translates to:
@@ -407,8 +437,26 @@ abstract class AppLocalizations {
   /// No description provided for @homeTrustServiceBody.
   ///
   /// In en, this message translates to:
-  /// **'10 AM – 10 PM'**
+  /// **'10 AM until 10 PM'**
   String get homeTrustServiceBody;
+
+  /// No description provided for @homeSpecialOfferTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Special Offer!'**
+  String get homeSpecialOfferTitle;
+
+  /// No description provided for @homeSpecialOfferBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Get 25% off on all makeup products'**
+  String get homeSpecialOfferBody;
+
+  /// No description provided for @homeSpecialOfferCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Use code:'**
+  String get homeSpecialOfferCodeLabel;
 
   /// No description provided for @homeHeroEyebrow.
   ///

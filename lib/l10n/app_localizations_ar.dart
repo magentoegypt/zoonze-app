@@ -143,7 +143,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeNewArrivals => 'وصل حديثًا';
 
   @override
+  String get homeBestsellers => 'الأكثر مبيعًا';
+
+  @override
+  String get homeExploreBrands => 'استكشف علاماتنا';
+
+  @override
   String get homeSeeAll => 'عرض الكل';
+
+  @override
+  String get homeSeeMore => 'عرض المزيد';
 
   @override
   String get homeAnnouncement => 'شحن مجاني للطلبات فوق 150 درهمًا';
@@ -161,10 +170,26 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeTrustDeliveryBody => 'للطلبات فوق 150 درهمًا';
 
   @override
+  String get homeTrustFastTitle => 'التوصيل خلال 3 ساعات';
+
+  @override
+  String get homeTrustFastBody =>
+      'دبي والشارقة وعجمان · وبقية الإمارات خلال 24 ساعة';
+
+  @override
   String get homeTrustServiceTitle => 'خدمة العملاء';
 
   @override
   String get homeTrustServiceBody => 'من 10 صباحًا حتى 10 مساءً';
+
+  @override
+  String get homeSpecialOfferTitle => 'عرض خاص!';
+
+  @override
+  String get homeSpecialOfferBody => 'احصل على خصم 25% على جميع منتجات المكياج';
+
+  @override
+  String get homeSpecialOfferCodeLabel => 'استخدم الرمز:';
 
   @override
   String get homeHeroEyebrow => 'تشكيلة جديدة';

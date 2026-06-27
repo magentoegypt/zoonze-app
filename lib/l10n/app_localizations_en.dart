@@ -145,7 +145,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeNewArrivals => 'New Arrivals';
 
   @override
+  String get homeBestsellers => 'Bestsellers';
+
+  @override
+  String get homeExploreBrands => 'Explore Our Brands';
+
+  @override
   String get homeSeeAll => 'See all';
+
+  @override
+  String get homeSeeMore => 'See More';
 
   @override
   String get homeAnnouncement => 'Free shipping on orders over AED 150';
@@ -163,10 +172,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeTrustDeliveryBody => 'On orders over AED 150';
 
   @override
+  String get homeTrustFastTitle => 'Delivery in 3 Hours';
+
+  @override
+  String get homeTrustFastBody => 'Dubai, Sharjah & Ajman · rest of UAE in 24h';
+
+  @override
   String get homeTrustServiceTitle => 'Customer Service';
 
   @override
-  String get homeTrustServiceBody => '10 AM – 10 PM';
+  String get homeTrustServiceBody => '10 AM until 10 PM';
+
+  @override
+  String get homeSpecialOfferTitle => 'Special Offer!';
+
+  @override
+  String get homeSpecialOfferBody => 'Get 25% off on all makeup products';
+
+  @override
+  String get homeSpecialOfferCodeLabel => 'Use code:';
 
   @override
   String get homeHeroEyebrow => 'NEW COLLECTION';

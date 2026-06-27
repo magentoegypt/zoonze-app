@@ -26,29 +26,56 @@ final featuredProductsProvider = FutureProvider.autoDispose<List<Product>>((
   return page.items;
 });
 
-/// Products from the "New Arrivals" category (matched by url_key/name, stable
-/// across locales). Empty when the catalogue has no such category — the home
-/// section then hides itself rather than fabricating content.
-final newArrivalsProductsProvider = FutureProvider.autoDispose<List<Product>>((
-  ref,
-) async {
+/// A home product section: the source category (for "See all") + its products.
+typedef HomeSection = ({Category? category, List<Product> items});
+
+Category? _findCategory(
+  List<Category> cats,
+  bool Function(String key, String name) test,
+) {
+  for (final c in cats) {
+    if (test(c.urlKey.toLowerCase(), c.name.toLowerCase())) return c;
+  }
+  return null;
+}
+
+/// "New Arrivals": the real category if present, otherwise the newest products
+/// from the first category (sorted by created_at) — so the section always has
+/// real content without fabricating it.
+final newArrivalsProvider = FutureProvider.autoDispose<HomeSection>((ref) async {
   ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
   final categories = await ref.watch(categoryTreeProvider.future);
-  Category? match;
-  for (final c in categories) {
-    final key = c.urlKey.toLowerCase();
-    final name = c.name.toLowerCase();
-    if ((key.contains('new') && key.contains('arriv')) ||
-        name.contains('new arriv')) {
-      match = c;
-      break;
-    }
-  }
-  if (match == null) return const <Product>[];
+  final repo = ref.watch(catalogRepositoryProvider);
+  final match = _findCategory(
+    categories,
+    (k, n) => (k.contains('new') && k.contains('arriv')) ||
+        n.contains('new arriv'),
+  );
+  final source = match ?? (categories.isEmpty ? null : categories.first);
+  if (source == null) return (category: null, items: const <Product>[]);
+  final page = await repo.fetchProducts(
+    categoryUid: source.uid,
+    pageSize: 4,
+    sort: ProductSortField.newest,
+  );
+  return (category: source, items: page.items);
+});
+
+/// "Bestsellers": products from the real Bestsellers category. Hides itself
+/// when the catalogue has no such category (no fabricated ranking).
+final bestsellersProvider = FutureProvider.autoDispose<HomeSection>((ref) async {
+  ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
+  final categories = await ref.watch(categoryTreeProvider.future);
+  final match = _findCategory(
+    categories,
+    (k, n) =>
+        k.contains('best') || n.contains('best') || n.contains('seller'),
+  );
+  if (match == null) return (category: null, items: const <Product>[]);
   final page = await ref
       .watch(catalogRepositoryProvider)
-      .fetchProducts(categoryUid: match.uid, pageSize: 6);
-  return page.items;
+      .fetchProducts(categoryUid: match.uid, pageSize: 4);
+  return (category: match, items: page.items);
 });
 
 /// Full product detail for the PDP (by url_key). Refetches on store switch.

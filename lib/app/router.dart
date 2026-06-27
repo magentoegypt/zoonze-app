@@ -68,7 +68,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.search,
-        builder: (context, state) => const SearchScreen(),
+        builder: (context, state) =>
+            SearchScreen(initialQuery: state.extra as String?),
       ),
       GoRoute(
         path: '/review/:sku',

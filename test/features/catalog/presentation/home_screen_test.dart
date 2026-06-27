@@ -56,14 +56,15 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('renders categories + featured products in English / LTR', (
+  testWidgets('renders categories + product sections in English / LTR', (
     tester,
   ) async {
     await pumpHome(tester, 'en');
 
     // Appears in the section header and again as a footer link.
     expect(find.text('Shop by category'), findsWidgets);
-    expect(find.text('Featured'), findsWidgets);
+    // New Arrivals replaced the old "Featured" section (Figma).
+    expect(find.text('New Arrivals'), findsWidgets);
     expect(find.text('Fragrance'), findsWidgets);
     expect(find.text('Coco Mademoiselle EDP'), findsWidgets);
 
