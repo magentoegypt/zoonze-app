@@ -11,6 +11,7 @@
   "themeWhite": "White",
   "themeBlack": "Black",
   "themeSystem": "System",
+  "versionLabel": "Version",
 
   "actionRetry": "Retry",
   "stateLoading": "Loading…",

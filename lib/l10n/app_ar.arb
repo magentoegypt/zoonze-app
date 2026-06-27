@@ -9,6 +9,7 @@
   "themeWhite": "أبيض",
   "themeBlack": "أسود",
   "themeSystem": "تلقائي",
+  "versionLabel": "الإصدار",
 
   "actionRetry": "إعادة المحاولة",
   "stateLoading": "جارٍ التحميل…",

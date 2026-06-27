@@ -36,6 +36,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get themeSystem => 'System';
 
   @override
+  String get versionLabel => 'Version';
+
+  @override
   String get actionRetry => 'Retry';
 
   @override

@@ -1,0 +1,107 @@
+name: Build · main (APK + IPA)
+
+# On every push to main, build installable artifacts:
+#   - Android APK  → always (debug-signed until the ANDROID_* secrets are set)
+#   - iOS ad-hoc IPA → only once the Apple signing secrets exist (otherwise the
+#     job is skipped, so pushes don't fail before signing is configured).
+# Artifacts: apk-prod / ipa-adhoc-prod (download from the run, e.g. for Diawi).
+on:
+  push:
+    branches: [main]
+
+jobs:
+  android-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.4
+          channel: stable
+          cache: true
+      - run: flutter pub get
+
+      - name: Write keystore + key.properties (when configured)
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "::warning::No keystore secret — building a debug-signed APK (installable for testing, not Play-uploadable)."
+            exit 0
+          fi
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/release.jks
+          cat > android/key.properties <<EOF
+          storePassword=$ANDROID_STORE_PASSWORD
+          keyPassword=$ANDROID_KEY_PASSWORD
+          keyAlias=$ANDROID_KEY_ALIAS
+          storeFile=release.jks
+          EOF
+
+      - name: Build APK (prod)
+        run: >
+          flutter build apk --release
+          --flavor prod -t lib/main_prod.dart
+          --dart-define-from-file=config/prod.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apk-prod
+          path: build/app/outputs/flutter-apk/*-release.apk
+          if-no-files-found: error
+
+  # iOS needs Apple signing; gate the (expensive, macOS) job on the secret so
+  # pushes don't fail until signing is set up.
+  check-ios-secrets:
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+    steps:
+      - id: check
+        env:
+          KEY: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+        run: |
+          if [ -n "$KEY" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false (Apple secrets not set — iOS IPA skipped)"
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  ios-ipa:
+    needs: check-ios-secrets
+    if: needs.check-ios-secrets.outputs.ready == 'true'
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.4
+          channel: stable
+          cache: true
+      - run: flutter pub get
+
+      - name: Build ad-hoc IPA (fastlane)
+        working-directory: ios
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_KEY_CONTENT_BASE64 }}
+          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
+          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+        run: |
+          bundle install
+          bundle exec fastlane adhoc
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ipa-adhoc-prod
+          path: build/ios/ipa/*.ipa
+          if-no-files-found: error

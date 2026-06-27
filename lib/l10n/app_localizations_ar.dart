@@ -36,6 +36,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get themeSystem => 'تلقائي';
 
   @override
+  String get versionLabel => 'الإصدار';
+
+  @override
   String get actionRetry => 'إعادة المحاولة';
 
   @override

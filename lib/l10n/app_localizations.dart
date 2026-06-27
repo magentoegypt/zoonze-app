@@ -152,6 +152,12 @@ abstract class AppLocalizations {
   /// **'System'**
   String get themeSystem;
 
+  /// No description provided for @versionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Version'**
+  String get versionLabel;
+
   /// No description provided for @actionRetry.
   ///
   /// In en, this message translates to:

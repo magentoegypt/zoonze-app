@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/routes.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/theme_mode_controller.dart';
+import '../../../../core/app_info.dart';
 import '../../../../core/store/store_controller.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../notifications/presentation/notification_settings_controller.dart';
@@ -82,6 +83,19 @@ class SettingsScreen extends ConsumerWidget {
             title: Text(l10n.accountHelp),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.help),
+          ),
+          const Divider(height: 32),
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                ref.watch(appVersionProvider).maybeWhen(
+                      data: (v) => v == null ? '' : '${l10n.versionLabel} $v',
+                      orElse: () => '',
+                    ),
+                style: const TextStyle(color: AppColors.inkMuted, fontSize: 12),
+              ),
+            ),
           ),
         ],
       ),

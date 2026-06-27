@@ -1,12 +1,19 @@
 # Decision — CI/CD (GitHub Actions)
 
-Three workflows in `.github/workflows/`:
+Workflows in `.github/workflows/`:
 
 | Workflow | Trigger | Runner | Does |
 |---|---|---|---|
 | `ci.yml` | every push to `main` + PRs | ubuntu | `flutter analyze` + `flutter test` |
-| `release-android.yml` | manual (pick flavor) | ubuntu | signed Play **.aab** → artifact |
-| `release-ios.yml` | manual | **macOS** | build + upload to **TestFlight** (fastlane) |
+| `build-on-push.yml` | every push to `main` | ubuntu + macOS | **APK** (`apk-prod`) always; **ad-hoc IPA** (`ipa-adhoc-prod`) once Apple secrets exist (else skipped) |
+| `release-android.yml` | manual (pick flavor/format) | ubuntu | APK or Play **.aab** → artifact |
+| `release-ios.yml` | manual | **macOS** | ad-hoc **.ipa** (Diawi) or TestFlight |
+| `introspect.yml` | manual | ubuntu | live GraphQL introspection (store codes, schema, payment contract) |
+
+> `build-on-push` makes every merge to `main` produce an installable APK (and an
+> ad-hoc IPA once iOS signing is set up) — download from the run's Artifacts.
+> The iOS job runs on macOS only when the Apple secrets are present, so pushes
+> don't fail (and don't burn macOS minutes) before signing is configured.
 
 Firebase config (`google-services.json` / `GoogleService-Info.plist`) is committed,
 so the release workflows don't inject it. Only signing material comes from secrets.
