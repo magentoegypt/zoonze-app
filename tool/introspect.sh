@@ -127,6 +127,15 @@ echo "== Full schema introspection -> $OUT_DIR/schema.graphql (SDL) or schema.js
 INTROSPECTION_QUERY='{"query":"query IntrospectionQuery { __schema { queryType { name } mutationType { name } subscriptionType { name } types { ...FullType } directives { name locations args { ...InputValue } } } } fragment FullType on __Type { kind name description fields(includeDeprecated:true){ name description args{ ...InputValue } type{ ...TypeRef } isDeprecated deprecationReason } inputFields{ ...InputValue } interfaces{ ...TypeRef } enumValues(includeDeprecated:true){ name description isDeprecated deprecationReason } possibleTypes{ ...TypeRef } } fragment InputValue on __InputValue { name description type{ ...TypeRef } defaultValue } fragment TypeRef on __Type { kind name ofType{ kind name ofType{ kind name ofType{ kind name ofType{ kind name ofType{ kind name ofType{ kind name ofType{ kind name } } } } } } } }"}'
 post "" "$INTROSPECTION_QUERY" > "$OUT_DIR/schema.introspection.json"
 echo "Wrote $OUT_DIR/schema.introspection.json"
-echo "Convert to SDL with e.g.: npx graphql-json-to-sdl $OUT_DIR/schema.introspection.json > $OUT_DIR/schema.graphql"
+
+# Convert the introspection JSON to SDL for graphql_codegen. Needs Node + the
+# `graphql` npm package (introspect.yml installs it; locally: `npm i graphql`).
+if command -v node >/dev/null 2>&1 && node -e "require.resolve('graphql')" >/dev/null 2>&1; then
+  node tool/json_to_sdl.mjs "$OUT_DIR/schema.introspection.json" "$OUT_DIR/schema.graphql"
+else
+  echo "SDL: install once with \`npm i graphql\`, then:"
+  echo "     node tool/json_to_sdl.mjs $OUT_DIR/schema.introspection.json $OUT_DIR/schema.graphql"
+fi
 echo
-echo "Next: update docs/decisions/stores.md + config/*.json with the confirmed codes."
+echo "Next: update docs/decisions/stores.md + config/*.json with the confirmed codes,"
+echo "      then \`dart run build_runner build\` to (re)generate typed GraphQL Dart."

@@ -14,6 +14,9 @@ analyzer:
     # One-off developer utilities (e.g. icon generation) that import transitive
     # dev tooling like `image`; not part of the app build.
     - tool/**
+    # Generated GraphQL/code-gen output — not hand-edited, lint-noisy.
+    - "**/*.graphql.dart"
+    - "**/*.g.dart"
 
 linter:
   # The lint rules applied to this project can be customized in the

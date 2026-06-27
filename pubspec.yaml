@@ -1,7 +1,7 @@
 name: zoonze_app
 description: "ZoonZE Beauty — Flutter storefront client for Magento Open Source (zoonze.com), UAE, bilingual EN/AR, AED."
 publish_to: "none"
-version: 0.1.16+17
+version: 0.1.17+18
 
 environment:
   sdk: ^3.12.0
@@ -43,9 +43,12 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^5.0.0
   flutter_launcher_icons: ^0.14.4
-  # NOTE: build_runner + riverpod_generator + graphql_codegen are introduced in
-  # Phase 1 (alongside the introspected schema.graphql). Phase 0 uses plain
-  # Riverpod providers and hand-written GraphQL documents, so no codegen runs.
+  # GraphQL codegen (Phase 1): typed Dart from .graphql operation files against
+  # the live-introspected lib/core/graphql/schema.graphql (produced by
+  # tool/introspect.sh → tool/json_to_sdl.mjs). State stays plain Riverpod, so
+  # no riverpod_generator. Run: dart run build_runner build --delete-conflicting-outputs
+  build_runner: ^2.4.0
+  graphql_codegen: ^0.14.0
 
 flutter:
   uses-material-design: true

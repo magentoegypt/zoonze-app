@@ -19,11 +19,22 @@ on:
         required: false
         default: ""
 
+permissions:
+  contents: write   # to commit the refreshed schema.graphql back to main
+
 jobs:
   introspect:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # The `graphql` package powers tool/json_to_sdl.mjs (introspection → SDL),
+      # which tool/introspect.sh runs automatically when it's installed.
+      - name: Install SDL converter dep
+        run: npm install graphql@16
 
       - name: Run introspection against the live endpoint
         env:
@@ -45,5 +56,20 @@ jobs:
           name: introspection
           path: |
             introspect-output.txt
+            lib/core/graphql/schema.graphql
             lib/core/graphql/schema.introspection.json
           if-no-files-found: warn
+
+      # Commit the refreshed SDL so the repo always has the latest live schema
+      # for graphql_codegen. [skip ci] keeps it from triggering a build-on-push.
+      - name: Commit refreshed schema.graphql (if changed)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/core/graphql/schema.graphql
+          if git diff --cached --quiet; then
+            echo "schema.graphql unchanged — nothing to commit."
+          else
+            git commit -m "chore(schema): refresh GraphQL SDL from live introspection [skip ci]"
+            git push origin HEAD:main
+          fi
