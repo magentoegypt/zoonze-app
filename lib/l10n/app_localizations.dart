@@ -1562,6 +1562,12 @@ abstract class AppLocalizations {
   /// **'Log Out'**
   String get menuLogOut;
 
+  /// No description provided for @drawerVouchers.
+  ///
+  /// In en, this message translates to:
+  /// **'Vouchers'**
+  String get drawerVouchers;
+
   /// No description provided for @footerShop.
   ///
   /// In en, this message translates to:

@@ -802,6 +802,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get menuLogOut => 'Log Out';
 
   @override
+  String get drawerVouchers => 'Vouchers';
+
+  @override
   String get footerShop => 'Shop';
 
   @override

@@ -793,6 +793,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get menuLogOut => 'تسجيل الخروج';
 
   @override
+  String get drawerVouchers => 'القسائم';
+
+  @override
   String get footerShop => 'تسوّق';
 
   @override

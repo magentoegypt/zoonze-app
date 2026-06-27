@@ -281,3 +281,16 @@ final addressesProvider = FutureProvider.autoDispose<List<CustomerAddress>>((
 ) {
   return ref.watch(accountRepositoryProvider).fetchAddresses();
 });
+
+/// Real order count for the drawer/account quick-stats (cheap pageSize:1 query).
+/// Isolated + error-safe so it never blocks the drawer; 0 on failure.
+final customerOrderCountProvider = FutureProvider.autoDispose<int>((ref) async {
+  try {
+    final page = await ref
+        .watch(accountRepositoryProvider)
+        .fetchOrders(pageSize: 1);
+    return page.totalCount;
+  } catch (_) {
+    return 0;
+  }
+});

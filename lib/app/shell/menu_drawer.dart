@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/store/store_controller.dart';
 import '../../core/widgets/brand_logo.dart';
+import '../../features/account/data/account_repository.dart';
 import '../../features/auth/presentation/auth_controller.dart';
 import '../../features/catalog/presentation/catalog_providers.dart';
+import '../../features/wishlist/presentation/wishlist_controller.dart';
 import '../../l10n/l10n.dart';
 import '../routes.dart';
 import '../theme/app_colors.dart';
@@ -63,6 +65,7 @@ class MenuDrawer extends ConsumerWidget {
                       context.push(AppRoutes.signIn);
                     },
             ),
+            if (auth.isAuthenticated) const _QuickStats(),
             Expanded(
               child: ListView(
                 padding: EdgeInsets.zero,
@@ -78,7 +81,7 @@ class MenuDrawer extends ConsumerWidget {
                       children: [
                         for (final category in items)
                           _DrawerTile(
-                            icon: Icons.local_mall_outlined,
+                            icon: _categoryIcon(category.urlKey, category.name),
                             label: category.name,
                             onTap: () {
                               _close(context);
@@ -301,11 +304,140 @@ class _DrawerTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ListTile(
-    leading: Icon(icon, color: AppColors.brandPrimary),
+    // Icon in a blush rounded-square badge (Figma).
+    leading: Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        color: AppColors.surfaceTint,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      alignment: Alignment.center,
+      child: Icon(icon, color: AppColors.brandPrimary, size: 20),
+    ),
     title: Text(label),
     trailing: const Icon(Icons.chevron_right, color: AppColors.inkMuted),
     onTap: onTap,
   );
+}
+
+/// Maps a category (by url_key / name) to a representative icon for the SHOP
+/// list. Falls back to a generic bag for anything unrecognised.
+IconData _categoryIcon(String urlKey, String name) {
+  final s = '$urlKey $name'.toLowerCase();
+  if (s.contains('makeup') || s.contains('lip') || s.contains('cosmet')) {
+    return Icons.brush_outlined;
+  }
+  if (s.contains('skin') || s.contains('care')) return Icons.spa_outlined;
+  if (s.contains('fragrance') || s.contains('perfume') || s.contains('scent')) {
+    return Icons.local_florist_outlined;
+  }
+  if (s.contains('gift')) return Icons.card_giftcard_outlined;
+  if (s.contains('new') && s.contains('arriv')) return Icons.auto_awesome;
+  if (s.contains('best') || s.contains('seller')) return Icons.star_outline;
+  if (s.contains('hair')) return Icons.content_cut;
+  if (s.contains('bath') || s.contains('body')) return Icons.shower_outlined;
+  return Icons.local_mall_outlined;
+}
+
+/// Three quick-stat tiles (Orders / Wishlist / Vouchers) — Figma. Counts are
+/// bound to real data where the backend exposes it; Vouchers has no source yet
+/// (shows 0 until a backend field is wired).
+class _QuickStats extends ConsumerWidget {
+  const _QuickStats();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final orders = ref
+        .watch(customerOrderCountProvider)
+        .maybeWhen(data: (n) => n, orElse: () => 0);
+    final wishlist = ref.watch(wishlistControllerProvider).entries.length;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Row(
+        children: [
+          _StatTile(
+            icon: Icons.shopping_bag_outlined,
+            count: orders,
+            label: l10n.accountOrders,
+            onTap: () {
+              Navigator.of(context).maybePop();
+              context.push(AppRoutes.orders);
+            },
+          ),
+          const SizedBox(width: 12),
+          _StatTile(
+            icon: Icons.favorite_border,
+            count: wishlist,
+            label: l10n.navWishlist,
+            onTap: () {
+              Navigator.of(context).maybePop();
+              context.go(AppRoutes.wishlist);
+            },
+          ),
+          const SizedBox(width: 12),
+          _StatTile(
+            icon: Icons.confirmation_number_outlined,
+            count: 0,
+            label: l10n.drawerVouchers,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatTile extends StatelessWidget {
+  const _StatTile({
+    required this.icon,
+    required this.count,
+    required this.label,
+    this.onTap,
+  });
+  final IconData icon;
+  final int count;
+  final String label;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3F4F6),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: AppColors.brandPrimary, size: 20),
+              const SizedBox(height: 6),
+              Text(
+                '$count',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 18,
+                  color: AppColors.inkHeading,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: AppColors.inkMuted,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _SectionHeader extends StatelessWidget {
