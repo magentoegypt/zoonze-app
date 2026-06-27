@@ -389,7 +389,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeAnnouncement.
   ///
   /// In en, this message translates to:
-  /// **'Free shipping on orders over AED 150'**
+  /// **'Free shipping on orders over AED 150 · delivery within 3 hours'**
   String get homeAnnouncement;
 
   /// No description provided for @homeTrustOriginalTitle.
@@ -563,7 +563,7 @@ abstract class AppLocalizations {
   /// No description provided for @searchHint.
   ///
   /// In en, this message translates to:
-  /// **'Search products'**
+  /// **'Search for products'**
   String get searchHint;
 
   /// No description provided for @comingSoon.

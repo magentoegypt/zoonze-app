@@ -155,7 +155,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeSeeMore => 'عرض المزيد';
 
   @override
-  String get homeAnnouncement => 'شحن مجاني للطلبات فوق 150 درهمًا';
+  String get homeAnnouncement =>
+      'شحن مجاني للطلبات فوق 150 درهمًا · التوصيل خلال 3 ساعات';
 
   @override
   String get homeTrustOriginalTitle => 'أصلي 100%';

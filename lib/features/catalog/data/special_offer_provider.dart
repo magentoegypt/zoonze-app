@@ -44,6 +44,39 @@ bool _asBool(Object? value) => switch (value) {
   _ => false,
 };
 
+/// Admin-configured announcement bar message (magentoegypt_beauty/announcement/
+/// message). Isolated from the offer query so one unknown field can't break the
+/// other. Returns '' on error/absence — the bar then shows its default text.
+const String _announcementQuery = r'''
+query AnnouncementConfig {
+  storeConfig {
+    magentoegypt_beauty_announcement_message
+  }
+}
+''';
+
+final announcementMessageProvider = FutureProvider.autoDispose<String>((
+  ref,
+) async {
+  ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
+  final client = ref.watch(graphqlClientProvider);
+  try {
+    final result = await client.query(
+      QueryOptions(
+        document: gql(_announcementQuery),
+        fetchPolicy: FetchPolicy.networkOnly,
+      ),
+    );
+    if (result.hasException) return '';
+    final cfg = result.data?['storeConfig'] as Map<String, dynamic>?;
+    return (cfg?['magentoegypt_beauty_announcement_message'] as String?)
+            ?.trim() ??
+        '';
+  } catch (_) {
+    return '';
+  }
+});
+
 /// Refetches on store/language switch. Degrades to [SpecialOffer.hidden] on any
 /// error (missing module, unknown field, network) so the home screen is safe.
 final specialOfferProvider = FutureProvider.autoDispose<SpecialOffer>((

@@ -74,38 +74,31 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-/// Thin top strip — free-shipping line (Figma announcement bar).
-class _AnnouncementBar extends StatelessWidget {
+/// Thin burgundy top strip (Figma). Message comes from the admin announcement
+/// config (magentoegypt_beauty/announcement/message); falls back to the
+/// localized default when not configured.
+class _AnnouncementBar extends ConsumerWidget {
   const _AnnouncementBar();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final configured = ref
+        .watch(announcementMessageProvider)
+        .maybeWhen(data: (m) => m, orElse: () => '');
+    final message = configured.isNotEmpty ? configured : l10n.homeAnnouncement;
     return Container(
       width: double.infinity,
-      color: AppColors.surfaceTint,
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.local_shipping_outlined,
-            size: 14,
-            color: AppColors.brandPrimary,
-          ),
-          const SizedBox(width: 6),
-          Flexible(
-            child: Text(
-              l10n.homeAnnouncement,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: AppColors.brandPrimary,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
+      color: AppColors.brandPrimary,
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+      child: Text(
+        message,
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }
@@ -124,20 +117,23 @@ class _SearchField extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(28),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           decoration: BoxDecoration(
             color: const Color(0xFFF3F4F6),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(28),
           ),
           child: Row(
             children: [
-              const Icon(Icons.search, color: AppColors.inkMuted, size: 20),
-              const SizedBox(width: 10),
+              const Icon(Icons.search, color: AppColors.inkMuted, size: 22),
+              const SizedBox(width: 12),
               Text(
                 l10n.searchHint,
-                style: const TextStyle(color: AppColors.inkMuted),
+                style: const TextStyle(
+                  color: AppColors.inkMuted,
+                  fontSize: 15,
+                ),
               ),
             ],
           ),

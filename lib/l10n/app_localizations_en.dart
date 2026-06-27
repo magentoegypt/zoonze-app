@@ -157,7 +157,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeSeeMore => 'See More';
 
   @override
-  String get homeAnnouncement => 'Free shipping on orders over AED 150';
+  String get homeAnnouncement =>
+      'Free shipping on orders over AED 150 · delivery within 3 hours';
 
   @override
   String get homeTrustOriginalTitle => '100% Original';
@@ -248,7 +249,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get searchHint => 'Search products';
+  String get searchHint => 'Search for products';
 
   @override
   String get comingSoon => 'Coming soon';

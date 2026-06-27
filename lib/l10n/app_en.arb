@@ -55,7 +55,7 @@
   "homeExploreBrands": "Explore Our Brands",
   "homeSeeAll": "See all",
   "homeSeeMore": "See More",
-  "homeAnnouncement": "Free shipping on orders over AED 150",
+  "homeAnnouncement": "Free shipping on orders over AED 150 · delivery within 3 hours",
   "homeTrustOriginalTitle": "100% Original",
   "homeTrustOriginalBody": "Guaranteed authentic",
   "homeTrustDeliveryTitle": "Free Delivery",
@@ -92,7 +92,7 @@
     "placeholders": { "count": { "type": "int" } }
   },
 
-  "searchHint": "Search products",
+  "searchHint": "Search for products",
   "comingSoon": "Coming soon",
   "comingSoonBody": "This section arrives in a later phase.",
 
