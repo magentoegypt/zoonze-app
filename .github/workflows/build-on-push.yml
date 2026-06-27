@@ -2,8 +2,9 @@ name: Build · main (APK + IPA)
 
 # On every push to main, build installable artifacts:
 #   - Android APK  → always (debug-signed until the ANDROID_* secrets are set)
-#   - iOS ad-hoc IPA → only once the Apple signing secrets exist (otherwise the
-#     job is skipped, so pushes don't fail before signing is configured).
+#   - iOS          → always on macOS: ad-hoc IPA once the Apple signing secrets
+#     exist (ipa-adhoc-prod artifact), otherwise an unsigned compile check (no
+#     IPA, but verifies the iOS build). Runs every push (uses macOS minutes).
 # Artifacts: apk-prod / ipa-adhoc-prod (download from the run, e.g. for Diawi).
 on:
   push:
@@ -56,27 +57,9 @@ jobs:
           path: build/app/outputs/flutter-apk/*-release.apk
           if-no-files-found: error
 
-  # iOS needs Apple signing; gate the (expensive, macOS) job on the secret so
-  # pushes don't fail until signing is set up.
-  check-ios-secrets:
-    runs-on: ubuntu-latest
-    outputs:
-      ready: ${{ steps.check.outputs.ready }}
-    steps:
-      - id: check
-        env:
-          KEY: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-        run: |
-          if [ -n "$KEY" ]; then
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "ready=false (Apple secrets not set — iOS IPA skipped)"
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-          fi
-
-  ios-ipa:
-    needs: check-ios-secrets
-    if: needs.check-ios-secrets.outputs.ready == 'true'
+  # Always runs on macOS (uses macOS minutes). Produces an ad-hoc IPA once the
+  # Apple signing secrets exist; otherwise an unsigned compile check.
+  ios:
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
@@ -87,8 +70,7 @@ jobs:
           cache: true
       - run: flutter pub get
 
-      - name: Build ad-hoc IPA (fastlane)
-        working-directory: ios
+      - name: Build iOS (ad-hoc IPA when signed, else unsigned compile)
         env:
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -97,11 +79,18 @@ jobs:
           MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
         run: |
-          bundle install
-          bundle exec fastlane adhoc
+          if [ -n "$APP_STORE_CONNECT_KEY_ID" ]; then
+            (cd ios && bundle install && bundle exec fastlane adhoc)
+          else
+            echo "::warning::No Apple signing secrets — building unsigned (compile check, no IPA). Add APP_STORE_CONNECT_*/MATCH_* secrets for an ad-hoc IPA artifact."
+            flutter build ios --release --no-codesign \
+              -t lib/main_prod.dart \
+              --dart-define-from-file=config/prod.json
+          fi
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload ad-hoc IPA (when produced)
+        uses: actions/upload-artifact@v4
         with:
           name: ipa-adhoc-prod
           path: build/ios/ipa/*.ipa
-          if-no-files-found: error
+          if-no-files-found: ignore
