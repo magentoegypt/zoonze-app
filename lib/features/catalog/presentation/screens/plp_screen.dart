@@ -58,7 +58,6 @@ class _PlpScreenState extends ConsumerState<PlpScreen> {
         ProductSortField.priceAsc => l10n.sortPriceLowHigh,
         ProductSortField.priceDesc => l10n.sortPriceHighLow,
         ProductSortField.nameAsc => l10n.sortNameAz,
-        ProductSortField.newest => l10n.sortNewest,
       };
 
   Future<void> _openFilters(PlpState state) async {

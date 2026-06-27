@@ -14,7 +14,10 @@ import '../domain/product_page.dart';
 import 'catalog_queries.dart';
 import 'product_mapper.dart';
 
-enum ProductSortField { relevance, priceAsc, priceDesc, nameAsc, newest }
+// Magento's ProductAttributeSortInput on this store exposes only name /
+// position / price / relevance — there is NO created_at, so a "newest" sort
+// would error the whole query.
+enum ProductSortField { relevance, priceAsc, priceDesc, nameAsc }
 
 /// Reads catalogue data via GraphQL and returns domain entities (or throws a
 /// [Failure]). Presentation never sees a raw GraphQL map.
@@ -289,8 +292,6 @@ class CatalogRepository {
         return <String, dynamic>{'price': 'DESC'};
       case ProductSortField.nameAsc:
         return <String, dynamic>{'name': 'ASC'};
-      case ProductSortField.newest:
-        return <String, dynamic>{'created_at': 'DESC'};
     }
   }
 

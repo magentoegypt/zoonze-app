@@ -53,11 +53,9 @@ final newArrivalsProvider = FutureProvider.autoDispose<HomeSection>((ref) async 
   );
   final source = match ?? (categories.isEmpty ? null : categories.first);
   if (source == null) return (category: null, items: const <Product>[]);
-  final page = await repo.fetchProducts(
-    categoryUid: source.uid,
-    pageSize: 4,
-    sort: ProductSortField.newest,
-  );
+  // The "New Arrivals" category already holds the newest products in order;
+  // no created_at sort (unsupported on this store).
+  final page = await repo.fetchProducts(categoryUid: source.uid, pageSize: 4);
   return (category: source, items: page.items);
 });
 

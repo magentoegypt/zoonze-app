@@ -24,14 +24,15 @@ class SpecialOffer {
 
 // Isolated from the main storeConfig query so an unknown field (e.g. before the
 // backend module is deployed) only hides the banner — it can't break the rest
-// of the app. The committed schema.graphql predates this module; confirm these
-// field names against its schema.graphqls (see docs / tool/introspect.sh).
+// of the app. Field names map from the admin config paths
+// magentoegypt_beauty/offer/{enabled,text,code} (slashes -> underscores), as
+// exposed on StoreConfig. tool/introspect.sh prints the live names to confirm.
 const String _query = r'''
 query SpecialOfferConfig {
   storeConfig {
-    special_offer_enabled
-    special_offer_text
-    special_offer_coupon_code
+    magentoegypt_beauty_offer_enabled
+    magentoegypt_beauty_offer_text
+    magentoegypt_beauty_offer_code
   }
 }
 ''';
@@ -61,9 +62,10 @@ final specialOfferProvider = FutureProvider.autoDispose<SpecialOffer>((
     final cfg = result.data?['storeConfig'] as Map<String, dynamic>?;
     if (cfg == null) return SpecialOffer.hidden;
     return SpecialOffer(
-      enabled: _asBool(cfg['special_offer_enabled']),
-      text: (cfg['special_offer_text'] as String?)?.trim() ?? '',
-      couponCode: (cfg['special_offer_coupon_code'] as String?)?.trim() ?? '',
+      enabled: _asBool(cfg['magentoegypt_beauty_offer_enabled']),
+      text: (cfg['magentoegypt_beauty_offer_text'] as String?)?.trim() ?? '',
+      couponCode:
+          (cfg['magentoegypt_beauty_offer_code'] as String?)?.trim() ?? '',
     );
   } catch (_) {
     return SpecialOffer.hidden;
