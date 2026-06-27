@@ -50,21 +50,41 @@ YAML
 echo "Wrote .appsonair-cli.yaml (workspace ${APPSONAIR_WORKSPACE_ID}, app ${APPSONAIR_APP_ID})"
 
 echo "Authenticating to AppsOnAir…"
-printf '%s\n' "${APPSONAIR_CLI_TOKEN}" | appsonair login
-appsonair whoami
+# The CLI exits 0 even when the token is rejected, so we must parse its output
+# and fail explicitly (otherwise a bad token would show a false-green job).
+# Trim any stray whitespace/newline — a single extra char makes a token invalid.
+token="$(printf '%s' "${APPSONAIR_CLI_TOKEN}" | tr -d '[:space:]')"
+login_out="$(printf '%s\n' "${token}" | appsonair login 2>&1 || true)"
+echo "${login_out}"
+if printf '%s' "${login_out}" | grep -qiE 'invalid token|not logged in|login (failed|cancelled)'; then
+  echo "::error::AppsOnAir rejected APPSONAIR_CLI_TOKEN as invalid. Get a fresh full CLI token from app.appsonair.com (run \`appsonair login\` locally and copy the token it shows after you log in), then update the secret."
+  exit 1
+fi
+
+who_out="$(appsonair whoami 2>&1 || true)"
+echo "${who_out}"
+if ! printf '%s' "${who_out}" | grep -qiE 'logged in user'; then
+  echo "::error::AppsOnAir auth not established (whoami shows no user) — update APPSONAIR_CLI_TOKEN with a valid token."
+  exit 1
+fi
 
 apk="$(ls "${APK_DIR}"/*.apk 2>/dev/null | head -1 || true)"
 ipa="$(ls "${IPA_DIR}"/*.ipa 2>/dev/null | head -1 || true)"
 echo "APK: ${apk:-none}   IPA: ${ipa:-none}"
 
 if [ -n "${apk}" ] && [ -n "${ipa}" ]; then
-  appsonair-ota upload                 # both, from yaml
+  up_out="$(appsonair-ota upload 2>&1 || true)"            # both, from yaml
 elif [ -n "${apk}" ]; then
-  appsonair-ota upload --android
+  up_out="$(appsonair-ota upload --android 2>&1 || true)"
 elif [ -n "${ipa}" ]; then
-  appsonair-ota upload --ios
+  up_out="$(appsonair-ota upload --ios 2>&1 || true)"
 else
   echo "::warning::No APK/IPA found for AppsOnAir upload."
   exit 0
+fi
+echo "${up_out}"
+if printf '%s' "${up_out}" | grep -qiE 'not logged in|invalid token|✖|error|failed'; then
+  echo "::error::AppsOnAir upload failed (see CLI output above)."
+  exit 1
 fi
 echo "✅ AppsOnAir upload complete."
