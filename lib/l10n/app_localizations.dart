@@ -164,6 +164,12 @@ abstract class AppLocalizations {
   /// **'Retry'**
   String get actionRetry;
 
+  /// No description provided for @actionCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get actionCopy;
+
   /// No description provided for @actionLinkCopied.
   ///
   /// In en, this message translates to:
@@ -1351,6 +1357,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Thank you. Your order number is {number}.'**
   String orderSuccessBody(String number);
+
+  /// No description provided for @orderNumberLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Number'**
+  String get orderNumberLabel;
+
+  /// No description provided for @orderNumberCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Order number copied'**
+  String get orderNumberCopied;
 
   /// No description provided for @paymentRedirectTitle.
   ///

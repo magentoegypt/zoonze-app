@@ -42,6 +42,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get actionRetry => 'إعادة المحاولة';
 
   @override
+  String get actionCopy => 'نسخ';
+
+  @override
   String get actionLinkCopied => 'تم نسخ الرابط';
 
   @override
@@ -673,6 +676,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String orderSuccessBody(String number) {
     return 'شكرًا لك. رقم طلبك هو $number.';
   }
+
+  @override
+  String get orderNumberLabel => 'رقم الطلب';
+
+  @override
+  String get orderNumberCopied => 'تم نسخ رقم الطلب';
 
   @override
   String get paymentRedirectTitle => 'إتمام الدفع';

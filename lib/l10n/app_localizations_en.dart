@@ -42,6 +42,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionRetry => 'Retry';
 
   @override
+  String get actionCopy => 'Copy';
+
+  @override
   String get actionLinkCopied => 'Link copied to clipboard';
 
   @override
@@ -683,6 +686,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String orderSuccessBody(String number) {
     return 'Thank you. Your order number is $number.';
   }
+
+  @override
+  String get orderNumberLabel => 'Order Number';
+
+  @override
+  String get orderNumberCopied => 'Order number copied';
 
   @override
   String get paymentRedirectTitle => 'Complete payment';

@@ -348,7 +348,18 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   const SizedBox(height: 16),
                   FilledButton(
                     onPressed: busy ? null : _placeOrder,
-                    child: Text(l10n.checkoutPlaceOrder),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.lock_outline, size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          state.grandTotal != null
+                              ? '${l10n.checkoutPlaceOrder} · ${state.grandTotal!.formatted()}'
+                              : l10n.checkoutPlaceOrder,
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ],

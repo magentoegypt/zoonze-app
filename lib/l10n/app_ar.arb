@@ -12,6 +12,7 @@
   "versionLabel": "الإصدار",
 
   "actionRetry": "إعادة المحاولة",
+  "actionCopy": "نسخ",
   "actionLinkCopied": "تم نسخ الرابط",
   "stateLoading": "جارٍ التحميل…",
   "stateEmpty": "لا يوجد شيء هنا بعد",
@@ -226,6 +227,8 @@
   "orderSuccessTitle": "تم تنفيذ الطلب!",
   "orderPendingTitle": "تم استلام طلبك",
   "orderSuccessBody": "شكرًا لك. رقم طلبك هو {number}.",
+  "orderNumberLabel": "رقم الطلب",
+  "orderNumberCopied": "تم نسخ رقم الطلب",
   "paymentRedirectTitle": "إتمام الدفع",
   "paymentRedirectPending": "تم استلام طلبك وهو بانتظار تأكيد الدفع. سنخطرك بمجرد إتمام الدفع.",
 
