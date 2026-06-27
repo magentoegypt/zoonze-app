@@ -2,10 +2,10 @@ name: Build · main (APK + IPA)
 
 # On every push to main, build installable artifacts:
 #   - Android APK  → always (debug-signed until the ANDROID_* secrets are set)
-#   - iOS          → always on macOS: ad-hoc IPA once the Apple signing secrets
-#     exist (ipa-adhoc-prod artifact), otherwise an unsigned compile check (no
-#     IPA, but verifies the iOS build). Runs every push (uses macOS minutes).
-# Artifacts: apk-prod / ipa-adhoc-prod (download from the run, e.g. for Diawi).
+#   - iOS IPA      → always on macOS. With the Apple signing secrets it's a
+#     signed ad-hoc IPA (Diawi-installable on registered devices); without them
+#     it's an UNSIGNED IPA (sideload/resign via AltStore or Sideloadly).
+# Artifacts: apk-prod / ipa-prod (download from the run, e.g. for Diawi).
 on:
   push:
     branches: [main]
@@ -93,7 +93,7 @@ jobs:
         run: mkdir -p build/ios/SourcePackages
       - run: flutter pub get
 
-      - name: Build iOS (ad-hoc IPA when signed, else unsigned compile)
+      - name: Build iOS IPA (signed ad-hoc when secrets exist, else unsigned)
         env:
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
@@ -103,17 +103,26 @@ jobs:
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
         run: |
           if [ -n "$APP_STORE_CONNECT_KEY_ID" ]; then
+            # Signed ad-hoc IPA via fastlane match → build/ios/ipa/*.ipa.
+            # Installs directly via Diawi on devices registered in the profile.
             (cd ios && bundle install && bundle exec fastlane adhoc)
           else
-            echo "::warning::No Apple signing secrets — building unsigned (compile check, no IPA). Add APP_STORE_CONNECT_*/MATCH_* secrets for an ad-hoc IPA artifact."
+            echo "::warning::No Apple signing secrets — producing an UNSIGNED IPA. It will NOT install via Diawi as-is; sideload/resign it with your own Apple ID (AltStore / Sideloadly), or add APP_STORE_CONNECT_*/MATCH_* secrets for a signed ad-hoc IPA."
             flutter build ios --release --no-codesign \
               -t lib/main_prod.dart \
               --dart-define-from-file=config/prod.json
+            # `flutter build ios --no-codesign` emits Runner.app, not an IPA.
+            # Package it into the standard IPA layout (Payload/Runner.app zip).
+            mkdir -p build/ios/ipa/Payload
+            cp -R build/ios/iphoneos/Runner.app build/ios/ipa/Payload/Runner.app
+            ( cd build/ios/ipa && zip -qry Zoonze-unsigned.ipa Payload && rm -rf Payload )
+            echo "Built unsigned IPA → build/ios/ipa/Zoonze-unsigned.ipa"
+            ls -lh build/ios/ipa/*.ipa
           fi
 
-      - name: Upload ad-hoc IPA (when produced)
+      - name: Upload IPA
         uses: actions/upload-artifact@v4
         with:
-          name: ipa-adhoc-prod
+          name: ipa-prod
           path: build/ios/ipa/*.ipa
-          if-no-files-found: ignore
+          if-no-files-found: error

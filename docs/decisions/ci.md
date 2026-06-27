@@ -5,7 +5,7 @@ Workflows in `.github/workflows/`:
 | Workflow | Trigger | Runner | Does |
 |---|---|---|---|
 | `ci.yml` | every push to `main` + PRs | ubuntu | `flutter analyze` + `flutter test` |
-| `build-on-push.yml` | every push to `main` | ubuntu + macos-15 | **APK** (`apk-prod`) always; **iOS** always on macOS (non-blocking) — ad-hoc IPA (`ipa-adhoc-prod`) once Apple secrets exist, else an unsigned compile check |
+| `build-on-push.yml` | every push to `main` | ubuntu + macos-15 | **APK** (`apk-prod`) always; **iOS IPA** (`ipa-prod`) always — signed ad-hoc once Apple secrets exist, else an **unsigned** IPA (sideload/resign) |
 | `release-android.yml` | manual (pick flavor/format) | ubuntu | APK or Play **.aab** → artifact |
 | `release-ios.yml` | manual | **macOS** | ad-hoc **.ipa** (Diawi) or TestFlight |
 | `introspect.yml` | manual | ubuntu | live GraphQL introspection (store codes, schema, payment contract) |
@@ -106,6 +106,20 @@ no manual certificate/CSR are needed).
 > `continue-on-error: true` — the Android APK is the dependable artifact and an
 > iOS failure won't fail the run while iOS is being brought online. Remove the
 > flag once iOS builds reliably.
+
+> **IPA without an Apple account (unsigned):** when the `APP_STORE_CONNECT_*` /
+> `MATCH_*` secrets are absent, `build-on-push` still emits an **unsigned** IPA
+> (`ipa-prod` → `Zoonze-unsigned.ipa`): it builds `Runner.app` with
+> `--no-codesign` and zips it into the standard `Payload/Runner.app` IPA layout.
+> An unsigned IPA does **not** install via Diawi or direct download as-is — it
+> must be **resigned**. Practical install paths:
+> - **AltStore** / **Sideloadly** — resign with your own (even free) Apple ID
+>   and sideload onto your device. Good for quick personal testing.
+> - **Diawi** — only works with a **signed ad-hoc** IPA, so add the Apple
+>   secrets + run `fastlane match adhoc` (registers device UDIDs); then the same
+>   job produces a signed `ipa-prod` that installs straight from Diawi.
+> So: unsigned IPA = generated today, sideload to test. Signed ad-hoc IPA =
+> needs the one-time Apple signing setup, then Diawi-installable.
 
 ## Notes
 - Pinned **Flutter 3.44.4** (matches the project's Dart `^3.12` constraint) — bump
