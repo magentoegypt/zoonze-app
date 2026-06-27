@@ -54,3 +54,10 @@ android/key.properties
 *.p12
 *.mobileprovision
 
+# Exception: the iOS ad-hoc signing material lives in ios/signing/ for CI
+# (manual signing without fastlane match). The .p12 is password-protected and
+# its password is a GitHub secret (IOS_P12_PASSWORD), never committed.
+!ios/signing/
+!ios/signing/*.p12
+!ios/signing/*.mobileprovision
+

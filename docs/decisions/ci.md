@@ -47,9 +47,33 @@ until the `ANDROID_*` secrets are set.
 > `flutter_local_notifications`. Without it the release build fails at
 > `checkProdReleaseAarMetadata`.
 
-### iOS (release-ios.yml)
-Uses **fastlane** with an **App Store Connect API key** + **`match`** (so no Mac and
-no manual certificate/CSR are needed).
+### iOS ad-hoc IPA — `build-on-push.yml` (manual signing, **no match**)
+
+The every-push **signed ad-hoc IPA** (`ipa-prod`) signs from a cert + profile
+committed in **`ios/signing/`** — no fastlane `match`, no separate signing repo.
+Add (see [`ios/signing/README.md`](../../ios/signing/README.md)):
+
+- `ios/signing/*.p12` — Apple **Distribution** cert exported **with its private
+  key**, password-protected.
+- `ios/signing/*.mobileprovision` — an **ad-hoc** profile for `com.zoonze.shop`
+  including your test devices' UDIDs.
+
+| Secret | How to produce |
+|---|---|
+| `IOS_P12_PASSWORD` | the password you set when exporting the `.p12` |
+
+That's the **only** secret needed for the ad-hoc IPA. `tool/ios_sign_build.sh`
+imports the cert into a temp keychain, installs the profile, reads the team id /
+bundle id / profile name straight from the profile, generates the export
+options, and runs `flutter build ipa`. With the two files **and**
+`IOS_P12_PASSWORD` set, every push emits a signed `ipa-prod`; otherwise an
+**unsigned** IPA (see below). Register a new device → regenerate the ad-hoc
+profile and replace the `.mobileprovision`.
+
+### iOS App Store / TestFlight — `release-ios.yml` (fastlane + match, optional)
+The **manual** TestFlight path still uses **fastlane** + **`match`** (needs the
+`APP_STORE_CONNECT_*` + `MATCH_*` + `APPLE_TEAM_ID` secrets). You only need this
+for TestFlight/App Store — the ad-hoc IPA above does **not** require it.
 
 | Secret | How to produce |
 |---|---|
@@ -59,10 +83,7 @@ no manual certificate/CSR are needed).
 | `MATCH_GIT_URL` | a **private** git repo URL that stores the signing cert/profile |
 | `MATCH_GIT_BASIC_AUTHORIZATION` | `base64 -w0 <<< "user:personal_access_token"` (read/write to the match repo) |
 | `MATCH_PASSWORD` | passphrase you choose to encrypt the match repo |
-| `APPLE_TEAM_ID` | your 10-char Apple Developer **Team ID** (Apple Developer → Membership). The workflow injects it into the `ExportOptions*.plist` so you don't edit them by hand. |
-
-These same secrets drive the iOS build in **`build-on-push.yml`**: once they're set,
-every push produces a **signed ad-hoc IPA** (`ipa-prod`) — no manual run needed.
+| `APPLE_TEAM_ID` | your 10-char Apple Developer **Team ID**; injected into `ExportOptions*.plist` at build time |
 
 **Distribution** (the `distribution` input):
 - **`adhoc`** (default) → builds an ad-hoc **`.ipa`** artifact (`ipa-adhoc-prod`)

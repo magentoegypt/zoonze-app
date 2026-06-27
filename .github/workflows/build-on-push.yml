@@ -2,9 +2,9 @@ name: Build · main (APK + IPA)
 
 # On every push to main, build installable artifacts:
 #   - Android APK  → always (debug-signed until the ANDROID_* secrets are set)
-#   - iOS IPA      → always on macOS. With the Apple signing secrets it's a
-#     signed ad-hoc IPA (Diawi-installable on registered devices); without them
-#     it's an UNSIGNED IPA (sideload/resign via AltStore or Sideloadly).
+#   - iOS IPA      → always on macOS. With the cert + profile in ios/signing/
+#     (+ IOS_P12_PASSWORD secret) it's a signed ad-hoc IPA (OTA-installable on
+#     registered devices); without them an UNSIGNED IPA (sideload/resign).
 # Artifacts: apk-prod / ipa-prod (download from the run, e.g. for Diawi).
 on:
   push:
@@ -62,8 +62,9 @@ jobs:
           path: build/app/outputs/flutter-apk/*-release.apk
           if-no-files-found: error
 
-  # Always runs on macOS (uses macOS minutes). Produces an ad-hoc IPA once the
-  # Apple signing secrets exist; otherwise an unsigned compile check.
+  # Always runs on macOS (uses macOS minutes). Produces a signed ad-hoc IPA when
+  # ios/signing/ holds a .p12 + .mobileprovision and IOS_P12_PASSWORD is set;
+  # otherwise an unsigned IPA. (See ios/signing/README.md — no fastlane match.)
   # Non-blocking until iOS builds reliably: a failure here does NOT fail the
   # run, so the Android APK stays the dependable artifact while iOS is brought
   # online. Flip continue-on-error off once iOS succeeds.
@@ -98,28 +99,17 @@ jobs:
         run: mkdir -p build/ios/SourcePackages
       - run: flutter pub get
 
-      - name: Build iOS IPA (signed ad-hoc when secrets exist, else unsigned)
+      - name: Build iOS IPA (signed ad-hoc from ios/signing certs, else unsigned)
         env:
-          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-          APP_STORE_CONNECT_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_KEY_CONTENT_BASE64 }}
-          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
-          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
-          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          IOS_P12_PASSWORD: ${{ secrets.IOS_P12_PASSWORD }}
         run: |
-          if [ -n "$APP_STORE_CONNECT_KEY_ID" ]; then
-            # Signed ad-hoc IPA via fastlane match → build/ios/ipa/*.ipa.
-            # Installs OTA (AppsOnAir / Diawi) on devices registered in the
-            # ad-hoc profile. Inject the Team ID into the export options so no
-            # manual plist edit is needed (falls back to the committed value).
-            if [ -n "$APPLE_TEAM_ID" ]; then
-              sed -i '' "s/YOUR_TEAM_ID/$APPLE_TEAM_ID/g" \
-                ios/ExportOptions-AdHoc.plist ios/ExportOptions.plist
-            fi
-            (cd ios && bundle install && bundle exec fastlane adhoc)
+          if [ -n "$IOS_P12_PASSWORD" ] && ls ios/signing/*.p12 >/dev/null 2>&1; then
+            # Signed ad-hoc IPA from the committed cert (.p12) + ad-hoc profile
+            # in ios/signing/ — no fastlane match, no separate signing repo.
+            # → build/ios/ipa/*.ipa (installs OTA on the profile's devices).
+            bash tool/ios_sign_build.sh
           else
-            echo "::warning::No Apple signing secrets — producing an UNSIGNED IPA. It will NOT install via Diawi as-is; sideload/resign it with your own Apple ID (AltStore / Sideloadly), or add APP_STORE_CONNECT_*/MATCH_* secrets for a signed ad-hoc IPA."
+            echo "::warning::No iOS signing material — add ios/signing/*.p12 + *.mobileprovision and the IOS_P12_PASSWORD secret for a SIGNED ad-hoc IPA (see ios/signing/README.md). Building an UNSIGNED IPA (sideload/resign via AltStore / Sideloadly)."
             flutter build ios --release --no-codesign \
               -t lib/main_prod.dart \
               --dart-define-from-file=config/prod.json
