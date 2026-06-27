@@ -18,6 +18,10 @@ concurrency:
 jobs:
   android-apk:
     runs-on: ubuntu-latest
+    # Gate the Android build on the iOS job: don't start the APK until the iOS
+    # IPA job has finished. `ios` is continue-on-error, so this waits for iOS to
+    # complete (pass or fail) rather than requiring it to pass.
+    needs: ios
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
