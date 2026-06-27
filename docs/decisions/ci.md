@@ -5,7 +5,7 @@ Workflows in `.github/workflows/`:
 | Workflow | Trigger | Runner | Does |
 |---|---|---|---|
 | `ci.yml` | every push to `main` + PRs | ubuntu | `flutter analyze` + `flutter test` |
-| `build-on-push.yml` | every push to `main` | ubuntu + macOS | **APK** (`apk-prod`) always; **iOS** always on macOS — ad-hoc IPA (`ipa-adhoc-prod`) once Apple secrets exist, else an unsigned compile check |
+| `build-on-push.yml` | every push to `main` | ubuntu + macos-15 | **APK** (`apk-prod`) always; **iOS** always on macOS (non-blocking) — ad-hoc IPA (`ipa-adhoc-prod`) once Apple secrets exist, else an unsigned compile check |
 | `release-android.yml` | manual (pick flavor/format) | ubuntu | APK or Play **.aab** → artifact |
 | `release-ios.yml` | manual | **macOS** | ad-hoc **.ipa** (Diawi) or TestFlight |
 | `introspect.yml` | manual | ubuntu | live GraphQL introspection (store codes, schema, payment contract) |
@@ -93,6 +93,17 @@ no manual certificate/CSR are needed).
 > plugin … mkdir … No such file or directory`). Both macOS jobs run
 > `mkdir -p build/ios/SourcePackages` before `flutter pub get` to work around
 > it. Do **not** disable SPM (no Podfile to fall back to).
+
+> **iOS toolchain:** `firebase_messaging` 16.4.1 → `firebase-ios-sdk` 12.15
+> declares `swift-tools-version: 6.1`, which needs **Xcode 16.3+**. `macos-14`
+> tops out around Xcode 16.2 (Swift 6.0) and fails SPM resolution
+> (`incompatible tools version (6.1.0)`), so the iOS jobs run on **`macos-15`**
+> and pin the newest stable Xcode via `maxim-lobanov/setup-xcode`.
+
+> **iOS is non-blocking for now:** in `build-on-push.yml` the `ios` job is
+> `continue-on-error: true` — the Android APK is the dependable artifact and an
+> iOS failure won't fail the run while iOS is being brought online. Remove the
+> flag once iOS builds reliably.
 
 ## Notes
 - Pinned **Flutter 3.44.4** (matches the project's Dart `^3.12` constraint) — bump
