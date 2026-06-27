@@ -338,6 +338,30 @@ abstract class AppLocalizations {
   /// **'See all'**
   String get homeSeeAll;
 
+  /// No description provided for @homeHeroEyebrow.
+  ///
+  /// In en, this message translates to:
+  /// **'NEW COLLECTION'**
+  String get homeHeroEyebrow;
+
+  /// No description provided for @homeHeroTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Beauty, your way'**
+  String get homeHeroTitle;
+
+  /// No description provided for @homeHeroSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Authentic brands, curated for the UAE'**
+  String get homeHeroSubtitle;
+
+  /// No description provided for @homeHeroCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop Now'**
+  String get homeHeroCta;
+
   /// No description provided for @filtersLabel.
   ///
   /// In en, this message translates to:

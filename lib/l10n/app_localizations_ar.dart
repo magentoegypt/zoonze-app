@@ -130,6 +130,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeSeeAll => 'عرض الكل';
 
   @override
+  String get homeHeroEyebrow => 'تشكيلة جديدة';
+
+  @override
+  String get homeHeroTitle => 'جمالكِ بأسلوبكِ';
+
+  @override
+  String get homeHeroSubtitle => 'علامات أصلية مختارة لدولة الإمارات';
+
+  @override
+  String get homeHeroCta => 'تسوّق الآن';
+
+  @override
   String get filtersLabel => 'تصفية';
 
   @override

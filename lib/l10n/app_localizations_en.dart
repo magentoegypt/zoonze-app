@@ -132,6 +132,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeSeeAll => 'See all';
 
   @override
+  String get homeHeroEyebrow => 'NEW COLLECTION';
+
+  @override
+  String get homeHeroTitle => 'Beauty, your way';
+
+  @override
+  String get homeHeroSubtitle => 'Authentic brands, curated for the UAE';
+
+  @override
+  String get homeHeroCta => 'Shop Now';
+
+  @override
   String get filtersLabel => 'Filters';
 
   @override

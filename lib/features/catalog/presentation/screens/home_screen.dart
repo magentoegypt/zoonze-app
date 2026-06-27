@@ -39,26 +39,7 @@ class HomeScreen extends ConsumerWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: AspectRatio(
-                  aspectRatio: 16 / 9,
-                  child: Image.asset(
-                    AppImages.banner,
-                    fit: BoxFit.cover,
-                    // Decode the bundled banner at screen width, not its full size.
-                    cacheWidth:
-                        (MediaQuery.sizeOf(context).width *
-                                MediaQuery.devicePixelRatioOf(context))
-                            .round(),
-                    errorBuilder: (_, __, ___) =>
-                        Container(color: AppColors.surfaceTint),
-                  ),
-                ),
-              ),
-            ),
+            const _HeroBanner(),
             _SectionHeader(title: l10n.homeShopByCategory),
             SizedBox(
               height: 120,
@@ -127,6 +108,85 @@ class HomeScreen extends ConsumerWidget {
             const MarketingFooter(),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Home hero per Figma: a blush promo card — eyebrow + headline + subtitle +
+/// Shop Now on the start side, a circular flatlay image on the end side.
+class _HeroBanner extends StatelessWidget {
+  const _HeroBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsetsDirectional.fromSTEB(20, 24, 8, 24),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceTint,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  l10n.homeHeroEyebrow,
+                  style: const TextStyle(
+                    color: AppColors.brandPrimary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.homeHeroTitle,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.inkHeading,
+                    height: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.homeHeroSubtitle,
+                  style: const TextStyle(
+                    color: AppColors.inkMuted,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: () => context.go(AppRoutes.categories),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(0, 44),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                  ),
+                  child: Text(l10n.homeHeroCta),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          ClipOval(
+            child: SizedBox(
+              width: 116,
+              height: 116,
+              child: Image.asset(
+                AppImages.banner,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) =>
+                    Container(color: Colors.white),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
