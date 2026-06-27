@@ -23,6 +23,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _email = TextEditingController();
   final _password = TextEditingController();
   bool _busy = false;
+  bool _obscure = true;
+  bool _agreedToTerms = false;
 
   @override
   void dispose() {
@@ -34,6 +36,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   }
 
   Future<void> _submit() async {
+    if (!_agreedToTerms) return;
     if (!_formKey.currentState!.validate()) return;
     setState(() => _busy = true);
     try {
@@ -79,14 +82,20 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                 TextFormField(
                   controller: _firstName,
                   textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(labelText: l10n.fieldFirstName),
+                  decoration: InputDecoration(
+                    labelText: l10n.fieldFirstName,
+                    prefixIcon: const Icon(Icons.person_outline),
+                  ),
                   validator: (v) => Validators.required(context, v),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _lastName,
                   textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(labelText: l10n.fieldLastName),
+                  decoration: InputDecoration(
+                    labelText: l10n.fieldLastName,
+                    prefixIcon: const Icon(Icons.person_outline),
+                  ),
                   validator: (v) => Validators.required(context, v),
                 ),
                 const SizedBox(height: 16),
@@ -94,20 +103,55 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   controller: _email,
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(labelText: l10n.fieldEmail),
+                  decoration: InputDecoration(
+                    labelText: l10n.fieldEmail,
+                    prefixIcon: const Icon(Icons.mail_outline),
+                  ),
                   validator: (v) => Validators.email(context, v),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _password,
-                  obscureText: true,
-                  decoration: InputDecoration(labelText: l10n.fieldPassword),
+                  obscureText: _obscure,
+                  decoration: InputDecoration(
+                    labelText: l10n.fieldPassword,
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscure
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                      ),
+                      onPressed: () => setState(() => _obscure = !_obscure),
+                    ),
+                  ),
                   validator: (v) => Validators.password(context, v),
                   onFieldSubmitted: (_) => _submit(),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
+                // Terms agreement — gates the Create Account button (Figma).
+                InkWell(
+                  onTap: () =>
+                      setState(() => _agreedToTerms = !_agreedToTerms),
+                  child: Row(
+                    children: [
+                      Checkbox(
+                        value: _agreedToTerms,
+                        onChanged: (v) =>
+                            setState(() => _agreedToTerms = v ?? false),
+                      ),
+                      Expanded(
+                        child: Text(
+                          l10n.authAgreeTerms,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
                 FilledButton(
-                  onPressed: _busy ? null : _submit,
+                  onPressed: (_busy || !_agreedToTerms) ? null : _submit,
                   child: _busy
                       ? const SizedBox(
                           height: 20,

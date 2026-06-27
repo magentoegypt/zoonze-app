@@ -216,10 +216,17 @@ class AppLocalizationsAr extends AppLocalizations {
   String get authSignUpTitle => 'إنشاء حساب';
 
   @override
-  String get authSignUpSubtitle => 'انضم إلى زونزي لإتمام الطلب بشكل أسرع';
+  String get authSignUpSubtitle =>
+      'انضم إلى زونزي لإتمام الطلب بشكل أسرع وتتبّع الطلبات وعروض حصرية.';
 
   @override
-  String get authForgotTitle => 'إعادة تعيين كلمة المرور';
+  String get authAgreeTerms => 'أوافق على شروط الخدمة وسياسة الخصوصية';
+
+  @override
+  String get authForgotTitle => 'هل نسيت كلمة المرور؟';
+
+  @override
+  String get authForgotSubmit => 'إرسال رابط إعادة التعيين';
 
   @override
   String get fieldEmail => 'البريد الإلكتروني';
@@ -247,7 +254,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get authForgotIntro =>
-      'أدخل بريدك الإلكتروني وسنرسل لك رابط إعادة التعيين.';
+      'لا تقلق! أدخل بريدك الإلكتروني وسنرسل لك رابطًا لإعادة تعيين كلمة المرور.';
 
   @override
   String get authForgotSent =>
@@ -680,10 +687,14 @@ class AppLocalizationsAr extends AppLocalizations {
   String get footerSupport => 'الدعم';
 
   @override
-  String get footerNewsletterTitle => 'اشترك في نشرتنا البريدية';
+  String get footerNewsletterTitle => 'النشرة البريدية';
 
   @override
-  String get footerNewsletterHint => 'البريد الإلكتروني';
+  String get footerNewsletterSubtitle =>
+      'اشترك لتصلك العروض الخاصة وآخر المستجدات.';
+
+  @override
+  String get footerNewsletterHint => 'بريدك الإلكتروني';
 
   @override
   String get footerSubscribe => 'اشتراك';
@@ -692,13 +703,37 @@ class AppLocalizationsAr extends AppLocalizations {
   String get footerSubscribed => 'شكرًا! سنبقيك على اطّلاع.';
 
   @override
-  String get footerRights => '© زونزي بيوتي. جميع الحقوق محفوظة.';
+  String get footerRights => '© 2026 زونزي بيوتي · جميع الحقوق محفوظة.';
+
+  @override
+  String get footerTagline => 'وجهتك للجمال والعطور الأصلية في الإمارات.';
+
+  @override
+  String get footerAboutHeading => 'من نحن';
 
   @override
   String get footerAbout => 'من نحن';
 
   @override
   String get footerContact => 'اتصل بنا';
+
+  @override
+  String get footerStoreLocator => 'مواقع المتاجر';
+
+  @override
+  String get footerTrackOrder => 'تتبّع الطلب';
+
+  @override
+  String get footerShippingReturns => 'الشحن والإرجاع';
+
+  @override
+  String get footerFaqs => 'الأسئلة الشائعة';
+
+  @override
+  String get footerPrivacy => 'سياسة الخصوصية';
+
+  @override
+  String get footerTerms => 'شروط الخدمة';
 
   @override
   String get footerShipping => 'الشحن';

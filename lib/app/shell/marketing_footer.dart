@@ -60,21 +60,39 @@ class _MarketingFooterState extends State<MarketingFooter> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const BrandLogo(onDark: true, height: 48),
+          const SizedBox(height: 16),
+          Text(
+            l10n.footerTagline,
+            style: const TextStyle(color: Colors.white70, height: 1.4),
+          ),
           const SizedBox(height: 20),
+          // Social row — brand presence. Links open the website until the real
+          // social URLs are provided (no fabricated handles).
+          Row(
+            children: [
+              _SocialButton(icon: Icons.camera_alt_outlined, onTap: _openWebsite),
+              _SocialButton(label: 'X', onTap: _openWebsite),
+              _SocialButton(icon: Icons.ondemand_video, onTap: _openWebsite),
+              _SocialButton(icon: Icons.facebook, onTap: _openWebsite),
+            ],
+          ),
+          const SizedBox(height: 28),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: _LinkColumn(
-                  heading: l10n.footerShop,
+                  heading: l10n.footerAboutHeading,
                   links: [
+                    (label: l10n.footerAbout, onTap: _openWebsite),
                     (
-                      label: l10n.homeShopByCategory,
-                      onTap: () => context.go(AppRoutes.categories),
+                      label: l10n.footerContact,
+                      onTap: () => context.push(AppRoutes.help),
                     ),
+                    (label: l10n.footerStoreLocator, onTap: _openWebsite),
                     (
-                      label: l10n.homeFeatured,
-                      onTap: () => context.go(AppRoutes.home),
+                      label: l10n.footerTrackOrder,
+                      onTap: () => context.push(AppRoutes.orders),
                     ),
                   ],
                 ),
@@ -83,33 +101,37 @@ class _MarketingFooterState extends State<MarketingFooter> {
                 child: _LinkColumn(
                   heading: l10n.footerSupport,
                   links: [
-                    (label: l10n.footerAbout, onTap: _openWebsite),
                     (
-                      label: l10n.footerContact,
+                      label: l10n.footerShippingReturns,
                       onTap: () => context.push(AppRoutes.help),
                     ),
                     (
-                      label: l10n.footerShipping,
+                      label: l10n.footerFaqs,
                       onTap: () => context.push(AppRoutes.help),
                     ),
-                    (
-                      label: l10n.footerReturns,
-                      onTap: () => context.push(AppRoutes.help),
-                    ),
+                    (label: l10n.footerPrivacy, onTap: _openWebsite),
+                    (label: l10n.footerTerms, onTap: _openWebsite),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
           Text(
-            l10n.footerNewsletterTitle,
+            l10n.footerNewsletterTitle.toUpperCase(),
             style: const TextStyle(
               color: Colors.white,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+              letterSpacing: 1,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
+          Text(
+            l10n.footerNewsletterSubtitle,
+            style: const TextStyle(color: Colors.white70, height: 1.4),
+          ),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
@@ -123,10 +145,10 @@ class _MarketingFooterState extends State<MarketingFooter> {
                     fillColor: Colors.white,
                     contentPadding: const EdgeInsets.symmetric(
                       horizontal: 12,
-                      vertical: 8,
+                      vertical: 12,
                     ),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(10),
                       borderSide: BorderSide.none,
                     ),
                   ),
@@ -135,16 +157,61 @@ class _MarketingFooterState extends State<MarketingFooter> {
               const SizedBox(width: 8),
               FilledButton(
                 onPressed: _subscribe,
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(0, 48),
+                ),
                 child: Text(l10n.footerSubscribe),
               ),
             ],
           ),
           const SizedBox(height: 24),
+          const Divider(color: Colors.white24, height: 1),
+          const SizedBox(height: 16),
           Text(
             l10n.footerRights,
             style: const TextStyle(color: Colors.white70, fontSize: 12),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Circular bordered social button (icon or short label) for the footer.
+class _SocialButton extends StatelessWidget {
+  const _SocialButton({this.icon, this.label, required this.onTap})
+    : assert(icon != null || label != null);
+
+  final IconData? icon;
+  final String? label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsetsDirectional.only(end: 10),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white24),
+          ),
+          alignment: Alignment.center,
+          child: icon != null
+              ? Icon(icon, color: Colors.white, size: 18)
+              : Text(
+                  label!,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                ),
+        ),
       ),
     );
   }
@@ -163,10 +230,12 @@ class _LinkColumn extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          heading,
+          heading.toUpperCase(),
           style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.w700,
+            fontSize: 12,
+            letterSpacing: 1,
           ),
         ),
         const SizedBox(height: 12),

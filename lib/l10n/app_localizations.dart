@@ -503,14 +503,26 @@ abstract class AppLocalizations {
   /// No description provided for @authSignUpSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Join ZoonZE for a faster checkout'**
+  /// **'Join ZoonZE for faster checkout, order tracking & exclusive offers.'**
   String get authSignUpSubtitle;
+
+  /// No description provided for @authAgreeTerms.
+  ///
+  /// In en, this message translates to:
+  /// **'I agree to the Terms of Service & Privacy Policy'**
+  String get authAgreeTerms;
 
   /// No description provided for @authForgotTitle.
   ///
   /// In en, this message translates to:
-  /// **'Reset Password'**
+  /// **'Forgot Password?'**
   String get authForgotTitle;
+
+  /// No description provided for @authForgotSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Send Reset Link'**
+  String get authForgotSubmit;
 
   /// No description provided for @fieldEmail.
   ///
@@ -563,7 +575,7 @@ abstract class AppLocalizations {
   /// No description provided for @authForgotIntro.
   ///
   /// In en, this message translates to:
-  /// **'Enter your email and we\'ll send you a reset link.'**
+  /// **'No worries! Enter your email and we\'ll send you a link to reset your password.'**
   String get authForgotIntro;
 
   /// No description provided for @authForgotSent.
@@ -1379,13 +1391,19 @@ abstract class AppLocalizations {
   /// No description provided for @footerNewsletterTitle.
   ///
   /// In en, this message translates to:
-  /// **'Join our newsletter'**
+  /// **'Newsletter'**
   String get footerNewsletterTitle;
+
+  /// No description provided for @footerNewsletterSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscribe to get special offers and updates.'**
+  String get footerNewsletterSubtitle;
 
   /// No description provided for @footerNewsletterHint.
   ///
   /// In en, this message translates to:
-  /// **'Email address'**
+  /// **'Your email'**
   String get footerNewsletterHint;
 
   /// No description provided for @footerSubscribe.
@@ -1403,13 +1421,25 @@ abstract class AppLocalizations {
   /// No description provided for @footerRights.
   ///
   /// In en, this message translates to:
-  /// **'© ZoonZE Beauty. All rights reserved.'**
+  /// **'© 2026 ZoonZE Beauty · All rights reserved.'**
   String get footerRights;
+
+  /// No description provided for @footerTagline.
+  ///
+  /// In en, this message translates to:
+  /// **'Your destination for authentic beauty & fragrance in the UAE.'**
+  String get footerTagline;
+
+  /// No description provided for @footerAboutHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'About Us'**
+  String get footerAboutHeading;
 
   /// No description provided for @footerAbout.
   ///
   /// In en, this message translates to:
-  /// **'About'**
+  /// **'About Us'**
   String get footerAbout;
 
   /// No description provided for @footerContact.
@@ -1417,6 +1447,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Contact'**
   String get footerContact;
+
+  /// No description provided for @footerStoreLocator.
+  ///
+  /// In en, this message translates to:
+  /// **'Store Locator'**
+  String get footerStoreLocator;
+
+  /// No description provided for @footerTrackOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Track Order'**
+  String get footerTrackOrder;
+
+  /// No description provided for @footerShippingReturns.
+  ///
+  /// In en, this message translates to:
+  /// **'Shipping & Returns'**
+  String get footerShippingReturns;
+
+  /// No description provided for @footerFaqs.
+  ///
+  /// In en, this message translates to:
+  /// **'FAQs'**
+  String get footerFaqs;
+
+  /// No description provided for @footerPrivacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get footerPrivacy;
+
+  /// No description provided for @footerTerms.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of Service'**
+  String get footerTerms;
 
   /// No description provided for @footerShipping.
   ///

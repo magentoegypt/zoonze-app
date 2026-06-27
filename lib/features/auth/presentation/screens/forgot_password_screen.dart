@@ -89,7 +89,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       AuthHeader(
-                        icon: Icons.lock_reset,
+                        icon: Icons.mail_outline,
                         title: l10n.authForgotTitle,
                         subtitle: l10n.authForgotIntro,
                       ),
@@ -115,7 +115,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                                   strokeWidth: 2,
                                 ),
                               )
-                            : Text(l10n.authForgotTitle),
+                            : Text(l10n.authForgotSubmit),
                       ),
                       TextButton(
                         onPressed: _busy ? null : _goReset,

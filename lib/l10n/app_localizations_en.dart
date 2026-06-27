@@ -218,10 +218,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authSignUpTitle => 'Create Account';
 
   @override
-  String get authSignUpSubtitle => 'Join ZoonZE for a faster checkout';
+  String get authSignUpSubtitle =>
+      'Join ZoonZE for faster checkout, order tracking & exclusive offers.';
 
   @override
-  String get authForgotTitle => 'Reset Password';
+  String get authAgreeTerms =>
+      'I agree to the Terms of Service & Privacy Policy';
+
+  @override
+  String get authForgotTitle => 'Forgot Password?';
+
+  @override
+  String get authForgotSubmit => 'Send Reset Link';
 
   @override
   String get fieldEmail => 'Email';
@@ -249,7 +257,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authForgotIntro =>
-      'Enter your email and we\'ll send you a reset link.';
+      'No worries! Enter your email and we\'ll send you a link to reset your password.';
 
   @override
   String get authForgotSent =>
@@ -689,10 +697,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get footerSupport => 'Support';
 
   @override
-  String get footerNewsletterTitle => 'Join our newsletter';
+  String get footerNewsletterTitle => 'Newsletter';
 
   @override
-  String get footerNewsletterHint => 'Email address';
+  String get footerNewsletterSubtitle =>
+      'Subscribe to get special offers and updates.';
+
+  @override
+  String get footerNewsletterHint => 'Your email';
 
   @override
   String get footerSubscribe => 'Subscribe';
@@ -701,13 +713,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get footerSubscribed => 'Thanks! We\'ll keep you posted.';
 
   @override
-  String get footerRights => '© ZoonZE Beauty. All rights reserved.';
+  String get footerRights => '© 2026 ZoonZE Beauty · All rights reserved.';
 
   @override
-  String get footerAbout => 'About';
+  String get footerTagline =>
+      'Your destination for authentic beauty & fragrance in the UAE.';
+
+  @override
+  String get footerAboutHeading => 'About Us';
+
+  @override
+  String get footerAbout => 'About Us';
 
   @override
   String get footerContact => 'Contact';
+
+  @override
+  String get footerStoreLocator => 'Store Locator';
+
+  @override
+  String get footerTrackOrder => 'Track Order';
+
+  @override
+  String get footerShippingReturns => 'Shipping & Returns';
+
+  @override
+  String get footerFaqs => 'FAQs';
+
+  @override
+  String get footerPrivacy => 'Privacy Policy';
+
+  @override
+  String get footerTerms => 'Terms of Service';
 
   @override
   String get footerShipping => 'Shipping';

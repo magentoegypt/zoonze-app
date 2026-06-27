@@ -41,9 +41,10 @@ void main() {
 
   testWidgets('footer links are tappable widgets', (tester) async {
     await _pump(tester);
-    // Shop + Support headings render with tappable link rows.
-    expect(find.text('Shop by category'), findsOneWidget);
-    expect(find.text('About'), findsOneWidget);
+    // ABOUT US + SUPPORT columns render with tappable link rows (Figma).
+    expect(find.text('About Us'), findsWidgets);
+    expect(find.text('Track Order'), findsOneWidget);
+    expect(find.text('Shipping & Returns'), findsOneWidget);
     expect(find.byType(InkWell), findsWidgets);
   });
 }
