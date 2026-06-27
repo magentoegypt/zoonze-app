@@ -53,3 +53,6 @@ android/key.properties
 *.p8
 *.p12
 *.mobileprovision
+
+# AppsOnAir OTA CLI config (generated in CI from secrets / `appsonair init ota` locally)
+.appsonair-cli.yaml

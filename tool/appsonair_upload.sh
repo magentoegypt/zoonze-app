@@ -1,46 +1,66 @@
 #!/usr/bin/env bash
-# Upload a single build artifact (APK or IPA) to AppsOnAir for OTA distribution.
+# Upload builds to AppsOnAir via the official OTA CLI (@appsonair/appsonair-cli).
+# Docs: https://documentation.appsonair.com/MobileQuickstart/CLI/ota-commands
 #
-# AppsOnAir publishes no GitHub Action / fastlane plugin / CLI for build
-# distribution, so we POST the file to their REST upload endpoint directly.
-# Auth is header-based: x-api-key = API Key, x-app-key = App ID (both from
-# AppsOnAir → App Settings). The exact upload URL (and, rarely, the multipart
-# file field name) is shown in the AppsOnAir dashboard's API / CI-CD snippet —
-# paste it into the APPSONAIR_UPLOAD_URL secret so we never hardcode a guess.
+# The CLI authenticates with a "CLI token" you copy from the AppsOnAir web app
+# (app.appsonair.com → log in → copy the full CLI token). The current beta has
+# no API-key/env auth, so CI pipes that token into `appsonair login` and uploads
+# in *yaml mode* — workspace/app/paths come from a generated `.appsonair-cli.yaml`
+# so nothing is interactive (path mode would prompt to pick the workspace/app).
 #
-# Required env: APPSONAIR_UPLOAD_URL, APPSONAIR_API_KEY, APPSONAIR_APP_KEY
-# Optional env: APPSONAIR_FILE_FIELD (multipart field name, default "file")
-# Usage: tool/appsonair_upload.sh <path-to-apk-or-ipa>
+# keytar is removed first so the CLI falls back to its file-based token store
+# under ~/.config/appsonair (headless CI has no OS keychain / Secret Service).
+#
+# Required env: APPSONAIR_CLI_TOKEN, APPSONAIR_WORKSPACE_ID, APPSONAIR_APP_ID
+# Optional env: APPSONAIR_APP_NAME (default Zoonze), APK_DIR (dist/apk), IPA_DIR (dist/ipa)
 set -euo pipefail
 
-FILE="${1:?usage: appsonair_upload.sh <file>}"
+: "${APPSONAIR_CLI_TOKEN:?APPSONAIR_CLI_TOKEN is required}"
+: "${APPSONAIR_WORKSPACE_ID:?APPSONAIR_WORKSPACE_ID is required}"
+: "${APPSONAIR_APP_ID:?APPSONAIR_APP_ID is required}"
+APK_DIR="${APK_DIR:-dist/apk}"
+IPA_DIR="${IPA_DIR:-dist/ipa}"
+APP_NAME="${APPSONAIR_APP_NAME:-Zoonze}"
 
-if [ ! -f "$FILE" ]; then
-  echo "::warning::AppsOnAir: file not found ($FILE) — skipping."
+echo "Installing @appsonair/appsonair-cli…"
+npm install -g @appsonair/appsonair-cli
+
+# Force the file-based token store: drop keytar so the CLI's dynamic
+# import("keytar") fails and it falls back to ~/.config/appsonair. Headless CI
+# has no keychain/Secret Service, so a present-but-unusable keytar would break
+# `login`. The CLI guards the import in try/catch, so removing it is safe.
+groot="$(npm root -g)"
+rm -rf "${groot}/keytar" \
+       "${groot}/@appsonair/appsonair-cli/node_modules/keytar" 2>/dev/null || true
+
+# yaml mode config — gives the CLI the workspace/app + build paths so the upload
+# is non-interactive (no workspace/app picker). Re-generated each run.
+cat > .appsonair-cli.yaml <<YAML
+workspaceId: ${APPSONAIR_WORKSPACE_ID}
+appId: ${APPSONAIR_APP_ID}
+appName: ${APP_NAME}
+ota:
+  androidOutput: ${APK_DIR}
+  iosOutput: ${IPA_DIR}
+YAML
+echo "Wrote .appsonair-cli.yaml (workspace ${APPSONAIR_WORKSPACE_ID}, app ${APPSONAIR_APP_ID})"
+
+echo "Authenticating to AppsOnAir…"
+printf '%s\n' "${APPSONAIR_CLI_TOKEN}" | appsonair login
+appsonair whoami
+
+apk="$(ls "${APK_DIR}"/*.apk 2>/dev/null | head -1 || true)"
+ipa="$(ls "${IPA_DIR}"/*.ipa 2>/dev/null | head -1 || true)"
+echo "APK: ${apk:-none}   IPA: ${ipa:-none}"
+
+if [ -n "${apk}" ] && [ -n "${ipa}" ]; then
+  appsonair-ota upload                 # both, from yaml
+elif [ -n "${apk}" ]; then
+  appsonair-ota upload --android
+elif [ -n "${ipa}" ]; then
+  appsonair-ota upload --ios
+else
+  echo "::warning::No APK/IPA found for AppsOnAir upload."
   exit 0
 fi
-
-: "${APPSONAIR_UPLOAD_URL:?APPSONAIR_UPLOAD_URL is required}"
-: "${APPSONAIR_API_KEY:?APPSONAIR_API_KEY is required}"
-: "${APPSONAIR_APP_KEY:?APPSONAIR_APP_KEY is required}"
-FIELD="${APPSONAIR_FILE_FIELD:-file}"
-
-echo "Uploading $(basename "$FILE") to AppsOnAir…"
-resp_body="$(mktemp)"
-http_code="$(
-  curl -sS --max-time 600 -w '%{http_code}' -o "$resp_body" \
-    -X POST "$APPSONAIR_UPLOAD_URL" \
-    -H "x-api-key: ${APPSONAIR_API_KEY}" \
-    -H "x-app-key: ${APPSONAIR_APP_KEY}" \
-    -F "${FIELD}=@${FILE}" || echo "000"
-)"
-
-echo "AppsOnAir HTTP ${http_code}"
-echo "--- response ---"; cat "$resp_body" 2>/dev/null || true; echo; echo "----------------"
-rm -f "$resp_body"
-
-case "$http_code" in
-  2*) echo "✅ AppsOnAir upload OK: $(basename "$FILE")" ;;
-  *)  echo "::error::AppsOnAir upload failed for $(basename "$FILE") (HTTP ${http_code}). Check APPSONAIR_UPLOAD_URL and the multipart field name (APPSONAIR_FILE_FIELD, default 'file')."
-      exit 1 ;;
-esac
+echo "✅ AppsOnAir upload complete."

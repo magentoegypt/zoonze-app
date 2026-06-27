@@ -129,24 +129,38 @@ every push produces a **signed ad-hoc IPA** (`ipa-prod`) — no manual run neede
 
 On every push to `main`, after the APK and IPA build, the **`appsonair`** job
 publishes **both** builds to [AppsOnAir](https://www.appsonair.com) for OTA
-distribution (`tool/appsonair_upload.sh`). It's a no-op until these secrets are
-set, so it never breaks the build.
+distribution using the official **OTA CLI** (`@appsonair/appsonair-cli`, the tool
+behind [`appsonair-ota upload`](https://documentation.appsonair.com/MobileQuickstart/CLI/ota-commands)),
+driven by `tool/appsonair_upload.sh`. It's a no-op until these secrets are set,
+so it never breaks the build.
 
 | Secret | Where to find it |
 |---|---|
-| `APPSONAIR_API_KEY` | AppsOnAir → your app → **App Settings → API Key** (sent as the `x-api-key` header) |
-| `APPSONAIR_APP_KEY` | AppsOnAir → your app → **App Settings → App ID** (sent as the `x-app-key` header) |
-| `APPSONAIR_UPLOAD_URL` | the build-upload endpoint from AppsOnAir's **API / CI-CD** snippet in the dashboard (we don't hardcode it — paste the exact URL they show) |
+| `APPSONAIR_CLI_TOKEN` | AppsOnAir web app (app.appsonair.com) → log in → **copy the full CLI token** (the value `appsonair login` asks you to paste) |
+| `APPSONAIR_WORKSPACE_ID` | the `workspaceId` for your app (AppsOnAir dashboard / `appsonair init ota`) |
+| `APPSONAIR_APP_ID` | the `appId` for your app (same place) |
 
-Optional repo **variable** `APPSONAIR_FILE_FIELD` overrides the multipart file
-field name (default `file`) if AppsOnAir's snippet uses a different one.
+**How it works (headless CLI):** the AppsOnAir OTA CLI (current beta) has **no
+API-key/env auth** — it logs in interactively and stores a token in the OS
+keychain. So in CI we:
+1. `npm i -g @appsonair/appsonair-cli`, then **remove keytar** so the CLI uses
+   its file-based token store (`~/.config/appsonair`) — headless runners have no
+   keychain/Secret Service.
+2. Generate a `.appsonair-cli.yaml` (workspace/app + the `dist/apk`·`dist/ipa`
+   paths) so the upload runs in **yaml mode** — no interactive workspace/app
+   picker.
+3. Pipe `APPSONAIR_CLI_TOKEN` into `appsonair login`, then `appsonair-ota upload`.
 
-> AppsOnAir publishes **no** GitHub Action / fastlane plugin / CLI for build
-> distribution (only CodePush for RN and the in-app AppSync SDK), so we upload
-> via their REST API with `curl`. Auth is `x-api-key` (API Key) + `x-app-key`
-> (App ID). **iOS caveat:** AppsOnAir installs over-the-air, which needs a
-> **signed** IPA — so set the Apple signing secrets above (the `ios` job then
-> emits a signed ad-hoc IPA). An unsigned IPA uploads but won't install.
+> **CLI token lifetime:** the CLI token can expire — if the `appsonair` job
+> starts failing auth, regenerate it from the web app and update the secret
+> (same pattern as the CodePush access key).
+>
+> **iOS caveat:** AppsOnAir installs over-the-air, which needs a **signed** IPA,
+> so set the Apple signing secrets above (the `ios` job then emits a signed
+> ad-hoc IPA). An unsigned IPA uploads but won't install.
+>
+> The CLI is a 0.0.1-beta with no documented headless auth; the first real run
+> (once the secrets exist) may need a small tweak — like the iOS signing setup.
 
 ## Notes
 - Pinned **Flutter 3.44.4** (matches the project's Dart `^3.12` constraint) — bump

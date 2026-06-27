@@ -136,11 +136,11 @@ jobs:
           path: build/ios/ipa/*.ipa
           if-no-files-found: error
 
-  # Publish both builds to AppsOnAir for OTA distribution. Runs after both
-  # platform jobs regardless of their outcome (uploads whatever was produced).
-  # No-op until the APPSONAIR_* secrets are set, so it never breaks the build.
-  # NOTE: an unsigned IPA uploads but won't OTA-install — set the Apple signing
-  # secrets so the ios job emits a *signed* ad-hoc IPA that installs on devices.
+  # Publish both builds to AppsOnAir for OTA distribution via the official OTA
+  # CLI (@appsonair/appsonair-cli), after both platform jobs (uploads whatever
+  # was produced). No-op until the APPSONAIR_* secrets are set, so it never
+  # breaks the build. NOTE: an unsigned IPA uploads but won't OTA-install — set
+  # the Apple signing secrets so the ios job emits a *signed* ad-hoc IPA.
   appsonair:
     name: Upload to AppsOnAir
     needs: [android-apk, ios]
@@ -148,6 +148,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
       - name: Download APK artifact
         uses: actions/download-artifact@v4
         continue-on-error: true
@@ -160,23 +163,15 @@ jobs:
         with:
           name: ipa-prod
           path: dist/ipa
-      - name: Upload builds to AppsOnAir
+      - name: Upload builds to AppsOnAir (OTA CLI)
         env:
-          APPSONAIR_UPLOAD_URL: ${{ secrets.APPSONAIR_UPLOAD_URL }}
-          APPSONAIR_API_KEY: ${{ secrets.APPSONAIR_API_KEY }}
-          APPSONAIR_APP_KEY: ${{ secrets.APPSONAIR_APP_KEY }}
-          APPSONAIR_FILE_FIELD: ${{ vars.APPSONAIR_FILE_FIELD }}
+          APPSONAIR_CLI_TOKEN: ${{ secrets.APPSONAIR_CLI_TOKEN }}
+          APPSONAIR_WORKSPACE_ID: ${{ secrets.APPSONAIR_WORKSPACE_ID }}
+          APPSONAIR_APP_ID: ${{ secrets.APPSONAIR_APP_ID }}
+          APPSONAIR_APP_NAME: Zoonze
         run: |
-          if [ -z "$APPSONAIR_UPLOAD_URL" ]; then
-            echo "::warning::AppsOnAir not configured — set APPSONAIR_UPLOAD_URL / APPSONAIR_API_KEY / APPSONAIR_APP_KEY secrets (see docs/decisions/ci.md). Skipping."
+          if [ -z "$APPSONAIR_CLI_TOKEN" ]; then
+            echo "::warning::AppsOnAir not configured — set APPSONAIR_CLI_TOKEN / APPSONAIR_WORKSPACE_ID / APPSONAIR_APP_ID secrets (see docs/decisions/ci.md). Skipping."
             exit 0
           fi
-          shopt -s nullglob
-          builds=(dist/apk/*.apk dist/ipa/*.ipa)
-          if [ ${#builds[@]} -eq 0 ]; then
-            echo "::warning::No APK/IPA artifacts found to upload to AppsOnAir."
-            exit 0
-          fi
-          for f in "${builds[@]}"; do
-            bash tool/appsonair_upload.sh "$f"
-          done
+          bash tool/appsonair_upload.sh
