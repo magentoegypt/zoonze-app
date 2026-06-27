@@ -117,6 +117,8 @@
   "accountGuestTitle": "Your ZoonZE account",
   "accountGuestBody": "Sign in to track orders, save addresses and check out faster.",
   "accountSignOut": "Sign Out",
+  "accountHeading": "My Account",
+  "accountAbout": "About ZoonZE",
   "accountOrders": "My Orders",
   "accountAddresses": "Saved Addresses",
   "accountHelp": "Help & FAQ",

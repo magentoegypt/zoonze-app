@@ -328,6 +328,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountSignOut => 'Sign Out';
 
   @override
+  String get accountHeading => 'My Account';
+
+  @override
+  String get accountAbout => 'About ZoonZE';
+
+  @override
   String get accountOrders => 'My Orders';
 
   @override

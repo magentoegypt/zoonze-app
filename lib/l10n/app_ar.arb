@@ -112,6 +112,8 @@
   "accountGuestTitle": "حساب زونزي الخاص بك",
   "accountGuestBody": "سجّل الدخول لتتبّع الطلبات وحفظ العناوين وإتمام الشراء بشكل أسرع.",
   "accountSignOut": "تسجيل الخروج",
+  "accountHeading": "حسابي",
+  "accountAbout": "عن زونزي",
   "accountOrders": "طلباتي",
   "accountAddresses": "العناوين المحفوظة",
   "accountHelp": "المساعدة والأسئلة الشائعة",

@@ -324,6 +324,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get accountSignOut => 'تسجيل الخروج';
 
   @override
+  String get accountHeading => 'حسابي';
+
+  @override
+  String get accountAbout => 'عن زونزي';
+
+  @override
   String get accountOrders => 'طلباتي';
 
   @override

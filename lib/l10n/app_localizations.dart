@@ -704,6 +704,18 @@ abstract class AppLocalizations {
   /// **'Sign Out'**
   String get accountSignOut;
 
+  /// No description provided for @accountHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'My Account'**
+  String get accountHeading;
+
+  /// No description provided for @accountAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About ZoonZE'**
+  String get accountAbout;
+
   /// No description provided for @accountOrders.
   ///
   /// In en, this message translates to:

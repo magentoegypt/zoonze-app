@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/routes.dart';
+import '../../../app/shell/marketing_footer.dart';
 import '../../../app/shell/zoonze_scaffold.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../core/app_info.dart';
@@ -63,8 +64,17 @@ class _Authenticated extends ConsumerWidget {
       orElse: () => null,
     );
     return ListView(
+      padding: EdgeInsets.zero,
       children: [
-        const SizedBox(height: 16),
+        Padding(
+          padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 16),
+          child: Text(
+            l10n.accountHeading,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
@@ -134,6 +144,11 @@ class _Authenticated extends ConsumerWidget {
           label: l10n.accountHelp,
           onTap: () => context.push(AppRoutes.help),
         ),
+        _AccountTile(
+          icon: Icons.info_outline,
+          label: l10n.accountAbout,
+          onTap: () => context.push(AppRoutes.help),
+        ),
         const SizedBox(height: 16),
         Center(
           child: TextButton.icon(
@@ -161,6 +176,7 @@ class _Authenticated extends ConsumerWidget {
               ),
             ),
           ),
+        const MarketingFooter(),
       ],
     );
   }
