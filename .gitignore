@@ -53,6 +53,10 @@ android/key.properties
 *.p8
 *.p12
 *.mobileprovision
+# Raw signing private keys from tool/ios_make_csr.sh — never commit. The CSR
+# (*.certSigningRequest) is a transient upload artifact; keep it out of git too.
+*.key
+*.certSigningRequest
 
 # Exception: the iOS ad-hoc signing material lives in ios/signing/ for CI
 # (manual signing without fastlane match). The .p12 is password-protected and

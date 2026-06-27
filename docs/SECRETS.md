@@ -18,8 +18,10 @@ its private key*:
 1. If you don't have a distribution cert yet: developer.apple.com → Certificates,
    Identifiers & Profiles → **Certificates → +** → **Apple Distribution** →
    upload a CSR (Mac: *Keychain Access → Certificate Assistant → Request a
-   Certificate From a Certificate Authority* → "Saved to disk") → download the
-   `.cer` and double-click to add it to Keychain.
+   Certificate From a Certificate Authority* → "Saved to disk"; **no Mac:** run
+   `tool/ios_make_csr.sh --email you@apple-account.com` — produces the same
+   `.certSigningRequest` + a private key via openssl) → download the `.cer` and
+   double-click to add it to Keychain.
 2. Export it: **Keychain Access → My Certificates** → right-click *"Apple
    Distribution: …"* (it must show a disclosure triangle = has the private key) →
    **Export…** → save as `.p12` → **set a password** (you'll put that password in
