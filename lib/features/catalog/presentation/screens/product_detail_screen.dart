@@ -38,6 +38,14 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
 
     return ZoonzeScaffold(
       currentTab: AppTab.home,
+      // Sticky Add-to-Cart bar (Figma) pinned above the bottom nav, shown once
+      // the product has loaded.
+      bottomBar: detail.maybeWhen(
+        data: (product) => product == null
+            ? null
+            : _StickyAddToCart(product: product, selection: _selection),
+        orElse: () => null,
+      ),
       body: AsyncValueView(
         value: detail,
         onRetry: () => ref.invalidate(productDetailProvider(widget.urlKey)),
@@ -119,11 +127,7 @@ class _Content extends StatelessWidget {
                   onSelect: (value) => onSelect(option.attributeCode, value),
                 ),
               const SizedBox(height: 8),
-              _AddToCartButton(
-                product: product,
-                selection: selection,
-                variant: variant,
-              ),
+              const _TrustRow(),
               const SizedBox(height: 24),
               _Tabs(current: tab, onTab: onTab),
               const SizedBox(height: 12),
@@ -388,42 +392,68 @@ class _Tabs extends StatelessWidget {
   }
 }
 
-class _AddToCartButton extends ConsumerWidget {
-  const _AddToCartButton({
-    required this.product,
-    required this.selection,
-    required this.variant,
-  });
+/// Sticky bottom Add-to-Cart bar (Figma): wishlist heart + a full-width button
+/// showing "Add to Cart · price". Recomputes the variant/price from the live
+/// swatch selection.
+class _StickyAddToCart extends ConsumerWidget {
+  const _StickyAddToCart({required this.product, required this.selection});
 
   final ProductDetail product;
   final Map<String, int> selection;
-  final ProductVariant? variant;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final variant = product.variantFor(selection);
+    final price = variant?.price ?? product.finalPrice ?? product.regularPrice;
     final inStock = variant?.inStock ?? product.inStock;
-    if (!inStock) {
-      return Text(
-        l10n.productOutOfStock,
-        style: const TextStyle(color: AppColors.accentSale),
-      );
-    }
     final needsSelection = product.isConfigurable && variant == null;
     final isMutating = ref.watch(
       cartControllerProvider.select((s) => s.isMutating),
     );
-    final enabled = !needsSelection && !isMutating;
+    final enabled = inStock && !needsSelection && !isMutating;
 
-    return FilledButton(
-      onPressed: enabled ? () => _add(context, ref, l10n) : null,
-      child: isMutating
-          ? const SizedBox(
-              height: 20,
-              width: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : Text(l10n.productAddToCart),
+    return Material(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      elevation: 8,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: AppColors.inkMuted.withValues(alpha: 0.3),
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: WishlistHeart(sku: product.sku),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton(
+                  onPressed: enabled ? () => _add(context, ref, l10n) : null,
+                  child: isMutating
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(
+                          !inStock
+                              ? l10n.productOutOfStock
+                              : price == null
+                              ? l10n.productAddToCart
+                              : '${l10n.productAddToCart} · ${price.formatted()}',
+                        ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -458,6 +488,64 @@ class _AddToCartButton extends ConsumerWidget {
       }
     }
   }
+}
+
+/// Compact trust row on the PDP (Figma): authenticity, delivery, service.
+class _TrustRow extends StatelessWidget {
+  const _TrustRow();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceTint,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          _TrustItem(
+            icon: Icons.verified_user_outlined,
+            label: l10n.homeTrustOriginalTitle,
+          ),
+          _TrustItem(
+            icon: Icons.local_shipping_outlined,
+            label: l10n.homeTrustDeliveryTitle,
+          ),
+          _TrustItem(
+            icon: Icons.headset_mic_outlined,
+            label: l10n.homeTrustServiceTitle,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TrustItem extends StatelessWidget {
+  const _TrustItem({required this.icon, required this.label});
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) => Expanded(
+    child: Column(
+      children: [
+        Icon(icon, color: AppColors.brandPrimary, size: 20),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: AppColors.inkHeading,
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _ReviewCard extends StatelessWidget {

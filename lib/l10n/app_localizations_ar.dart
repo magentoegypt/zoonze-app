@@ -396,6 +396,24 @@ class AppLocalizationsAr extends AppLocalizations {
   String get cartTitle => 'السلة';
 
   @override
+  String get cartHeading => 'سلّتي';
+
+  @override
+  String cartItemCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count عناصر',
+      one: 'عنصر واحد',
+      zero: 'لا عناصر',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cartSecureCheckout => 'الدفع الآمن';
+
+  @override
   String get cartEmptyTitle => 'سلتك فارغة';
 
   @override

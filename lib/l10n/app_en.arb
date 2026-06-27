@@ -141,6 +141,12 @@
   "notificationsOrdersNote": "Order updates are always sent for your purchases.",
 
   "cartTitle": "Cart",
+  "cartHeading": "My Cart",
+  "cartItemCount": "{count, plural, =0{No items} =1{1 item} other{{count} items}}",
+  "@cartItemCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "cartSecureCheckout": "Secure Checkout",
   "cartEmptyTitle": "Your cart is empty",
   "cartEmptyBody": "Browse the catalogue and add your favourites.",
   "cartContinueShopping": "Continue shopping",

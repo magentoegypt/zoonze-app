@@ -836,6 +836,24 @@ abstract class AppLocalizations {
   /// **'Cart'**
   String get cartTitle;
 
+  /// No description provided for @cartHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'My Cart'**
+  String get cartHeading;
+
+  /// No description provided for @cartItemCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{No items} =1{1 item} other{{count} items}}'**
+  String cartItemCount(int count);
+
+  /// No description provided for @cartSecureCheckout.
+  ///
+  /// In en, this message translates to:
+  /// **'Secure Checkout'**
+  String get cartSecureCheckout;
+
   /// No description provided for @cartEmptyTitle.
   ///
   /// In en, this message translates to:

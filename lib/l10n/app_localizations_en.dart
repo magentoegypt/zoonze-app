@@ -401,6 +401,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cartTitle => 'Cart';
 
   @override
+  String get cartHeading => 'My Cart';
+
+  @override
+  String cartItemCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+      zero: 'No items',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get cartSecureCheckout => 'Secure Checkout';
+
+  @override
   String get cartEmptyTitle => 'Your cart is empty';
 
   @override

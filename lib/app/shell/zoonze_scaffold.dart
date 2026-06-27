@@ -15,6 +15,7 @@ class ZoonzeScaffold extends StatelessWidget {
     required this.body,
     this.showSearch = true,
     this.appBar,
+    this.bottomBar,
   });
 
   final AppTab currentTab;
@@ -22,13 +23,23 @@ class ZoonzeScaffold extends StatelessWidget {
   final bool showSearch;
   final PreferredSizeWidget? appBar;
 
+  /// Optional persistent bar pinned directly above the bottom nav (e.g. the PDP
+  /// sticky Add-to-Cart bar). Null on most screens.
+  final Widget? bottomBar;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: appBar ?? ZoonzeAppBar(showSearch: showSearch),
       drawer: const MenuDrawer(),
       body: body,
-      bottomNavigationBar: ZoonzeBottomNav(current: currentTab),
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (bottomBar != null) bottomBar!,
+          ZoonzeBottomNav(current: currentTab),
+        ],
+      ),
     );
   }
 }

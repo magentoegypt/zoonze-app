@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/routes.dart';
+import '../../../../app/shell/marketing_footer.dart';
 import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/error/failure.dart';
@@ -110,9 +111,33 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     }
 
     final cart = state.cart;
+    final itemCount = cart.items.fold<int>(0, (sum, i) => sum + i.quantity);
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.zero,
       children: [
+        Padding(
+          padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                l10n.cartHeading,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                l10n.cartItemCount(itemCount),
+                style: const TextStyle(color: AppColors.inkMuted),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
         for (final item in cart.items)
           _CartItemTile(
             item: item,
@@ -163,8 +188,24 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         const SizedBox(height: 16),
         FilledButton(
           onPressed: () => context.push(AppRoutes.checkout),
-          child: Text(l10n.cartCheckout),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.lock_outline, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                cart.totals.grandTotal != null
+                    ? '${l10n.cartSecureCheckout} · ${cart.totals.grandTotal!.formatted()}'
+                    : l10n.cartSecureCheckout,
+              ),
+            ],
+          ),
         ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        const MarketingFooter(),
       ],
     );
   }

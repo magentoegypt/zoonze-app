@@ -136,6 +136,9 @@
   "notificationsOrdersNote": "تُرسَل تحديثات الطلبات دائمًا لعمليات الشراء الخاصة بك.",
 
   "cartTitle": "السلة",
+  "cartHeading": "سلّتي",
+  "cartItemCount": "{count, plural, =0{لا عناصر} =1{عنصر واحد} other{{count} عناصر}}",
+  "cartSecureCheckout": "الدفع الآمن",
   "cartEmptyTitle": "سلتك فارغة",
   "cartEmptyBody": "تصفّح المنتجات وأضف ما يعجبك.",
   "cartContinueShopping": "متابعة التسوّق",
