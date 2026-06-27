@@ -201,12 +201,16 @@ class _Guest extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
-              Icons.person_outline,
-              size: 56,
-              color: AppColors.brandPrimary,
+            const CircleAvatar(
+              radius: 48,
+              backgroundColor: AppColors.surfaceTint,
+              child: Icon(
+                Icons.person_outline,
+                size: 48,
+                color: AppColors.brandPrimary,
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Text(
               l10n.accountGuestTitle,
               style: Theme.of(context).textTheme.titleLarge,

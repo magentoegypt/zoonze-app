@@ -74,12 +74,16 @@ class _Empty extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
-            Icons.favorite_border,
-            size: 56,
-            color: AppColors.brandPrimary,
+          const CircleAvatar(
+            radius: 48,
+            backgroundColor: AppColors.surfaceTint,
+            child: Icon(
+              Icons.favorite_border,
+              size: 48,
+              color: AppColors.brandPrimary,
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Text(title, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
           Text(
@@ -113,12 +117,16 @@ class _Prompt extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
-            Icons.favorite_border,
-            size: 56,
-            color: AppColors.brandPrimary,
+          const CircleAvatar(
+            radius: 48,
+            backgroundColor: AppColors.surfaceTint,
+            child: Icon(
+              Icons.favorite_border,
+              size: 48,
+              color: AppColors.brandPrimary,
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Text(title, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
           Text(
