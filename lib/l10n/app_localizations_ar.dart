@@ -456,6 +456,23 @@ class AppLocalizationsAr extends AppLocalizations {
   String get cartCouponError => 'هذا الرمز غير صالح.';
 
   @override
+  String get wishlistHeading => 'قائمة مفضلتي';
+
+  @override
+  String wishlistSavedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count عناصر محفوظة',
+      one: 'عنصر محفوظ واحد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get wishlistAddAll => 'أضف الكل إلى السلة';
+
+  @override
   String get wishlistEmptyTitle => 'قائمة المفضلة فارغة';
 
   @override

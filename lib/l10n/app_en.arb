@@ -162,6 +162,12 @@
   "cartAdded": "Added to cart",
   "cartCouponError": "That code didn't work.",
 
+  "wishlistHeading": "My Wishlist",
+  "wishlistSavedCount": "{count, plural, =1{1 saved item} other{{count} saved items}}",
+  "@wishlistSavedCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "wishlistAddAll": "Add all to Bag",
   "wishlistEmptyTitle": "Your wishlist is empty",
   "wishlistEmptyBody": "Tap the heart on any product to save it here.",
   "wishlistSignInPrompt": "Sign in to save items to your wishlist.",

@@ -3,11 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/routes.dart';
+import '../../../../app/shell/marketing_footer.dart';
 import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../auth/presentation/auth_controller.dart';
+import '../../../cart/presentation/cart_controller.dart';
 import '../../../catalog/presentation/widgets/product_card.dart';
+import '../../domain/wishlist_entry.dart';
 import '../wishlist_controller.dart';
 
 class WishlistScreen extends ConsumerWidget {
@@ -35,22 +38,59 @@ class WishlistScreen extends ConsumerWidget {
         body: l10n.wishlistEmptyBody,
       );
     } else {
-      body = GridView.builder(
-        padding: const EdgeInsets.all(16),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 0.58,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-        ),
-        itemCount: state.entries.length,
-        itemBuilder: (context, index) {
-          final product = state.entries[index].product;
-          return ProductCard(
-            product: product,
-            onTap: () => context.push(AppRoutes.product(product.urlKey)),
-          );
-        },
+      body = ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  l10n.wishlistHeading,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  l10n.wishlistSavedCount(state.entries.length),
+                  style: const TextStyle(color: AppColors.inkMuted),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: state.isLoading
+                        ? null
+                        : () => _addAll(context, ref, state.entries, l10n),
+                    icon: const Icon(Icons.shopping_bag_outlined, size: 18),
+                    label: Text(l10n.wishlistAddAll),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              childAspectRatio: 0.58,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+            ),
+            itemCount: state.entries.length,
+            itemBuilder: (context, index) {
+              final product = state.entries[index].product;
+              return ProductCard(
+                product: product,
+                onTap: () => context.push(AppRoutes.product(product.urlKey)),
+              );
+            },
+          ),
+          const MarketingFooter(),
+        ],
       );
     }
 
@@ -59,6 +99,28 @@ class WishlistScreen extends ConsumerWidget {
       showSearch: false,
       body: body,
     );
+  }
+
+  /// Best-effort "Add all to Bag": adds each saved product to the cart. Items
+  /// that need an option choice (configurables) are skipped silently.
+  Future<void> _addAll(
+    BuildContext context,
+    WidgetRef ref,
+    List<WishlistEntry> entries,
+    AppLocalizations l10n,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final cart = ref.read(cartControllerProvider.notifier);
+    for (final entry in entries) {
+      try {
+        await cart.addToCart(sku: entry.product.sku);
+      } catch (_) {
+        // Skip items that require selecting options before adding.
+      }
+    }
+    if (context.mounted) {
+      messenger.showSnackBar(SnackBar(content: Text(l10n.cartAdded)));
+    }
   }
 }
 

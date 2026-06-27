@@ -938,6 +938,24 @@ abstract class AppLocalizations {
   /// **'That code didn\'t work.'**
   String get cartCouponError;
 
+  /// No description provided for @wishlistHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'My Wishlist'**
+  String get wishlistHeading;
+
+  /// No description provided for @wishlistSavedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 saved item} other{{count} saved items}}'**
+  String wishlistSavedCount(int count);
+
+  /// No description provided for @wishlistAddAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Add all to Bag'**
+  String get wishlistAddAll;
+
   /// No description provided for @wishlistEmptyTitle.
   ///
   /// In en, this message translates to:

@@ -154,6 +154,9 @@
   "cartAdded": "تمت الإضافة إلى السلة",
   "cartCouponError": "هذا الرمز غير صالح.",
 
+  "wishlistHeading": "قائمة مفضلتي",
+  "wishlistSavedCount": "{count, plural, =1{عنصر محفوظ واحد} other{{count} عناصر محفوظة}}",
+  "wishlistAddAll": "أضف الكل إلى السلة",
   "wishlistEmptyTitle": "قائمة المفضلة فارغة",
   "wishlistEmptyBody": "اضغط على القلب في أي منتج لحفظه هنا.",
   "wishlistSignInPrompt": "سجّل الدخول لحفظ المنتجات في قائمتك.",

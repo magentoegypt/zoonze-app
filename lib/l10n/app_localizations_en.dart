@@ -461,6 +461,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cartCouponError => 'That code didn\'t work.';
 
   @override
+  String get wishlistHeading => 'My Wishlist';
+
+  @override
+  String wishlistSavedCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count saved items',
+      one: '1 saved item',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get wishlistAddAll => 'Add all to Bag';
+
+  @override
   String get wishlistEmptyTitle => 'Your wishlist is empty';
 
   @override
