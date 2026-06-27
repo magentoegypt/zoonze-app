@@ -328,10 +328,19 @@ class CatalogRepository {
       urlKey: (json['url_key'] as String?) ?? '',
       image: httpsMediaUrl(json['image'] as String?),
       productCount: (json['product_count'] as int?) ?? 0,
-      includeInMenu: (json['include_in_menu'] as bool?) ?? true,
+      // Magento returns include_in_menu as an Int (0/1), not a Boolean —
+      // casting it `as bool` throws on real data. Accept int or bool.
+      includeInMenu: _asBool(json['include_in_menu'], orElse: true),
       children: children,
     );
   }
+
+  /// Coerces a GraphQL value to bool, tolerating Magento's Int (0/1) flags.
+  bool _asBool(Object? value, {required bool orElse}) => switch (value) {
+    final bool b => b,
+    final num n => n != 0,
+    _ => orElse,
+  };
 
   ProductPage _parseProductPage(Map<String, dynamic> json) {
     final items = (json['items'] as List<dynamic>? ?? const [])

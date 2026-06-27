@@ -55,6 +55,16 @@ for store in "$STORE_EN" "$STORE_AR"; do
   echo; echo
 done
 
+echo "== Phase 1 catalog smoke (Store: $STORE_EN) — the app's home queries =="
+# categoryList drives the home/menu; this is the first query the app runs.
+# Watch for GraphQL "errors" AND the include_in_menu value type (Int vs Boolean).
+echo "-- categoryList --"
+post "$STORE_EN" '{"query":"{ categoryList { uid name url_key children { uid name url_key image include_in_menu product_count } } }"}'
+echo; echo
+echo "-- products(search) --"
+post "$STORE_EN" '{"query":"query($s:String){ products(search:$s, pageSize:3, currentPage:1){ total_count items{ sku name url_key stock_status image{ url } price_range{ minimum_price{ final_price{ value currency } } } } } }","variables":{"s":"a"}}'
+echo; echo
+
 echo "== Phase 3 payment contract — MagentoEgypt_PaymentGraphQl (no Store header) =="
 # Schema introspection is store-agnostic, so it works without a valid code.
 # Confirm the resolvers + args exist on the live schema and match the app's queries
