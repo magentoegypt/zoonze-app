@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/routes.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/error/failure.dart';
+import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/failure_message.dart';
 import '../../../../l10n/l10n.dart';
 import '../../data/account_repository.dart';
@@ -78,7 +79,10 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
       );
     }
     if (state.orders.isEmpty) {
-      return Center(child: Text(l10n.ordersEmpty));
+      return EmptyState(
+        icon: Icons.receipt_long_outlined,
+        title: l10n.ordersEmpty,
+      );
     }
     return ListView.builder(
       controller: _scroll,

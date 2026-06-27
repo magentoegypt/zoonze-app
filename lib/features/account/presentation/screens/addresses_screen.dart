@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/routes.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/widgets/async_value_view.dart';
+import '../../../../core/widgets/empty_state.dart';
 import '../../../../l10n/l10n.dart';
 import '../../data/account_repository.dart';
 import '../../domain/customer_address.dart';
@@ -29,7 +30,10 @@ class AddressesScreen extends ConsumerWidget {
         onRetry: () => ref.invalidate(addressesProvider),
         data: (list) {
           if (list.isEmpty) {
-            return Center(child: Text(l10n.addressesEmpty));
+            return EmptyState(
+              icon: Icons.location_on_outlined,
+              title: l10n.addressesEmpty,
+            );
           }
           return ListView(
             padding: const EdgeInsets.all(16),
