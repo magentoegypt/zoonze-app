@@ -98,7 +98,9 @@ no manual certificate/CSR are needed).
 > declares `swift-tools-version: 6.1`, which needs **Xcode 16.3+**. `macos-14`
 > tops out around Xcode 16.2 (Swift 6.0) and fails SPM resolution
 > (`incompatible tools version (6.1.0)`), so the iOS jobs run on **`macos-15`**
-> and pin the newest stable Xcode via `maxim-lobanov/setup-xcode`.
+> and pin the newest stable Xcode via `maxim-lobanov/setup-xcode`. The same
+> firebase packages also require an **iOS 15.0** minimum, so the Xcode project's
+> `IPHONEOS_DEPLOYMENT_TARGET` is **15.0** (was 13.0).
 
 > **iOS is non-blocking for now:** in `build-on-push.yml` the `ios` job is
 > `continue-on-error: true` — the Android APK is the dependable artifact and an
