@@ -32,6 +32,8 @@ jobs:
           channel: stable
           cache: true
       - run: flutter pub get
+      - name: Generate GraphQL typed Dart (build_runner)
+        run: dart run build_runner build --delete-conflicting-outputs
 
       # google-services.json is committed; only the keystore is injected. When
       # no keystore secret is set, this step is skipped and the Gradle config

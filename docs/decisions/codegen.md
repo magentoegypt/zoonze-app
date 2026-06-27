@@ -57,3 +57,14 @@ workflow can:
 
 `build.yaml` options: `clients: [graphql_flutter]`, `addTypename: true`, and a
 `scalars:` map to extend as Magento custom scalars surface.
+
+## CI runs codegen
+
+Every workflow that compiles or tests Dart runs
+`dart run build_runner build --delete-conflicting-outputs` right after
+`flutter pub get` (`ci.yml`, both `build-on-push` jobs, `release-android`,
+`release-ios`). Because the generated `*.graphql.dart` are gitignored, CI
+regenerates them on each run — and this **doubles as a drift guard**: if an
+operation references a field that no longer exists in the committed
+`schema.graphql`, codegen fails and CI goes red. (`introspect.yml` is the one
+exception — it *produces* the schema rather than building the app.)
