@@ -3,6 +3,12 @@
 /// These extend the Phase 0 bootstrap exception: until `tool/introspect.sh`
 /// produces `schema.graphql` (origin is blocked in CI), catalogue ops are
 /// hand-written + mapped. Phase 1.x migrates them to graphql_codegen.
+///
+/// The codegen sources for the browse ops now live as standalone operations in
+/// `lib/features/catalog/data/graphql/` (`category_tree`, `products`,
+/// `product_detail` — mirrored from the strings below). Once `schema.graphql`
+/// lands, `dart run build_runner build` generates their typed Dart and this
+/// file is replaced by the generated documents. See `docs/decisions/codegen.md`.
 abstract final class CatalogQueries {
   /// Top-level category tree (menu / home "shop by category").
   static const String categoryTree = r'''
