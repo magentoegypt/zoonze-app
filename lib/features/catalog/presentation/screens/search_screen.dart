@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/routes.dart';
 import '../../../../core/widgets/async_value_view.dart';
+import '../../../../core/widgets/empty_state.dart';
 import '../../../../l10n/l10n.dart';
 import '../catalog_providers.dart';
 import '../widgets/product_card.dart';
@@ -54,7 +55,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         ],
       ),
       body: _query.isEmpty
-          ? Center(child: Text(l10n.searchHint))
+          ? EmptyState(icon: Icons.search, title: l10n.searchHint)
           : _Results(query: _query),
     );
   }
@@ -73,7 +74,10 @@ class _Results extends ConsumerWidget {
       onRetry: () => ref.invalidate(searchResultsProvider(query)),
       data: (page) {
         if (page.items.isEmpty) {
-          return Center(child: Text(l10n.stateEmpty));
+          return EmptyState(
+            icon: Icons.search_off_outlined,
+            title: l10n.stateEmpty,
+          );
         }
         return GridView.builder(
           padding: const EdgeInsets.all(16),
