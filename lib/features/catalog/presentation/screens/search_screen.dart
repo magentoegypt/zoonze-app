@@ -79,22 +79,36 @@ class _Results extends ConsumerWidget {
             title: l10n.stateEmpty,
           );
         }
-        return GridView.builder(
-          padding: const EdgeInsets.all(16),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 0.58,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-          ),
-          itemCount: page.items.length,
-          itemBuilder: (context, index) {
-            final product = page.items[index];
-            return ProductCard(
-              product: product,
-              onTap: () => context.push(AppRoutes.product(product.urlKey)),
-            );
-          },
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 16, 0),
+              child: Text(
+                l10n.resultsCount(page.totalCount),
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ),
+            Expanded(
+              child: GridView.builder(
+                padding: const EdgeInsets.all(16),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 0.58,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                ),
+                itemCount: page.items.length,
+                itemBuilder: (context, index) {
+                  final product = page.items[index];
+                  return ProductCard(
+                    product: product,
+                    onTap: () => context.push(AppRoutes.product(product.urlKey)),
+                  );
+                },
+              ),
+            ),
+          ],
         );
       },
     );
