@@ -350,11 +350,59 @@ abstract class AppLocalizations {
   /// **'Featured'**
   String get homeFeatured;
 
+  /// No description provided for @homeNewArrivals.
+  ///
+  /// In en, this message translates to:
+  /// **'New Arrivals'**
+  String get homeNewArrivals;
+
   /// No description provided for @homeSeeAll.
   ///
   /// In en, this message translates to:
   /// **'See all'**
   String get homeSeeAll;
+
+  /// No description provided for @homeAnnouncement.
+  ///
+  /// In en, this message translates to:
+  /// **'Free shipping on orders over AED 150'**
+  String get homeAnnouncement;
+
+  /// No description provided for @homeTrustOriginalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'100% Original'**
+  String get homeTrustOriginalTitle;
+
+  /// No description provided for @homeTrustOriginalBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Guaranteed authentic'**
+  String get homeTrustOriginalBody;
+
+  /// No description provided for @homeTrustDeliveryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Free Delivery'**
+  String get homeTrustDeliveryTitle;
+
+  /// No description provided for @homeTrustDeliveryBody.
+  ///
+  /// In en, this message translates to:
+  /// **'On orders over AED 150'**
+  String get homeTrustDeliveryBody;
+
+  /// No description provided for @homeTrustServiceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer Service'**
+  String get homeTrustServiceTitle;
+
+  /// No description provided for @homeTrustServiceBody.
+  ///
+  /// In en, this message translates to:
+  /// **'10 AM – 10 PM'**
+  String get homeTrustServiceBody;
 
   /// No description provided for @homeHeroEyebrow.
   ///

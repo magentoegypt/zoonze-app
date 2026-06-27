@@ -137,7 +137,31 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeFeatured => 'مميّزة';
 
   @override
+  String get homeNewArrivals => 'وصل حديثًا';
+
+  @override
   String get homeSeeAll => 'عرض الكل';
+
+  @override
+  String get homeAnnouncement => 'شحن مجاني للطلبات فوق 150 درهمًا';
+
+  @override
+  String get homeTrustOriginalTitle => 'أصلي 100%';
+
+  @override
+  String get homeTrustOriginalBody => 'منتجات أصلية مضمونة';
+
+  @override
+  String get homeTrustDeliveryTitle => 'توصيل مجاني';
+
+  @override
+  String get homeTrustDeliveryBody => 'للطلبات فوق 150 درهمًا';
+
+  @override
+  String get homeTrustServiceTitle => 'خدمة العملاء';
+
+  @override
+  String get homeTrustServiceBody => 'من 10 صباحًا حتى 10 مساءً';
 
   @override
   String get homeHeroEyebrow => 'تشكيلة جديدة';

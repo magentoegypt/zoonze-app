@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +10,8 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../core/assets/app_images.dart';
 import '../../../../core/widgets/async_value_view.dart';
 import '../../../../l10n/l10n.dart';
+import '../../domain/category.dart';
+import '../../domain/product.dart';
 import '../catalog_providers.dart';
 import '../widgets/product_card.dart';
 
@@ -27,6 +30,7 @@ class HomeScreen extends ConsumerWidget {
         onRefresh: () async {
           ref.invalidate(categoryTreeProvider);
           ref.invalidate(featuredProductsProvider);
+          ref.invalidate(newArrivalsProductsProvider);
           // Keep the indicator up until the real reload finishes; errors are
           // surfaced in-body by AsyncValueView.
           try {
@@ -39,38 +43,22 @@ class HomeScreen extends ConsumerWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
+            const _AnnouncementBar(),
+            _SearchField(onTap: () => context.push(AppRoutes.search)),
             const _HeroBanner(),
             _SectionHeader(title: l10n.homeShopByCategory),
-            SizedBox(
-              height: 120,
-              child: AsyncValueView(
-                value: categories,
-                onRetry: () => ref.invalidate(categoryTreeProvider),
-                data: (items) {
-                  if (items.isEmpty) {
-                    return Center(child: Text(l10n.stateEmpty));
-                  }
-                  return ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsetsDirectional.only(
-                      start: 16,
-                      end: 16,
-                    ),
-                    itemCount: items.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 12),
-                    itemBuilder: (context, index) {
-                      final category = items[index];
-                      return _CategoryChip(
-                        label: category.name,
-                        onTap: () => context.push(
-                          AppRoutes.category(category.uid),
-                          extra: category.name,
-                        ),
-                      );
-                    },
+            AsyncValueView(
+              value: categories,
+              onRetry: () => ref.invalidate(categoryTreeProvider),
+              data: (items) {
+                if (items.isEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Center(child: Text(l10n.stateEmpty)),
                   );
-                },
-              ),
+                }
+                return _CategoryGrid(categories: items);
+              },
             ),
             _SectionHeader(title: l10n.homeFeatured),
             AsyncValueView(
@@ -83,30 +71,86 @@ class HomeScreen extends ConsumerWidget {
                     child: Center(child: Text(l10n.stateEmpty)),
                   );
                 }
-                return GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(16),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.58,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                  ),
-                  itemCount: products.length,
-                  itemBuilder: (context, index) {
-                    final product = products[index];
-                    return ProductCard(
-                      product: product,
-                      onTap: () =>
-                          context.push(AppRoutes.product(product.urlKey)),
-                    );
-                  },
-                );
+                return _ProductGrid(products: products);
               },
             ),
+            const _NewArrivalsSection(),
+            const _TrustBadges(),
             const MarketingFooter(),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Thin top strip — free-shipping line (Figma announcement bar).
+class _AnnouncementBar extends StatelessWidget {
+  const _AnnouncementBar();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      width: double.infinity,
+      color: AppColors.surfaceTint,
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.local_shipping_outlined,
+            size: 14,
+            color: AppColors.brandPrimary,
+          ),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              l10n.homeAnnouncement,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppColors.brandPrimary,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Tappable search field (routes to the search screen) — Figma's full-width
+/// search bar below the header.
+class _SearchField extends StatelessWidget {
+  const _SearchField({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF3F4F6),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.search, color: AppColors.inkMuted, size: 20),
+              const SizedBox(width: 10),
+              Text(
+                l10n.searchHint,
+                style: const TextStyle(color: AppColors.inkMuted),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -168,7 +212,19 @@ class _HeroBanner extends StatelessWidget {
                     minimumSize: const Size(0, 44),
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                   ),
-                  child: Text(l10n.homeHeroCta),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(l10n.homeHeroCta),
+                      const SizedBox(width: 8),
+                      Icon(
+                        Directionality.of(context) == TextDirection.rtl
+                            ? Icons.arrow_back
+                            : Icons.arrow_forward,
+                        size: 18,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -181,10 +237,225 @@ class _HeroBanner extends StatelessWidget {
               child: Image.asset(
                 AppImages.banner,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
-                    Container(color: Colors.white),
+                errorBuilder: (_, __, ___) => Container(color: Colors.white),
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Circular category images in a grid (Figma "Shop by category").
+class _CategoryGrid extends StatelessWidget {
+  const _CategoryGrid({required this.categories});
+  final List<Category> categories;
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        childAspectRatio: 0.82,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+      ),
+      itemCount: categories.length,
+      itemBuilder: (context, index) {
+        final category = categories[index];
+        return _CategoryCircle(
+          category: category,
+          onTap: () => context.push(
+            AppRoutes.category(category.uid),
+            extra: category.name,
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _CategoryCircle extends StatelessWidget {
+  const _CategoryCircle({required this.category, required this.onTap});
+  final Category category;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final image = category.image;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          ClipOval(
+            child: SizedBox(
+              width: 72,
+              height: 72,
+              child: (image != null && image.isNotEmpty)
+                  ? CachedNetworkImage(
+                      imageUrl: image,
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) => const _CategoryFallback(),
+                      errorWidget: (_, __, ___) => const _CategoryFallback(),
+                    )
+                  : const _CategoryFallback(),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            category.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CategoryFallback extends StatelessWidget {
+  const _CategoryFallback();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    color: AppColors.surfaceTint,
+    child: const Center(
+      child: Icon(Icons.spa_outlined, color: AppColors.brandPrimary),
+    ),
+  );
+}
+
+/// Two-column product grid shared by Featured + New Arrivals.
+class _ProductGrid extends StatelessWidget {
+  const _ProductGrid({required this.products});
+  final List<Product> products;
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.58,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+      ),
+      itemCount: products.length,
+      itemBuilder: (context, index) {
+        final product = products[index];
+        return ProductCard(
+          product: product,
+          onTap: () => context.push(AppRoutes.product(product.urlKey)),
+        );
+      },
+    );
+  }
+}
+
+/// "New Arrivals" — a second product section backed by the real New Arrivals
+/// category. Hides itself when the catalogue has none (no fabricated content).
+class _NewArrivalsSection extends ConsumerWidget {
+  const _NewArrivalsSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final newArrivals = ref.watch(newArrivalsProductsProvider);
+    return newArrivals.maybeWhen(
+      data: (products) {
+        if (products.isEmpty) return const SizedBox.shrink();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _SectionHeader(title: l10n.homeNewArrivals),
+            _ProductGrid(products: products),
+          ],
+        );
+      },
+      orElse: () => const SizedBox.shrink(),
+    );
+  }
+}
+
+/// Trust badges (Figma) — store guarantees. The unverified "3-hour delivery"
+/// claim is intentionally omitted.
+class _TrustBadges extends StatelessWidget {
+  const _TrustBadges();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _TrustBadge(
+            icon: Icons.verified_user_outlined,
+            title: l10n.homeTrustOriginalTitle,
+            body: l10n.homeTrustOriginalBody,
+          ),
+          _TrustBadge(
+            icon: Icons.local_shipping_outlined,
+            title: l10n.homeTrustDeliveryTitle,
+            body: l10n.homeTrustDeliveryBody,
+          ),
+          _TrustBadge(
+            icon: Icons.headset_mic_outlined,
+            title: l10n.homeTrustServiceTitle,
+            body: l10n.homeTrustServiceBody,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TrustBadge extends StatelessWidget {
+  const _TrustBadge({
+    required this.icon,
+    required this.title,
+    required this.body,
+  });
+  final IconData icon;
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 24,
+            backgroundColor: AppColors.surfaceTint,
+            child: Icon(icon, color: AppColors.brandPrimary, size: 22),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+              color: AppColors.inkHeading,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            body,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: AppColors.inkMuted, fontSize: 11),
           ),
         ],
       ),
@@ -201,44 +472,4 @@ class _SectionHeader extends StatelessWidget {
     padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 8),
     child: Text(title, style: Theme.of(context).textTheme.titleLarge),
   );
-}
-
-class _CategoryChip extends StatelessWidget {
-  const _CategoryChip({required this.label, required this.onTap});
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        width: 96,
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceTint,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const CircleAvatar(
-              radius: 26,
-              backgroundColor: Colors.white,
-              child: Icon(Icons.spa_outlined, color: AppColors.brandPrimary),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 12),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }

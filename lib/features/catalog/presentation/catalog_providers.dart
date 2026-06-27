@@ -26,6 +26,31 @@ final featuredProductsProvider = FutureProvider.autoDispose<List<Product>>((
   return page.items;
 });
 
+/// Products from the "New Arrivals" category (matched by url_key/name, stable
+/// across locales). Empty when the catalogue has no such category — the home
+/// section then hides itself rather than fabricating content.
+final newArrivalsProductsProvider = FutureProvider.autoDispose<List<Product>>((
+  ref,
+) async {
+  ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
+  final categories = await ref.watch(categoryTreeProvider.future);
+  Category? match;
+  for (final c in categories) {
+    final key = c.urlKey.toLowerCase();
+    final name = c.name.toLowerCase();
+    if ((key.contains('new') && key.contains('arriv')) ||
+        name.contains('new arriv')) {
+      match = c;
+      break;
+    }
+  }
+  if (match == null) return const <Product>[];
+  final page = await ref
+      .watch(catalogRepositoryProvider)
+      .fetchProducts(categoryUid: match.uid, pageSize: 6);
+  return page.items;
+});
+
 /// Full product detail for the PDP (by url_key). Refetches on store switch.
 final productDetailProvider = FutureProvider.autoDispose
     .family<ProductDetail?, String>((ref, urlKey) {

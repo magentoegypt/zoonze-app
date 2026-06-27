@@ -139,7 +139,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeFeatured => 'Featured';
 
   @override
+  String get homeNewArrivals => 'New Arrivals';
+
+  @override
   String get homeSeeAll => 'See all';
+
+  @override
+  String get homeAnnouncement => 'Free shipping on orders over AED 150';
+
+  @override
+  String get homeTrustOriginalTitle => '100% Original';
+
+  @override
+  String get homeTrustOriginalBody => 'Guaranteed authentic';
+
+  @override
+  String get homeTrustDeliveryTitle => 'Free Delivery';
+
+  @override
+  String get homeTrustDeliveryBody => 'On orders over AED 150';
+
+  @override
+  String get homeTrustServiceTitle => 'Customer Service';
+
+  @override
+  String get homeTrustServiceBody => '10 AM – 10 PM';
 
   @override
   String get homeHeroEyebrow => 'NEW COLLECTION';
