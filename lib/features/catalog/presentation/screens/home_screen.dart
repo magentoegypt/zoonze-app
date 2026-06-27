@@ -26,6 +26,8 @@ class HomeScreen extends ConsumerWidget {
 
     return ZoonzeScaffold(
       currentTab: AppTab.home,
+      // The home body already has a search bar — no app-bar search icon.
+      showSearch: false,
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(categoryTreeProvider);
@@ -350,31 +352,7 @@ class _ProductGrid extends StatelessWidget {
   }
 }
 
-/// Section header with an optional "See all" action.
-class _ProductSectionHeader extends StatelessWidget {
-  const _ProductSectionHeader({required this.title, this.onSeeAll});
-  final String title;
-  final VoidCallback? onSeeAll;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 4, 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(title, style: Theme.of(context).textTheme.titleLarge),
-          ),
-          if (onSeeAll != null)
-            TextButton(onPressed: onSeeAll, child: Text(l10n.homeSeeAll)),
-        ],
-      ),
-    );
-  }
-}
-
-/// "New Arrivals" — real category if present, else newest products. Hides when
+/// "New Arrivals" — latest products from the new-arrivals category. Hides when
 /// the catalogue returns nothing.
 class _NewArrivalsSection extends ConsumerWidget {
   const _NewArrivalsSection();
@@ -421,20 +399,26 @@ class _ProductSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (section.items.isEmpty) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
     final category = section.category;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _ProductSectionHeader(
-          title: title,
-          onSeeAll: category == null
-              ? null
-              : () => context.push(
+        _SectionHeader(title: title),
+        _ProductGrid(products: section.items),
+        if (category != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Center(
+              child: OutlinedButton(
+                onPressed: () => context.push(
                   AppRoutes.category(category.uid),
                   extra: category.name,
                 ),
-        ),
-        _ProductGrid(products: section.items),
+                child: Text(l10n.homeSeeMore),
+              ),
+            ),
+          ),
       ],
     );
   }

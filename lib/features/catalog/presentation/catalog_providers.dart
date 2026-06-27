@@ -29,46 +29,40 @@ final featuredProductsProvider = FutureProvider.autoDispose<List<Product>>((
 /// A home product section: the source category (for "See all") + its products.
 typedef HomeSection = ({Category? category, List<Product> items});
 
+/// Searches the category tree recursively (top-level + nested children) so a
+/// target like `new-arrivals`/`bestsellers` is found wherever it sits.
 Category? _findCategory(
   List<Category> cats,
   bool Function(String key, String name) test,
 ) {
   for (final c in cats) {
     if (test(c.urlKey.toLowerCase(), c.name.toLowerCase())) return c;
+    final nested = _findCategory(c.children, test);
+    if (nested != null) return nested;
   }
   return null;
 }
 
-/// "New Arrivals": the real category if present, otherwise the newest products
-/// from the first category (sorted by created_at) — so the section always has
-/// real content without fabricating it.
+/// "New Arrivals": the latest 4 products from the `new-arrivals` category.
+/// Hidden when that category is absent (no fabricated content).
 final newArrivalsProvider = FutureProvider.autoDispose<HomeSection>((ref) async {
   ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
   final categories = await ref.watch(categoryTreeProvider.future);
-  final repo = ref.watch(catalogRepositoryProvider);
-  final match = _findCategory(
-    categories,
-    (k, n) => (k.contains('new') && k.contains('arriv')) ||
-        n.contains('new arriv'),
-  );
-  final source = match ?? (categories.isEmpty ? null : categories.first);
-  if (source == null) return (category: null, items: const <Product>[]);
-  // The "New Arrivals" category already holds the newest products in order;
-  // no created_at sort (unsupported on this store).
-  final page = await repo.fetchProducts(categoryUid: source.uid, pageSize: 4);
-  return (category: source, items: page.items);
+  final match = _findCategory(categories, (k, n) => k == 'new-arrivals');
+  if (match == null) return (category: null, items: const <Product>[]);
+  // The category already holds the newest products in order; created_at sort
+  // is unsupported on this store, so take the first 4.
+  final page = await ref
+      .watch(catalogRepositoryProvider)
+      .fetchProducts(categoryUid: match.uid, pageSize: 4);
+  return (category: match, items: page.items);
 });
 
-/// "Bestsellers": products from the real Bestsellers category. Hides itself
-/// when the catalogue has no such category (no fabricated ranking).
+/// "Bestsellers": products from the `bestsellers` category. Hidden when absent.
 final bestsellersProvider = FutureProvider.autoDispose<HomeSection>((ref) async {
   ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
   final categories = await ref.watch(categoryTreeProvider.future);
-  final match = _findCategory(
-    categories,
-    (k, n) =>
-        k.contains('best') || n.contains('best') || n.contains('seller'),
-  );
+  final match = _findCategory(categories, (k, n) => k == 'bestsellers');
   if (match == null) return (category: null, items: const <Product>[]);
   final page = await ref
       .watch(catalogRepositoryProvider)

@@ -445,6 +445,8 @@ const List<StoreView> kSampleStores = <StoreView>[
 const List<Category> kSampleCategories = <Category>[
   Category(uid: 'cat-fragrance', name: 'Fragrance', urlKey: 'fragrance'),
   Category(uid: 'cat-makeup', name: 'Makeup', urlKey: 'makeup'),
+  Category(uid: 'cat-new', name: 'New Arrivals', urlKey: 'new-arrivals'),
+  Category(uid: 'cat-best', name: 'Bestsellers', urlKey: 'bestsellers'),
 ];
 
 // imageUrl is null so widget tests don't hit the network via CachedNetworkImage.
