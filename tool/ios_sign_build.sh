@@ -68,9 +68,46 @@ cat > "${EXPORT_PLIST}" <<PLIST
 PLIST
 
 # 5) Build the signed IPA.
-flutter build ipa --release \
+#
+# We deliberately do NOT use `flutter build ipa` here. That wrapper runs the
+# `xcodebuild archive` phase using the *project's* signing settings — and the
+# committed Runner target is CODE_SIGN_STYLE=Automatic (correct for local dev
+# and the App Store / fastlane match path). On a CI runner with no Apple ID,
+# automatic signing can't provision and the archive fails with "No development
+# certificates available", regardless of the export-options plist (which only
+# governs the later export step).
+#
+# Instead: generate the Flutter build config, then archive + export with
+# xcodebuild directly, forcing MANUAL signing via command-line build settings
+# (highest precedence — overrides the project's Automatic style without editing
+# any committed file). All values come from the profile we parsed above.
+ARCHIVE="${RUNNER_TEMP:-/tmp}/Runner.xcarchive"
+rm -rf "${ARCHIVE}"
+
+# 5a) Prepare Generated.xcconfig (entrypoint + dart-defines) without building.
+flutter build ios --release --config-only \
   -t lib/main_prod.dart \
-  --dart-define-from-file=config/prod.json \
-  --export-options-plist "${EXPORT_PLIST}"
+  --dart-define-from-file=config/prod.json
+
+# 5b) Archive with manual signing pinned to our cert + ad-hoc profile.
+xcodebuild archive \
+  -workspace ios/Runner.xcworkspace \
+  -scheme Runner \
+  -configuration Release \
+  -sdk iphoneos \
+  -destination 'generic/platform=iOS' \
+  -archivePath "${ARCHIVE}" \
+  CODE_SIGN_STYLE=Manual \
+  DEVELOPMENT_TEAM="${TEAM_ID}" \
+  PROVISIONING_PROFILE_SPECIFIER="${PROFILE_NAME}" \
+  "CODE_SIGN_IDENTITY=Apple Distribution" \
+  OTHER_CODE_SIGN_FLAGS="--keychain ${KEYCHAIN}"
+
+# 5c) Export the signed ad-hoc IPA.
+mkdir -p build/ios/ipa
+xcodebuild -exportArchive \
+  -archivePath "${ARCHIVE}" \
+  -exportPath build/ios/ipa \
+  -exportOptionsPlist "${EXPORT_PLIST}"
 
 echo "✅ Signed ad-hoc IPA → $(ls build/ios/ipa/*.ipa 2>/dev/null | head -1)"
