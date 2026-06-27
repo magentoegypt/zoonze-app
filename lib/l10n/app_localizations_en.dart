@@ -69,6 +69,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Live storeConfig for the active store view';
 
   @override
+  String get settingsConnectionTest => 'Connection test';
+
+  @override
+  String get settingsConnectionTestSubtitle =>
+      'Check the live connection to the store';
+
+  @override
   String get fieldStoreCode => 'Store code';
 
   @override

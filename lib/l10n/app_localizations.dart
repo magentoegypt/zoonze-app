@@ -212,6 +212,18 @@ abstract class AppLocalizations {
   /// **'Live storeConfig for the active store view'**
   String get healthCheckSubtitle;
 
+  /// No description provided for @settingsConnectionTest.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection test'**
+  String get settingsConnectionTest;
+
+  /// No description provided for @settingsConnectionTestSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Check the live connection to the store'**
+  String get settingsConnectionTestSubtitle;
+
   /// No description provided for @fieldStoreCode.
   ///
   /// In en, this message translates to:

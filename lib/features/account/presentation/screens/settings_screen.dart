@@ -84,6 +84,16 @@ class SettingsScreen extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.help),
           ),
+          // Live on-device connection probe (runs storeConfig against the active
+          // store view) — lets us tell a network/WAF problem apart from an empty
+          // catalogue when content isn't loading on a real device.
+          ListTile(
+            leading: const Icon(Icons.wifi_tethering),
+            title: Text(l10n.settingsConnectionTest),
+            subtitle: Text(l10n.settingsConnectionTestSubtitle),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(AppRoutes.diagnostics),
+          ),
           const Divider(height: 32),
           Center(
             child: Padding(

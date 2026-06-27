@@ -70,6 +70,26 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<!-- App Transport Security: the storefront talks to zoonze.com over HTTPS;
+	     permit it explicitly (TLS 1.2+) and allow cleartext for any http media
+	     URL the catalogue returns before it's upgraded client-side. iOS blocks
+	     non-conforming loads by default, so without this block any TLS edge case
+	     or http image would silently fail (blank widgets / missing images). -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>zoonze.com</key>
+			<dict>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSExceptionMinimumTLSVersion</key>
+				<string>TLSv1.2</string>
+			</dict>
+		</dict>
+	</dict>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

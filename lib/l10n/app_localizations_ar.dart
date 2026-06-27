@@ -67,6 +67,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get healthCheckSubtitle => 'إعدادات المتجر الحيّة لطريقة العرض النشطة';
 
   @override
+  String get settingsConnectionTest => 'اختبار الاتصال';
+
+  @override
+  String get settingsConnectionTestSubtitle =>
+      'تحقّق من الاتصال المباشر بالمتجر';
+
+  @override
   String get fieldStoreCode => 'رمز المتجر';
 
   @override

@@ -21,6 +21,8 @@
 
   "healthCheckTitle": "فحص حالة المتجر",
   "healthCheckSubtitle": "إعدادات المتجر الحيّة لطريقة العرض النشطة",
+  "settingsConnectionTest": "اختبار الاتصال",
+  "settingsConnectionTestSubtitle": "تحقّق من الاتصال المباشر بالمتجر",
   "fieldStoreCode": "رمز المتجر",
   "fieldLocale": "اللغة المحلية",
   "fieldCurrency": "العملة",

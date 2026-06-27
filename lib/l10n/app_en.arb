@@ -23,6 +23,8 @@
 
   "healthCheckTitle": "Store health check",
   "healthCheckSubtitle": "Live storeConfig for the active store view",
+  "settingsConnectionTest": "Connection test",
+  "settingsConnectionTestSubtitle": "Check the live connection to the store",
   "fieldStoreCode": "Store code",
   "fieldLocale": "Locale",
   "fieldCurrency": "Currency",

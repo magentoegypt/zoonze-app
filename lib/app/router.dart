@@ -161,7 +161,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             CompletePaymentScreen(args: state.extra as CompletePaymentArgs),
       ),
       GoRoute(
-        path: '/diagnostics',
+        path: AppRoutes.diagnostics,
         builder: (context, state) => const HealthCheckScreen(),
       ),
     ],

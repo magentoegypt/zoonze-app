@@ -20,6 +20,7 @@ abstract final class AppRoutes {
   static const String notifications = '/notifications';
   static const String help = '/help';
   static const String settings = '/settings';
+  static const String diagnostics = '/diagnostics';
   static const String checkout = '/checkout';
   static const String orderSuccess = '/order-success';
   static const String completePayment = '/complete-payment';
