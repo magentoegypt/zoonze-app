@@ -85,7 +85,13 @@ ARCHIVE="${RUNNER_TEMP:-/tmp}/Runner.xcarchive"
 rm -rf "${ARCHIVE}"
 
 # 5a) Prepare Generated.xcconfig (entrypoint + dart-defines) without building.
-flutter build ios --release --config-only \
+# --no-codesign is required: even in --config-only mode, `flutter build ios`
+# runs its code-signing identity check for a device release build and aborts
+# ("No valid code signing certificates were found") before writing the config.
+# We only need the config here; signing is handled by the xcodebuild archive
+# below. --no-codesign disables that check and does NOT persist any
+# signing-disable flag into Generated.xcconfig, so the archive still signs.
+flutter build ios --release --config-only --no-codesign \
   -t lib/main_prod.dart \
   --dart-define-from-file=config/prod.json
 
