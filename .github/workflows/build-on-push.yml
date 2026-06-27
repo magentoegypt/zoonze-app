@@ -6,14 +6,11 @@ name: Build · main (APK + IPA)
 #     signed ad-hoc IPA (Diawi-installable on registered devices); without them
 #     it's an UNSIGNED IPA (sideload/resign via AltStore or Sideloadly).
 # Artifacts: apk-prod / ipa-prod (download from the run, e.g. for Diawi).
-# Both builds are also auto-uploaded to AppsOnAir for OTA distribution once the
-# APPSONAIR_* secrets are set (see the `appsonair` job + docs/decisions/ci.md).
 on:
   push:
     branches: [main]
 
-# A newer push to main cancels an older in-progress run (saves macOS minutes
-# and avoids overlapping AppsOnAir uploads).
+# A newer push to main cancels an older in-progress run (saves macOS minutes).
 concurrency:
   group: build-on-push-${{ github.ref }}
   cancel-in-progress: true
@@ -141,43 +138,3 @@ jobs:
           name: ipa-prod
           path: build/ios/ipa/*.ipa
           if-no-files-found: error
-
-  # Publish both builds to AppsOnAir for OTA distribution via the official OTA
-  # CLI (@appsonair/appsonair-cli), after both platform jobs (uploads whatever
-  # was produced). No-op until the APPSONAIR_* secrets are set, so it never
-  # breaks the build. NOTE: an unsigned IPA uploads but won't OTA-install — set
-  # the Apple signing secrets so the ios job emits a *signed* ad-hoc IPA.
-  appsonair:
-    name: Upload to AppsOnAir
-    needs: [android-apk, ios]
-    if: ${{ always() }}
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-      - name: Download APK artifact
-        uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          name: apk-prod
-          path: dist/apk
-      - name: Download IPA artifact
-        uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          name: ipa-prod
-          path: dist/ipa
-      - name: Upload builds to AppsOnAir (OTA CLI)
-        env:
-          APPSONAIR_CLI_TOKEN: ${{ secrets.APPSONAIR_CLI_TOKEN }}
-          APPSONAIR_WORKSPACE_ID: ${{ secrets.APPSONAIR_WORKSPACE_ID }}
-          APPSONAIR_APP_ID: ${{ secrets.APPSONAIR_APP_ID }}
-          APPSONAIR_APP_NAME: Zoonze
-        run: |
-          if [ -z "$APPSONAIR_CLI_TOKEN" ]; then
-            echo "::warning::AppsOnAir not configured — set APPSONAIR_CLI_TOKEN / APPSONAIR_WORKSPACE_ID / APPSONAIR_APP_ID secrets (see docs/decisions/ci.md). Skipping."
-            exit 0
-          fi
-          bash tool/appsonair_upload.sh
