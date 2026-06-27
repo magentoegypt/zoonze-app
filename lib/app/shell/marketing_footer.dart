@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/util/launch.dart';
 import '../../core/validation/validators.dart';
-import '../../core/widgets/brand_lockup.dart';
+import '../../core/widgets/brand_logo.dart';
 import '../../l10n/l10n.dart';
 import '../routes.dart';
 import '../theme/app_colors.dart';
@@ -59,7 +59,7 @@ class _MarketingFooterState extends State<MarketingFooter> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const BrandLockup(color: Colors.white, fontSize: 22),
+          const BrandLogo(onDark: true, height: 48),
           const SizedBox(height: 20),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,

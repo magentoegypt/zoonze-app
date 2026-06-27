@@ -68,7 +68,10 @@
   "comingSoonBody": "This section arrives in a later phase.",
 
   "authSignInTitle": "Sign In",
+  "authSignInWelcome": "Welcome back",
+  "authSignInSubtitle": "Sign in to continue shopping",
   "authSignUpTitle": "Create Account",
+  "authSignUpSubtitle": "Join ZoonZE for a faster checkout",
   "authForgotTitle": "Reset Password",
   "fieldEmail": "Email",
   "fieldPassword": "Password",

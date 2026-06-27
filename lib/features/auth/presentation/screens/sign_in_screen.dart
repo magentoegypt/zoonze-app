@@ -4,9 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/routes.dart';
 import '../../../../core/validation/validators.dart';
-import '../../../../core/widgets/brand_lockup.dart';
+import '../../../../core/widgets/brand_logo.dart';
 import '../../../../l10n/l10n.dart';
 import '../auth_controller.dart';
+import '../widgets/auth_header.dart';
 
 class SignInScreen extends ConsumerStatefulWidget {
   const SignInScreen({super.key});
@@ -51,7 +52,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(centerTitle: true, title: const BrandLogo(height: 40)),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -60,27 +61,30 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Center(child: BrandLockup(fontSize: 28)),
-                const SizedBox(height: 8),
-                Center(
-                  child: Text(
-                    l10n.authSignInTitle,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
+                AuthHeader(
+                  icon: Icons.lock_outline,
+                  title: l10n.authSignInWelcome,
+                  subtitle: l10n.authSignInSubtitle,
                 ),
                 const SizedBox(height: 24),
                 TextFormField(
                   controller: _email,
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(labelText: l10n.fieldEmail),
+                  decoration: InputDecoration(
+                    labelText: l10n.fieldEmail,
+                    prefixIcon: const Icon(Icons.mail_outline),
+                  ),
                   validator: (v) => Validators.email(context, v),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _password,
                   obscureText: true,
-                  decoration: InputDecoration(labelText: l10n.fieldPassword),
+                  decoration: InputDecoration(
+                    labelText: l10n.fieldPassword,
+                    prefixIcon: const Icon(Icons.lock_outline),
+                  ),
                   validator: (v) => Validators.required(context, v),
                   onFieldSubmitted: (_) => _submit(),
                 ),

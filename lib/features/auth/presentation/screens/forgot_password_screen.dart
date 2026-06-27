@@ -4,9 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/routes.dart';
 import '../../../../core/validation/validators.dart';
-import '../../../../core/widgets/brand_lockup.dart';
+import '../../../../core/widgets/brand_logo.dart';
 import '../../../../l10n/l10n.dart';
 import '../auth_controller.dart';
+import '../widgets/auth_header.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -60,7 +61,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.authForgotTitle)),
+      appBar: AppBar(centerTitle: true, title: const BrandLogo(height: 40)),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -87,14 +88,19 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Center(child: BrandLockup(fontSize: 28)),
-                      const SizedBox(height: 24),
-                      Text(l10n.authForgotIntro, textAlign: TextAlign.center),
+                      AuthHeader(
+                        icon: Icons.lock_reset,
+                        title: l10n.authForgotTitle,
+                        subtitle: l10n.authForgotIntro,
+                      ),
                       const SizedBox(height: 24),
                       TextFormField(
                         controller: _email,
                         keyboardType: TextInputType.emailAddress,
-                        decoration: InputDecoration(labelText: l10n.fieldEmail),
+                        decoration: InputDecoration(
+                          labelText: l10n.fieldEmail,
+                          prefixIcon: const Icon(Icons.mail_outline),
+                        ),
                         validator: (v) => Validators.email(context, v),
                         onFieldSubmitted: (_) => _submit(),
                       ),

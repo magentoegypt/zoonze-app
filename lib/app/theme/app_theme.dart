@@ -61,6 +61,34 @@ abstract final class AppTheme {
         color: AppColors.surfaceTint,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
+      // Figma form fields: filled grey (surface/alt), rounded, no hard border,
+      // burgundy focus ring. Applies to every TextField/TextFormField app-wide.
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: brightness == Brightness.light
+            ? const Color(0xFFF3F4F6) // surface/alt
+            : Colors.white10,
+        hintStyle: const TextStyle(color: Color(0xFF9CA3AF)), // text/muted
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(
+            color: AppColors.brandPrimary,
+            width: 1.5,
+          ),
+        ),
+      ),
     );
   }
 }

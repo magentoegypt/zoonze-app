@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/store/store_controller.dart';
-import '../../core/widgets/brand_lockup.dart';
+import '../../core/widgets/brand_logo.dart';
 import '../../features/auth/presentation/auth_controller.dart';
 import '../../features/catalog/presentation/catalog_providers.dart';
 import '../../l10n/l10n.dart';
@@ -30,19 +30,22 @@ class MenuDrawer extends ConsumerWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
+            // Brand logo centered; close (×) pinned to the trailing corner
+            // (flips to the leading side in the Arabic/RTL mirror).
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              child: Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const BrandLockup(fontSize: 22),
-                    IconButton(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  const BrandLogo(height: 46),
+                  PositionedDirectional(
+                    end: 4,
+                    child: IconButton(
                       icon: const Icon(Icons.close),
                       onPressed: () => Navigator.of(context).maybePop(),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
             Padding(

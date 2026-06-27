@@ -179,7 +179,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authSignInTitle => 'Sign In';
 
   @override
+  String get authSignInWelcome => 'Welcome back';
+
+  @override
+  String get authSignInSubtitle => 'Sign in to continue shopping';
+
+  @override
   String get authSignUpTitle => 'Create Account';
+
+  @override
+  String get authSignUpSubtitle => 'Join ZoonZE for a faster checkout';
 
   @override
   String get authForgotTitle => 'Reset Password';

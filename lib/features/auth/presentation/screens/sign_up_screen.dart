@@ -4,9 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/routes.dart';
 import '../../../../core/validation/validators.dart';
-import '../../../../core/widgets/brand_lockup.dart';
+import '../../../../core/widgets/brand_logo.dart';
 import '../../../../l10n/l10n.dart';
 import '../auth_controller.dart';
+import '../widgets/auth_header.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
   const SignUpScreen({super.key});
@@ -60,7 +61,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(centerTitle: true, title: const BrandLogo(height: 40)),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -69,13 +70,10 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Center(child: BrandLockup(fontSize: 28)),
-                const SizedBox(height: 8),
-                Center(
-                  child: Text(
-                    l10n.authSignUpTitle,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
+                AuthHeader(
+                  icon: Icons.person_outline,
+                  title: l10n.authSignUpTitle,
+                  subtitle: l10n.authSignUpSubtitle,
                 ),
                 const SizedBox(height: 24),
                 TextFormField(

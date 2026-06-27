@@ -177,7 +177,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get authSignInTitle => 'تسجيل الدخول';
 
   @override
+  String get authSignInWelcome => 'مرحبًا بعودتك';
+
+  @override
+  String get authSignInSubtitle => 'سجّل الدخول لمتابعة التسوّق';
+
+  @override
   String get authSignUpTitle => 'إنشاء حساب';
+
+  @override
+  String get authSignUpSubtitle => 'انضم إلى زونزي لإتمام الطلب بشكل أسرع';
 
   @override
   String get authForgotTitle => 'إعادة تعيين كلمة المرور';

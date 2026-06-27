@@ -63,7 +63,10 @@
   "comingSoonBody": "سيتوفّر هذا القسم في مرحلة لاحقة.",
 
   "authSignInTitle": "تسجيل الدخول",
+  "authSignInWelcome": "مرحبًا بعودتك",
+  "authSignInSubtitle": "سجّل الدخول لمتابعة التسوّق",
   "authSignUpTitle": "إنشاء حساب",
+  "authSignUpSubtitle": "انضم إلى زونزي لإتمام الطلب بشكل أسرع",
   "authForgotTitle": "إعادة تعيين كلمة المرور",
   "fieldEmail": "البريد الإلكتروني",
   "fieldPassword": "كلمة المرور",

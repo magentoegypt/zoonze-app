@@ -4,7 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/routes.dart';
 import '../../../../core/validation/validators.dart';
-import '../../../../core/widgets/brand_lockup.dart';
+import '../../../../core/widgets/brand_logo.dart';
+import '../widgets/auth_header.dart';
 import '../../../../l10n/l10n.dart';
 import '../auth_controller.dart';
 
@@ -69,7 +70,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.authResetTitle)),
+      appBar: AppBar(centerTitle: true, title: const BrandLogo(height: 40)),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -78,14 +79,19 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Center(child: BrandLockup(fontSize: 28)),
-                const SizedBox(height: 24),
-                Text(l10n.authResetIntro, textAlign: TextAlign.center),
+                AuthHeader(
+                  icon: Icons.lock_reset,
+                  title: l10n.authResetTitle,
+                  subtitle: l10n.authResetIntro,
+                ),
                 const SizedBox(height: 24),
                 TextFormField(
                   controller: _email,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(labelText: l10n.fieldEmail),
+                  decoration: InputDecoration(
+                    labelText: l10n.fieldEmail,
+                    prefixIcon: const Icon(Icons.mail_outline),
+                  ),
                   validator: (v) => Validators.email(context, v),
                 ),
                 const SizedBox(height: 12),

@@ -428,11 +428,29 @@ abstract class AppLocalizations {
   /// **'Sign In'**
   String get authSignInTitle;
 
+  /// No description provided for @authSignInWelcome.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome back'**
+  String get authSignInWelcome;
+
+  /// No description provided for @authSignInSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to continue shopping'**
+  String get authSignInSubtitle;
+
   /// No description provided for @authSignUpTitle.
   ///
   /// In en, this message translates to:
   /// **'Create Account'**
   String get authSignUpTitle;
+
+  /// No description provided for @authSignUpSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Join ZoonZE for a faster checkout'**
+  String get authSignUpSubtitle;
 
   /// No description provided for @authForgotTitle.
   ///
