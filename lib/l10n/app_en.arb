@@ -14,6 +14,7 @@
   "versionLabel": "Version",
 
   "actionRetry": "Retry",
+  "actionLinkCopied": "Link copied to clipboard",
   "stateLoading": "Loading…",
   "stateEmpty": "Nothing here yet",
   "errorGeneric": "Something went wrong. Please try again.",

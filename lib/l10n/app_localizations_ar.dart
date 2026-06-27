@@ -42,6 +42,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get actionRetry => 'إعادة المحاولة';
 
   @override
+  String get actionLinkCopied => 'تم نسخ الرابط';
+
+  @override
   String get stateLoading => 'جارٍ التحميل…';
 
   @override

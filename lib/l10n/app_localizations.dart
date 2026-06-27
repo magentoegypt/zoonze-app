@@ -164,6 +164,12 @@ abstract class AppLocalizations {
   /// **'Retry'**
   String get actionRetry;
 
+  /// No description provided for @actionLinkCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Link copied to clipboard'**
+  String get actionLinkCopied;
+
   /// No description provided for @stateLoading.
   ///
   /// In en, this message translates to:

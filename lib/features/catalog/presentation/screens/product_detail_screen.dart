@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -84,7 +85,7 @@ class _Content extends StatelessWidget {
     return ListView(
       padding: EdgeInsets.zero,
       children: [
-        _Gallery(images: images, sku: product.sku),
+        _Gallery(images: images, sku: product.sku, urlKey: product.urlKey),
         Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -137,9 +138,14 @@ class _Content extends StatelessWidget {
 }
 
 class _Gallery extends StatefulWidget {
-  const _Gallery({required this.images, required this.sku});
+  const _Gallery({
+    required this.images,
+    required this.sku,
+    required this.urlKey,
+  });
   final List<String> images;
   final String sku;
+  final String urlKey;
 
   @override
   State<_Gallery> createState() => _GalleryState();
@@ -153,6 +159,18 @@ class _GalleryState extends State<_Gallery> {
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  Future<void> _share(BuildContext context) async {
+    final l10n = AppLocalizations.of(context);
+    await Clipboard.setData(
+      ClipboardData(text: 'https://zoonze.com/${widget.urlKey}'),
+    );
+    if (context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.actionLinkCopied)));
+    }
   }
 
   @override
@@ -192,7 +210,7 @@ class _GalleryState extends State<_Gallery> {
                         children: [
                           WishlistHeart(sku: widget.sku),
                           IconButton(
-                            onPressed: () {},
+                            onPressed: () => _share(context),
                             icon: const Icon(
                               Icons.share_outlined,
                               color: AppColors.inkHeading,
@@ -204,25 +222,44 @@ class _GalleryState extends State<_Gallery> {
                   ],
                 ),
         ),
+        // Thumbnail strip beneath the main image (per Figma) — tap to switch.
         if (images.length > 1)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                for (var i = 0; i < images.length; i++)
-                  Container(
-                    width: 8,
-                    height: 8,
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
+          SizedBox(
+            height: 72,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              itemCount: images.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (_, i) => GestureDetector(
+                onTap: () => _controller.animateToPage(
+                  i,
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeOut,
+                ),
+                child: Container(
+                  width: 56,
+                  height: 56,
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
                       color: i == _index
                           ? AppColors.brandPrimary
-                          : AppColors.inkMuted.withValues(alpha: 0.3),
+                          : AppColors.inkMuted.withValues(alpha: 0.25),
+                      width: i == _index ? 2 : 1,
                     ),
                   ),
-              ],
+                  child: CachedNetworkImage(
+                    imageUrl: images[i],
+                    fit: BoxFit.cover,
+                    placeholder: (_, __) =>
+                        Container(color: AppColors.surfaceTint),
+                    errorWidget: (_, __, ___) =>
+                        Container(color: AppColors.surfaceTint),
+                  ),
+                ),
+              ),
             ),
           ),
       ],

@@ -12,6 +12,7 @@
   "versionLabel": "الإصدار",
 
   "actionRetry": "إعادة المحاولة",
+  "actionLinkCopied": "تم نسخ الرابط",
   "stateLoading": "جارٍ التحميل…",
   "stateEmpty": "لا يوجد شيء هنا بعد",
   "errorGeneric": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",

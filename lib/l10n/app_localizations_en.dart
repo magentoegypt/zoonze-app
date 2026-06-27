@@ -42,6 +42,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get actionRetry => 'Retry';
 
   @override
+  String get actionLinkCopied => 'Link copied to clipboard';
+
+  @override
   String get stateLoading => 'Loading…';
 
   @override
