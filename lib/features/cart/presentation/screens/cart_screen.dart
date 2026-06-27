@@ -78,12 +78,16 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
-                Icons.shopping_bag_outlined,
-                size: 56,
-                color: AppColors.brandPrimary,
+              const CircleAvatar(
+                radius: 48,
+                backgroundColor: AppColors.surfaceTint,
+                child: Icon(
+                  Icons.shopping_bag_outlined,
+                  size: 48,
+                  color: AppColors.brandPrimary,
+                ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               Text(
                 l10n.cartEmptyTitle,
                 style: Theme.of(context).textTheme.titleLarge,

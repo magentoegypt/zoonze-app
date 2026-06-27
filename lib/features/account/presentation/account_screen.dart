@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/routes.dart';
 import '../../../app/shell/zoonze_scaffold.dart';
 import '../../../app/theme/app_colors.dart';
+import '../../../core/app_info.dart';
 import '../../../l10n/l10n.dart';
 import '../../auth/presentation/auth_controller.dart';
 
@@ -36,7 +37,7 @@ class AccountScreen extends ConsumerWidget {
   }
 }
 
-class _Authenticated extends StatelessWidget {
+class _Authenticated extends ConsumerWidget {
   const _Authenticated({
     required this.name,
     required this.email,
@@ -47,9 +48,20 @@ class _Authenticated extends StatelessWidget {
   final String email;
   final VoidCallback onSignOut;
 
+  String get _initials {
+    final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty);
+    final letters = parts.take(2).map((p) => p.characters.first.toUpperCase());
+    final joined = letters.join();
+    return joined.isEmpty ? '?' : joined;
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final version = ref.watch(appVersionProvider).maybeWhen(
+      data: (v) => v,
+      orElse: () => null,
+    );
     return ListView(
       children: [
         const SizedBox(height: 16),
@@ -61,11 +73,11 @@ class _Authenticated extends StatelessWidget {
                 radius: 28,
                 backgroundColor: AppColors.surfaceTint,
                 child: Text(
-                  name.isNotEmpty ? name.characters.first.toUpperCase() : '?',
+                  _initials,
                   style: const TextStyle(
                     color: AppColors.brandPrimary,
                     fontWeight: FontWeight.w700,
-                    fontSize: 22,
+                    fontSize: 20,
                   ),
                 ),
               ),
@@ -87,58 +99,92 @@ class _Authenticated extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         const Divider(height: 1),
-        ListTile(
-          leading: const Icon(Icons.person_outline),
-          title: Text(l10n.profileTitle),
-          trailing: const Icon(Icons.chevron_right),
+        _AccountTile(
+          icon: Icons.person_outline,
+          label: l10n.profileTitle,
           onTap: () => context.push(AppRoutes.editProfile),
         ),
-        ListTile(
-          leading: const Icon(Icons.receipt_long_outlined),
-          title: Text(l10n.accountOrders),
-          trailing: const Icon(Icons.chevron_right),
+        _AccountTile(
+          icon: Icons.receipt_long_outlined,
+          label: l10n.accountOrders,
           onTap: () => context.push(AppRoutes.orders),
         ),
-        ListTile(
-          leading: const Icon(Icons.location_on_outlined),
-          title: Text(l10n.accountAddresses),
-          trailing: const Icon(Icons.chevron_right),
+        _AccountTile(
+          icon: Icons.location_on_outlined,
+          label: l10n.accountAddresses,
           onTap: () => context.push(AppRoutes.addresses),
         ),
-        ListTile(
-          leading: const Icon(Icons.favorite_border),
-          title: Text(l10n.navWishlist),
-          trailing: const Icon(Icons.chevron_right),
+        _AccountTile(
+          icon: Icons.favorite_border,
+          label: l10n.navWishlist,
           onTap: () => context.go(AppRoutes.wishlist),
         ),
-        ListTile(
-          leading: const Icon(Icons.notifications_none),
-          title: Text(l10n.notificationsTitle),
-          trailing: const Icon(Icons.chevron_right),
+        _AccountTile(
+          icon: Icons.notifications_none,
+          label: l10n.notificationsTitle,
           onTap: () => context.push(AppRoutes.notifications),
         ),
-        ListTile(
-          leading: const Icon(Icons.settings_outlined),
-          title: Text(l10n.settingsTitle),
-          trailing: const Icon(Icons.chevron_right),
+        _AccountTile(
+          icon: Icons.settings_outlined,
+          label: l10n.settingsTitle,
           onTap: () => context.push(AppRoutes.settings),
         ),
-        ListTile(
-          leading: const Icon(Icons.help_outline),
-          title: Text(l10n.accountHelp),
-          trailing: const Icon(Icons.chevron_right),
+        _AccountTile(
+          icon: Icons.help_outline,
+          label: l10n.accountHelp,
           onTap: () => context.push(AppRoutes.help),
         ),
-        const SizedBox(height: 24),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: OutlinedButton.icon(
+        const SizedBox(height: 16),
+        Center(
+          child: TextButton.icon(
             onPressed: onSignOut,
-            icon: const Icon(Icons.logout),
-            label: Text(l10n.accountSignOut),
+            icon: const Icon(Icons.logout, color: AppColors.brandPrimary),
+            label: Text(
+              l10n.accountSignOut,
+              style: const TextStyle(
+                color: AppColors.brandPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ),
+        if (version != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4, bottom: 16),
+            child: Center(
+              child: Text(
+                '${l10n.appTitle} · ${l10n.versionLabel} $version',
+                style: const TextStyle(
+                  color: AppColors.inkMuted,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ),
       ],
+    );
+  }
+}
+
+/// Account menu row per Figma: burgundy leading icon, label, muted chevron.
+class _AccountTile extends StatelessWidget {
+  const _AccountTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon, color: AppColors.brandPrimary),
+      title: Text(label),
+      trailing: const Icon(Icons.chevron_right, color: AppColors.inkMuted),
+      onTap: onTap,
     );
   }
 }
