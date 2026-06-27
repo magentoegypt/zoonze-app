@@ -147,6 +147,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeHeroCta => 'Shop Now';
 
   @override
+  String get categoriesSubtitle => 'Shop by what you love';
+
+  @override
+  String categoryProductCount(int count) {
+    return '$count products';
+  }
+
+  @override
   String get filtersLabel => 'Filters';
 
   @override

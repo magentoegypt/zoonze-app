@@ -52,6 +52,11 @@
   "homeHeroTitle": "Beauty, your way",
   "homeHeroSubtitle": "Authentic brands, curated for the UAE",
   "homeHeroCta": "Shop Now",
+  "categoriesSubtitle": "Shop by what you love",
+  "categoryProductCount": "{count} products",
+  "@categoryProductCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
 
   "filtersLabel": "Filters",
   "filterPriceLabel": "Price",

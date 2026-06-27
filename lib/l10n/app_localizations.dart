@@ -368,6 +368,18 @@ abstract class AppLocalizations {
   /// **'Shop Now'**
   String get homeHeroCta;
 
+  /// No description provided for @categoriesSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shop by what you love'**
+  String get categoriesSubtitle;
+
+  /// No description provided for @categoryProductCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} products'**
+  String categoryProductCount(int count);
+
   /// No description provided for @filtersLabel.
   ///
   /// In en, this message translates to:

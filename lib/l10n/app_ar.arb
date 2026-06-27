@@ -50,6 +50,11 @@
   "homeHeroTitle": "جمالكِ بأسلوبكِ",
   "homeHeroSubtitle": "علامات أصلية مختارة لدولة الإمارات",
   "homeHeroCta": "تسوّق الآن",
+  "categoriesSubtitle": "تسوّقي حسب ما تحبين",
+  "categoryProductCount": "{count} منتج",
+  "@categoryProductCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
 
   "filtersLabel": "تصفية",
   "filterPriceLabel": "السعر",

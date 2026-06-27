@@ -145,6 +145,14 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeHeroCta => 'تسوّق الآن';
 
   @override
+  String get categoriesSubtitle => 'تسوّقي حسب ما تحبين';
+
+  @override
+  String categoryProductCount(int count) {
+    return '$count منتج';
+  }
+
+  @override
   String get filtersLabel => 'تصفية';
 
   @override
