@@ -65,9 +65,10 @@ flutter:
       fonts:
         - asset: assets/fonts/PlayfairDisplay.ttf
 
-# App launcher icons. Owner: drop a 1024×1024 square PNG at the path below
-# (the foreground should keep ~20% padding for the adaptive circle mask), then
-# run:  dart run flutter_launcher_icons
+# App launcher icons — generated from the brand logo's Z-monogram (white on
+# brand burgundy) by `dart run tool/icon_gen.dart`, then `dart run
+# flutter_launcher_icons`. app_icon.png = full (iOS/legacy);
+# app_icon_foreground.png = padded transparent (Android adaptive).
 flutter_launcher_icons:
   android: true
   ios: true
@@ -75,4 +76,4 @@ flutter_launcher_icons:
   min_sdk_android: 21
   image_path: "assets/branding/app_icon.png"
   adaptive_icon_background: "#9E1B3F"
-  adaptive_icon_foreground: "assets/branding/app_icon.png"
+  adaptive_icon_foreground: "assets/branding/app_icon_foreground.png"

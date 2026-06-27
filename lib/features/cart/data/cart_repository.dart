@@ -4,6 +4,7 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/error/graphql_failure_mapper.dart';
 import '../../../core/graphql/graphql_client.dart';
+import '../../../core/util/media.dart';
 import '../../catalog/domain/money.dart';
 import '../domain/cart.dart';
 import 'cart_queries.dart';
@@ -205,7 +206,9 @@ class CartRepository {
       sku: (product?['sku'] as String?) ?? '',
       name: (product?['name'] as String?) ?? '',
       quantity: (json['quantity'] as num?)?.toInt() ?? 1,
-      imageUrl: (product?['image'] as Map<String, dynamic>?)?['url'] as String?,
+      imageUrl: httpsMediaUrl(
+        (product?['image'] as Map<String, dynamic>?)?['url'] as String?,
+      ),
       unitPrice: _parseMoney(prices?['price'] as Map<String, dynamic>?),
       rowTotal: _parseMoney(prices?['row_total'] as Map<String, dynamic>?),
       options: options,

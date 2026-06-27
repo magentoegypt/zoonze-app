@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/routes.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/theme_mode_controller.dart';
 import '../../../../core/store/store_controller.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../notifications/presentation/notification_settings_controller.dart';
@@ -19,11 +20,29 @@ class SettingsScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final store = ref.watch(storeControllerProvider);
     final promoEnabled = ref.watch(notificationSettingsProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsTitle)),
       body: ListView(
         children: [
+          _SectionHeader(l10n.settingsTheme),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: SegmentedButton<ThemeMode>(
+              showSelectedIcon: false,
+              segments: [
+                ButtonSegment(value: ThemeMode.light, label: Text(l10n.themeWhite)),
+                ButtonSegment(value: ThemeMode.dark, label: Text(l10n.themeBlack)),
+                ButtonSegment(value: ThemeMode.system, label: Text(l10n.themeSystem)),
+              ],
+              selected: {themeMode},
+              onSelectionChanged: (s) =>
+                  ref.read(themeModeProvider.notifier).set(s.first),
+            ),
+          ),
+          const Divider(height: 32),
+
           _SectionHeader(l10n.languageToggleLabel),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),

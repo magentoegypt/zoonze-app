@@ -10,6 +10,7 @@ import '../l10n/l10n.dart';
 import 'notification_routes.dart';
 import 'router.dart';
 import 'theme/app_theme.dart';
+import 'theme/theme_mode_controller.dart';
 
 /// Root widget. Locale, theme (incl. font), and text direction are all driven by
 /// the active store view, so a language switch rebuilds the whole tree. Also
@@ -52,6 +53,7 @@ class _ZoonzeAppState extends ConsumerState<ZoonzeApp> {
   Widget build(BuildContext context) {
     final store = ref.watch(storeControllerProvider);
     final router = ref.watch(routerProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
@@ -67,6 +69,9 @@ class _ZoonzeAppState extends ConsumerState<ZoonzeApp> {
       ],
       theme: AppTheme.light(store.activeLocale),
       darkTheme: AppTheme.dark(store.activeLocale),
+      // Defaults to light (white) — the app no longer follows the OS dark mode
+      // unless the user picks Black/System in Settings.
+      themeMode: themeMode,
       builder: (context, child) => Directionality(
         textDirection: store.isRtl ? TextDirection.rtl : TextDirection.ltr,
         child: child ?? const SizedBox.shrink(),

@@ -4,6 +4,7 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/error/graphql_failure_mapper.dart';
 import '../../../core/graphql/graphql_client.dart';
+import '../../../core/util/media.dart';
 import '../domain/aggregation.dart';
 import '../domain/category.dart';
 import '../domain/money.dart';
@@ -101,12 +102,13 @@ class CatalogRepository {
             as Map<String, dynamic>?;
 
     final gallery = <String>[];
-    final mainImage =
-        (json['image'] as Map<String, dynamic>?)?['url'] as String?;
+    final mainImage = httpsMediaUrl(
+      (json['image'] as Map<String, dynamic>?)?['url'] as String?,
+    );
     if (mainImage != null && mainImage.isNotEmpty) gallery.add(mainImage);
     for (final g in (json['media_gallery'] as List<dynamic>? ?? const [])) {
       if (g is Map<String, dynamic> && g['url'] is String) {
-        gallery.add(g['url'] as String);
+        gallery.add(httpsMediaUrl(g['url'] as String)!);
       }
     }
 
@@ -154,8 +156,9 @@ class CatalogRepository {
               variantMin?['final_price'] as Map<String, dynamic>?,
             ),
             inStock: (product?['stock_status'] as String?) != 'OUT_OF_STOCK',
-            imageUrl:
-                (product?['image'] as Map<String, dynamic>?)?['url'] as String?,
+            imageUrl: httpsMediaUrl(
+              (product?['image'] as Map<String, dynamic>?)?['url'] as String?,
+            ),
           );
         })
         .toList();
@@ -323,7 +326,7 @@ class CatalogRepository {
       uid: (json['uid'] as String?) ?? '',
       name: (json['name'] as String?) ?? '',
       urlKey: (json['url_key'] as String?) ?? '',
-      image: json['image'] as String?,
+      image: httpsMediaUrl(json['image'] as String?),
       productCount: (json['product_count'] as int?) ?? 0,
       includeInMenu: (json['include_in_menu'] as bool?) ?? true,
       children: children,

@@ -20,7 +20,14 @@ final graphqlClientProvider = Provider<GraphQLClient>((ref) {
   final config = ref.watch(appConfigProvider);
   final tokenStore = ref.watch(secureTokenStoreProvider);
 
-  final httpLink = HttpLink(config.graphqlEndpoint);
+  // Set the stable User-Agent at the transport level too (not only via
+  // StoreHeaderLink) so it is guaranteed on every request — without it, the
+  // default `Dart/<ver> (dart:io)` UA goes out, which AWS WAF/bot rules are
+  // likely to block (CLAUDE.md §7). The Store header stays dynamic in the link.
+  final httpLink = HttpLink(
+    config.graphqlEndpoint,
+    defaultHeaders: {'User-Agent': config.userAgent},
+  );
 
   final authLink = AuthLink(
     getToken: () async {

@@ -24,6 +24,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get settingsTitle => 'الإعدادات';
 
   @override
+  String get settingsTheme => 'المظهر';
+
+  @override
+  String get themeWhite => 'أبيض';
+
+  @override
+  String get themeBlack => 'أسود';
+
+  @override
+  String get themeSystem => 'تلقائي';
+
+  @override
   String get actionRetry => 'إعادة المحاولة';
 
   @override

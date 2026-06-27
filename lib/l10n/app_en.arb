@@ -7,6 +7,10 @@
   "languageArabic": "العربية",
   "languageToggleLabel": "Language",
   "settingsTitle": "Settings",
+  "settingsTheme": "Appearance",
+  "themeWhite": "White",
+  "themeBlack": "Black",
+  "themeSystem": "System",
 
   "actionRetry": "Retry",
   "stateLoading": "Loading…",

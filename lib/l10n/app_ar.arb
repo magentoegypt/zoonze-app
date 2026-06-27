@@ -5,6 +5,10 @@
   "languageArabic": "العربية",
   "languageToggleLabel": "اللغة",
   "settingsTitle": "الإعدادات",
+  "settingsTheme": "المظهر",
+  "themeWhite": "أبيض",
+  "themeBlack": "أسود",
+  "themeSystem": "تلقائي",
 
   "actionRetry": "إعادة المحاولة",
   "stateLoading": "جارٍ التحميل…",

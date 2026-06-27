@@ -128,6 +128,30 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get settingsTitle;
 
+  /// No description provided for @settingsTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get settingsTheme;
+
+  /// No description provided for @themeWhite.
+  ///
+  /// In en, this message translates to:
+  /// **'White'**
+  String get themeWhite;
+
+  /// No description provided for @themeBlack.
+  ///
+  /// In en, this message translates to:
+  /// **'Black'**
+  String get themeBlack;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get themeSystem;
+
   /// No description provided for @actionRetry.
   ///
   /// In en, this message translates to:

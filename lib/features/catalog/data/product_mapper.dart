@@ -1,3 +1,4 @@
+import '../../../core/util/media.dart';
 import '../domain/money.dart';
 import '../domain/product.dart';
 
@@ -21,7 +22,7 @@ Product productFromJson(Map<String, dynamic> json) {
     sku: (json['sku'] as String?) ?? '',
     name: (json['name'] as String?) ?? '',
     urlKey: (json['url_key'] as String?) ?? '',
-    imageUrl: image?['url'] as String?,
+    imageUrl: httpsMediaUrl(image?['url'] as String?),
     regularPrice: moneyFromJson(
       minPrice?['regular_price'] as Map<String, dynamic>?,
     ),
