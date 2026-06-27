@@ -10,6 +10,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../core/assets/app_images.dart';
 import '../../../../core/widgets/async_value_view.dart';
 import '../../../../l10n/l10n.dart';
+import '../../data/special_offer_provider.dart';
 import '../../domain/category.dart';
 import '../../domain/product.dart';
 import '../catalog_providers.dart';
@@ -481,10 +482,26 @@ class _ExploreBrands extends StatelessWidget {
   }
 }
 
-/// Promotional offer card (Figma). Copy/code are campaign content — update to
-/// match the live promotion.
-class _SpecialOffer extends StatelessWidget {
+/// Promotional offer card — content comes from the admin "Special Offer Banner"
+/// store config (enabled / text / coupon). Hidden when disabled or absent.
+class _SpecialOffer extends ConsumerWidget {
   const _SpecialOffer();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ref
+        .watch(specialOfferProvider)
+        .maybeWhen(
+          data: (offer) =>
+              offer.isVisible ? _SpecialOfferCard(offer: offer) : const SizedBox.shrink(),
+          orElse: () => const SizedBox.shrink(),
+        );
+  }
+}
+
+class _SpecialOfferCard extends StatelessWidget {
+  const _SpecialOfferCard({required this.offer});
+  final SpecialOffer offer;
 
   @override
   Widget build(BuildContext context) {
@@ -518,44 +535,46 @@ class _SpecialOffer extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  l10n.homeSpecialOfferBody,
+                  offer.text,
                   style: const TextStyle(
                     color: AppColors.inkMuted,
                     fontSize: 13,
                   ),
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    Text(
-                      l10n.homeSpecialOfferCodeLabel,
-                      style: const TextStyle(
-                        color: AppColors.inkMuted,
-                        fontSize: 12,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: AppColors.brandPrimary),
-                      ),
-                      child: const Text(
-                        'BEAUTY25',
-                        style: TextStyle(
-                          color: AppColors.brandPrimary,
-                          fontWeight: FontWeight.w700,
+                if (offer.hasCode) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Text(
+                        l10n.homeSpecialOfferCodeLabel,
+                        style: const TextStyle(
+                          color: AppColors.inkMuted,
                           fontSize: 12,
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: AppColors.brandPrimary),
+                        ),
+                        child: Text(
+                          offer.couponCode,
+                          style: const TextStyle(
+                            color: AppColors.brandPrimary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
