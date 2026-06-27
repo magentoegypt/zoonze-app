@@ -1,6 +1,8 @@
 name: Release · Android
 
-# Builds a signed Play app bundle. Run from the Actions tab (choose a flavor).
+# Builds an Android APK and/or Play app bundle. Run from the Actions tab.
+#   - apk → a single installable .apk (for Diawi / direct install / testing)
+#   - aab → the Play Store app bundle (.aab; NOT installable directly / on Diawi)
 on:
   workflow_dispatch:
     inputs:
@@ -9,6 +11,11 @@ on:
         type: choice
         default: prod
         options: [prod, staging, dev]
+      format:
+        description: "Output (apk = Diawi/install, aab = Play Store)"
+        type: choice
+        default: apk
+        options: [apk, aab, both]
 
 jobs:
   build:
@@ -49,7 +56,28 @@ jobs:
           storeFile=release.jks
           EOF
 
+      # APK — a single installable file for Diawi / direct install.
+      - name: Build APK
+        if: ${{ inputs.format == 'apk' || inputs.format == 'both' }}
+        env:
+          FLAVOR: ${{ inputs.flavor }}
+        run: >
+          flutter build apk --release
+          --flavor "$FLAVOR"
+          -t "lib/main_$FLAVOR.dart"
+          --dart-define-from-file="config/$FLAVOR.json"
+
+      - name: Upload APK
+        if: ${{ inputs.format == 'apk' || inputs.format == 'both' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk-${{ inputs.flavor }}
+          path: build/app/outputs/flutter-apk/*-release.apk
+          if-no-files-found: error
+
+      # AAB — Play Store app bundle (not installable directly / on Diawi).
       - name: Build app bundle
+        if: ${{ inputs.format == 'aab' || inputs.format == 'both' }}
         env:
           FLAVOR: ${{ inputs.flavor }}
         run: >
@@ -58,7 +86,9 @@ jobs:
           -t "lib/main_$FLAVOR.dart"
           --dart-define-from-file="config/$FLAVOR.json"
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload app bundle
+        if: ${{ inputs.format == 'aab' || inputs.format == 'both' }}
+        uses: actions/upload-artifact@v4
         with:
           name: appbundle-${{ inputs.flavor }}
           path: build/app/outputs/bundle/${{ inputs.flavor }}Release/*.aab

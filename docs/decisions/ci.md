@@ -24,10 +24,15 @@ so the release workflows don't inject it. Only signing material comes from secre
 The job decodes the keystore + writes `android/key.properties`; the Gradle config
 already reads it. Output: `appbundle-<flavor>` artifact → upload to Play Console.
 
+**Output format** (the `format` input): `apk` (default) builds a single
+installable **`.apk`** — use this for **Diawi** / direct install / device
+testing; `aab` builds the Play Store **app bundle** (NOT installable directly
+or on Diawi); `both` builds each. Artifacts: `apk-<flavor>` / `appbundle-<flavor>`.
+
 **Without the secrets** the keystore step is skipped and the build falls back to
-the **debug key** (a warning is logged) — the pipeline still produces an AAB so
-you can validate the build, but it is **not** Play-uploadable until the `ANDROID_*`
-secrets are set.
+the **debug key** (a warning is logged) — the build still completes (a debug-
+signed APK installs fine for testing/Diawi), but it is **not** Play-uploadable
+until the `ANDROID_*` secrets are set.
 
 > **Core library desugaring** is enabled in `android/app/build.gradle.kts`
 > (`isCoreLibraryDesugaringEnabled = true` + `desugar_jdk_libs`), required by
