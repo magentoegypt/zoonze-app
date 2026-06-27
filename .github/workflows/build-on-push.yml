@@ -18,9 +18,9 @@ concurrency:
 jobs:
   android-apk:
     runs-on: ubuntu-latest
-    # Gate the Android build on the iOS job: don't start the APK until the iOS
-    # IPA job has finished. `ios` is continue-on-error, so this waits for iOS to
-    # complete (pass or fail) rather than requiring it to pass.
+    # Gate the Android build on the iOS job: the APK only builds after the iOS
+    # job SUCCEEDS. If iOS errors, this job is skipped (the iOS job is no longer
+    # continue-on-error), so Android won't run on a broken iOS build.
     needs: ios
     steps:
       - uses: actions/checkout@v4
@@ -68,15 +68,13 @@ jobs:
           path: build/app/outputs/flutter-apk/*-release.apk
           if-no-files-found: error
 
-  # Always runs on macOS (uses macOS minutes). Produces a signed ad-hoc IPA when
+  # Runs on macOS (uses macOS minutes). Produces a signed ad-hoc IPA when
   # ios/signing/ holds a .p12 + .mobileprovision and IOS_P12_PASSWORD is set;
   # otherwise an unsigned IPA. (See ios/signing/README.md — no fastlane match.)
-  # Non-blocking until iOS builds reliably: a failure here does NOT fail the
-  # run, so the Android APK stays the dependable artifact while iOS is brought
-  # online. Flip continue-on-error off once iOS succeeds.
+  # Blocking: a failure here fails the run and skips the gated Android job, so
+  # Android won't build on top of a broken iOS build.
   ios:
     runs-on: macos-15
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 

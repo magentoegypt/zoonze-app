@@ -1,9 +1,10 @@
 name: CI
 
+# Manual-only: CI no longer runs automatically on push/PR. The "Build · main
+# (APK + IPA)" workflow is the one that runs on every push. Run this by hand
+# from the Actions tab when you want analyze + tests.
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   analyze-test:
