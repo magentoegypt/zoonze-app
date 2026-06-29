@@ -3,15 +3,30 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:zoonze_app/core/config/store_contact.dart';
 import 'package:zoonze_app/core/storage/local_cache.dart';
 import 'package:zoonze_app/core/storage/locale_prefs.dart';
 import 'package:zoonze_app/core/storage/secure_token_store.dart';
+import 'package:zoonze_app/features/account/data/account_repository.dart';
 import 'package:zoonze_app/features/account/presentation/account_screen.dart';
 import 'package:zoonze_app/features/auth/data/auth_repository.dart';
+import 'package:zoonze_app/features/cart/data/cart_repository.dart';
 import 'package:zoonze_app/features/catalog/data/catalog_repository.dart';
+import 'package:zoonze_app/features/wishlist/data/wishlist_repository.dart';
 import 'package:zoonze_app/l10n/l10n.dart';
 
 import '../../support/fakes.dart';
+
+const _testContact = StoreContact(
+  company: 'Zoonze',
+  address: 'Dubai, UAE',
+  phone: '+971500000000',
+  phoneDisplay: '+971 50 000 0000',
+  email: 'info@zoonze.com',
+  hours: '',
+  whatsapp: 'https://wa.me/971500000000',
+  website: 'https://zoonze.com',
+);
 
 Widget _harness({String? token, String locale = 'en'}) {
   final router = GoRouter(
@@ -36,6 +51,12 @@ Widget _harness({String? token, String locale = 'en'}) {
       localCacheProvider.overrideWithValue(FakeLocalCache()),
       localePrefsProvider.overrideWithValue(FakeLocalePrefs(locale)),
       catalogRepositoryProvider.overrideWithValue(FakeCatalogRepository()),
+      storeContactProvider.overrideWithValue(_testContact),
+      // Keep the authenticated view's quick-stats / nav counts offline so no
+      // real GraphQL query schedules a retry-backoff timer.
+      customerOrderCountProvider.overrideWith((ref) => 0),
+      cartRepositoryProvider.overrideWithValue(FakeCartRepository()),
+      wishlistRepositoryProvider.overrideWithValue(FakeWishlistRepository()),
     ],
     child: MaterialApp.router(
       routerConfig: router,
@@ -59,7 +80,7 @@ void main() {
     await tester.pumpWidget(_harness(token: null));
     await tester.pumpAndSettle();
 
-    expect(find.text('Your ZoonZE account'), findsOneWidget);
+    expect(find.text('Your Zoonze account'), findsOneWidget);
     expect(find.text('Sign In'), findsWidgets);
     expect(find.text('Create Account'), findsWidgets);
   });
@@ -75,7 +96,7 @@ void main() {
 
     expect(find.text('Layla Hassan'), findsOneWidget);
     expect(find.text('layla@example.com'), findsOneWidget);
-    expect(find.text('Sign Out'), findsOneWidget);
+    expect(find.text('Log Out'), findsOneWidget);
   });
 
   testWidgets('renders translated + RTL in Arabic', (tester) async {
@@ -85,10 +106,10 @@ void main() {
     await tester.pumpWidget(_harness(token: 'persisted', locale: 'ar'));
     await tester.pumpAndSettle();
 
-    expect(find.text('الإشعارات'), findsOneWidget); // Notifications entry
-    expect(find.text('تسجيل الخروج'), findsOneWidget); // Sign Out
+    expect(find.text('طلباتي'), findsOneWidget); // My Orders entry
+    expect(find.text('تسجيل الخروج'), findsOneWidget); // Log Out
     expect(
-      Directionality.of(tester.element(find.text('الإشعارات'))),
+      Directionality.of(tester.element(find.text('طلباتي'))),
       TextDirection.rtl,
     );
   });
