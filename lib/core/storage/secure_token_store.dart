@@ -5,7 +5,18 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 /// shared_preferences.
 class SecureTokenStore {
   SecureTokenStore([FlutterSecureStorage? storage])
-    : _storage = storage ?? const FlutterSecureStorage();
+    : _storage =
+          storage ??
+          const FlutterSecureStorage(
+            // iOS: keep the token readable after the first unlock (incl. while
+            // backgrounded / right after launch). The plugin's default
+            // (`whenUnlocked`) can intermittently fail to read on a locked or
+            // freshly-relaunched device, which surfaces as "sign-in not
+            // working" on iOS. Android keeps its default backend.
+            iOptions: IOSOptions(
+              accessibility: KeychainAccessibility.first_unlock,
+            ),
+          );
 
   final FlutterSecureStorage _storage;
   static const String _tokenKey = 'customer_token';

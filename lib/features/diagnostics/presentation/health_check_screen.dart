@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/failure.dart';
+import '../../../core/notifications/notification_service.dart';
 import '../../../core/store/store_controller.dart';
 import '../../../core/widgets/failure_message.dart';
 import '../../../l10n/l10n.dart';
@@ -63,6 +65,8 @@ class HealthCheckScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 24),
+            const _PushDiagnostics(),
+            const SizedBox(height: 24),
             if (store.stores.isNotEmpty) ...[
               Text(
                 l10n.availableStoresTitle,
@@ -116,6 +120,124 @@ class _StoreConfigCard extends StatelessWidget {
                   ],
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Push / FCM diagnostics — surfaces the FCM availability + registration token
+/// so it can be copied and pasted into Firebase Console → "Send test message"
+/// to confirm APNs/FCM delivery on a real device.
+class _PushDiagnostics extends StatefulWidget {
+  const _PushDiagnostics();
+
+  @override
+  State<_PushDiagnostics> createState() => _PushDiagnosticsState();
+}
+
+class _PushDiagnosticsState extends State<_PushDiagnostics> {
+  late Future<String?> _token;
+
+  @override
+  void initState() {
+    super.initState();
+    _token = NotificationService.instance.token();
+  }
+
+  void _refresh() =>
+      setState(() => _token = NotificationService.instance.token());
+
+  Future<void> _copy(String token) async {
+    await Clipboard.setData(ClipboardData(text: token));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).actionLinkCopied)),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final available = NotificationService.instance.fcmAvailable;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsetsDirectional.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Push notifications (FCM)',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Refresh',
+                  icon: const Icon(Icons.refresh),
+                  onPressed: _refresh,
+                ),
+              ],
+            ),
+            Text('FCM available: ${available ? 'yes' : 'no'}'),
+            const SizedBox(height: 8),
+            FutureBuilder<String?>(
+              future: _token,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const Text('Fetching FCM token…');
+                }
+                final token = snapshot.data;
+                if (token == null || token.isEmpty) {
+                  return const Text(
+                    'FCM token: unavailable — FCM is disabled or the APNs token '
+                    "isn't ready yet (iOS). Check GoogleService-Info.plist / "
+                    'the APNs key, then Refresh.',
+                  );
+                }
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'FCM token (tap to copy):',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 6),
+                    InkWell(
+                      onTap: () => _copy(token),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: SelectableText(
+                          token,
+                          style: const TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: AlignmentDirectional.centerEnd,
+                      child: OutlinedButton.icon(
+                        onPressed: () => _copy(token),
+                        icon: const Icon(Icons.copy, size: 18),
+                        label: Text(l10n.actionCopy),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
           ],
         ),
       ),

@@ -110,10 +110,20 @@ class NotificationService {
     try {
       await Firebase.initializeApp();
       _fcmAvailable = true;
-    } catch (error) {
+    } catch (error, stack) {
       // No Firebase config bundled — FCM stays disabled (see docs/decisions).
       _fcmAvailable = false;
-      debugPrint('FCM disabled (no Firebase config): $error');
+      debugPrint('FCM disabled (Firebase.initializeApp failed): $error');
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        // On iOS a real config can still fail init if GoogleService-Info.plist
+        // isn't in the Runner target's Copy Bundle Resources, or the running
+        // flavor's bundle id doesn't match the plist's BUNDLE_ID.
+        debugPrint(
+          'iOS Firebase init failed — verify GoogleService-Info.plist is in '
+          'the Runner target and its BUNDLE_ID matches the running flavor.\n'
+          '$stack',
+        );
+      }
       return;
     }
     try {
@@ -173,7 +183,14 @@ class NotificationService {
           icon: 'ic_stat_notify',
           color: Color(0xFF9E1B3F),
         ),
-        iOS: const DarwinNotificationDetails(),
+        // Present a banner/sound even while the app is foregrounded (iOS
+        // suppresses foreground pushes by default).
+        iOS: const DarwinNotificationDetails(
+          presentAlert: true,
+          presentBanner: true,
+          presentSound: true,
+          presentBadge: true,
+        ),
       ),
     );
     // Surface to the local inbox.
@@ -190,8 +207,33 @@ class NotificationService {
     await FirebaseMessaging.instance.unsubscribeFromTopic(topic);
   }
 
-  Future<String?> token() async =>
-      _fcmAvailable ? FirebaseMessaging.instance.getToken() : null;
+  /// The FCM registration token, or null when unavailable.
+  ///
+  /// On iOS/macOS `getToken()` cannot resolve until APNs has handed Firebase a
+  /// device token — calling it too early (e.g. at app launch, right after
+  /// login) throws `apns-token-not-set` or returns null, which is why the
+  /// device token wasn't registering on iOS. So we wait briefly for the APNs
+  /// token first and never throw; if it's still not ready, [onTokenRefresh]
+  /// drives a later registration. Android has no APNs step and is unaffected.
+  Future<String?> token() async {
+    if (!_fcmAvailable) return null;
+    final messaging = FirebaseMessaging.instance;
+    try {
+      if (defaultTargetPlatform == TargetPlatform.iOS ||
+          defaultTargetPlatform == TargetPlatform.macOS) {
+        var apns = await messaging.getAPNSToken();
+        for (var i = 0; i < 5 && apns == null; i++) {
+          await Future<void>.delayed(const Duration(milliseconds: 500));
+          apns = await messaging.getAPNSToken();
+        }
+        if (apns == null) return null; // not ready yet — onTokenRefresh catches up
+      }
+      return await messaging.getToken();
+    } catch (error) {
+      debugPrint('FCM getToken unavailable: $error');
+      return null;
+    }
+  }
 
   /// Emits whenever FCM rotates the device token, so the app can re-register it
   /// with the backend. Empty stream when FCM is unavailable.
