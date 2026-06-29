@@ -429,6 +429,23 @@ class AppLocalizationsAr extends AppLocalizations {
   String get accountStatVouchers => 'القسائم';
 
   @override
+  String get aboutBody =>
+      'زونزي وجهتك للجمال والعطور الأصلية في الإمارات. منذ 2008 نقدّم عطورًا ومنتجات عناية بالبشرة ومكياجًا ومنتجات للشعر أصلية 100% من كبرى العلامات العالمية الفاخرة — بأسعار تنافسية وتوصيل سريع وخدمة موثوقة.';
+
+  @override
+  String get aboutCompany => 'زونزي لتجارة العطور ومستحضرات التجميل ذ.م.م';
+
+  @override
+  String get aboutAddress =>
+      'برج HHHR، شارع الشيخ زايد، مركز التجارة الأول، دبي، الإمارات العربية المتحدة';
+
+  @override
+  String get aboutFollowUs => 'تابعنا';
+
+  @override
+  String get aboutWeAccept => 'نقبل الدفع عبر';
+
+  @override
   String get helpIntro =>
       'إجابات عن الأسئلة الشائعة. ما زلت بحاجة إلى مساعدة؟ تواصل مع فريقنا أدناه.';
 
@@ -580,6 +597,37 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get notificationsOrdersNote =>
       'تُرسَل تحديثات الطلبات دائمًا لعمليات الشراء الخاصة بك.';
+
+  @override
+  String get notificationsMarkAllRead => 'تعليم الكل كمقروء';
+
+  @override
+  String get notificationsEmptyTitle => 'لا توجد إشعارات بعد';
+
+  @override
+  String get notificationsEmptyBody =>
+      'ستظهر هنا تحديثات الطلبات والعروض وانخفاضات الأسعار.';
+
+  @override
+  String get notifJustNow => 'الآن';
+
+  @override
+  String notifMinutesAgo(int count) {
+    return 'قبل $count دقيقة';
+  }
+
+  @override
+  String notifHoursAgo(int count) {
+    return 'قبل $count ساعة';
+  }
+
+  @override
+  String get notifYesterday => 'أمس';
+
+  @override
+  String notifDaysAgo(int count) {
+    return 'قبل $count يوم';
+  }
 
   @override
   String get cartTitle => 'السلة';
@@ -888,6 +936,27 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get profileSaved => 'تم تحديث الملف الشخصي';
+
+  @override
+  String get profilePersonalInfo => 'المعلومات الشخصية';
+
+  @override
+  String get profilePreferences => 'التفضيلات';
+
+  @override
+  String get profileChangePhoto => 'تغيير الصورة';
+
+  @override
+  String get profilePhotoUnavailable => 'رفع صورة الملف الشخصي غير متاح بعد.';
+
+  @override
+  String get profilePushNotifications => 'الإشعارات';
+
+  @override
+  String get profileEmailOffers => 'عروض البريد الإلكتروني';
+
+  @override
+  String get profileSaveChanges => 'حفظ التغييرات';
 
   @override
   String get profilePasswordSection => 'تغيير كلمة المرور';

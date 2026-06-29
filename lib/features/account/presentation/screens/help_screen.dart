@@ -36,6 +36,8 @@ class _HelpScreenState extends State<HelpScreen> {
       (l10n.helpQ6, l10n.helpA6),
       (l10n.helpQ7, l10n.helpA7),
       (l10n.helpQ8, l10n.helpA8),
+      (l10n.helpQPayments, l10n.helpAPayments),
+      (l10n.helpQOrders, l10n.helpAOrders),
       (l10n.helpQ9, l10n.helpA9),
       (l10n.helpQ10, l10n.helpA10),
     ];

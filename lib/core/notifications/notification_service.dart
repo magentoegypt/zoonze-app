@@ -11,6 +11,19 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 @pragma('vm:entry-point')
 Future<void> firebaseBackgroundHandler(RemoteMessage message) async {}
 
+/// A received notification surfaced to the app for the local inbox.
+class NotificationMessage {
+  const NotificationMessage({
+    this.title,
+    this.body,
+    this.data = const <String, dynamic>{},
+  });
+
+  final String? title;
+  final String? body;
+  final Map<String, dynamic> data;
+}
+
 /// App-side push plumbing. Local notifications work standalone; FCM is enabled
 /// only when a Firebase config (google-services.json / GoogleService-Info.plist)
 /// is present, otherwise it degrades to a no-op so the app still runs.
@@ -31,6 +44,26 @@ class NotificationService {
       StreamController<Map<String, dynamic>>.broadcast();
 
   Stream<Map<String, dynamic>> get onNotificationOpened => _opened.stream;
+
+  /// Every received notification (foreground push, or a tapped/cold-start one),
+  /// for persisting into the local inbox. UI-agnostic.
+  final StreamController<NotificationMessage> _received =
+      StreamController<NotificationMessage>.broadcast();
+
+  Stream<NotificationMessage> get onNotificationReceived => _received.stream;
+
+  void _ingest(RemoteMessage message) {
+    final notification = message.notification;
+    final data = Map<String, dynamic>.from(message.data);
+    if (notification == null && data.isEmpty) return;
+    _received.add(
+      NotificationMessage(
+        title: notification?.title ?? data['title'] as String?,
+        body: notification?.body ?? data['body'] as String?,
+        data: data,
+      ),
+    );
+  }
 
   Map<String, dynamic>? _initial;
 
@@ -87,12 +120,19 @@ class NotificationService {
       FirebaseMessaging.onBackgroundMessage(firebaseBackgroundHandler);
       await FirebaseMessaging.instance.requestPermission();
       FirebaseMessaging.onMessage.listen(_showRemote);
-      // Tapped while backgrounded → navigate. Cold-start tap is captured once
-      // via getInitialMessage and replayed after the first frame.
-      FirebaseMessaging.onMessageOpenedApp.listen((m) => _emit(m.data));
+      // Tapped while backgrounded → navigate (and record in the inbox). Cold-
+      // start tap is captured once via getInitialMessage and replayed after the
+      // first frame.
+      FirebaseMessaging.onMessageOpenedApp.listen((m) {
+        _ingest(m);
+        _emit(m.data);
+      });
       final initial = await FirebaseMessaging.instance.getInitialMessage();
-      if (initial != null && initial.data.isNotEmpty) {
-        _initial = Map<String, dynamic>.from(initial.data);
+      if (initial != null) {
+        _ingest(initial);
+        if (initial.data.isNotEmpty) {
+          _initial = Map<String, dynamic>.from(initial.data);
+        }
       }
     } catch (error) {
       debugPrint('FCM setup error: $error');
@@ -136,6 +176,8 @@ class NotificationService {
         iOS: const DarwinNotificationDetails(),
       ),
     );
+    // Surface to the local inbox.
+    _ingest(message);
   }
 
   Future<void> subscribeToTopic(String topic) async {

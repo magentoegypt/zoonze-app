@@ -7,6 +7,7 @@ import '../features/account/presentation/screens/address_form_screen.dart';
 import '../features/account/presentation/screens/addresses_screen.dart';
 import '../features/account/presentation/screens/edit_profile_screen.dart';
 import '../features/account/domain/order.dart';
+import '../features/account/presentation/screens/about_screen.dart';
 import '../features/account/presentation/screens/help_screen.dart';
 import '../features/account/presentation/screens/order_detail_screen.dart';
 import '../features/account/presentation/screens/order_tracking_screen.dart';
@@ -26,7 +27,7 @@ import '../features/catalog/presentation/screens/plp_screen.dart';
 import '../features/catalog/presentation/screens/product_detail_screen.dart';
 import '../features/catalog/presentation/screens/search_screen.dart';
 import '../features/catalog/presentation/screens/write_review_screen.dart';
-import '../features/notifications/presentation/notification_settings_screen.dart';
+import '../features/notifications/presentation/notifications_screen.dart';
 import '../features/wishlist/presentation/screens/wishlist_screen.dart';
 import '../features/diagnostics/presentation/health_check_screen.dart';
 import '../features/onboarding/presentation/launch_splash_screen.dart';
@@ -145,11 +146,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoutes.notifications,
-        builder: (context, state) => const NotificationSettingsScreen(),
+        builder: (context, state) => const NotificationsScreen(),
       ),
       GoRoute(
         path: AppRoutes.help,
         builder: (context, state) => const HelpScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.about,
+        builder: (context, state) => const AboutScreen(),
       ),
       GoRoute(
         path: AppRoutes.settings,

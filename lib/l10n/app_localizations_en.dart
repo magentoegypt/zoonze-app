@@ -432,6 +432,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountStatVouchers => 'Vouchers';
 
   @override
+  String get aboutBody =>
+      'Zoonze is your destination for authentic beauty and fragrance in the UAE. Since 2008 we\'ve offered 100% genuine perfumes, skincare, makeup and haircare from the world\'s leading luxury brands — with competitive prices, fast delivery and trusted service.';
+
+  @override
+  String get aboutCompany => 'Zoonze Perfume & Cosmetics Trading LLC';
+
+  @override
+  String get aboutAddress =>
+      'HHHR Tower, Sheikh Zayed Road, Trade Center First, Dubai, United Arab Emirates';
+
+  @override
+  String get aboutFollowUs => 'Follow Us';
+
+  @override
+  String get aboutWeAccept => 'We Accept';
+
+  @override
   String get helpIntro =>
       'Answers to common questions. Still stuck? Reach our team below.';
 
@@ -585,6 +602,55 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get notificationsOrdersNote =>
       'Order updates are always sent for your purchases.';
+
+  @override
+  String get notificationsMarkAllRead => 'Mark all as read';
+
+  @override
+  String get notificationsEmptyTitle => 'No notifications yet';
+
+  @override
+  String get notificationsEmptyBody =>
+      'Order updates, offers and price drops will show up here.';
+
+  @override
+  String get notifJustNow => 'Just now';
+
+  @override
+  String notifMinutesAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count min ago',
+      one: '1 min ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String notifHoursAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hours ago',
+      one: '1 hour ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get notifYesterday => 'Yesterday';
+
+  @override
+  String notifDaysAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days ago',
+      one: '1 day ago',
+    );
+    return '$_temp0';
+  }
 
   @override
   String get cartTitle => 'Cart';
@@ -900,6 +966,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileSaved => 'Profile updated';
+
+  @override
+  String get profilePersonalInfo => 'Personal Information';
+
+  @override
+  String get profilePreferences => 'Preferences';
+
+  @override
+  String get profileChangePhoto => 'Change Photo';
+
+  @override
+  String get profilePhotoUnavailable =>
+      'Profile photo upload isn\'t available yet.';
+
+  @override
+  String get profilePushNotifications => 'Push Notifications';
+
+  @override
+  String get profileEmailOffers => 'Email Offers';
+
+  @override
+  String get profileSaveChanges => 'Save Changes';
 
   @override
   String get profilePasswordSection => 'Change Password';

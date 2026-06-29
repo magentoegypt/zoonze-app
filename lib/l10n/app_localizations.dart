@@ -902,6 +902,36 @@ abstract class AppLocalizations {
   /// **'Vouchers'**
   String get accountStatVouchers;
 
+  /// No description provided for @aboutBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoonze is your destination for authentic beauty and fragrance in the UAE. Since 2008 we\'ve offered 100% genuine perfumes, skincare, makeup and haircare from the world\'s leading luxury brands — with competitive prices, fast delivery and trusted service.'**
+  String get aboutBody;
+
+  /// No description provided for @aboutCompany.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoonze Perfume & Cosmetics Trading LLC'**
+  String get aboutCompany;
+
+  /// No description provided for @aboutAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'HHHR Tower, Sheikh Zayed Road, Trade Center First, Dubai, United Arab Emirates'**
+  String get aboutAddress;
+
+  /// No description provided for @aboutFollowUs.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow Us'**
+  String get aboutFollowUs;
+
+  /// No description provided for @aboutWeAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'We Accept'**
+  String get aboutWeAccept;
+
   /// No description provided for @helpIntro.
   ///
   /// In en, this message translates to:
@@ -1171,6 +1201,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Order updates are always sent for your purchases.'**
   String get notificationsOrdersNote;
+
+  /// No description provided for @notificationsMarkAllRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark all as read'**
+  String get notificationsMarkAllRead;
+
+  /// No description provided for @notificationsEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No notifications yet'**
+  String get notificationsEmptyTitle;
+
+  /// No description provided for @notificationsEmptyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Order updates, offers and price drops will show up here.'**
+  String get notificationsEmptyBody;
+
+  /// No description provided for @notifJustNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Just now'**
+  String get notifJustNow;
+
+  /// No description provided for @notifMinutesAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 min ago} other{{count} min ago}}'**
+  String notifMinutesAgo(int count);
+
+  /// No description provided for @notifHoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 hour ago} other{{count} hours ago}}'**
+  String notifHoursAgo(int count);
+
+  /// No description provided for @notifYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get notifYesterday;
+
+  /// No description provided for @notifDaysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day ago} other{{count} days ago}}'**
+  String notifDaysAgo(int count);
 
   /// No description provided for @cartTitle.
   ///
@@ -1699,6 +1777,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Profile updated'**
   String get profileSaved;
+
+  /// No description provided for @profilePersonalInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal Information'**
+  String get profilePersonalInfo;
+
+  /// No description provided for @profilePreferences.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferences'**
+  String get profilePreferences;
+
+  /// No description provided for @profileChangePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Photo'**
+  String get profileChangePhoto;
+
+  /// No description provided for @profilePhotoUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile photo upload isn\'t available yet.'**
+  String get profilePhotoUnavailable;
+
+  /// No description provided for @profilePushNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Push Notifications'**
+  String get profilePushNotifications;
+
+  /// No description provided for @profileEmailOffers.
+  ///
+  /// In en, this message translates to:
+  /// **'Email Offers'**
+  String get profileEmailOffers;
+
+  /// No description provided for @profileSaveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get profileSaveChanges;
 
   /// No description provided for @profilePasswordSection.
   ///
