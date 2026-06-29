@@ -1,25 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/config/store_contact.dart';
 import '../../core/util/launch.dart';
 import '../../core/validation/validators.dart';
 import '../../core/widgets/brand_logo.dart';
+import '../../core/widgets/social_icon.dart';
 import '../../l10n/l10n.dart';
 import '../routes.dart';
 import '../theme/app_colors.dart';
 
 /// Marketing footer shown on content screens (home, PLP, PDP, cart, …) in both
-/// EN and AR. Links navigate to in-app destinations (categories, Help) or the
-/// website; the newsletter validates the email and confirms locally.
-class MarketingFooter extends StatefulWidget {
+/// EN and AR. Social links + website come from admin config
+/// ([storeContactProvider]); other links navigate in-app; the newsletter
+/// validates the email and confirms locally.
+class MarketingFooter extends ConsumerStatefulWidget {
   const MarketingFooter({super.key});
 
   @override
-  State<MarketingFooter> createState() => _MarketingFooterState();
+  ConsumerState<MarketingFooter> createState() => _MarketingFooterState();
 }
 
-class _MarketingFooterState extends State<MarketingFooter> {
-  static const String _websiteUrl = 'https://zoonze.com';
+class _MarketingFooterState extends ConsumerState<MarketingFooter> {
   final TextEditingController _newsletter = TextEditingController();
 
   @override
@@ -40,10 +43,13 @@ class _MarketingFooterState extends State<MarketingFooter> {
     messenger.showSnackBar(SnackBar(content: Text(l10n.footerSubscribed)));
   }
 
-  Future<void> _openWebsite() async {
+  Future<void> _openWebsite() =>
+      _openUrl(ref.read(storeContactProvider).website);
+
+  Future<void> _openUrl(String url) async {
     final messenger = ScaffoldMessenger.of(context);
     final l10n = AppLocalizations.of(context);
-    if (!await launchExternalUri(Uri.parse(_websiteUrl))) {
+    if (!await launchExternalUri(Uri.parse(url))) {
       messenger.showSnackBar(SnackBar(content: Text(l10n.errorGeneric)));
     }
   }
@@ -51,6 +57,7 @@ class _MarketingFooterState extends State<MarketingFooter> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final socials = ref.watch(storeContactProvider).socials;
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(top: 32),
@@ -66,16 +73,17 @@ class _MarketingFooterState extends State<MarketingFooter> {
             style: const TextStyle(color: Colors.white70, height: 1.4),
           ),
           const SizedBox(height: 20),
-          // Social row — brand presence. Links open the website until the real
-          // social URLs are provided (no fabricated handles).
-          Row(
-            children: [
-              _SocialButton(icon: Icons.camera_alt_outlined, onTap: _openWebsite),
-              _SocialButton(label: 'X', onTap: _openWebsite),
-              _SocialButton(icon: Icons.ondemand_video, onTap: _openWebsite),
-              _SocialButton(icon: Icons.facebook, onTap: _openWebsite),
-            ],
-          ),
+          // Social row — admin-configured links (hidden when none are set).
+          if (socials.isNotEmpty)
+            Row(
+              children: [
+                for (final s in socials)
+                  _SocialButton(
+                    icon: socialIconFor(s.key),
+                    onTap: () => _openUrl(s.url),
+                  ),
+              ],
+            ),
           const SizedBox(height: 28),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,21 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zoonze_app/app/shell/marketing_footer.dart';
+import 'package:zoonze_app/core/config/store_contact.dart';
 import 'package:zoonze_app/l10n/l10n.dart';
+
+const _testContact = StoreContact(
+  company: 'Zoonze Perfume & Cosmetics Trading LLC',
+  address: 'HHHR Tower, Dubai, UAE',
+  phone: '+971500000000',
+  phoneDisplay: '+971 50 000 0000',
+  email: 'info@zoonze.com',
+  hours: '',
+  whatsapp: 'https://wa.me/971500000000',
+  website: 'https://zoonze.com',
+  facebook: 'https://facebook.com/zoonze',
+  instagram: 'https://instagram.com/zoonze',
+);
 
 Future<void> _pump(WidgetTester tester) async {
   await tester.pumpWidget(
-    MaterialApp(
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: const Scaffold(
-        body: SingleChildScrollView(child: MarketingFooter()),
+    ProviderScope(
+      overrides: [storeContactProvider.overrideWithValue(_testContact)],
+      child: MaterialApp(
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const Scaffold(
+          body: SingleChildScrollView(child: MarketingFooter()),
+        ),
       ),
     ),
   );

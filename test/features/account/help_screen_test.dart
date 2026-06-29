@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:zoonze_app/core/config/store_contact.dart';
 import 'package:zoonze_app/core/storage/local_cache.dart';
 import 'package:zoonze_app/core/storage/locale_prefs.dart';
 import 'package:zoonze_app/core/storage/secure_token_store.dart';
@@ -10,6 +11,17 @@ import 'package:zoonze_app/features/account/presentation/screens/help_screen.dar
 import 'package:zoonze_app/l10n/l10n.dart';
 
 import '../../support/fakes.dart';
+
+const _testContact = StoreContact(
+  company: 'Zoonze',
+  address: 'Dubai, UAE',
+  phone: '+971500000000',
+  phoneDisplay: '+971 50 000 0000',
+  email: 'info@zoonze.com',
+  hours: '',
+  whatsapp: 'https://wa.me/971500000000',
+  website: 'https://zoonze.com',
+);
 
 Future<void> _pump(WidgetTester tester, {String locale = 'en'}) async {
   await tester.binding.setSurfaceSize(const Size(450, 2400));
@@ -29,6 +41,7 @@ Future<void> _pump(WidgetTester tester, {String locale = 'en'}) async {
         localCacheProvider.overrideWithValue(FakeLocalCache()),
         localePrefsProvider.overrideWithValue(FakeLocalePrefs(locale)),
         secureTokenStoreProvider.overrideWithValue(FakeSecureTokenStore()),
+        storeContactProvider.overrideWithValue(_testContact),
       ],
       child: MaterialApp.router(
         routerConfig: router,

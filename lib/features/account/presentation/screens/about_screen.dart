@@ -5,25 +5,23 @@ import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/routes.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/app_info.dart';
+import '../../../../core/config/store_contact.dart';
 import '../../../../core/util/launch.dart';
 import '../../../../core/widgets/brand_logo.dart';
+import '../../../../core/widgets/social_icon.dart';
 import '../../../../l10n/l10n.dart';
 
-/// About Zoonze — brand intro, company + contact details (real store data),
-/// social links, accepted payment methods, and the app version. Reached from
+/// About Zoonze — brand intro, company + contact details, social links,
+/// accepted payment methods, and the app version. Contact details + social
+/// links come from admin config ([storeContactProvider]). Reached from
 /// Account → About Zoonze.
 class AboutScreen extends ConsumerWidget {
   const AboutScreen({super.key});
 
-  static const String _phone = '+971505104167';
-  static const String _phoneDisplay = '+971 50 510 4167';
-  static const String _email = 'info@zoonze.com';
-  static const String _whatsapp = 'https://wa.me/971505104167';
-  static const String _website = 'https://zoonze.com';
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final c = ref.watch(storeContactProvider);
     final version = ref
         .watch(appVersionProvider)
         .maybeWhen(data: (v) => v, orElse: () => null);
@@ -81,7 +79,7 @@ class AboutScreen extends ConsumerWidget {
                     child: Align(
                       alignment: AlignmentDirectional.centerStart,
                       child: Text(
-                        l10n.aboutCompany,
+                        c.company,
                         style: const TextStyle(
                           fontWeight: FontWeight.w700,
                           fontSize: 15,
@@ -93,53 +91,60 @@ class AboutScreen extends ConsumerWidget {
                   const Divider(height: 1, color: AppColors.borderDefault),
                   _InfoRow(
                     icon: Icons.location_on_outlined,
-                    text: l10n.aboutAddress,
+                    text: c.address,
                     onTap: () => _open(
                       context,
                       Uri.parse(
-                        'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(l10n.aboutAddress)}',
+                        'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(c.address)}',
                       ),
                     ),
                   ),
                   const Divider(height: 1, color: AppColors.borderDefault),
                   _InfoRow(
                     icon: Icons.call_outlined,
-                    text: _phoneDisplay,
+                    text: c.phoneDisplay,
                     onTap: () =>
-                        _open(context, Uri(scheme: 'tel', path: _phone)),
+                        _open(context, Uri(scheme: 'tel', path: c.phone)),
                   ),
                   const Divider(height: 1, color: AppColors.borderDefault),
                   _InfoRow(
                     icon: Icons.chat_outlined,
                     text: 'WhatsApp',
-                    onTap: () => _open(context, Uri.parse(_whatsapp)),
+                    onTap: () => _open(context, Uri.parse(c.whatsapp)),
                   ),
                   const Divider(height: 1, color: AppColors.borderDefault),
                   _InfoRow(
                     icon: Icons.mail_outline,
-                    text: _email,
-                    onTap: () => _open(context, mailtoUri(_email)),
+                    text: c.email,
+                    onTap: () => _open(context, mailtoUri(c.email)),
                   ),
+                  if (c.hours.isNotEmpty) ...[
+                    const Divider(height: 1, color: AppColors.borderDefault),
+                    _InfoRow(icon: Icons.schedule_outlined, text: c.hours),
+                  ],
                 ],
               ),
             ),
           ),
           const SizedBox(height: 24),
 
-          // Follow us.
-          _SectionLabel(l10n.aboutFollowUs),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                _Social(Icons.facebook, () => _open(context, Uri.parse(_website))),
-                _Social(Icons.camera_alt_outlined, () => _open(context, Uri.parse(_website))),
-                _Social(Icons.ondemand_video, () => _open(context, Uri.parse(_website))),
-                _Social(Icons.chat_bubble_outline, () => _open(context, Uri.parse(_whatsapp))),
-              ],
+          // Follow us — admin-configured social links (hidden when none set).
+          if (c.socials.isNotEmpty) ...[
+            _SectionLabel(l10n.aboutFollowUs),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  for (final s in c.socials)
+                    _Social(
+                      socialIconFor(s.key),
+                      () => _open(context, Uri.parse(s.url)),
+                    ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 24),
+            const SizedBox(height: 24),
+          ],
 
           // We accept.
           _SectionLabel(l10n.aboutWeAccept),

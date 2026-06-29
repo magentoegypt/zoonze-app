@@ -1,32 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/shell/marketing_footer.dart';
 import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/routes.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/config/store_contact.dart';
 import '../../../../core/util/launch.dart';
 import '../../../../l10n/l10n.dart';
 
 /// Help & FAQ (Figma `66:2`): a help search, three contact actions (Live Chat /
-/// Call Us / Email), and a searchable FAQ accordion. Content lives in ARB —
-/// no backend dependency. Contact details are the live store's real channels.
-class HelpScreen extends StatefulWidget {
+/// Call Us / Email), and a searchable FAQ accordion. FAQ content lives in ARB;
+/// contact channels come from admin config ([storeContactProvider]).
+class HelpScreen extends ConsumerStatefulWidget {
   const HelpScreen({super.key});
 
   @override
-  State<HelpScreen> createState() => _HelpScreenState();
+  ConsumerState<HelpScreen> createState() => _HelpScreenState();
 }
 
-class _HelpScreenState extends State<HelpScreen> {
-  static const String _supportEmail = 'support@zoonze.com';
-  static const String _supportPhone = '+971505104167';
-  static const String _whatsappUrl = 'https://wa.me/971505104167';
-
+class _HelpScreenState extends ConsumerState<HelpScreen> {
   String _query = '';
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final c = ref.watch(storeContactProvider);
     final faqs = <(String, String)>[
       (l10n.helpQ1, l10n.helpA1),
       (l10n.helpQ2, l10n.helpA2),
@@ -94,7 +93,7 @@ class _HelpScreenState extends State<HelpScreen> {
                   child: _ContactCard(
                     icon: Icons.headset_mic_outlined,
                     label: l10n.helpLiveChat,
-                    onTap: () => _open(Uri.parse(_whatsappUrl)),
+                    onTap: () => _open(Uri.parse(c.whatsapp)),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -102,7 +101,7 @@ class _HelpScreenState extends State<HelpScreen> {
                   child: _ContactCard(
                     icon: Icons.call_outlined,
                     label: l10n.helpCallUs,
-                    onTap: () => _open(Uri(scheme: 'tel', path: _supportPhone)),
+                    onTap: () => _open(Uri(scheme: 'tel', path: c.phone)),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -110,7 +109,7 @@ class _HelpScreenState extends State<HelpScreen> {
                   child: _ContactCard(
                     icon: Icons.mail_outline,
                     label: l10n.helpEmailLabel,
-                    onTap: () => _open(mailtoUri(_supportEmail)),
+                    onTap: () => _open(mailtoUri(c.email)),
                   ),
                 ),
               ],
