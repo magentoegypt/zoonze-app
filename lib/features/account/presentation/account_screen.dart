@@ -237,7 +237,7 @@ class _Authenticated extends ConsumerWidget {
         _AccountTile(
           icon: Icons.info_outline,
           label: l10n.accountAbout,
-          onTap: () => context.push(AppRoutes.help),
+          onTap: () => context.push(AppRoutes.about),
         ),
         const _AccountBand(),
         // Log out (Figma 43:34) — red, centered.

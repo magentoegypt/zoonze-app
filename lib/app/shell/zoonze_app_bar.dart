@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/widgets/brand_logo.dart';
+import '../../features/notifications/presentation/notification_bell.dart';
 import '../routes.dart';
 
 /// Decluttered app bar per the design review: centered Z-mark + `ZOONZE` logo
@@ -30,6 +31,7 @@ class ZoonzeAppBar extends StatelessWidget implements PreferredSizeWidget {
             icon: const Icon(Icons.search),
             onPressed: () => context.push(AppRoutes.search),
           ),
+        const NotificationBell(),
       ],
     );
   }

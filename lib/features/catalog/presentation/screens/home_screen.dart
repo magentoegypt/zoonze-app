@@ -14,6 +14,7 @@ import '../../../../core/assets/app_images.dart';
 import '../../../../core/util/launch.dart';
 import '../../../../core/widgets/async_value_view.dart';
 import '../../../../core/widgets/brand_logo.dart';
+import '../../../notifications/presentation/notification_bell.dart';
 import '../../../../l10n/l10n.dart';
 import '../../data/brands_provider.dart';
 import '../../data/hero_slides_provider.dart';
@@ -126,6 +127,12 @@ class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                     ),
                   ),
                   const Center(child: BrandLogo(height: 40)),
+                  const PositionedDirectional(
+                    end: 4,
+                    top: 0,
+                    bottom: 0,
+                    child: NotificationBell(color: AppColors.brandPrimary),
+                  ),
                 ],
               ),
             ),

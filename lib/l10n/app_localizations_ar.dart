@@ -1216,6 +1216,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get footerRights => '© 2026 زونزي بيوتي · جميع الحقوق محفوظة.';
 
   @override
+  String get developedBy => 'تطوير Magento Egypt';
+
+  @override
   String get footerTagline => 'وجهتك للجمال والعطور الأصلية في الإمارات.';
 
   @override

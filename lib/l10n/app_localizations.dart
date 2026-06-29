@@ -2294,6 +2294,12 @@ abstract class AppLocalizations {
   /// **'© 2026 Zoonze Beauty · All rights reserved.'**
   String get footerRights;
 
+  /// No description provided for @developedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Developed by Magento Egypt'**
+  String get developedBy;
+
   /// No description provided for @footerTagline.
   ///
   /// In en, this message translates to:
