@@ -192,4 +192,10 @@ class NotificationService {
 
   Future<String?> token() async =>
       _fcmAvailable ? FirebaseMessaging.instance.getToken() : null;
+
+  /// Emits whenever FCM rotates the device token, so the app can re-register it
+  /// with the backend. Empty stream when FCM is unavailable.
+  Stream<String> get onTokenRefresh => _fcmAvailable
+      ? FirebaseMessaging.instance.onTokenRefresh
+      : const Stream<String>.empty();
 }

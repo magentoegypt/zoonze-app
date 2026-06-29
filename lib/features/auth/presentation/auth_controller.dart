@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/graphql/graphql_client.dart';
 import '../../../core/storage/secure_token_store.dart';
+import '../../notifications/data/device_token_repository.dart';
 import '../data/auth_repository.dart';
 import '../domain/customer.dart';
 
@@ -52,6 +55,8 @@ class AuthController extends Notifier<AuthState> {
     ref.invalidate(graphqlClientProvider);
     final customer = await _repo.fetchCustomer();
     state = AuthState(customer: customer, status: AuthStatus.authenticated);
+    // Re-bind this device's FCM token to the now-authenticated customer.
+    unawaited(ref.read(deviceTokenSyncProvider).register());
   }
 
   Future<void> register({
@@ -70,6 +75,9 @@ class AuthController extends Notifier<AuthState> {
   }
 
   Future<void> logout() async {
+    // Unbind this device first, while the bearer is still valid (the resolver
+    // scopes the delete to the authenticated customer).
+    await ref.read(deviceTokenSyncProvider).unregister();
     await _repo.revokeToken();
     await _tokens.clear();
     ref.invalidate(graphqlClientProvider);
