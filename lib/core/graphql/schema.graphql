@@ -1253,6 +1253,40 @@ input BraintreeVaultInput {
   public_hash: String!
 }
 
+"""A ZoonZE shop-by-brand brand (Magiccart_Shopbrand)."""
+type Brand {
+  """Brand entity id (shopbrand_id)."""
+  brand_id: Int
+
+  """Brand description."""
+  description: String
+
+  """Absolute brand logo/image URL. Empty string when no image is set."""
+  image_url: String
+
+  """Brand meta description."""
+  meta_description: String
+
+  """
+  Linked 'manufacturer' attribute option id; use with product filters to list this brand's products. Null when unlinked.
+  """
+  option_id: Int
+
+  """Sort order (ascending)."""
+  position: Int
+
+  """Brand name."""
+  title: String
+
+  """
+  Absolute storefront brand-page URL for the current store (e.g. /uae-en/shopbrand/<url_key>.html).
+  """
+  url: String
+
+  """Brand URL key."""
+  url_key: String
+}
+
 """
 Contains details about an individual category that comprises a breadcrumb.
 """
@@ -1540,6 +1574,13 @@ type BundleOrderItem implements OrderItemInterface {
 Defines basic features of a bundle product and contains multiple BundleItems.
 """
 type BundleProduct implements CustomizableProductInterface & PhysicalProductInterface & ProductInterface & RoutableInterface {
+  """
+  Products for the PDP 'You may also like' rail: the product's related links, or — when none are set — other in-stock products from the same category, newest first. Mirrors the storefront rail.
+  """
+  also_like_products(
+    """Maximum number of products to return (default 8)."""
+    pageSize: Int = 8
+  ): [ProductInterface]!
   am_offer_item_condition: Int @deprecated(reason: "Use the `custom_attributes` field instead.")
 
   """The attribute set assigned to the product."""
@@ -1591,6 +1632,16 @@ type BundleProduct implements CustomizableProductInterface & PhysicalProductInte
 
   """The relative path to the main image on the product page."""
   image: ProductImage
+
+  """
+  True when the product is among the top sellers by units ordered (the same signal as the homepage Bestsellers rail / storefront BESTSELLER badge).
+  """
+  is_bestseller: Boolean!
+
+  """
+  True when the product is among the newest in the catalogue (the same signal as the homepage New Arrivals rail / storefront NEW ARRIVAL badge).
+  """
+  is_new_arrival: Boolean!
 
   """An array containing information about individual bundle items."""
   items: [BundleItem]
@@ -1668,6 +1719,11 @@ type BundleProduct implements CustomizableProductInterface & PhysicalProductInte
 
   """Amount of available stock"""
   quantity: Float
+
+  """
+  Per-star distribution of the product's approved reviews for the current store, one bar per star from 5 down to 1.
+  """
+  rating_histogram: [RatingHistogramBar]!
 
   """The average of all the ratings given to the product."""
   rating_summary: Float!
@@ -3134,6 +3190,13 @@ type ConfigurableOrderItem implements OrderItemInterface {
 Defines basic features of a configurable product and its simple product variants.
 """
 type ConfigurableProduct implements CustomizableProductInterface & PhysicalProductInterface & ProductInterface & RoutableInterface {
+  """
+  Products for the PDP 'You may also like' rail: the product's related links, or — when none are set — other in-stock products from the same category, newest first. Mirrors the storefront rail.
+  """
+  also_like_products(
+    """Maximum number of products to return (default 8)."""
+    pageSize: Int = 8
+  ): [ProductInterface]!
   am_offer_item_condition: Int @deprecated(reason: "Use the `custom_attributes` field instead.")
 
   """The attribute set assigned to the product."""
@@ -3182,6 +3245,16 @@ type ConfigurableProduct implements CustomizableProductInterface & PhysicalProdu
 
   """The relative path to the main image on the product page."""
   image: ProductImage
+
+  """
+  True when the product is among the top sellers by units ordered (the same signal as the homepage Bestsellers rail / storefront BESTSELLER badge).
+  """
+  is_bestseller: Boolean!
+
+  """
+  True when the product is among the newest in the catalogue (the same signal as the homepage New Arrivals rail / storefront NEW ARRIVAL badge).
+  """
+  is_new_arrival: Boolean!
 
   """A number representing the product's manufacturer."""
   manufacturer: Int @deprecated(reason: "Use the `custom_attributes` field instead.")
@@ -3250,6 +3323,11 @@ type ConfigurableProduct implements CustomizableProductInterface & PhysicalProdu
 
   """Amount of available stock"""
   quantity: Float
+
+  """
+  Per-star distribution of the product's approved reviews for the current store, one bar per star from 5 down to 1.
+  """
+  rating_histogram: [RatingHistogramBar]!
 
   """The average of all the ratings given to the product."""
   rating_summary: Float!
@@ -6532,6 +6610,13 @@ type DownloadableOrderItem implements OrderItemInterface {
 
 """Defines a product that the shopper downloads."""
 type DownloadableProduct implements CustomizableProductInterface & ProductInterface & RoutableInterface {
+  """
+  Products for the PDP 'You may also like' rail: the product's related links, or — when none are set — other in-stock products from the same category, newest first. Mirrors the storefront rail.
+  """
+  also_like_products(
+    """Maximum number of products to return (default 8)."""
+    pageSize: Int = 8
+  ): [ProductInterface]!
   am_offer_item_condition: Int @deprecated(reason: "Use the `custom_attributes` field instead.")
 
   """The attribute set assigned to the product."""
@@ -6582,6 +6667,16 @@ type DownloadableProduct implements CustomizableProductInterface & ProductInterf
 
   """The relative path to the main image on the product page."""
   image: ProductImage
+
+  """
+  True when the product is among the top sellers by units ordered (the same signal as the homepage Bestsellers rail / storefront BESTSELLER badge).
+  """
+  is_bestseller: Boolean!
+
+  """
+  True when the product is among the newest in the catalogue (the same signal as the homepage New Arrivals rail / storefront NEW ARRIVAL badge).
+  """
+  is_new_arrival: Boolean!
 
   """
   A value of 1 indicates that each link in the array must be purchased separately.
@@ -6658,6 +6753,11 @@ type DownloadableProduct implements CustomizableProductInterface & ProductInterf
 
   """Amount of available stock"""
   quantity: Float
+
+  """
+  Per-star distribution of the product's approved reviews for the current store, one bar per star from 5 down to 1.
+  """
+  rating_histogram: [RatingHistogramBar]!
 
   """The average of all the ratings given to the product."""
   rating_summary: Float!
@@ -7227,6 +7327,13 @@ input GooglePayMethodInput {
 Defines a grouped product, which consists of simple standalone products that are presented as a group.
 """
 type GroupedProduct implements PhysicalProductInterface & ProductInterface & RoutableInterface {
+  """
+  Products for the PDP 'You may also like' rail: the product's related links, or — when none are set — other in-stock products from the same category, newest first. Mirrors the storefront rail.
+  """
+  also_like_products(
+    """Maximum number of products to return (default 8)."""
+    pageSize: Int = 8
+  ): [ProductInterface]!
   am_offer_item_condition: Int @deprecated(reason: "Use the `custom_attributes` field instead.")
 
   """The attribute set assigned to the product."""
@@ -7267,6 +7374,16 @@ type GroupedProduct implements PhysicalProductInterface & ProductInterface & Rou
 
   """The relative path to the main image on the product page."""
   image: ProductImage
+
+  """
+  True when the product is among the top sellers by units ordered (the same signal as the homepage Bestsellers rail / storefront BESTSELLER badge).
+  """
+  is_bestseller: Boolean!
+
+  """
+  True when the product is among the newest in the catalogue (the same signal as the homepage New Arrivals rail / storefront NEW ARRIVAL badge).
+  """
+  is_new_arrival: Boolean!
 
   """An array containing grouped product items."""
   items: [GroupedProductItem]
@@ -7335,6 +7452,11 @@ type GroupedProduct implements PhysicalProductInterface & ProductInterface & Rou
 
   """Amount of available stock"""
   quantity: Float
+
+  """
+  Per-star distribution of the product's approved reviews for the current store, one bar per star from 5 down to 1.
+  """
+  rating_histogram: [RatingHistogramBar]!
 
   """The average of all the ratings given to the product."""
   rating_summary: Float!
@@ -7475,6 +7597,42 @@ input GuestOrderCancelInput {
 
   """Order token."""
   token: String!
+}
+
+"""An admin-managed ZoonZE Beauty homepage hero slide."""
+type HeroSlide {
+  """Call-to-action button label."""
+  cta_label: String
+
+  """
+  Absolute storefront URL for the call-to-action (resolved for the current store, including the store URL prefix).
+  """
+  cta_url: String
+
+  """Supporting text."""
+  description: String
+
+  """Small eyebrow label shown above the title."""
+  eyebrow: String
+
+  """
+  Absolute URL of the background image (also the video poster/fallback). Empty string when no image is set.
+  """
+  image_url: String
+
+  """Sort order (ascending)."""
+  position: Int
+
+  """Slide entity id."""
+  slide_id: Int
+
+  """Slide title."""
+  title: String
+
+  """
+  Absolute URL of the background video. Empty string when no video is set.
+  """
+  video_url: String
 }
 
 """"""
@@ -7824,6 +7982,19 @@ interface LayerFilterItemInterface {
 
   """The value of a filter request variable to be used in query."""
   value_string: String @deprecated(reason: "Use `AggregationOption.value` instead.")
+}
+
+"""A single ZoonZE Beauty configuration value."""
+type MagentoEgyptBeautyConfigItem {
+  """
+  Config path relative to the magentoegypt_beauty section, e.g. "offer/enabled" or "footer/instagram_url".
+  """
+  path: String!
+
+  """
+  Resolved value for the current store (raw string; arrays are JSON-encoded). Null when unset.
+  """
+  value: String
 }
 
 """
@@ -9598,9 +9769,7 @@ type ProductAttribute {
   value: String!
 }
 
-"""
-Defines the filters to be used in the search. A filter contains at least one attribute, a comparison operator, and the value that is being searched for.
-"""
+"""ZoonZE Beauty layered-navigation filters for the mobile app PLP."""
 input ProductAttributeFilterInput {
   """Deprecated: use `category_uid` to filter product by category ID."""
   category_id: FilterEqualTypeInput
@@ -9617,6 +9786,11 @@ input ProductAttributeFilterInput {
   """Attribute label: Description"""
   description: FilterMatchTypeInput
 
+  """
+  Filter by discount percent for the storefront Discount filter. Use from: 20|30|40|50 to match products that percent off or more; matches the product discount_bucket (discount floored to tens).
+  """
+  discount: FilterRangeTypeInput
+
   """Attribute label: Manufacturer"""
   manufacturer: FilterEqualTypeInput
 
@@ -9628,6 +9802,11 @@ input ProductAttributeFilterInput {
 
   """Attribute label: Price"""
   price: FilterRangeTypeInput
+
+  """
+  Filter by review rating in whole stars (1-5) for the storefront Rating filter. Use from: 4 for 4 stars and above, scoped to the current store.
+  """
+  rating: FilterRangeTypeInput
 
   """Attribute label: Short Description"""
   short_description: FilterMatchTypeInput
@@ -9643,6 +9822,9 @@ input ProductAttributeFilterInput {
 Specifies the attribute to use for sorting search results and indicates whether the results are sorted in ascending or descending order. It's possible to sort products using searchable attributes with enabled 'Use in Filter Options' option
 """
 input ProductAttributeSortInput {
+  """Attribute label: Manufacturer"""
+  manufacturer: SortEnum
+
   """Attribute label: Product Name"""
   name: SortEnum
 
@@ -9845,8 +10027,17 @@ input ProductInfoInput {
   sku: String!
 }
 
-"""Contains fields that are common to all types of products."""
+"""
+ZoonZE Beauty PDP additions: the 'You may also like' rail and the per-star review histogram.
+"""
 interface ProductInterface {
+  """
+  Products for the PDP 'You may also like' rail: the product's related links, or — when none are set — other in-stock products from the same category, newest first. Mirrors the storefront rail.
+  """
+  also_like_products(
+    """Maximum number of products to return (default 8)."""
+    pageSize: Int = 8
+  ): [ProductInterface]!
   am_offer_item_condition: Int @deprecated(reason: "Use the `custom_attributes` field instead.")
 
   """The attribute set assigned to the product."""
@@ -9887,6 +10078,16 @@ interface ProductInterface {
 
   """The relative path to the main image on the product page."""
   image: ProductImage
+
+  """
+  True when the product is among the top sellers by units ordered (the same signal as the homepage Bestsellers rail / storefront BESTSELLER badge).
+  """
+  is_bestseller: Boolean!
+
+  """
+  True when the product is among the newest in the catalogue (the same signal as the homepage New Arrivals rail / storefront NEW ARRIVAL badge).
+  """
+  is_new_arrival: Boolean!
 
   """A number representing the product's manufacturer."""
   manufacturer: Int @deprecated(reason: "Use the `custom_attributes` field instead.")
@@ -9952,6 +10153,11 @@ interface ProductInterface {
 
   """Amount of available stock"""
   quantity: Float
+
+  """
+  Per-star distribution of the product's approved reviews for the current store, one bar per star from 5 down to 1.
+  """
+  rating_histogram: [RatingHistogramBar]!
 
   """The average of all the ratings given to the product."""
   rating_summary: Float!
@@ -10555,6 +10761,11 @@ type Query {
     storeId: Int
   ): blogTagsOutput
 
+  """
+  All active 'shop by brand' brands for the current store, ordered by sort order then title.
+  """
+  brands: [Brand]!
+
   """Return information about the specified shopping cart."""
   cart(
     """The unique ID of the cart to query."""
@@ -10705,6 +10916,11 @@ type Query {
   guestOrderByToken(input: OrderTokenInput!): CustomerOrder!
 
   """
+  Active ZoonZE Beauty homepage hero slides for the current store, ordered by position. Returns an empty list when the hero section is disabled for the store.
+  """
+  heroSlides: [HeroSlide]!
+
+  """
   Check whether the specified email has already been used to create a customer account.
   """
   isEmailAvailable(
@@ -10828,6 +11044,22 @@ input QuoteItemsSortInput {
 
   """Specifies the order of quote items' sorting"""
   order: SortEnum!
+}
+
+"""One bar of the per-star review histogram."""
+type RatingHistogramBar {
+  """
+  Number of approved reviews whose average rating rounds to this star level.
+  """
+  count: Int!
+
+  """
+  This bar's count as a percentage of all rated reviews (0 when there are none).
+  """
+  percent: Float!
+
+  """Star level this bar represents (1-5)."""
+  stars: Int!
 }
 
 """"""
@@ -11685,6 +11917,13 @@ type SimpleCartItem implements CartItemInterface {
 Defines a simple product, which is tangible and is usually sold in single units or in fixed quantities.
 """
 type SimpleProduct implements CustomizableProductInterface & PhysicalProductInterface & ProductInterface & RoutableInterface {
+  """
+  Products for the PDP 'You may also like' rail: the product's related links, or — when none are set — other in-stock products from the same category, newest first. Mirrors the storefront rail.
+  """
+  also_like_products(
+    """Maximum number of products to return (default 8)."""
+    pageSize: Int = 8
+  ): [ProductInterface]!
   am_offer_item_condition: Int @deprecated(reason: "Use the `custom_attributes` field instead.")
 
   """The attribute set assigned to the product."""
@@ -11725,6 +11964,16 @@ type SimpleProduct implements CustomizableProductInterface & PhysicalProductInte
 
   """The relative path to the main image on the product page."""
   image: ProductImage
+
+  """
+  True when the product is among the top sellers by units ordered (the same signal as the homepage Bestsellers rail / storefront BESTSELLER badge).
+  """
+  is_bestseller: Boolean!
+
+  """
+  True when the product is among the newest in the catalogue (the same signal as the homepage New Arrivals rail / storefront NEW ARRIVAL badge).
+  """
+  is_new_arrival: Boolean!
 
   """A number representing the product's manufacturer."""
   manufacturer: Int @deprecated(reason: "Use the `custom_attributes` field instead.")
@@ -11793,6 +12042,11 @@ type SimpleProduct implements CustomizableProductInterface & PhysicalProductInte
 
   """Amount of available stock"""
   quantity: Float
+
+  """
+  Per-star distribution of the product's approved reviews for the current store, one bar per star from 5 down to 1.
+  """
+  rating_histogram: [RatingHistogramBar]!
 
   """The average of all the ratings given to the product."""
   rating_summary: Float!
@@ -12106,7 +12360,7 @@ enum SortQuoteItemsEnum {
   WEIGHT
 }
 
-"""Contains information about a store's configuration."""
+"""ZoonZE Beauty storefront banner configuration, store-scoped."""
 type StoreConfig {
   """
   Contains scripts that must be included in the HTML before the closing `<body>` tag.
@@ -12623,6 +12877,49 @@ type StoreConfig {
 
   """Indicates whether wishlists are enabled (1) or disabled (0)."""
   magento_wishlist_general_is_enabled: String
+
+  """
+  Whether the top announcement bar is enabled for the store (magentoegypt_beauty/general/enable_announcement).
+  """
+  magentoegypt_beauty_announcement_enabled: Boolean
+
+  """
+  Bold tag before the secondary announcement message, e.g. "NEW" (magentoegypt_beauty/announcement/highlight_label).
+  """
+  magentoegypt_beauty_announcement_highlight_label: String
+
+  """
+  Secondary announcement message (magentoegypt_beauty/announcement/highlight_message).
+  """
+  magentoegypt_beauty_announcement_highlight_message: String
+
+  """
+  Category URL key or path the announcement "Shop now" link points to; empty for the homepage (magentoegypt_beauty/announcement/link).
+  """
+  magentoegypt_beauty_announcement_link: String
+
+  """Announcement bar message (magentoegypt_beauty/announcement/message)."""
+  magentoegypt_beauty_announcement_message: String
+
+  """
+  All ZoonZE Beauty theme configuration (every magentoegypt_beauty/* path) resolved for the current store, as path/value pairs. Includes config.xml defaults, per-store overrides and any admin-set values; serialized array values (e.g. trust/categories items) are returned as JSON strings.
+  """
+  magentoegypt_beauty_config: [MagentoEgyptBeautyConfigItem]!
+
+  """
+  Special Offer coupon code shown as "Use code: CODE"; empty to hide (magentoegypt_beauty/offer/code).
+  """
+  magentoegypt_beauty_offer_code: String
+
+  """
+  Whether the homepage Special Offer banner is enabled for the store (magentoegypt_beauty/offer/enabled).
+  """
+  magentoegypt_beauty_offer_enabled: Boolean
+
+  """
+  Special Offer banner text, e.g. "Get 25% off on all makeup products" (magentoegypt_beauty/offer/text).
+  """
+  magentoegypt_beauty_offer_text: String
 
   """
   checkout/options/max_items_display_count: maximum number of items to display in order summary.
@@ -13576,6 +13873,13 @@ type VirtualCartItem implements CartItemInterface {
 Defines a virtual product, which is a non-tangible product that does not require shipping and is not kept in inventory.
 """
 type VirtualProduct implements CustomizableProductInterface & ProductInterface & RoutableInterface {
+  """
+  Products for the PDP 'You may also like' rail: the product's related links, or — when none are set — other in-stock products from the same category, newest first. Mirrors the storefront rail.
+  """
+  also_like_products(
+    """Maximum number of products to return (default 8)."""
+    pageSize: Int = 8
+  ): [ProductInterface]!
   am_offer_item_condition: Int @deprecated(reason: "Use the `custom_attributes` field instead.")
 
   """The attribute set assigned to the product."""
@@ -13616,6 +13920,16 @@ type VirtualProduct implements CustomizableProductInterface & ProductInterface &
 
   """The relative path to the main image on the product page."""
   image: ProductImage
+
+  """
+  True when the product is among the top sellers by units ordered (the same signal as the homepage Bestsellers rail / storefront BESTSELLER badge).
+  """
+  is_bestseller: Boolean!
+
+  """
+  True when the product is among the newest in the catalogue (the same signal as the homepage New Arrivals rail / storefront NEW ARRIVAL badge).
+  """
+  is_new_arrival: Boolean!
 
   """A number representing the product's manufacturer."""
   manufacturer: Int @deprecated(reason: "Use the `custom_attributes` field instead.")
@@ -13684,6 +13998,11 @@ type VirtualProduct implements CustomizableProductInterface & ProductInterface &
 
   """Amount of available stock"""
   quantity: Float
+
+  """
+  Per-star distribution of the product's approved reviews for the current store, one bar per star from 5 down to 1.
+  """
+  rating_histogram: [RatingHistogramBar]!
 
   """The average of all the ratings given to the product."""
   rating_summary: Float!
