@@ -1,6 +1,7 @@
 name: Build · main (APK + IPA)
 
-# On every push to main, build installable artifacts:
+# On every push to main: run the CI gate (analyze + tests), then — only if it
+# passes — build installable artifacts:
 #   - Android APK  → always (debug-signed until the ANDROID_* secrets are set)
 #   - iOS IPA      → always on macOS. With the cert + profile in ios/signing/
 #     (+ IOS_P12_PASSWORD secret) it's a signed ad-hoc IPA (OTA-installable on
@@ -16,7 +17,26 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # CI gate: analyze + tests must pass before either platform builds. Runs on
+  # ubuntu (reliable) so a macOS-runner hiccup never lets a red build through.
+  analyze-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 3.44.4
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      # Guards against schema/operation drift, mirroring CI.
+      - run: dart run build_runner build --delete-conflicting-outputs
+      - run: flutter gen-l10n
+      - run: flutter analyze
+      - run: flutter test
+
   android-apk:
+    needs: analyze-test
     runs-on: ubuntu-latest
     # Builds independently of the iOS job. The two are separate platform
     # artifacts — a broken (or, more often, a flaky macOS-runner startup)
@@ -74,6 +94,7 @@ jobs:
   # Blocking: a failure here fails the run and skips the gated Android job, so
   # Android won't build on top of a broken iOS build.
   ios:
+    needs: analyze-test
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4

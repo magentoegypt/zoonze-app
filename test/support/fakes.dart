@@ -1,3 +1,4 @@
+import 'package:graphql_flutter/graphql_flutter.dart';
 import 'package:zoonze_app/core/error/failure.dart';
 import 'package:zoonze_app/core/storage/local_cache.dart';
 import 'package:zoonze_app/core/storage/locale_prefs.dart';
@@ -511,3 +512,15 @@ const List<Aggregation> kSampleAggregations = <Aggregation>[
     ],
   ),
 ];
+
+/// A [GraphQLClient] whose every request fails immediately — no network, no
+/// retry-backoff. Mounting a screen that fires storeConfig / footer / hero /
+/// brands queries then degrades to fallbacks without leaving a pending retry
+/// timer in the widget test. Override via `graphqlClientProvider`.
+GraphQLClient fakeGraphQLClient() => GraphQLClient(
+  link: Link.function(
+    (request, [forward]) =>
+        Stream<Response>.error(Exception('offline (test)')),
+  ),
+  cache: GraphQLCache(),
+);

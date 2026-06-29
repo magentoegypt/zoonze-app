@@ -1,9 +1,11 @@
 name: CI
 
-# Manual-only: CI no longer runs automatically on push/PR. The "Build · main
-# (APK + IPA)" workflow is the one that runs on every push. Run this by hand
-# from the Actions tab when you want analyze + tests.
+# Runs on every pull request (analyze + tests) to catch regressions before
+# merge. On push to main the same checks run as a gate inside the "Build · main
+# (APK + IPA)" workflow, so they aren't duplicated here. Still dispatchable by
+# hand from the Actions tab.
 on:
+  pull_request:
   workflow_dispatch:
 
 jobs:

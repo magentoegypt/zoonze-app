@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:zoonze_app/core/graphql/graphql_client.dart';
 import 'package:zoonze_app/core/storage/local_cache.dart';
 import 'package:zoonze_app/core/storage/locale_prefs.dart';
 import 'package:zoonze_app/core/storage/secure_token_store.dart';
@@ -32,6 +33,9 @@ Widget _harness(String locale) {
       localePrefsProvider.overrideWithValue(FakeLocalePrefs(locale)),
       secureTokenStoreProvider.overrideWithValue(FakeSecureTokenStore()),
       catalogRepositoryProvider.overrideWithValue(FakeCatalogRepository()),
+      // Home fires storeConfig/hero/brands/footer queries — keep them offline
+      // so they degrade to fallbacks without leaving retry-backoff timers.
+      graphqlClientProvider.overrideWithValue(fakeGraphQLClient()),
     ],
     child: MaterialApp.router(
       routerConfig: router,
@@ -61,8 +65,8 @@ void main() {
   ) async {
     await pumpHome(tester, 'en');
 
-    // Appears in the section header and again as a footer link.
-    expect(find.text('Shop by category'), findsWidgets);
+    // Section headers are uppercased (Figma).
+    expect(find.text('SHOP BY CATEGORY'), findsWidgets);
     // New Arrivals replaced the old "Featured" section (Figma).
     expect(find.text('New Arrivals'), findsWidgets);
     expect(find.text('Fragrance'), findsWidgets);

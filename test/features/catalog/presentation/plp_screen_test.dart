@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:zoonze_app/core/graphql/graphql_client.dart';
 import 'package:zoonze_app/core/storage/local_cache.dart';
 import 'package:zoonze_app/core/storage/locale_prefs.dart';
 import 'package:zoonze_app/core/storage/secure_token_store.dart';
@@ -40,6 +41,8 @@ Widget _harness(String locale) {
       localePrefsProvider.overrideWithValue(FakeLocalePrefs(locale)),
       secureTokenStoreProvider.overrideWithValue(FakeSecureTokenStore()),
       catalogRepositoryProvider.overrideWithValue(FakeCatalogRepository()),
+      // Footer fires the store-contact config query — keep it offline.
+      graphqlClientProvider.overrideWithValue(fakeGraphQLClient()),
     ],
     child: MaterialApp.router(
       routerConfig: router,

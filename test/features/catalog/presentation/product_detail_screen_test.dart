@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:zoonze_app/core/graphql/graphql_client.dart';
 import 'package:zoonze_app/core/storage/local_cache.dart';
 import 'package:zoonze_app/core/storage/locale_prefs.dart';
 import 'package:zoonze_app/core/storage/secure_token_store.dart';
@@ -39,6 +40,7 @@ Widget _harness(String locale) {
       secureTokenStoreProvider.overrideWithValue(FakeSecureTokenStore()),
       catalogRepositoryProvider.overrideWithValue(FakeCatalogRepository()),
       // Keep the PDP test network-free; the Tabby promo is covered separately.
+      graphqlClientProvider.overrideWithValue(fakeGraphQLClient()),
       tabbyConfigProvider.overrideWith((ref) => null),
     ],
     child: MaterialApp.router(
