@@ -3,6 +3,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zoonze_app/core/storage/secure_token_store.dart';
+import 'package:zoonze_app/features/catalog/domain/money.dart';
+import 'package:zoonze_app/features/catalog/domain/product.dart';
 import 'package:zoonze_app/features/catalog/presentation/widgets/product_card.dart';
 import 'package:zoonze_app/l10n/l10n.dart';
 
@@ -36,8 +38,9 @@ void main() {
       );
       await tester.pump();
 
+      // Per Figma, the card shows the product name (brand folded in) with no
+      // separate brand line, the stacked sale/struck price, and the discount.
       expect(find.text('Coco Mademoiselle EDP'), findsOneWidget);
-      expect(find.text('Chanel'), findsOneWidget);
       expect(find.text('AED 199.00'), findsOneWidget);
       expect(find.text('AED 250.00'), findsOneWidget);
       expect(find.text('-20%'), findsOneWidget);
@@ -50,5 +53,22 @@ void main() {
 
     expect(find.text('AED 300.00'), findsOneWidget);
     expect(find.textContaining('%'), findsNothing);
+  });
+
+  testWidgets('renders the BESTSELLER merchandising badge when flagged', (
+    tester,
+  ) async {
+    const product = Product(
+      sku: 'BS1',
+      name: 'Bestselling Serum',
+      urlKey: 'bestselling-serum',
+      regularPrice: Money(amount: 100, currency: 'AED'),
+      finalPrice: Money(amount: 100, currency: 'AED'),
+      badge: ProductBadge.bestseller,
+    );
+    await tester.pumpWidget(_wrap(const ProductCard(product: product)));
+    await tester.pump();
+
+    expect(find.text('BESTSELLER'), findsOneWidget);
   });
 }

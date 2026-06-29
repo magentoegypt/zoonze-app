@@ -9,6 +9,7 @@ import '../features/account/presentation/screens/edit_profile_screen.dart';
 import '../features/account/domain/order.dart';
 import '../features/account/presentation/screens/help_screen.dart';
 import '../features/account/presentation/screens/order_detail_screen.dart';
+import '../features/account/presentation/screens/order_tracking_screen.dart';
 import '../features/account/presentation/screens/orders_screen.dart';
 import '../features/account/presentation/screens/settings_screen.dart';
 import '../features/auth/presentation/screens/forgot_password_screen.dart';
@@ -53,6 +54,13 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.categories,
         builder: (context, state) => const CategoriesScreen(),
+      ),
+      GoRoute(
+        path: '/subcategories/:uid',
+        builder: (context, state) => SubcategoriesScreen(
+          categoryUid: state.pathParameters['uid']!,
+          title: state.extra as String?,
+        ),
       ),
       GoRoute(
         path: '/category/:uid',
@@ -118,6 +126,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             OrderDetailScreen(order: state.extra as CustomerOrder),
       ),
       GoRoute(
+        path: AppRoutes.orderTracking,
+        builder: (context, state) =>
+            OrderTrackingScreen(order: state.extra as CustomerOrder),
+      ),
+      GoRoute(
         path: AppRoutes.addresses,
         builder: (context, state) => const AddressesScreen(),
       ),
@@ -153,6 +166,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           return OrderSuccessScreen(
             orderNumber: (extra?['number'] as String?) ?? '',
             pendingPayment: (extra?['pending'] as bool?) ?? false,
+            deliveryEta: extra?['eta'] as String?,
+            deliveryLocation: extra?['location'] as String?,
           );
         },
       ),

@@ -11,7 +11,8 @@ import '../../../../core/store/store_controller.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/failure_message.dart';
 import '../../../../l10n/l10n.dart';
-import '../../data/catalog_repository.dart';
+import '../../domain/category.dart';
+import '../catalog_providers.dart';
 import '../plp_controller.dart';
 import '../widgets/filter_sheet.dart';
 import '../widgets/product_card.dart';
@@ -31,6 +32,12 @@ class PlpScreen extends ConsumerStatefulWidget {
 class _PlpScreenState extends ConsumerState<PlpScreen> {
   final ScrollController _scroll = ScrollController();
 
+  /// Selected sub-category chip — null means "All" (the parent category).
+  String? _selectedSubUid;
+
+  /// The category whose products the grid currently lists.
+  String get _effectiveUid => _selectedSubUid ?? widget.categoryUid;
+
   @override
   void initState() {
     super.initState();
@@ -44,7 +51,13 @@ class _PlpScreenState extends ConsumerState<PlpScreen> {
   }
 
   PlpController get _controller =>
-      ref.read(plpControllerProvider(widget.categoryUid).notifier);
+      ref.read(plpControllerProvider(_effectiveUid).notifier);
+
+  void _selectSub(String? uid) {
+    if (uid == _selectedSubUid) return;
+    setState(() => _selectedSubUid = uid);
+    if (_scroll.hasClients) _scroll.jumpTo(0);
+  }
 
   void _onScroll() {
     if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 400) {
@@ -52,23 +65,17 @@ class _PlpScreenState extends ConsumerState<PlpScreen> {
     }
   }
 
-  String _sortLabel(AppLocalizations l10n, ProductSortField sort) =>
-      switch (sort) {
-        ProductSortField.relevance => l10n.sortRelevance,
-        ProductSortField.priceAsc => l10n.sortPriceLowHigh,
-        ProductSortField.priceDesc => l10n.sortPriceHighLow,
-        ProductSortField.nameAsc => l10n.sortNameAz,
-      };
-
   Future<void> _openFilters(PlpState state) async {
     final currency = ref.read(storeControllerProvider).currency;
     final result = await showModalBottomSheet<FilterResult>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
+      backgroundColor: Colors.white,
       builder: (_) => FilterSheet(
         aggregations: state.aggregations,
         initial: state.selectedFilters,
+        initialSort: state.sort,
         currency: currency,
         initialPriceFrom: state.priceFrom,
         initialPriceTo: state.priceTo,
@@ -79,6 +86,7 @@ class _PlpScreenState extends ConsumerState<PlpScreen> {
         result.attributes,
         priceFrom: result.priceFrom,
         priceTo: result.priceTo,
+        sort: result.sort,
       );
     }
   }
@@ -86,14 +94,21 @@ class _PlpScreenState extends ConsumerState<PlpScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final state = ref.watch(plpControllerProvider(widget.categoryUid));
+    final state = ref.watch(plpControllerProvider(_effectiveUid));
+    // Sub-category chips come from the parent category's navigable children.
+    final parent = ref
+        .watch(categoryByUidProvider(widget.categoryUid))
+        .valueOrNull;
+    final subcats = (parent?.children ?? const <Category>[])
+        .where((c) => c.includeInMenu)
+        .toList(growable: false);
     return ZoonzeScaffold(
       currentTab: AppTab.categories,
-      body: _body(l10n, state),
+      body: _body(l10n, state, subcats),
     );
   }
 
-  Widget _body(AppLocalizations l10n, PlpState state) {
+  Widget _body(AppLocalizations l10n, PlpState state, List<Category> subcats) {
     if (state.isLoading && state.products.isEmpty) {
       return const Center(
         child: Padding(
@@ -133,9 +148,9 @@ class _PlpScreenState extends ConsumerState<PlpScreen> {
           child: _Header(
             title: widget.title ?? l10n.navCategories,
             state: state,
-            sortLabel: _sortLabel(l10n, state.sort),
-            onSort: _controller.setSort,
-            sortLabelFor: (s) => _sortLabel(l10n, s),
+            subcats: subcats,
+            selectedSubUid: _selectedSubUid,
+            onSelectSub: _selectSub,
             onFilters: () => _openFilters(state),
           ),
         ),
@@ -152,7 +167,8 @@ class _PlpScreenState extends ConsumerState<PlpScreen> {
             sliver: SliverGrid(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                childAspectRatio: 0.58,
+                // Figma card ≈ 173×237–253 (image 158 + name/price panel).
+                childAspectRatio: 0.66,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
               ),
@@ -182,87 +198,194 @@ class _Header extends StatelessWidget {
   const _Header({
     required this.title,
     required this.state,
-    required this.sortLabel,
-    required this.onSort,
-    required this.sortLabelFor,
+    required this.subcats,
+    required this.selectedSubUid,
+    required this.onSelectSub,
     required this.onFilters,
   });
 
   final String title;
   final PlpState state;
-  final String sortLabel;
-  final ValueChanged<ProductSortField> onSort;
-  final String Function(ProductSortField) sortLabelFor;
+  final List<Category> subcats;
+  final String? selectedSubUid;
+  final ValueChanged<String?> onSelectSub;
   final VoidCallback onFilters;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: 4),
-          Text(
-            l10n.resultsCount(state.totalCount),
-            style: const TextStyle(color: AppColors.inkMuted),
+    final filtersLabel = state.activeFilterCount > 0
+        ? '${l10n.filtersLabel} (${state.activeFilterCount})'
+        : l10n.filtersLabel;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 12),
+          child: Text(
+            title,
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 12),
-          Row(
+        ),
+        const Divider(height: 1, thickness: 1, color: AppColors.borderDefault),
+        if (subcats.isNotEmpty)
+          _SubcategoryChips(
+            subcats: subcats,
+            selectedUid: selectedSubUid,
+            onSelect: onSelectSub,
+          ),
+        Padding(
+          padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 16, 12),
+          child: Row(
             children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: onFilters,
-                  icon: const Icon(Icons.tune),
-                  label: Text(
-                    state.activeFilterCount > 0
-                        ? '${l10n.filtersLabel} (${state.activeFilterCount})'
-                        : l10n.filtersLabel,
-                  ),
+              Text(
+                l10n.categoryProductCount(state.totalCount),
+                style: const TextStyle(
+                  color: AppColors.inkMuted,
+                  fontSize: 12.5,
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: PopupMenuButton<ProductSortField>(
-                  onSelected: onSort,
-                  itemBuilder: (_) => [
-                    for (final sort in ProductSortField.values)
-                      PopupMenuItem<ProductSortField>(
-                        value: sort,
-                        child: Text(sortLabelFor(sort)),
-                      ),
-                  ],
-                  child: Container(
-                    height: 40,
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: AppColors.inkMuted.withValues(alpha: 0.4),
-                      ),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    alignment: Alignment.center,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.sort, size: 18),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            sortLabel,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+              const Spacer(),
+              _PillButton(
+                icon: Icons.tune,
+                label: filtersLabel,
+                onTap: onFilters,
               ),
             ],
           ),
+        ),
+        const Divider(height: 1, thickness: 1, color: AppColors.borderDefault),
+      ],
+    );
+  }
+}
+
+/// Horizontally scrollable sub-category filter pills (Figma `subcats`). "All"
+/// resets to the parent category.
+class _SubcategoryChips extends StatelessWidget {
+  const _SubcategoryChips({
+    required this.subcats,
+    required this.selectedUid,
+    required this.onSelect,
+  });
+
+  final List<Category> subcats;
+  final String? selectedUid;
+  final ValueChanged<String?> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 16, 10),
+      child: Row(
+        children: [
+          _Chip(
+            label: l10n.filterAll,
+            selected: selectedUid == null,
+            onTap: () => onSelect(null),
+          ),
+          for (final c in subcats) ...[
+            const SizedBox(width: 8),
+            _Chip(
+              label: c.name,
+              selected: selectedUid == c.uid,
+              onTap: () => onSelect(c.uid),
+            ),
+          ],
         ],
       ),
     );
   }
+}
+
+class _Chip extends StatelessWidget {
+  const _Chip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.brandPrimary : AppColors.surfaceMuted,
+          borderRadius: BorderRadius.circular(999),
+          border: selected
+              ? null
+              : Border.all(color: AppColors.borderDefault),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+            color: selected ? Colors.white : AppColors.inkMuted,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Bordered pill shell for the compact Filters / Sort controls.
+class _Pill extends StatelessWidget {
+  const _Pill({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+    decoration: BoxDecoration(
+      border: Border.all(color: AppColors.borderDefault),
+      borderRadius: BorderRadius.circular(999),
+    ),
+    child: child,
+  );
+}
+
+class _PillButton extends StatelessWidget {
+  const _PillButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(999),
+    child: _Pill(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: AppColors.inkHeading),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.inkHeading,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }

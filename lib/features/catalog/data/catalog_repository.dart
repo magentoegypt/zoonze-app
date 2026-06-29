@@ -173,6 +173,10 @@ class CatalogRepository {
       description: _stripHtml(
         (json['description'] as Map<String, dynamic>?)?['html'] as String?,
       ),
+      shortDescription: _stripHtml(
+        (json['short_description'] as Map<String, dynamic>?)?['html']
+            as String?,
+      ),
       gallery: gallery.toSet().toList(growable: false),
       regularPrice: _parseMoney(
         minPrice?['regular_price'] as Map<String, dynamic>?,
@@ -181,10 +185,25 @@ class CatalogRepository {
         minPrice?['final_price'] as Map<String, dynamic>?,
       ),
       inStock: (json['stock_status'] as String?) != 'OUT_OF_STOCK',
+      badge: badgeFromJson(json),
       options: options,
       variants: variants,
       ratingSummary: (json['rating_summary'] as int?) ?? 0,
       reviewCount: (json['review_count'] as int?) ?? 0,
+      ratingHistogram: (json['rating_histogram'] as List<dynamic>? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(
+            (b) => RatingBar(
+              stars: (b['stars'] as num?)?.toInt() ?? 0,
+              count: (b['count'] as num?)?.toInt() ?? 0,
+              percent: (b['percent'] as num?)?.toInt() ?? 0,
+            ),
+          )
+          .toList(growable: false),
+      alsoLike: (json['also_like_products'] as List<dynamic>? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .map(productFromJson)
+          .toList(growable: false),
       reviews:
           ((json['reviews'] as Map<String, dynamic>?)?['items']
                       as List<dynamic>? ??
@@ -276,9 +295,32 @@ class CatalogRepository {
   String? _stripHtml(String? html) {
     if (html == null || html.isEmpty) return null;
     final text = html
+        // Drop <style>/<script> blocks entirely — Page Builder emits a
+        // <style> block whose CSS would otherwise leak into the description.
+        .replaceAll(
+          RegExp(
+            r'<(style|script)[^>]*>.*?</\1>',
+            caseSensitive: false,
+            dotAll: true,
+          ),
+          ' ',
+        )
+        // Turn list items into bullet lines and block breaks into newlines so
+        // the short description (a <ul> of features) keeps its structure.
+        .replaceAll(RegExp(r'<li[^>]*>', caseSensitive: false), '\n• ')
+        .replaceAll(
+          RegExp(r'</(p|div|li|ul|ol|tr|h[1-6])>', caseSensitive: false),
+          '\n',
+        )
+        .replaceAll(RegExp(r'<br\s*/?>', caseSensitive: false), '\n')
         .replaceAll(RegExp('<[^>]*>'), ' ')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
+        // Collapse runs of spaces/tabs but keep newlines, then trim each line
+        // and drop the empties.
+        .replaceAll(RegExp(r'[ \t]+'), ' ')
+        .split('\n')
+        .map((l) => l.trim())
+        .where((l) => l.isNotEmpty)
+        .join('\n');
     return text.isEmpty ? null : text;
   }
 

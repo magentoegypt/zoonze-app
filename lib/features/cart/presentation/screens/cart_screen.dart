@@ -10,6 +10,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/widgets/failure_message.dart';
 import '../../../../l10n/l10n.dart';
+import '../../../catalog/domain/money.dart';
 import '../../../checkout/payments/tabby_promo.dart';
 import '../../domain/cart.dart';
 import '../cart_controller.dart';
@@ -73,40 +74,66 @@ class _CartScreenState extends ConsumerState<CartScreen> {
       );
     }
     if (state.cart.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircleAvatar(
-                radius: 48,
-                backgroundColor: AppColors.surfaceTint,
-                child: Icon(
-                  Icons.shopping_bag_outlined,
-                  size: 48,
-                  color: AppColors.brandPrimary,
+      // Empty state (Figma "Cart — Empty"): blush cart pill, copy, full-width
+      // "Start Shopping", then the marketing footer pinned to the bottom.
+      // SliverFillRemaining fills short content and scrolls when it overflows.
+      return CustomScrollView(
+        slivers: [
+          SliverFillRemaining(
+            hasScrollBody: false,
+            child: Column(
+              children: [
+                Expanded(
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 104,
+                            height: 56,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: AppColors.surfaceTint,
+                              borderRadius: BorderRadius.circular(28),
+                            ),
+                            child: const Icon(
+                              Icons.shopping_cart_outlined,
+                              size: 30,
+                              color: AppColors.brandPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Text(
+                            l10n.cartEmptyTitle,
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            l10n.cartEmptyBody,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: AppColors.inkMuted),
+                          ),
+                          const SizedBox(height: 24),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton(
+                              onPressed: () => context.go(AppRoutes.home),
+                              child: Text(l10n.cartStartShopping),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                l10n.cartEmptyTitle,
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                l10n.cartEmptyBody,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.inkMuted),
-              ),
-              const SizedBox(height: 24),
-              FilledButton(
-                onPressed: () => context.go(AppRoutes.home),
-                child: Text(l10n.cartContinueShopping),
-              ),
-            ],
+                const MarketingFooter(),
+              ],
+            ),
           ),
-        ),
+        ],
       );
     }
 
@@ -133,22 +160,29 @@ class _CartScreenState extends ConsumerState<CartScreen> {
             ],
           ),
         ),
+        if (cart.totals.subtotal != null)
+          _FreeDeliveryBanner(subtotal: cart.totals.subtotal!),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-        for (final item in cart.items)
-          _CartItemTile(
-            item: item,
-            busy: state.isMutating,
-            onChangeQty: (q) => _controller.setQuantity(item.uid, q),
-            onRemove: () => _controller.removeItem(item.uid),
+              for (final item in cart.items)
+                _CartItemTile(
+                  item: item,
+                  busy: state.isMutating,
+                  onChangeQty: (q) => _controller.setQuantity(item.uid, q),
+                  onRemove: () => _controller.removeItem(item.uid),
+                ),
+            ],
           ),
-        const SizedBox(height: 8),
+        ),
+        // Thick grey band (Figma 39:2) — brackets the promo section.
+        const _SectionBand(),
         _CouponSection(
           controller: _coupon,
           appliedCoupon: cart.totals.appliedCoupon,
+          discount: cart.totals.discount,
           busy: state.isMutating,
           onApply: () async {
             if (_coupon.text.trim().isEmpty) return;
@@ -165,42 +199,35 @@ class _CartScreenState extends ConsumerState<CartScreen> {
           },
           onRemoveCoupon: _controller.removeCoupon,
         ),
-        const Divider(height: 32),
-        _TotalRow(
-          label: l10n.cartSubtotal,
-          value: cart.totals.subtotal?.formatted(),
-        ),
-        if (cart.totals.discount != null)
-          _TotalRow(
-            label: l10n.cartDiscount,
-            value: '-${cart.totals.discount!.formatted()}',
-          ),
-        _TotalRow(
-          label: l10n.cartTotal,
-          value: cart.totals.grandTotal?.formatted(),
-          emphasize: true,
-        ),
-        if (cart.totals.grandTotal != null)
-          TabbyPromo(
-            price: cart.totals.grandTotal!,
-            padding: const EdgeInsets.only(top: 8),
-          ),
-        const SizedBox(height: 16),
-        FilledButton(
-          onPressed: () => context.push(AppRoutes.checkout),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
+        // Thick grey band (Figma 39:26) — closes the promo section.
+        const _SectionBand(),
+        // Order Summary (Figma 39:27).
+        _OrderSummary(cart: cart),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(Icons.lock_outline, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                cart.totals.grandTotal != null
-                    ? '${l10n.cartSecureCheckout} · ${cart.totals.grandTotal!.formatted()}'
-                    : l10n.cartSecureCheckout,
+              if (cart.totals.grandTotal != null)
+                TabbyPromo(
+                  price: cart.totals.grandTotal!,
+                  padding: const EdgeInsets.only(top: 4, bottom: 8),
+                ),
+              FilledButton(
+                onPressed: () => context.push(AppRoutes.checkout),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.lock_outline, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      cart.totals.grandTotal != null
+                          ? '${l10n.cartSecureCheckout} · ${cart.totals.grandTotal!.formatted()}'
+                          : l10n.cartSecureCheckout,
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
-        ),
             ],
           ),
         ),
@@ -270,6 +297,34 @@ class _CartItemTile extends StatelessWidget {
                       fontSize: 12,
                     ),
                   ),
+                const SizedBox(height: 6),
+                if (item.unitPrice != null)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        item.unitPrice!.formatted(),
+                        textDirection: TextDirection.ltr,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          color: AppColors.brandPrimary,
+                        ),
+                      ),
+                      if (item.isDiscounted) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          item.originalUnitPrice!.formatted(),
+                          textDirection: TextDirection.ltr,
+                          style: const TextStyle(
+                            color: AppColors.inkMuted,
+                            fontSize: 12,
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -285,16 +340,6 @@ class _CartItemTile extends StatelessWidget {
                       icon: Icons.add,
                       onTap: busy ? null : () => onChangeQty(item.quantity + 1),
                     ),
-                    const Spacer(),
-                    if (item.rowTotal != null)
-                      Text(
-                        item.rowTotal!.formatted(),
-                        textDirection: TextDirection.ltr,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.brandPrimary,
-                        ),
-                      ),
                   ],
                 ),
               ],
@@ -330,10 +375,23 @@ class _QtyButton extends StatelessWidget {
   );
 }
 
+/// Full-bleed 8px grey band that separates cart sections (Figma 39:2 / 39:26).
+class _SectionBand extends StatelessWidget {
+  const _SectionBand();
+
+  @override
+  Widget build(BuildContext context) =>
+      Container(height: 8, color: AppColors.surfaceMuted);
+}
+
+/// Promo / gift-code entry (Figma "promo" 39:3): a filled grey field with a
+/// tag icon + muted placeholder, a burgundy outlined "Apply" pill, and — when a
+/// coupon is live — a blush chip showing the code, the saving, and a remove ×.
 class _CouponSection extends StatelessWidget {
   const _CouponSection({
     required this.controller,
     required this.appliedCoupon,
+    required this.discount,
     required this.busy,
     required this.onApply,
     required this.onRemoveCoupon,
@@ -341,6 +399,7 @@ class _CouponSection extends StatelessWidget {
 
   final TextEditingController controller;
   final String? appliedCoupon;
+  final Money? discount;
   final bool busy;
   final VoidCallback onApply;
   final VoidCallback onRemoveCoupon;
@@ -348,60 +407,344 @@ class _CouponSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    if (appliedCoupon != null) {
-      return Row(
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Icon(Icons.local_offer_outlined, color: AppColors.accentGold),
-          const SizedBox(width: 8),
-          Expanded(child: Text(appliedCoupon!)),
-          TextButton(
-            onPressed: busy ? null : onRemoveCoupon,
-            child: const Icon(Icons.close, size: 18),
+          Row(
+            children: [
+              // Filled grey field with a tag icon prefix (Figma 39:5).
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceMuted,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.local_offer_outlined,
+                        size: 17,
+                        color: AppColors.inkFaint,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: controller,
+                          enabled: !busy,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppColors.inkHeading,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: l10n.cartCouponHint,
+                            hintStyle: const TextStyle(
+                              color: AppColors.inkFaint,
+                              fontSize: 13,
+                            ),
+                            isCollapsed: true,
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          onSubmitted: (_) => busy ? null : onApply(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              // Burgundy outlined "Apply" pill (Figma 39:11).
+              OutlinedButton(
+                onPressed: busy ? null : onApply,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.brandPrimary,
+                  side: const BorderSide(
+                    color: AppColors.brandPrimary,
+                    width: 1.4,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 13,
+                  ),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  textStyle: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                child: Text(l10n.cartApply),
+              ),
+            ],
           ),
+          // Applied-coupon chip (Figma 39:13).
+          if (appliedCoupon != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceTint,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.local_offer_outlined,
+                    size: 16,
+                    color: AppColors.brandPrimary,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      l10n.cartCouponApplied(appliedCoupon!),
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.brandPrimary,
+                      ),
+                    ),
+                  ),
+                  if (discount != null) ...[
+                    Text(
+                      '−${discount!.formatted()}',
+                      textDirection: TextDirection.ltr,
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.brandPrimary,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                  ],
+                  InkWell(
+                    onTap: busy ? null : onRemoveCoupon,
+                    borderRadius: BorderRadius.circular(12),
+                    child: const Icon(
+                      Icons.close,
+                      size: 15,
+                      color: AppColors.brandPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
-      );
-    }
-    return Row(
-      children: [
-        Expanded(
-          child: TextField(
-            controller: controller,
-            decoration: InputDecoration(
-              hintText: l10n.cartCouponHint,
-              isDense: true,
-              border: const OutlineInputBorder(),
+      ),
+    );
+  }
+}
+
+/// Free shipping threshold (AED) — matches the storefront announcement and
+/// gates both the progress banner and the summary's free-delivery line.
+const double _kFreeDeliveryThreshold = 150;
+
+/// Order Summary block (Figma 39:27): subtotal, optional promo line, the
+/// free-delivery line (only once the threshold is crossed), a divider, then
+/// the total in burgundy.
+class _OrderSummary extends StatelessWidget {
+  const _OrderSummary({required this.cart});
+
+  final Cart cart;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final totals = cart.totals;
+    final itemCount = cart.items.fold<int>(0, (sum, i) => sum + i.quantity);
+    final subtotal = totals.subtotal;
+    final freeDelivery =
+        subtotal != null && subtotal.amount >= _kFreeDeliveryThreshold;
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            l10n.cartOrderSummary,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.inkHeading,
             ),
           ),
+          const SizedBox(height: 11),
+          _SummaryRow(
+            label: l10n.cartSubtotalCount(itemCount),
+            value: subtotal?.formatted(),
+          ),
+          if (totals.discount != null) ...[
+            const SizedBox(height: 11),
+            _SummaryRow(
+              label: totals.appliedCoupon != null
+                  ? l10n.cartPromoCode(totals.appliedCoupon!)
+                  : l10n.cartDiscount,
+              value: '−${totals.discount!.formatted()}',
+              valueColor: AppColors.brandPrimary,
+            ),
+          ],
+          // Delivery line appears only once free delivery is unlocked.
+          if (freeDelivery) ...[
+            const SizedBox(height: 11),
+            _SummaryRow(
+              label: l10n.cartDelivery,
+              value: l10n.cartDeliveryFree,
+              valueColor: AppColors.brandPrimary,
+              valueWeight: FontWeight.w700,
+            ),
+          ],
+          const SizedBox(height: 11),
+          const Divider(
+            height: 1,
+            thickness: 1,
+            color: AppColors.borderDefault,
+          ),
+          const SizedBox(height: 11),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                l10n.cartTotal,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.inkHeading,
+                ),
+              ),
+              Text(
+                totals.grandTotal?.formatted() ?? '—',
+                textDirection: TextDirection.ltr,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.brandPrimary,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A single label/value line in the Order Summary (Figma rows 39:29–39:35).
+class _SummaryRow extends StatelessWidget {
+  const _SummaryRow({
+    required this.label,
+    this.value,
+    this.valueColor,
+    this.valueWeight = FontWeight.w500,
+  });
+
+  final String label;
+  final String? value;
+  final Color? valueColor;
+  final FontWeight valueWeight;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Flexible(
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
+          ),
         ),
-        const SizedBox(width: 8),
-        OutlinedButton(
-          onPressed: busy ? null : onApply,
-          child: Text(l10n.cartApply),
+        Text(
+          value ?? '—',
+          textDirection: TextDirection.ltr,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: valueWeight,
+            color: valueColor ?? AppColors.inkHeading,
+          ),
         ),
       ],
     );
   }
 }
 
-class _TotalRow extends StatelessWidget {
-  const _TotalRow({required this.label, this.value, this.emphasize = false});
+/// Blush progress banner toward the free 3-hour delivery threshold (Figma).
+/// Shows remaining-to-go with a partial bar, or an unlocked state once met.
+class _FreeDeliveryBanner extends StatelessWidget {
+  const _FreeDeliveryBanner({required this.subtotal});
 
-  final String label;
-  final String? value;
-  final bool emphasize;
+  final Money subtotal;
 
   @override
   Widget build(BuildContext context) {
-    final style = emphasize
-        ? const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)
-        : const TextStyle(color: AppColors.inkMuted);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    final l10n = AppLocalizations.of(context);
+    final amount = subtotal.amount;
+    final unlocked = amount >= _kFreeDeliveryThreshold;
+    final progress = (amount / _kFreeDeliveryThreshold).clamp(0.0, 1.0);
+    final remaining = Money(
+      amount: (_kFreeDeliveryThreshold - amount).clamp(
+        0.0,
+        _kFreeDeliveryThreshold,
+      ),
+      currency: subtotal.currency,
+    );
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.brandPrimary.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.brandPrimary.withValues(alpha: 0.12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: style),
-          Text(value ?? '—', textDirection: TextDirection.ltr, style: style),
+          Row(
+            children: [
+              Icon(
+                unlocked
+                    ? Icons.check_circle
+                    : Icons.local_shipping_outlined,
+                size: 18,
+                color: unlocked ? AppColors.success : AppColors.brandPrimary,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  unlocked
+                      ? l10n.cartFreeDeliveryUnlocked
+                      : l10n.cartFreeDeliveryRemaining(remaining.formatted()),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    color: AppColors.inkHeading,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 6,
+              backgroundColor: Colors.white,
+              valueColor: AlwaysStoppedAnimation(
+                unlocked ? AppColors.success : AppColors.brandPrimary,
+              ),
+            ),
+          ),
         ],
       ),
     );

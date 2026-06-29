@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:ui' as ui;
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,10 +11,16 @@ import '../../../../app/shell/marketing_footer.dart';
 import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/assets/app_images.dart';
+import '../../../../core/util/launch.dart';
 import '../../../../core/widgets/async_value_view.dart';
+import '../../../../core/widgets/brand_logo.dart';
 import '../../../../l10n/l10n.dart';
+import '../../data/brands_provider.dart';
+import '../../data/hero_slides_provider.dart';
 import '../../data/special_offer_provider.dart';
+import '../../domain/brand.dart';
 import '../../domain/category.dart';
+import '../../domain/hero_slide.dart';
 import '../../domain/product.dart';
 import '../catalog_providers.dart';
 import '../widgets/product_card.dart';
@@ -28,6 +37,8 @@ class HomeScreen extends ConsumerWidget {
       currentTab: AppTab.home,
       // The home body already has a search bar — no app-bar search icon.
       showSearch: false,
+      // Figma: the burgundy announcement strip sits above the ZOONZE header.
+      appBar: const _HomeAppBar(),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(categoryTreeProvider);
@@ -44,9 +55,8 @@ class HomeScreen extends ConsumerWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            const _AnnouncementBar(),
             _SearchField(onTap: () => context.push(AppRoutes.search)),
-            const _HeroBanner(),
+            const _Hero(),
             _SectionHeader(title: l10n.homeShopByCategory),
             AsyncValueView(
               value: categories,
@@ -74,9 +84,61 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-/// Thin burgundy top strip (Figma). Message comes from the admin announcement
-/// config (magentoegypt_beauty/announcement/message); falls back to the
-/// localized default when not configured.
+/// Home app bar (Figma): the burgundy announcement strip on top, then the
+/// centered ZOONZE lockup with a hamburger that opens the drawer.
+class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
+  const _HomeAppBar();
+
+  static const double _announcementHeight = 30;
+  static const double _headerHeight = 56;
+
+  @override
+  Size get preferredSize {
+    final view = WidgetsBinding.instance.platformDispatcher.views.first;
+    final top = view.viewPadding.top / view.devicePixelRatio;
+    return Size.fromHeight(top + _announcementHeight + _headerHeight);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const _AnnouncementBar(),
+            SizedBox(
+              height: _headerHeight,
+              child: Stack(
+                children: [
+                  PositionedDirectional(
+                    start: 4,
+                    top: 0,
+                    bottom: 0,
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.menu,
+                        color: AppColors.brandPrimary,
+                      ),
+                      onPressed: () => Scaffold.of(context).openDrawer(),
+                    ),
+                  ),
+                  const Center(child: BrandLogo(height: 40)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Thin burgundy top strip (Figma) — single line. Message comes from the admin
+/// announcement config (magentoegypt_beauty/announcement/message); falls back to
+/// the localized default when not configured.
 class _AnnouncementBar extends ConsumerWidget {
   const _AnnouncementBar();
 
@@ -89,15 +151,21 @@ class _AnnouncementBar extends ConsumerWidget {
     final message = configured.isNotEmpty ? configured : l10n.homeAnnouncement;
     return Container(
       width: double.infinity,
+      height: _HomeAppBar._announcementHeight,
       color: AppColors.brandPrimary,
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-      child: Text(
-        message,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      alignment: Alignment.center,
+      // Always one line — scale the text down to fit rather than wrap.
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          message,
+          maxLines: 1,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ),
     );
@@ -114,15 +182,17 @@ class _SearchField extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(22),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          height: 44,
+          alignment: AlignmentDirectional.centerStart,
+          padding: const EdgeInsetsDirectional.only(start: 16, end: 16),
           decoration: BoxDecoration(
             color: const Color(0xFFF3F4F6),
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(22),
           ),
           child: Row(
             children: [
@@ -143,92 +213,409 @@ class _SearchField extends StatelessWidget {
   }
 }
 
-/// Home hero per Figma: a blush promo card — eyebrow + headline + subtitle +
-/// Shop Now on the start side, a circular flatlay image on the end side.
+/// Fixed hero height (Figma node 3:2 is 390×250).
+const double _kHeroHeight = 250;
+
+/// Warm-beige hero background (Figma `#f6efe8`).
+const Color _kHeroBg = Color(0xFFF6EFE8);
+
+/// The full-width hero layout (Figma node 3:2): beige background, text on the
+/// start side, a circular image bleeding off the end side. Shared by the static
+/// fallback and each carousel slide.
+class _HeroBannerView extends StatelessWidget {
+  const _HeroBannerView({
+    required this.eyebrow,
+    required this.title,
+    required this.subtitle,
+    required this.ctaLabel,
+    required this.onCta,
+    required this.imageProvider,
+    this.showPlay = false,
+  });
+
+  final String eyebrow;
+  final String title;
+  final String subtitle;
+  final String ctaLabel;
+  final VoidCallback onCta;
+  final ImageProvider imageProvider;
+  final bool showPlay;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: _kHeroBg,
+      child: Stack(
+        clipBehavior: Clip.hardEdge,
+        children: [
+          // Layered product circles (Figma): a big blurred circle behind a
+          // smaller sharp one, bleeding off the end edge.
+          PositionedDirectional(
+            top: 0,
+            bottom: 0,
+            end: -40,
+            child: Center(
+              child: _HeroImageGroup(
+                provider: imageProvider,
+                showPlay: showPlay,
+              ),
+            ),
+          ),
+          // Text block on the start side.
+          PositionedDirectional(
+            start: 48,
+            end: 108,
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (eyebrow.isNotEmpty) ...[
+                    Text(
+                      eyebrow.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.brandPrimary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
+                        letterSpacing: 1.54,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                  Text(
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 28,
+                      color: AppColors.inkHeading,
+                      height: 1.06,
+                    ),
+                  ),
+                  if (subtitle.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.inkMuted,
+                        fontSize: 13,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                  if (ctaLabel.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      onPressed: onCta,
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(0, 42),
+                        padding: const EdgeInsets.symmetric(horizontal: 22),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(ctaLabel),
+                          const SizedBox(width: 8),
+                          Icon(
+                            Directionality.of(context) == TextDirection.rtl
+                                ? Icons.arrow_back
+                                : Icons.arrow_forward,
+                            size: 16,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Two overlapping product circles (Figma node 3:2): a big **blurred** circle
+/// behind a smaller **sharp** one, both fed from the same image. An optional
+/// play badge marks a video slide.
+class _HeroImageGroup extends StatelessWidget {
+  const _HeroImageGroup({required this.provider, this.showPlay = false});
+  final ImageProvider provider;
+  final bool showPlay;
+
+  Widget _image() => Image(
+    image: provider,
+    fit: BoxFit.cover,
+    errorBuilder: (_, __, ___) => Container(color: Colors.white),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 220,
+      height: 220,
+      child: Stack(
+        children: [
+          // Big softly-blurred circle (back) — fills most of the area.
+          Positioned(
+            left: 6,
+            top: 8,
+            child: ClipOval(
+              child: SizedBox(
+                width: 196,
+                height: 196,
+                child: ImageFiltered(
+                  imageFilter: ui.ImageFilter.blur(sigmaX: 2.5, sigmaY: 2.5),
+                  child: _image(),
+                ),
+              ),
+            ),
+          ),
+          // Small sharp circle (front) — overlaps the big one's lower-end side.
+          Positioned(
+            right: 0,
+            bottom: 16,
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: _kHeroBg, width: 3),
+              ),
+              child: ClipOval(
+                child: SizedBox(
+                  width: 132,
+                  height: 132,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      _image(),
+                      if (showPlay)
+                        const Center(
+                          child: Icon(
+                            Icons.play_circle_fill,
+                            color: Colors.white,
+                            size: 36,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// White circular prev/next arrow overlaid on the hero (Figma).
+class _NavArrow extends StatelessWidget {
+  const _NavArrow({required this.icon, required this.onTap});
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Colors.white,
+    shape: const CircleBorder(side: BorderSide(color: Color(0xFFE5E7EB))),
+    clipBehavior: Clip.antiAlias,
+    child: InkWell(
+      onTap: onTap,
+      child: SizedBox(
+        width: 34,
+        height: 34,
+        child: Icon(icon, size: 18, color: AppColors.inkHeading),
+      ),
+    ),
+  );
+}
+
+/// Static hero fallback — full-width [_HeroBannerView] with the bundled flatlay,
+/// shown while [heroSlides] loads or when none are configured.
 class _HeroBanner extends StatelessWidget {
   const _HeroBanner();
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsetsDirectional.fromSTEB(20, 24, 8, 24),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceTint,
-        borderRadius: BorderRadius.circular(20),
+    return SizedBox(
+      height: _kHeroHeight,
+      child: _HeroBannerView(
+        eyebrow: l10n.homeHeroEyebrow,
+        title: l10n.homeHeroTitle,
+        subtitle: l10n.homeHeroSubtitle,
+        ctaLabel: l10n.homeHeroCta,
+        onCta: () => context.go(AppRoutes.categories),
+        imageProvider: const AssetImage(AppImages.banner),
       ),
-      child: Row(
+    );
+  }
+}
+
+/// Home hero: the admin-managed [heroSlides] carousel, falling back to the
+/// static [_HeroBanner] while loading or when no slides are configured.
+class _Hero extends ConsumerWidget {
+  const _Hero();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ref
+        .watch(heroSlidesProvider)
+        .maybeWhen(
+          data: (slides) => slides.isEmpty
+              ? const _HeroBanner()
+              : _HeroCarousel(slides: slides),
+          orElse: () => const _HeroBanner(),
+        );
+  }
+}
+
+/// Swipeable, auto-advancing hero carousel with a dots indicator.
+class _HeroCarousel extends StatefulWidget {
+  const _HeroCarousel({required this.slides});
+  final List<HeroSlide> slides;
+
+  @override
+  State<_HeroCarousel> createState() => _HeroCarouselState();
+}
+
+class _HeroCarouselState extends State<_HeroCarousel> {
+  final PageController _controller = PageController();
+  Timer? _timer;
+  int _index = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.slides.length > 1) {
+      _timer = Timer.periodic(const Duration(seconds: 5), (_) {
+        if (!mounted || !_controller.hasClients) return;
+        final next = (_index + 1) % widget.slides.length;
+        _controller.animateToPage(
+          next,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _go(int delta) {
+    if (!_controller.hasClients) return;
+    final n = widget.slides.length;
+    _controller.animateToPage(
+      (_index + delta + n) % n,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final multi = widget.slides.length > 1;
+    return SizedBox(
+      height: _kHeroHeight,
+      child: Stack(
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  l10n.homeHeroEyebrow,
-                  style: const TextStyle(
-                    color: AppColors.brandPrimary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 11,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  l10n.homeHeroTitle,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.inkHeading,
-                    height: 1.1,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  l10n.homeHeroSubtitle,
-                  style: const TextStyle(
-                    color: AppColors.inkMuted,
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                FilledButton(
-                  onPressed: () => context.go(AppRoutes.categories),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size(0, 44),
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(l10n.homeHeroCta),
-                      const SizedBox(width: 8),
-                      Icon(
-                        Directionality.of(context) == TextDirection.rtl
-                            ? Icons.arrow_back
-                            : Icons.arrow_forward,
-                        size: 18,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+          PageView.builder(
+            controller: _controller,
+            onPageChanged: (i) => setState(() => _index = i),
+            itemCount: widget.slides.length,
+            itemBuilder: (context, i) => _HeroSlideCard(slide: widget.slides[i]),
           ),
-          const SizedBox(width: 8),
-          ClipOval(
-            child: SizedBox(
-              width: 116,
-              height: 116,
-              child: Image.asset(
-                AppImages.banner,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(color: Colors.white),
+          if (multi) ...[
+            PositionedDirectional(
+              start: 8,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: _NavArrow(icon: Icons.chevron_left, onTap: () => _go(-1)),
               ),
             ),
-          ),
+            PositionedDirectional(
+              end: 8,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: _NavArrow(icon: Icons.chevron_right, onTap: () => _go(1)),
+              ),
+            ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 16,
+              child: Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (var i = 0; i < widget.slides.length; i++)
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        width: i == _index ? 20 : 6,
+                        height: 6,
+                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        decoration: BoxDecoration(
+                          color: i == _index
+                              ? AppColors.brandPrimary
+                              : const Color(0xFFE5E7EB),
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ],
       ),
+    );
+  }
+}
+
+/// One hero slide — blush card with eyebrow/title/description/CTA and a circular
+/// image. A play badge marks a video slide; the poster image is shown until
+/// inline video playback is wired.
+class _HeroSlideCard extends StatelessWidget {
+  const _HeroSlideCard({required this.slide});
+  final HeroSlide slide;
+
+  void _onCta(BuildContext context) {
+    final uid = categoryUidFromUrl(slide.ctaUrl);
+    if (uid != null) {
+      context.push(AppRoutes.category(uid), extra: slide.title);
+    } else if (slide.ctaUrl.isNotEmpty) {
+      launchExternalUri(Uri.parse(slide.ctaUrl));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ImageProvider provider = slide.imageUrl.isNotEmpty
+        ? CachedNetworkImageProvider(slide.imageUrl)
+        : const AssetImage(AppImages.banner);
+    return _HeroBannerView(
+      eyebrow: slide.eyebrow,
+      title: slide.title,
+      subtitle: slide.description,
+      ctaLabel: slide.ctaLabel,
+      onCta: () => _onCta(context),
+      imageProvider: provider,
+      showPlay: slide.hasVideo,
     );
   }
 }
@@ -420,46 +807,88 @@ class _ProductSection extends StatelessWidget {
   }
 }
 
-/// "Explore Our Brands" — curated brand shortcuts; tapping searches the
-/// catalogue for that brand (brand names stay Latin per the design).
-class _ExploreBrands extends StatelessWidget {
+/// "Explore Our Brands" — real brands (logos) from the `brands` query; tapping
+/// searches the catalogue for that brand. Hidden when none are returned.
+class _ExploreBrands extends ConsumerWidget {
   const _ExploreBrands();
 
-  static const List<String> _brands = [
-    'Chanel',
-    'Dunhill',
-    'Versace',
-    'Lacoste',
-    'Azzaro',
-    'Rasasi',
-  ];
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final brands = ref
+        .watch(brandsProvider)
+        .maybeWhen(data: (b) => b, orElse: () => const <Brand>[]);
+    if (brands.isEmpty) return const SizedBox.shrink();
+    final shown = brands.take(15).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _SectionHeader(title: l10n.homeExploreBrands),
         SizedBox(
-          height: 44,
+          height: 72,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: _brands.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
-            itemBuilder: (context, index) {
-              final brand = _brands[index];
-              return ActionChip(
-                label: Text(brand),
-                onPressed: () => context.push(AppRoutes.search, extra: brand),
-              );
-            },
+            itemCount: shown.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (context, index) => _BrandCard(brand: shown[index]),
           ),
         ),
       ],
     );
   }
+}
+
+/// A brand logo card; falls back to the brand name if the logo can't load.
+class _BrandCard extends StatelessWidget {
+  const _BrandCard({required this.brand});
+  final Brand brand;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => context.push(AppRoutes.search, extra: brand.title),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 124,
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        alignment: Alignment.center,
+        child: brand.imageUrl.isNotEmpty
+            ? CachedNetworkImage(
+                imageUrl: brand.imageUrl,
+                fit: BoxFit.contain,
+                placeholder: (_, __) => _BrandName(title: brand.title),
+                errorWidget: (_, __, ___) => _BrandName(title: brand.title),
+              )
+            : _BrandName(title: brand.title),
+      ),
+    );
+  }
+}
+
+class _BrandName extends StatelessWidget {
+  const _BrandName({required this.title});
+  final String title;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Text(
+      title,
+      maxLines: 2,
+      textAlign: TextAlign.center,
+      overflow: TextOverflow.ellipsis,
+      style: const TextStyle(
+        fontWeight: FontWeight.w600,
+        fontSize: 12,
+        color: AppColors.inkHeading,
+      ),
+    ),
+  );
 }
 
 /// Promotional offer card — content comes from the admin "Special Offer Banner"
@@ -571,8 +1000,11 @@ class _TrustBadges extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+    // Figma: the trust section sits on a light-grey band (white icon circles).
+    return Container(
+      width: double.infinity,
+      color: const Color(0xFFF3F4F6),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 28),
       child: Column(
         children: [
           Row(
@@ -628,9 +1060,9 @@ class _TrustBadge extends StatelessWidget {
       child: Column(
         children: [
           CircleAvatar(
-            radius: 24,
-            backgroundColor: AppColors.surfaceTint,
-            child: Icon(icon, color: AppColors.brandPrimary, size: 22),
+            radius: 26,
+            backgroundColor: Colors.white,
+            child: Icon(icon, color: AppColors.brandPrimary, size: 24),
           ),
           const SizedBox(height: 8),
           Text(
@@ -660,7 +1092,16 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 8),
-    child: Text(title, style: Theme.of(context).textTheme.titleLarge),
+    padding: const EdgeInsets.fromLTRB(16, 28, 16, 14),
+    child: Text(
+      title.toUpperCase(),
+      textAlign: TextAlign.center,
+      style: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.82,
+        color: AppColors.inkHeading,
+      ),
+    ),
   );
 }

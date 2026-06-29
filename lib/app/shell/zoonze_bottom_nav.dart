@@ -6,9 +6,12 @@ import '../../features/cart/presentation/cart_controller.dart';
 import '../../features/wishlist/presentation/wishlist_controller.dart';
 import '../../l10n/l10n.dart';
 import '../routes.dart';
+import '../theme/app_colors.dart';
 
-/// Persistent bottom navigation (Home · Categories · Cart · Wishlist · Account)
-/// with live cart + wishlist count badges.
+/// Persistent bottom navigation (Home · Categories · Cart · Wishlist · Account).
+/// Figma: a thin top divider, and the active tab marked by a burgundy top bar +
+/// burgundy icon/label (inactive tabs are muted grey). Live cart + wishlist
+/// count badges.
 class ZoonzeBottomNav extends ConsumerWidget {
   const ZoonzeBottomNav({super.key, required this.current});
 
@@ -24,54 +27,121 @@ class ZoonzeBottomNav extends ConsumerWidget {
       wishlistControllerProvider.select((s) => s.entries.length),
     );
 
-    return NavigationBar(
-      selectedIndex: current.index,
-      // Always navigate to the tab root, even when re-tapping the active tab,
-      // so a pushed detail (e.g. PLP) can be left via the bottom nav.
-      onDestinationSelected: (index) => context.go(AppTab.values[index].route),
-      destinations: [
-        NavigationDestination(
-          icon: const Icon(Icons.home_outlined),
-          selectedIcon: const Icon(Icons.home),
-          label: l10n.navHome,
-        ),
-        NavigationDestination(
-          icon: const Icon(Icons.grid_view_outlined),
-          selectedIcon: const Icon(Icons.grid_view),
-          label: l10n.navCategories,
-        ),
-        NavigationDestination(
-          icon: Badge(
-            isLabelVisible: cartCount > 0,
-            label: Text('$cartCount'),
-            child: const Icon(Icons.shopping_bag_outlined),
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Color(0xFFE5E7EB))),
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 62,
+          child: Row(
+            children: [
+              _NavItem(
+                tab: AppTab.home,
+                current: current,
+                icon: Icons.home_outlined,
+                activeIcon: Icons.home,
+                label: l10n.navHome,
+              ),
+              _NavItem(
+                tab: AppTab.categories,
+                current: current,
+                icon: Icons.grid_view_outlined,
+                activeIcon: Icons.grid_view,
+                label: l10n.navCategories,
+              ),
+              _NavItem(
+                tab: AppTab.cart,
+                current: current,
+                icon: Icons.shopping_bag_outlined,
+                activeIcon: Icons.shopping_bag,
+                label: l10n.navCart,
+                badge: cartCount,
+              ),
+              _NavItem(
+                tab: AppTab.wishlist,
+                current: current,
+                icon: Icons.favorite_border,
+                activeIcon: Icons.favorite,
+                label: l10n.navWishlist,
+                badge: wishlistCount,
+              ),
+              _NavItem(
+                tab: AppTab.account,
+                current: current,
+                icon: Icons.person_outline,
+                activeIcon: Icons.person,
+                label: l10n.navAccount,
+              ),
+            ],
           ),
-          selectedIcon: Badge(
-            isLabelVisible: cartCount > 0,
-            label: Text('$cartCount'),
-            child: const Icon(Icons.shopping_bag),
-          ),
-          label: l10n.navCart,
         ),
-        NavigationDestination(
-          icon: Badge(
-            isLabelVisible: wishlistCount > 0,
-            label: Text('$wishlistCount'),
-            child: const Icon(Icons.favorite_border),
-          ),
-          selectedIcon: Badge(
-            isLabelVisible: wishlistCount > 0,
-            label: Text('$wishlistCount'),
-            child: const Icon(Icons.favorite),
-          ),
-          label: l10n.navWishlist,
+      ),
+    );
+  }
+}
+
+class _NavItem extends StatelessWidget {
+  const _NavItem({
+    required this.tab,
+    required this.current,
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+    this.badge,
+  });
+
+  final AppTab tab;
+  final AppTab current;
+  final IconData icon;
+  final IconData activeIcon;
+  final String label;
+  final int? badge;
+
+  @override
+  Widget build(BuildContext context) {
+    final selected = tab == current;
+    final color = selected ? AppColors.brandPrimary : AppColors.inkMuted;
+    return Expanded(
+      child: InkWell(
+        // Always navigate to the tab root, even when re-tapping the active tab.
+        onTap: () => context.go(tab.route),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            // Top indicator bar (Figma) — burgundy when active.
+            Container(
+              width: 18,
+              height: 3,
+              decoration: BoxDecoration(
+                color: selected ? AppColors.brandPrimary : Colors.transparent,
+                borderRadius: const BorderRadius.vertical(
+                  bottom: Radius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 9),
+            Badge(
+              isLabelVisible: (badge ?? 0) > 0,
+              label: Text('${badge ?? 0}'),
+              child: Icon(selected ? activeIcon : icon, color: color, size: 24),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: color,
+                fontSize: 11,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+          ],
         ),
-        NavigationDestination(
-          icon: const Icon(Icons.person_outline),
-          selectedIcon: const Icon(Icons.person),
-          label: l10n.navAccount,
-        ),
-      ],
+      ),
     );
   }
 }

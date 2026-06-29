@@ -67,4 +67,29 @@ void main() {
     expect(find.text('Filters'), findsOneWidget);
     expect(find.text('Coco Mademoiselle EDP'), findsWidgets);
   });
+
+  testWidgets('filter sheet shows Sort By, brand facets, and footer actions', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 3200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(_harness('en'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Filters'));
+    await tester.pumpAndSettle();
+
+    // Sort By section (moved into the sheet per Figma).
+    expect(find.text('Sort By'), findsOneWidget);
+    expect(find.text('Relevance'), findsOneWidget);
+    // Brand facet from aggregations, with selectable options.
+    expect(find.text('Brand'), findsOneWidget);
+    expect(find.text('Chanel'), findsOneWidget);
+    expect(find.text('Dior'), findsOneWidget);
+    // Two-button footer + header reset.
+    expect(find.text('Reset'), findsOneWidget);
+    expect(find.text('Clear All'), findsOneWidget);
+    expect(find.text('Apply Filters'), findsOneWidget);
+  });
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zoonze_app/features/catalog/data/catalog_repository.dart';
 import 'package:zoonze_app/features/catalog/domain/aggregation.dart';
 import 'package:zoonze_app/features/catalog/presentation/widgets/filter_sheet.dart';
 import 'package:zoonze_app/l10n/l10n.dart';
@@ -42,6 +43,7 @@ Future<FilterResult?> _open(
                 builder: (_) => FilterSheet(
                   aggregations: aggregations,
                   initial: const {},
+                  initialSort: ProductSortField.relevance,
                   currency: 'AED',
                 ),
               );
@@ -62,10 +64,10 @@ void main() {
     tester,
   ) async {
     await _open(tester, aggregations: const [_priceAgg, _colorAgg]);
-    expect(find.text('Price'), findsOneWidget);
+    expect(find.text('Price Range'), findsOneWidget);
     expect(find.byType(RangeSlider), findsOneWidget);
-    expect(find.text('AED 10'), findsOneWidget); // lower bound label
-    expect(find.text('AED 200'), findsOneWidget); // upper bound label
+    // Bounds render as a single combined range string (Figma).
+    expect(find.text('AED 10 — AED 200'), findsOneWidget);
   });
 
   testWidgets('omits the price slider when no price aggregation exists', (
@@ -98,6 +100,7 @@ void main() {
                   builder: (_) => const FilterSheet(
                     aggregations: [_priceAgg],
                     initial: {},
+                    initialSort: ProductSortField.relevance,
                     currency: 'AED',
                   ),
                 );
@@ -110,7 +113,7 @@ void main() {
     );
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Apply'));
+    await tester.tap(find.text('Apply Filters'));
     await tester.pumpAndSettle();
 
     expect(captured, isNotNull);

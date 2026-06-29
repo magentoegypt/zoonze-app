@@ -158,9 +158,10 @@ class CheckoutController extends Notifier<CheckoutState> {
     state = state.copyWith(isBusy: true, error: null);
     try {
       final result = await _repo.placeOrder(cartId);
-      // The order consumed the cart — refresh it before releasing the busy
-      // lock so the Place Order button cannot be re-tapped on a consumed cart.
-      await ref.read(cartControllerProvider.notifier).refresh();
+      // The order consumed the cart server-side — reset it (drop the stale id +
+      // persisted guest id) so it reads empty and the next add-to-cart creates a
+      // fresh cart, instead of failing against the consumed one.
+      await ref.read(cartControllerProvider.notifier).clearAfterOrder();
       state = state.copyWith(isBusy: false);
       return result;
     } catch (error) {

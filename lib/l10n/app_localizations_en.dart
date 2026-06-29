@@ -9,7 +9,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'ZoonZE Beauty';
+  String get appTitle => 'Zoonze Beauty';
 
   @override
   String get languageEnglish => 'English';
@@ -214,10 +214,47 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String categoryCount(int count) {
+    return '$count categories';
+  }
+
+  @override
   String get filtersLabel => 'Filters';
 
   @override
   String get filterPriceLabel => 'Price';
+
+  @override
+  String get filterSortByLabel => 'Sort By';
+
+  @override
+  String get filterPriceRangeLabel => 'Price Range';
+
+  @override
+  String get filterResetLabel => 'Reset';
+
+  @override
+  String get filterClearAllLabel => 'Clear All';
+
+  @override
+  String get filterApplyLabel => 'Apply Filters';
+
+  @override
+  String get filterAll => 'All';
+
+  @override
+  String get actionShare => 'Share';
+
+  @override
+  String get badgeNew => 'NEW';
+
+  @override
+  String get badgeBestseller => 'BESTSELLER';
+
+  @override
+  String shareProduct(String name) {
+    return 'Check out $name at Zoonze';
+  }
 
   @override
   String get sortLabel => 'Sort';
@@ -271,7 +308,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authSignUpSubtitle =>
-      'Join ZoonZE for faster checkout, order tracking & exclusive offers.';
+      'Join Zoonze for faster checkout, order tracking & exclusive offers.';
 
   @override
   String get authAgreeTerms =>
@@ -296,7 +333,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fieldLastName => 'Last name';
 
   @override
-  String get authForgotLink => 'Forgot password?';
+  String get authForgotLink => 'Forgot Password?';
 
   @override
   String get authNoAccount => 'Don\'t have an account?';
@@ -317,6 +354,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authHaveResetCode => 'I have a reset code';
+
+  @override
+  String get authBackToSignIn => 'Back to Sign In';
+
+  @override
+  String get authEmailHint => 'Email address';
 
   @override
   String get authResetTitle => 'Set a New Password';
@@ -346,7 +389,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get validationPassword => 'Use at least 8 characters';
 
   @override
-  String get accountGuestTitle => 'Your ZoonZE account';
+  String get accountGuestTitle => 'Your Zoonze account';
 
   @override
   String get accountGuestBody =>
@@ -359,7 +402,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountHeading => 'My Account';
 
   @override
-  String get accountAbout => 'About ZoonZE';
+  String get accountAbout => 'About Zoonze';
 
   @override
   String get accountOrders => 'My Orders';
@@ -371,35 +414,147 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountHelp => 'Help & FAQ';
 
   @override
+  String get accountHelpSupport => 'Help & Support';
+
+  @override
+  String get accountLogOut => 'Log Out';
+
+  @override
+  String get accountMember => 'Member';
+
+  @override
+  String get accountStatOrders => 'Orders';
+
+  @override
+  String get accountStatWishlist => 'Wishlist';
+
+  @override
+  String get accountStatVouchers => 'Vouchers';
+
+  @override
   String get helpIntro =>
       'Answers to common questions. Still stuck? Reach our team below.';
 
   @override
-  String get helpQOrders => 'How do I track my order?';
+  String get helpSearchHint => 'Search for help…';
+
+  @override
+  String get helpFrequentlyAsked => 'Frequently Asked';
+
+  @override
+  String get helpLiveChat => 'Live Chat';
+
+  @override
+  String get helpCallUs => 'Call Us';
+
+  @override
+  String get helpEmailLabel => 'Email';
+
+  @override
+  String get helpQ1 => 'How does Zoonze guarantee 100% authentic products?';
+
+  @override
+  String get helpA1 =>
+      'At Zoonze, all perfumes, skincare, makeup, and haircare products are sourced from trusted suppliers and verified to ensure they are 100% authentic.';
+
+  @override
+  String get helpQ2 =>
+      'Are all perfumes, skincare, haircare and makeup sold by Zoonze original?';
+
+  @override
+  String get helpA2 =>
+      'Yes. We only offer genuine products from leading international luxury brands.';
+
+  @override
+  String get helpQ3 => 'Does Zoonze have a marketplace?';
+
+  @override
+  String get helpA3 =>
+      'No. Zoonze doesn\'t operate a marketplace — we never list the same product at different prices or from different vendors. We only offer our own products, guaranteed 100% original.';
+
+  @override
+  String get helpQ4 => 'What beauty products are available at Zoonze?';
+
+  @override
+  String get helpA4 =>
+      'We offer authentic perfumes, skincare products, makeup, and haircare products from top luxury brands worldwide.';
+
+  @override
+  String get helpQ5 => 'How fast is Zoonze delivery?';
+
+  @override
+  String get helpA5 =>
+      'We deliver within 3 hours, and we\'re continuously working toward 2-hour delivery whenever possible.';
+
+  @override
+  String get helpQ6 => 'Why are Zoonze prices competitive?';
+
+  @override
+  String get helpA6 =>
+      'Our goal is to make authentic luxury beauty more accessible through efficient sourcing and operations, allowing us to offer attractive prices.';
+
+  @override
+  String get helpQ7 => 'Do you offer luxury beauty brands?';
+
+  @override
+  String get helpA7 =>
+      'Yes. Zoonze offers a curated collection of premium international brands across fragrances, skincare, makeup, and haircare.';
+
+  @override
+  String get helpQ8 => 'Can I return or exchange products?';
+
+  @override
+  String get helpA8 =>
+      'Yes. We provide an easy return and exchange process in line with our policy.';
+
+  @override
+  String get helpQ9 => 'Do you provide customer support after purchase?';
+
+  @override
+  String get helpA9 =>
+      'Absolutely. From 10 AM until 10 PM, our customer support team is available before and after your purchase to ensure a seamless shopping experience.';
+
+  @override
+  String get helpQ10 => 'Why should I shop from Zoonze?';
+
+  @override
+  String get helpA10 =>
+      'Zoonze combines 100% authentic products, competitive pricing, fast delivery, trusted service, and years of beauty-industry experience since 2008.';
+
+  @override
+  String get helpQOrders => 'How can I track my order?';
 
   @override
   String get helpAOrders =>
       'Open Account → My Orders to see the status of each order.';
 
   @override
-  String get helpQPayments => 'Which payment methods can I use?';
+  String get helpQPayments => 'What payment methods do you accept?';
 
   @override
   String get helpAPayments =>
       'Cards via Network International, and Tabby (Pay in 4 / Pay Later) where available at checkout.';
 
   @override
-  String get helpQDelivery => 'Where do you deliver?';
+  String get helpQDelivery => 'How fast is delivery?';
 
   @override
-  String get helpADelivery => 'We deliver across the United Arab Emirates.';
+  String get helpADelivery =>
+      'Free 3-hour delivery in Dubai, Sharjah & Ajman on orders over AED 150. The rest of the UAE is delivered within 24 hours.';
 
   @override
-  String get helpQReturns => 'How do I return an item?';
+  String get helpQReturns => 'How do I return or exchange a product?';
 
   @override
   String get helpAReturns =>
-      'Contact our support team within 14 days of delivery to arrange a return.';
+      'Contact our support team within 14 days of delivery to arrange a return or exchange.';
+
+  @override
+  String get helpQAuthentic => 'Are all products 100% authentic?';
+
+  @override
+  String get helpAAuthentic =>
+      'Yes. Every product is sourced from authorised distributors and is guaranteed 100% authentic.';
 
   @override
   String get helpQLanguage => 'How do I change the language?';
@@ -453,19 +608,57 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cartSecureCheckout => 'Secure Checkout';
 
   @override
-  String get cartEmptyTitle => 'Your cart is empty';
+  String get cartEmptyTitle => 'Your bag is empty';
 
   @override
-  String get cartEmptyBody => 'Browse the catalogue and add your favourites.';
+  String get cartEmptyBody =>
+      'Looks like you haven\'t added anything yet. Explore our bestsellers and find your signature scent.';
 
   @override
   String get cartContinueShopping => 'Continue shopping';
 
   @override
+  String get cartStartShopping => 'Start Shopping';
+
+  @override
+  String get cartOrderSummary => 'Order Summary';
+
+  @override
   String get cartSubtotal => 'Subtotal';
 
   @override
+  String cartSubtotalCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+    );
+    return 'Subtotal ($_temp0)';
+  }
+
+  @override
+  String cartPromoCode(String code) {
+    return 'Promo ($code)';
+  }
+
+  @override
   String get cartDiscount => 'Discount';
+
+  @override
+  String get cartDelivery => 'Delivery (3-hour)';
+
+  @override
+  String get cartDeliveryFree => 'FREE';
+
+  @override
+  String get cartFreeDeliveryUnlocked =>
+      'You\'ve unlocked FREE 3-hour delivery!';
+
+  @override
+  String cartFreeDeliveryRemaining(String amount) {
+    return 'Add $amount more for FREE 3-hour delivery';
+  }
 
   @override
   String get cartTotal => 'Total';
@@ -474,10 +667,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cartCheckout => 'Checkout';
 
   @override
-  String get cartCouponHint => 'Promo code';
+  String get cartCouponHint => 'Gift or promo code';
 
   @override
   String get cartApply => 'Apply';
+
+  @override
+  String cartCouponApplied(String code) {
+    return '$code applied';
+  }
 
   @override
   String get cartAdded => 'Added to cart';
@@ -565,6 +763,58 @@ class AppLocalizationsEn extends AppLocalizations {
   String get orderViewDetails => 'View details';
 
   @override
+  String orderItemCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count items',
+      one: '1 item',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get orderTotalLabel => 'Total';
+
+  @override
+  String get orderTrack => 'Track';
+
+  @override
+  String get orderReorder => 'Reorder';
+
+  @override
+  String get orderReorderAdded => 'Items added to your cart';
+
+  @override
+  String get orderReorderFailed =>
+      'Couldn\'t reorder these items. Please try again.';
+
+  @override
+  String get trackOrderTitle => 'Track Order';
+
+  @override
+  String get orderStatusTitle => 'Order Status';
+
+  @override
+  String get orderPlaced => 'Order Placed';
+
+  @override
+  String get orderDeliveryAddress => 'Delivery Address';
+
+  @override
+  String orderItemsCount(int count) {
+    return 'Items ($count)';
+  }
+
+  @override
+  String orderQty(int count) {
+    return 'Qty $count';
+  }
+
+  @override
+  String get orderNeedHelp => 'Need help with this order?';
+
+  @override
   String get addressesEmpty => 'No saved addresses yet.';
 
   @override
@@ -583,10 +833,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get defaultBadge => 'Default';
 
   @override
-  String get fieldPhone => 'Phone';
+  String get fieldPhone => 'Phone Number';
 
   @override
-  String get fieldStreet => 'Street address';
+  String get fieldStreet => 'Street';
 
   @override
   String get fieldCity => 'City';
@@ -601,7 +851,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fieldCountry => 'Country code';
 
   @override
-  String get addressDefaultShipping => 'Set as default shipping';
+  String get fieldFullName => 'Full Name';
+
+  @override
+  String get fieldEmirate => 'Emirate';
+
+  @override
+  String get fieldArea => 'Area';
+
+  @override
+  String get fieldApartment => 'Apartment / Floor (optional)';
+
+  @override
+  String get addressDefaultShipping => 'Set as default address';
+
+  @override
+  String get addressAddNew => 'Add New Address';
+
+  @override
+  String get addressSave => 'Save Address';
+
+  @override
+  String get addressHintName => 'e.g. Hassan Ahmed';
+
+  @override
+  String get addressHintPhone => '+971 50 000 0000';
+
+  @override
+  String get addressHintArea => 'Jumeirah 1';
+
+  @override
+  String get addressHintStreet => 'Street 9';
+
+  @override
+  String get contactInformation => 'Contact Information';
+
+  @override
+  String get checkoutEmailHelp => 'Order updates will be sent to this email.';
+
+  @override
+  String get checkoutDeliveryAddress => 'Delivery Address';
+
+  @override
+  String get actionChange => 'Change';
 
   @override
   String get profileTitle => 'Edit Profile';
@@ -731,7 +1023,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get completePaymentPayLater => 'I\'ll pay later';
 
   @override
-  String get orderSuccessTitle => 'Order placed!';
+  String get orderSuccessTitle => 'Order Placed!';
 
   @override
   String get orderPendingTitle => 'Order received';
@@ -739,6 +1031,15 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String orderSuccessBody(String number) {
     return 'Thank you. Your order number is $number.';
+  }
+
+  @override
+  String get orderSuccessThanks =>
+      'Thank you! Your order is confirmed and on its way.';
+
+  @override
+  String orderSuccessThanksNamed(String name) {
+    return 'Thank you, $name! Your order is confirmed and on its way.';
   }
 
   @override
@@ -755,12 +1056,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your order is placed and awaiting payment confirmation. We\'ll notify you once your payment is completed.';
 
   @override
-  String get badgeNew => 'NEW';
-
-  @override
-  String get badgeBestseller => 'BESTSELLER';
-
-  @override
   String get priceFrom => 'From';
 
   @override
@@ -770,10 +1065,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get productOutOfStock => 'Out of stock';
 
   @override
-  String get tabDescription => 'Description';
+  String get tabDetails => 'Details';
 
   @override
-  String get tabDetails => 'Details';
+  String get tabKeyFeatures => 'Key Features';
+
+  @override
+  String get tabMoreInformation => 'More Information';
 
   @override
   String get tabReviews => 'Reviews';
@@ -791,6 +1089,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String reviewsSummary(int rating, int count) {
     return '$rating% rating · $count reviews';
   }
+
+  @override
+  String get pdpQuantityLabel => 'Quantity';
+
+  @override
+  String get pdpYouMayAlsoLike => 'You may also like';
+
+  @override
+  String reviewsCount(int count) {
+    return '$count reviews';
+  }
+
+  @override
+  String pdpRatingReviews(String rating, int count) {
+    return '$rating · $count reviews';
+  }
+
+  @override
+  String get pdpTrustAuthenticValue => '100%';
+
+  @override
+  String get pdpTrustAuthenticLabel => 'Authentic';
+
+  @override
+  String get pdpTrustFreeValue => 'Free';
+
+  @override
+  String get pdpTrustFreeLabel => 'over AED 150';
+
+  @override
+  String get pdpTrustDeliveryValue => '3-Hour';
+
+  @override
+  String get pdpTrustDeliveryLabel => 'Delivery';
 
   @override
   String get menuShop => 'Shop';
@@ -827,7 +1159,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get footerSubscribed => 'Thanks! We\'ll keep you posted.';
 
   @override
-  String get footerRights => '© 2026 ZoonZE Beauty · All rights reserved.';
+  String get footerRights => '© 2026 Zoonze Beauty · All rights reserved.';
 
   @override
   String get footerTagline =>

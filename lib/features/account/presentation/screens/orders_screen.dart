@@ -1,15 +1,20 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/routes.dart';
+import '../../../../app/shell/marketing_footer.dart';
+import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/failure_message.dart';
 import '../../../../l10n/l10n.dart';
+import '../../../cart/presentation/cart_controller.dart';
 import '../../data/account_repository.dart';
 import '../../domain/order.dart';
+import '../order_format.dart';
 
 class OrdersScreen extends ConsumerStatefulWidget {
   const OrdersScreen({super.key});
@@ -22,26 +27,13 @@ class OrdersScreen extends ConsumerStatefulWidget {
 /// free-text status, which varies by config — matched loosely on keywords.
 enum _OrderFilter { all, toReceive, delivered, cancelled }
 
-bool _statusMatches(_OrderFilter f, String status) {
-  final s = status.toLowerCase();
-  final delivered = s.contains('complet') || s.contains('deliver');
-  final cancelled =
-      s.contains('cancel') || s.contains('refund') || s.contains('closed');
+bool _statusMatches(_OrderFilter f, CustomerOrder o) {
   return switch (f) {
     _OrderFilter.all => true,
-    _OrderFilter.delivered => delivered,
-    _OrderFilter.cancelled => cancelled,
-    _OrderFilter.toReceive => !delivered && !cancelled,
+    _OrderFilter.delivered => o.isDelivered,
+    _OrderFilter.cancelled => o.isCancelled,
+    _OrderFilter.toReceive => !o.isDelivered && !o.isCancelled,
   };
-}
-
-Color _statusColor(String status) {
-  final s = status.toLowerCase();
-  if (s.contains('complet') || s.contains('deliver')) return AppColors.accentGold;
-  if (s.contains('cancel') || s.contains('refund') || s.contains('closed')) {
-    return AppColors.inkMuted;
-  }
-  return AppColors.brandPrimary;
 }
 
 class _OrdersScreenState extends ConsumerState<OrdersScreen> {
@@ -66,13 +58,42 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
     }
   }
 
+  Future<void> _reorder(CustomerOrder order) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = AppLocalizations.of(context);
+    final cart = ref.read(cartControllerProvider.notifier);
+    var added = false;
+    for (final line in order.lines) {
+      final sku = line.sku;
+      if (sku == null || sku.isEmpty) continue;
+      try {
+        await cart.addToCart(sku: sku, quantity: line.quantity.toInt().clamp(1, 99));
+        added = true;
+      } catch (_) {
+        // Skip items that can't be re-added (out of stock / removed).
+      }
+    }
+    if (!mounted) return;
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(added ? l10n.orderReorderAdded : l10n.orderReorderFailed),
+      ),
+    );
+    if (added) context.push(AppRoutes.cart);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(ordersControllerProvider);
 
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.accountOrders)),
+    return ZoonzeScaffold(
+      currentTab: AppTab.account,
+      appBar: AppBar(
+        centerTitle: true,
+        leading: const BackButton(),
+        title: Text(l10n.accountOrders),
+      ),
       body: _body(l10n, state),
     );
   }
@@ -111,42 +132,61 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
         title: l10n.ordersEmpty,
       );
     }
-    final filtered = state.orders
-        .where((o) => _statusMatches(_filter, o.status))
-        .toList();
-    return Column(
+    final filtered = state.orders.where((o) => _statusMatches(_filter, o)).toList();
+    return ListView(
+      controller: _scroll,
+      padding: EdgeInsets.zero,
       children: [
         _FilterBar(
           current: _filter,
           onChanged: (f) => setState(() => _filter = f),
         ),
-        Expanded(
-          child: filtered.isEmpty
-              ? EmptyState(
-                  icon: Icons.receipt_long_outlined,
-                  title: l10n.ordersEmpty,
-                )
-              : ListView.builder(
-                  controller: _scroll,
-                  padding: const EdgeInsets.all(16),
-                  itemCount: filtered.length + (state.isLoadingMore ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (index >= filtered.length) {
-                      return const Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Center(child: CircularProgressIndicator()),
-                      );
-                    }
-                    return _OrderCard(order: filtered[index]);
-                  },
-                ),
-        ),
+        const _Band(),
+        if (filtered.isEmpty)
+          Padding(
+            padding: const EdgeInsets.all(40),
+            child: EmptyState(
+              icon: Icons.receipt_long_outlined,
+              title: l10n.ordersEmpty,
+            ),
+          )
+        else
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Column(
+              children: [
+                for (final order in filtered)
+                  _OrderCard(
+                    order: order,
+                    onTrack: () =>
+                        context.push(AppRoutes.orderTracking, extra: order),
+                    onReorder: () => _reorder(order),
+                  ),
+              ],
+            ),
+          ),
+        if (state.isLoadingMore)
+          const Padding(
+            padding: EdgeInsets.all(16),
+            child: Center(child: CircularProgressIndicator()),
+          ),
+        const MarketingFooter(),
       ],
     );
   }
 }
 
-/// Horizontal status filter chips (All / To Receive / Delivered / Cancelled).
+/// 8px light section separator (Figma).
+class _Band extends StatelessWidget {
+  const _Band();
+  @override
+  Widget build(BuildContext context) => const SizedBox(
+    height: 8,
+    child: ColoredBox(color: AppColors.surfaceMuted),
+  );
+}
+
+/// Horizontal status filter pills (All / To Receive / Delivered / Cancelled).
 class _FilterBar extends StatelessWidget {
   const _FilterBar({required this.current, required this.onChanged});
   final _OrderFilter current;
@@ -161,117 +201,305 @@ class _FilterBar extends StatelessWidget {
       _OrderFilter.delivered: l10n.ordersFilterDelivered,
       _OrderFilter.cancelled: l10n.ordersFilterCancelled,
     };
-    return SizedBox(
-      height: 48,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
         children: [
-          for (final entry in labels.entries)
-            Padding(
-              padding: const EdgeInsetsDirectional.only(end: 8),
-              child: ChoiceChip(
-                label: Text(entry.value),
-                selected: current == entry.key,
-                onSelected: (_) => onChanged(entry.key),
-              ),
+          for (final entry in labels.entries) ...[
+            _Chip(
+              label: entry.value,
+              selected: current == entry.key,
+              onTap: () => onChanged(entry.key),
             ),
+            const SizedBox(width: 8),
+          ],
         ],
       ),
     );
   }
 }
 
-class _OrderCard extends StatelessWidget {
-  const _OrderCard({required this.order});
-  final CustomerOrder order;
+class _Chip extends StatelessWidget {
+  const _Chip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: ListTile(
-        onTap: () => context.push(AppRoutes.orderDetail, extra: order),
-        title: Text(
-          l10n.orderNumber(order.number),
-          style: const TextStyle(fontWeight: FontWeight.w700),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.brandPrimary : AppColors.surfaceMuted,
+          borderRadius: BorderRadius.circular(999),
+          border: selected ? null : Border.all(color: AppColors.borderDefault),
         ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Text(
-                  order.date,
-                  style: const TextStyle(color: AppColors.inkMuted),
-                ),
-                const SizedBox(width: 8),
-                _StatusBadge(status: order.status),
-              ],
-            ),
-            if (order.hasTracking)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.local_shipping_outlined,
-                      size: 14,
-                      color: AppColors.brandPrimary,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      l10n.orderTrackingSection,
-                      style: const TextStyle(
-                        color: AppColors.brandPrimary,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-          ],
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+            color: selected ? Colors.white : AppColors.inkMuted,
+          ),
         ),
-        trailing: order.total != null
-            ? Text(
-                order.total!.formatted(),
-                textDirection: TextDirection.ltr,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.brandPrimary,
-                ),
-              )
-            : const Icon(Icons.chevron_right),
-        isThreeLine: order.hasTracking,
       ),
     );
   }
 }
 
-/// Coloured status pill (Figma): gold = delivered, muted = cancelled,
-/// burgundy = in progress.
-class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.status});
-  final String status;
+class _OrderCard extends StatelessWidget {
+  const _OrderCard({
+    required this.order,
+    required this.onTrack,
+    required this.onReorder,
+  });
+
+  final CustomerOrder order;
+  final VoidCallback onTrack;
+  final VoidCallback onReorder;
 
   @override
   Widget build(BuildContext context) {
-    final color = _statusColor(status);
+    final l10n = AppLocalizations.of(context);
+    final isPast = order.isDelivered || order.isCancelled;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(6),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.borderDefault),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => context.push(AppRoutes.orderDetail, extra: order),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header: number + date·items, status pill.
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '#${order.number}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            color: AppColors.inkHeading,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          '${orderFmtDate(order.date)} · ${l10n.orderItemCount(order.itemCount)}',
+                          style: const TextStyle(
+                            color: AppColors.inkMuted,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _StatusPill(order: order),
+                ],
+              ),
+              if (order.lines.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                _Thumbnails(lines: order.lines),
+              ],
+              const SizedBox(height: 12),
+              const Divider(height: 1, thickness: 1, color: AppColors.borderDefault),
+              const SizedBox(height: 12),
+              // Total + action.
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.orderTotalLabel,
+                          style: const TextStyle(
+                            color: AppColors.inkMuted,
+                            fontSize: 11,
+                          ),
+                        ),
+                        if (order.total != null)
+                          Text(
+                            order.total!.formatted(),
+                            textDirection: TextDirection.ltr,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                              color: AppColors.brandPrimary,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _ActionButton(
+                    label: isPast ? l10n.orderReorder : l10n.orderTrack,
+                    onTap: isPast ? onReorder : onTrack,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Solid status pill: gold = delivered, grey = cancelled, burgundy = in progress.
+class _StatusPill extends StatelessWidget {
+  const _StatusPill({required this.order});
+  final CustomerOrder order;
+
+  @override
+  Widget build(BuildContext context) {
+    final cancelled = order.isCancelled;
+    final color = order.isDelivered
+        ? AppColors.accentGold
+        : cancelled
+        ? AppColors.inkMuted
+        : AppColors.brandPrimary;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: cancelled ? AppColors.surfaceMuted : color,
+        borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
-        status,
+        order.status,
         style: TextStyle(
-          color: color,
+          color: cancelled ? AppColors.inkMuted : Colors.white,
           fontSize: 11,
           fontWeight: FontWeight.w600,
         ),
+      ),
+    );
+  }
+}
+
+/// Outlined burgundy action pill (Track / Reorder).
+class _ActionButton extends StatelessWidget {
+  const _ActionButton({required this.label, required this.onTap});
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+        decoration: BoxDecoration(
+          border: Border.all(color: AppColors.brandPrimary),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: AppColors.brandPrimary,
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Row of up to four 52×52 product thumbnails, with a "+N" overflow tile.
+class _Thumbnails extends StatelessWidget {
+  const _Thumbnails({required this.lines});
+  final List<OrderLine> lines;
+
+  @override
+  Widget build(BuildContext context) {
+    const max = 4;
+    final shown = lines.take(max).toList();
+    final extra = lines.length - shown.length;
+    return Row(
+      children: [
+        for (final line in shown) ...[
+          _Thumb(url: line.imageUrl),
+          const SizedBox(width: 8),
+        ],
+        if (extra > 0)
+          Container(
+            width: 52,
+            height: 52,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceTint,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              '+$extra',
+              style: const TextStyle(
+                color: AppColors.brandPrimary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _Thumb extends StatelessWidget {
+  const _Thumb({required this.url});
+  final String? url;
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: SizedBox(
+        width: 52,
+        height: 52,
+        child: (url == null || url!.isEmpty)
+            ? const ColoredBox(
+                color: AppColors.surfaceTint,
+                child: Icon(
+                  Icons.image_outlined,
+                  size: 18,
+                  color: AppColors.inkMuted,
+                ),
+              )
+            : CachedNetworkImage(
+                imageUrl: url!,
+                fit: BoxFit.cover,
+                placeholder: (_, __) =>
+                    const ColoredBox(color: AppColors.surfaceTint),
+                errorWidget: (_, __, ___) => const ColoredBox(
+                  color: AppColors.surfaceTint,
+                  child: Icon(
+                    Icons.image_outlined,
+                    size: 18,
+                    color: AppColors.inkMuted,
+                  ),
+                ),
+              ),
       ),
     );
   }

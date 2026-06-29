@@ -20,8 +20,21 @@ query CustomerOrders($pageSize: Int!, $currentPage: Int!) {
         }
         items {
           product_name
+          product_sku
+          product_url_key
           quantity_ordered
           product_sale_price { value currency }
+          product { image { url } }
+        }
+        comments { message timestamp }
+        shipping_address {
+          firstname
+          lastname
+          street
+          city
+          region
+          postcode
+          telephone
         }
         shipments {
           tracking { title number carrier }
@@ -43,7 +56,7 @@ query CustomerAddresses {
       street
       city
       postcode
-      region { region region_code }
+      region { region region_code region_id }
       country_code
       default_shipping
       default_billing

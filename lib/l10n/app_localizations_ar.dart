@@ -213,10 +213,47 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String categoryCount(int count) {
+    return '$count فئة';
+  }
+
+  @override
   String get filtersLabel => 'تصفية';
 
   @override
   String get filterPriceLabel => 'السعر';
+
+  @override
+  String get filterSortByLabel => 'ترتيب حسب';
+
+  @override
+  String get filterPriceRangeLabel => 'نطاق السعر';
+
+  @override
+  String get filterResetLabel => 'إعادة تعيين';
+
+  @override
+  String get filterClearAllLabel => 'مسح الكل';
+
+  @override
+  String get filterApplyLabel => 'تطبيق الفلاتر';
+
+  @override
+  String get filterAll => 'الكل';
+
+  @override
+  String get actionShare => 'مشاركة';
+
+  @override
+  String get badgeNew => 'جديد';
+
+  @override
+  String get badgeBestseller => 'الأكثر مبيعًا';
+
+  @override
+  String shareProduct(String name) {
+    return 'اكتشفي $name على Zoonze';
+  }
 
   @override
   String get sortLabel => 'ترتيب';
@@ -317,6 +354,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get authHaveResetCode => 'لديّ رمز إعادة التعيين';
 
   @override
+  String get authBackToSignIn => 'العودة إلى تسجيل الدخول';
+
+  @override
+  String get authEmailHint => 'البريد الإلكتروني';
+
+  @override
   String get authResetTitle => 'تعيين كلمة مرور جديدة';
 
   @override
@@ -368,8 +411,111 @@ class AppLocalizationsAr extends AppLocalizations {
   String get accountHelp => 'المساعدة والأسئلة الشائعة';
 
   @override
+  String get accountHelpSupport => 'المساعدة والدعم';
+
+  @override
+  String get accountLogOut => 'تسجيل الخروج';
+
+  @override
+  String get accountMember => 'عضو';
+
+  @override
+  String get accountStatOrders => 'الطلبات';
+
+  @override
+  String get accountStatWishlist => 'المفضلة';
+
+  @override
+  String get accountStatVouchers => 'القسائم';
+
+  @override
   String get helpIntro =>
       'إجابات عن الأسئلة الشائعة. ما زلت بحاجة إلى مساعدة؟ تواصل مع فريقنا أدناه.';
+
+  @override
+  String get helpSearchHint => 'ابحث عن مساعدة…';
+
+  @override
+  String get helpFrequentlyAsked => 'الأسئلة الشائعة';
+
+  @override
+  String get helpLiveChat => 'دردشة مباشرة';
+
+  @override
+  String get helpCallUs => 'اتصل بنا';
+
+  @override
+  String get helpEmailLabel => 'البريد';
+
+  @override
+  String get helpQ1 => 'كيف تضمن زونزي أن المنتجات أصلية 100%؟';
+
+  @override
+  String get helpA1 =>
+      'في زونزي، جميع العطور ومنتجات العناية بالبشرة والمكياج والعناية بالشعر مصدرها موردون موثوقون ويتم التحقق منها لضمان أصالتها 100%.';
+
+  @override
+  String get helpQ2 =>
+      'هل جميع العطور ومنتجات البشرة والشعر والمكياج التي تبيعها زونزي أصلية؟';
+
+  @override
+  String get helpA2 =>
+      'نعم. نقدّم فقط منتجات أصلية من كبرى العلامات العالمية الفاخرة.';
+
+  @override
+  String get helpQ3 => 'هل لدى زونزي سوق إلكتروني؟';
+
+  @override
+  String get helpA3 =>
+      'لا. لا تملك زونزي سوقًا إلكترونيًا — فنحن لا ندرج المنتج نفسه بأسعار مختلفة أو من بائعين مختلفين. نقدّم منتجاتنا فقط، المضمونة أصلية 100%.';
+
+  @override
+  String get helpQ4 => 'ما المنتجات التجميلية المتوفرة في زونزي؟';
+
+  @override
+  String get helpA4 =>
+      'نقدّم عطورًا أصلية ومنتجات للعناية بالبشرة ومكياجًا ومنتجات للعناية بالشعر من أرقى العلامات الفاخرة حول العالم.';
+
+  @override
+  String get helpQ5 => 'ما سرعة التوصيل في زونزي؟';
+
+  @override
+  String get helpA5 =>
+      'نوصّل خلال 3 ساعات، ونعمل باستمرار للوصول إلى التوصيل خلال ساعتين كلما أمكن.';
+
+  @override
+  String get helpQ6 => 'لماذا أسعار زونزي تنافسية؟';
+
+  @override
+  String get helpA6 =>
+      'هدفنا جعل منتجات الجمال الفاخرة الأصلية في متناول الجميع من خلال كفاءة المصادر والعمليات، مما يتيح لنا تقديم أسعار جذابة.';
+
+  @override
+  String get helpQ7 => 'هل تقدّمون علامات تجميل فاخرة؟';
+
+  @override
+  String get helpA7 =>
+      'نعم. تقدّم زونزي مجموعة منتقاة من العلامات العالمية الراقية في العطور والعناية بالبشرة والمكياج والعناية بالشعر.';
+
+  @override
+  String get helpQ8 => 'هل يمكنني إرجاع المنتجات أو استبدالها؟';
+
+  @override
+  String get helpA8 => 'نعم. نوفّر عملية إرجاع واستبدال سهلة وفقًا لسياستنا.';
+
+  @override
+  String get helpQ9 => 'هل تقدّمون دعمًا للعملاء بعد الشراء؟';
+
+  @override
+  String get helpA9 =>
+      'بالتأكيد. من الساعة 10 صباحًا حتى 10 مساءً، فريق دعم العملاء متاح قبل عملية الشراء وبعدها لضمان تجربة تسوّق سلسة.';
+
+  @override
+  String get helpQ10 => 'لماذا أتسوّق من زونزي؟';
+
+  @override
+  String get helpA10 =>
+      'تجمع زونزي بين المنتجات الأصلية 100% والأسعار التنافسية والتوصيل السريع والخدمة الموثوقة وسنوات من الخبرة في قطاع الجمال منذ 2008.';
 
   @override
   String get helpQOrders => 'كيف أتتبّع طلبي؟';
@@ -385,17 +531,25 @@ class AppLocalizationsAr extends AppLocalizations {
       'البطاقات عبر Network International، وتابي (الدفع على 4 دفعات / الدفع لاحقًا) عند توفّرها في الدفع.';
 
   @override
-  String get helpQDelivery => 'إلى أين توصّلون؟';
+  String get helpQDelivery => 'ما سرعة التوصيل؟';
 
   @override
-  String get helpADelivery => 'نوصّل إلى جميع أنحاء الإمارات العربية المتحدة.';
+  String get helpADelivery =>
+      'توصيل مجاني خلال 3 ساعات في دبي والشارقة وعجمان للطلبات فوق 150 درهمًا. وبقية الإمارات خلال 24 ساعة.';
 
   @override
-  String get helpQReturns => 'كيف أرجع منتجًا؟';
+  String get helpQReturns => 'كيف أرجع أو أستبدل منتجًا؟';
 
   @override
   String get helpAReturns =>
-      'تواصل مع فريق الدعم خلال 14 يومًا من التوصيل لترتيب الإرجاع.';
+      'تواصل مع فريق الدعم خلال 14 يومًا من التوصيل لترتيب الإرجاع أو الاستبدال.';
+
+  @override
+  String get helpQAuthentic => 'هل جميع المنتجات أصلية 100%؟';
+
+  @override
+  String get helpAAuthentic =>
+      'نعم. كل منتج موثوق المصدر من موزّعين معتمدين ومضمون أصلي 100%.';
 
   @override
   String get helpQLanguage => 'كيف أغيّر اللغة؟';
@@ -452,16 +606,48 @@ class AppLocalizationsAr extends AppLocalizations {
   String get cartEmptyTitle => 'سلتك فارغة';
 
   @override
-  String get cartEmptyBody => 'تصفّح المنتجات وأضف ما يعجبك.';
+  String get cartEmptyBody =>
+      'يبدو أنك لم تُضِف أي شيء بعد. تصفّح الأكثر مبيعاً واعثر على عطرك المميّز.';
 
   @override
   String get cartContinueShopping => 'متابعة التسوّق';
 
   @override
+  String get cartStartShopping => 'ابدأ التسوّق';
+
+  @override
+  String get cartOrderSummary => 'ملخص الطلب';
+
+  @override
   String get cartSubtotal => 'المجموع الفرعي';
 
   @override
+  String cartSubtotalCount(int count) {
+    return 'المجموع الفرعي ($count عنصر)';
+  }
+
+  @override
+  String cartPromoCode(String code) {
+    return 'خصم ($code)';
+  }
+
+  @override
   String get cartDiscount => 'الخصم';
+
+  @override
+  String get cartDelivery => 'التوصيل (خلال ٣ ساعات)';
+
+  @override
+  String get cartDeliveryFree => 'مجاني';
+
+  @override
+  String get cartFreeDeliveryUnlocked =>
+      'لقد حصلت على توصيل مجاني خلال ٣ ساعات!';
+
+  @override
+  String cartFreeDeliveryRemaining(String amount) {
+    return 'أضف $amount للحصول على توصيل مجاني خلال ٣ ساعات';
+  }
 
   @override
   String get cartTotal => 'الإجمالي';
@@ -470,10 +656,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get cartCheckout => 'إتمام الشراء';
 
   @override
-  String get cartCouponHint => 'رمز الخصم';
+  String get cartCouponHint => 'بطاقة هدية أو رمز خصم';
 
   @override
   String get cartApply => 'تطبيق';
+
+  @override
+  String cartCouponApplied(String code) {
+    return '$code مُطبّق';
+  }
 
   @override
   String get cartAdded => 'تمت الإضافة إلى السلة';
@@ -559,6 +750,58 @@ class AppLocalizationsAr extends AppLocalizations {
   String get orderViewDetails => 'عرض التفاصيل';
 
   @override
+  String orderItemCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count منتجات',
+      one: 'منتج واحد',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get orderTotalLabel => 'الإجمالي';
+
+  @override
+  String get orderTrack => 'تتبّع';
+
+  @override
+  String get orderReorder => 'إعادة الطلب';
+
+  @override
+  String get orderReorderAdded => 'تمت إضافة المنتجات إلى سلتك';
+
+  @override
+  String get orderReorderFailed =>
+      'تعذّرت إعادة طلب هذه المنتجات. حاول مرة أخرى.';
+
+  @override
+  String get trackOrderTitle => 'تتبّع الطلب';
+
+  @override
+  String get orderStatusTitle => 'حالة الطلب';
+
+  @override
+  String get orderPlaced => 'تم استلام الطلب';
+
+  @override
+  String get orderDeliveryAddress => 'عنوان التوصيل';
+
+  @override
+  String orderItemsCount(int count) {
+    return 'المنتجات ($count)';
+  }
+
+  @override
+  String orderQty(int count) {
+    return 'الكمية $count';
+  }
+
+  @override
+  String get orderNeedHelp => 'هل تحتاج مساعدة بخصوص هذا الطلب؟';
+
+  @override
   String get addressesEmpty => 'لا توجد عناوين محفوظة بعد.';
 
   @override
@@ -577,10 +820,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get defaultBadge => 'افتراضي';
 
   @override
-  String get fieldPhone => 'الهاتف';
+  String get fieldPhone => 'رقم الهاتف';
 
   @override
-  String get fieldStreet => 'عنوان الشارع';
+  String get fieldStreet => 'الشارع';
 
   @override
   String get fieldCity => 'المدينة';
@@ -595,7 +838,50 @@ class AppLocalizationsAr extends AppLocalizations {
   String get fieldCountry => 'رمز الدولة';
 
   @override
-  String get addressDefaultShipping => 'تعيين كعنوان شحن افتراضي';
+  String get fieldFullName => 'الاسم الكامل';
+
+  @override
+  String get fieldEmirate => 'الإمارة';
+
+  @override
+  String get fieldArea => 'المنطقة';
+
+  @override
+  String get fieldApartment => 'شقة / طابق (اختياري)';
+
+  @override
+  String get addressDefaultShipping => 'تعيين كعنوان افتراضي';
+
+  @override
+  String get addressAddNew => 'إضافة عنوان جديد';
+
+  @override
+  String get addressSave => 'حفظ العنوان';
+
+  @override
+  String get addressHintName => 'مثال: حسن أحمد';
+
+  @override
+  String get addressHintPhone => '+971 50 000 0000';
+
+  @override
+  String get addressHintArea => 'جميرا 1';
+
+  @override
+  String get addressHintStreet => 'شارع 9';
+
+  @override
+  String get contactInformation => 'معلومات الاتصال';
+
+  @override
+  String get checkoutEmailHelp =>
+      'سيتم إرسال تحديثات الطلب إلى هذا البريد الإلكتروني.';
+
+  @override
+  String get checkoutDeliveryAddress => 'عنوان التوصيل';
+
+  @override
+  String get actionChange => 'تغيير';
 
   @override
   String get profileTitle => 'تعديل الملف الشخصي';
@@ -733,6 +1019,15 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String get orderSuccessThanks =>
+      'شكرًا لك! تم تأكيد طلبك وهو في الطريق إليك.';
+
+  @override
+  String orderSuccessThanksNamed(String name) {
+    return 'شكرًا لك، $name! تم تأكيد طلبك وهو في الطريق إليك.';
+  }
+
+  @override
   String get orderNumberLabel => 'رقم الطلب';
 
   @override
@@ -746,12 +1041,6 @@ class AppLocalizationsAr extends AppLocalizations {
       'تم استلام طلبك وهو بانتظار تأكيد الدفع. سنخطرك بمجرد إتمام الدفع.';
 
   @override
-  String get badgeNew => 'جديد';
-
-  @override
-  String get badgeBestseller => 'الأكثر مبيعًا';
-
-  @override
   String get priceFrom => 'ابتداءً من';
 
   @override
@@ -761,10 +1050,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get productOutOfStock => 'غير متوفّر';
 
   @override
-  String get tabDescription => 'الوصف';
+  String get tabDetails => 'التفاصيل';
 
   @override
-  String get tabDetails => 'التفاصيل';
+  String get tabKeyFeatures => 'أبرز المزايا';
+
+  @override
+  String get tabMoreInformation => 'معلومات إضافية';
 
   @override
   String get tabReviews => 'المراجعات';
@@ -782,6 +1074,40 @@ class AppLocalizationsAr extends AppLocalizations {
   String reviewsSummary(int rating, int count) {
     return 'تقييم $rating% · $count مراجعة';
   }
+
+  @override
+  String get pdpQuantityLabel => 'الكمية';
+
+  @override
+  String get pdpYouMayAlsoLike => 'قد يعجبك أيضاً';
+
+  @override
+  String reviewsCount(int count) {
+    return '$count مراجعة';
+  }
+
+  @override
+  String pdpRatingReviews(String rating, int count) {
+    return '$rating · $count مراجعة';
+  }
+
+  @override
+  String get pdpTrustAuthenticValue => '100%';
+
+  @override
+  String get pdpTrustAuthenticLabel => 'أصلي';
+
+  @override
+  String get pdpTrustFreeValue => 'مجاني';
+
+  @override
+  String get pdpTrustFreeLabel => 'فوق 150 د.إ';
+
+  @override
+  String get pdpTrustDeliveryValue => '3 ساعات';
+
+  @override
+  String get pdpTrustDeliveryLabel => 'توصيل';
 
   @override
   String get menuShop => 'تسوّق';

@@ -1,4 +1,5 @@
 import 'money.dart';
+import 'product.dart';
 
 /// One selectable value of a configurable option (e.g. a size or a colour
 /// swatch). [swatchColor] is a hex string when Magento exposes swatch data.
@@ -70,6 +71,20 @@ class ProductReview {
   int get stars => (averageRating / 20).round();
 }
 
+/// One bar of the per-star rating distribution (`rating_histogram`), e.g.
+/// `stars: 5, count: 12, percent: 80`. Store-scoped, computed server-side.
+class RatingBar {
+  const RatingBar({
+    required this.stars,
+    required this.count,
+    required this.percent,
+  });
+
+  final int stars;
+  final int count;
+  final int percent;
+}
+
 /// Review rating metadata value (e.g. "5 stars" -> value_id).
 class ReviewRatingValue {
   const ReviewRatingValue({required this.valueId, required this.value});
@@ -97,15 +112,19 @@ class ProductDetail {
     required this.urlKey,
     this.brand,
     this.description,
+    this.shortDescription,
     this.gallery = const <String>[],
     this.regularPrice,
     this.finalPrice,
     this.inStock = true,
+    this.badge = ProductBadge.none,
     this.options = const <ConfigurableOption>[],
     this.variants = const <ProductVariant>[],
     this.ratingSummary = 0,
     this.reviewCount = 0,
     this.reviews = const <ProductReview>[],
+    this.ratingHistogram = const <RatingBar>[],
+    this.alsoLike = const <Product>[],
   });
 
   final String sku;
@@ -115,10 +134,16 @@ class ProductDetail {
 
   /// Plain-text description (HTML already stripped).
   final String? description;
+
+  /// Plain-text short description / key features (HTML already stripped).
+  final String? shortDescription;
   final List<String> gallery;
   final Money? regularPrice;
   final Money? finalPrice;
   final bool inStock;
+
+  /// Merchandising badge (NEW / BESTSELLER) from `is_new_arrival`/`is_bestseller`.
+  final ProductBadge badge;
   final List<ConfigurableOption> options;
   final List<ProductVariant> variants;
 
@@ -127,6 +152,14 @@ class ProductDetail {
   final int reviewCount;
   final List<ProductReview> reviews;
 
+  /// Per-star distribution bars (5★→1★) from `rating_histogram`. Store-scoped,
+  /// computed server-side; empty when the store has no reviews.
+  final List<RatingBar> ratingHistogram;
+
+  /// "You may also like" — Magento `also_like_products` (related links, with a
+  /// same-category newest-in-stock fallback applied server-side).
+  final List<Product> alsoLike;
+
   bool get isConfigurable => options.isNotEmpty;
   bool get hasReviews => reviewCount > 0;
 
@@ -134,6 +167,16 @@ class ProductDetail {
     final r = regularPrice;
     final f = finalPrice;
     return r != null && f != null && f.amount < r.amount;
+  }
+
+  /// Discount percentage (rounded) of the final price vs the regular price, or
+  /// null when not on sale.
+  int? get discountPercent {
+    if (!isOnSale) return null;
+    final r = regularPrice!.amount;
+    final f = finalPrice!.amount;
+    if (r <= 0) return null;
+    return (((r - f) / r) * 100).round();
   }
 
   /// The variant matching a full attribute selection, or null if incomplete /

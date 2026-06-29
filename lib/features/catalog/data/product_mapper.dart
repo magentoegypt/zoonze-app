@@ -30,5 +30,16 @@ Product productFromJson(Map<String, dynamic> json) {
       minPrice?['final_price'] as Map<String, dynamic>?,
     ),
     inStock: (json['stock_status'] as String?) != 'OUT_OF_STOCK',
+    badge: badgeFromJson(json),
   );
+}
+
+/// Maps the backend `is_new_arrival` / `is_bestseller` flags to a single
+/// merchandising badge. Bestseller wins when a product qualifies for both.
+/// Tolerates GraphQL Boolean or Magento Int (0/1). Absent fields → no badge.
+ProductBadge badgeFromJson(Map<String, dynamic> json) {
+  bool truthy(Object? v) => v == true || (v is num && v != 0);
+  if (truthy(json['is_bestseller'])) return ProductBadge.bestseller;
+  if (truthy(json['is_new_arrival'])) return ProductBadge.isNew;
+  return ProductBadge.none;
 }

@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// Application title shown in the OS task switcher.
   ///
   /// In en, this message translates to:
-  /// **'ZoonZE Beauty'**
+  /// **'Zoonze Beauty'**
   String get appTitle;
 
   /// No description provided for @languageEnglish.
@@ -494,6 +494,12 @@ abstract class AppLocalizations {
   /// **'{count} products'**
   String categoryProductCount(int count);
 
+  /// No description provided for @categoryCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} categories'**
+  String categoryCount(int count);
+
   /// No description provided for @filtersLabel.
   ///
   /// In en, this message translates to:
@@ -505,6 +511,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Price'**
   String get filterPriceLabel;
+
+  /// No description provided for @filterSortByLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort By'**
+  String get filterSortByLabel;
+
+  /// No description provided for @filterPriceRangeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Price Range'**
+  String get filterPriceRangeLabel;
+
+  /// No description provided for @filterResetLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get filterResetLabel;
+
+  /// No description provided for @filterClearAllLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear All'**
+  String get filterClearAllLabel;
+
+  /// No description provided for @filterApplyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply Filters'**
+  String get filterApplyLabel;
+
+  /// No description provided for @filterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get filterAll;
+
+  /// No description provided for @actionShare.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get actionShare;
+
+  /// No description provided for @badgeNew.
+  ///
+  /// In en, this message translates to:
+  /// **'NEW'**
+  String get badgeNew;
+
+  /// No description provided for @badgeBestseller.
+  ///
+  /// In en, this message translates to:
+  /// **'BESTSELLER'**
+  String get badgeBestseller;
+
+  /// No description provided for @shareProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Check out {name} at Zoonze'**
+  String shareProduct(String name);
 
   /// No description provided for @sortLabel.
   ///
@@ -605,7 +671,7 @@ abstract class AppLocalizations {
   /// No description provided for @authSignUpSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Join ZoonZE for faster checkout, order tracking & exclusive offers.'**
+  /// **'Join Zoonze for faster checkout, order tracking & exclusive offers.'**
   String get authSignUpSubtitle;
 
   /// No description provided for @authAgreeTerms.
@@ -653,7 +719,7 @@ abstract class AppLocalizations {
   /// No description provided for @authForgotLink.
   ///
   /// In en, this message translates to:
-  /// **'Forgot password?'**
+  /// **'Forgot Password?'**
   String get authForgotLink;
 
   /// No description provided for @authNoAccount.
@@ -691,6 +757,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'I have a reset code'**
   String get authHaveResetCode;
+
+  /// No description provided for @authBackToSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Sign In'**
+  String get authBackToSignIn;
+
+  /// No description provided for @authEmailHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Email address'**
+  String get authEmailHint;
 
   /// No description provided for @authResetTitle.
   ///
@@ -743,7 +821,7 @@ abstract class AppLocalizations {
   /// No description provided for @accountGuestTitle.
   ///
   /// In en, this message translates to:
-  /// **'Your ZoonZE account'**
+  /// **'Your Zoonze account'**
   String get accountGuestTitle;
 
   /// No description provided for @accountGuestBody.
@@ -767,7 +845,7 @@ abstract class AppLocalizations {
   /// No description provided for @accountAbout.
   ///
   /// In en, this message translates to:
-  /// **'About ZoonZE'**
+  /// **'About Zoonze'**
   String get accountAbout;
 
   /// No description provided for @accountOrders.
@@ -788,16 +866,202 @@ abstract class AppLocalizations {
   /// **'Help & FAQ'**
   String get accountHelp;
 
+  /// No description provided for @accountHelpSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Help & Support'**
+  String get accountHelpSupport;
+
+  /// No description provided for @accountLogOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Log Out'**
+  String get accountLogOut;
+
+  /// No description provided for @accountMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Member'**
+  String get accountMember;
+
+  /// No description provided for @accountStatOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Orders'**
+  String get accountStatOrders;
+
+  /// No description provided for @accountStatWishlist.
+  ///
+  /// In en, this message translates to:
+  /// **'Wishlist'**
+  String get accountStatWishlist;
+
+  /// No description provided for @accountStatVouchers.
+  ///
+  /// In en, this message translates to:
+  /// **'Vouchers'**
+  String get accountStatVouchers;
+
   /// No description provided for @helpIntro.
   ///
   /// In en, this message translates to:
   /// **'Answers to common questions. Still stuck? Reach our team below.'**
   String get helpIntro;
 
+  /// No description provided for @helpSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search for help…'**
+  String get helpSearchHint;
+
+  /// No description provided for @helpFrequentlyAsked.
+  ///
+  /// In en, this message translates to:
+  /// **'Frequently Asked'**
+  String get helpFrequentlyAsked;
+
+  /// No description provided for @helpLiveChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Live Chat'**
+  String get helpLiveChat;
+
+  /// No description provided for @helpCallUs.
+  ///
+  /// In en, this message translates to:
+  /// **'Call Us'**
+  String get helpCallUs;
+
+  /// No description provided for @helpEmailLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get helpEmailLabel;
+
+  /// No description provided for @helpQ1.
+  ///
+  /// In en, this message translates to:
+  /// **'How does Zoonze guarantee 100% authentic products?'**
+  String get helpQ1;
+
+  /// No description provided for @helpA1.
+  ///
+  /// In en, this message translates to:
+  /// **'At Zoonze, all perfumes, skincare, makeup, and haircare products are sourced from trusted suppliers and verified to ensure they are 100% authentic.'**
+  String get helpA1;
+
+  /// No description provided for @helpQ2.
+  ///
+  /// In en, this message translates to:
+  /// **'Are all perfumes, skincare, haircare and makeup sold by Zoonze original?'**
+  String get helpQ2;
+
+  /// No description provided for @helpA2.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes. We only offer genuine products from leading international luxury brands.'**
+  String get helpA2;
+
+  /// No description provided for @helpQ3.
+  ///
+  /// In en, this message translates to:
+  /// **'Does Zoonze have a marketplace?'**
+  String get helpQ3;
+
+  /// No description provided for @helpA3.
+  ///
+  /// In en, this message translates to:
+  /// **'No. Zoonze doesn\'t operate a marketplace — we never list the same product at different prices or from different vendors. We only offer our own products, guaranteed 100% original.'**
+  String get helpA3;
+
+  /// No description provided for @helpQ4.
+  ///
+  /// In en, this message translates to:
+  /// **'What beauty products are available at Zoonze?'**
+  String get helpQ4;
+
+  /// No description provided for @helpA4.
+  ///
+  /// In en, this message translates to:
+  /// **'We offer authentic perfumes, skincare products, makeup, and haircare products from top luxury brands worldwide.'**
+  String get helpA4;
+
+  /// No description provided for @helpQ5.
+  ///
+  /// In en, this message translates to:
+  /// **'How fast is Zoonze delivery?'**
+  String get helpQ5;
+
+  /// No description provided for @helpA5.
+  ///
+  /// In en, this message translates to:
+  /// **'We deliver within 3 hours, and we\'re continuously working toward 2-hour delivery whenever possible.'**
+  String get helpA5;
+
+  /// No description provided for @helpQ6.
+  ///
+  /// In en, this message translates to:
+  /// **'Why are Zoonze prices competitive?'**
+  String get helpQ6;
+
+  /// No description provided for @helpA6.
+  ///
+  /// In en, this message translates to:
+  /// **'Our goal is to make authentic luxury beauty more accessible through efficient sourcing and operations, allowing us to offer attractive prices.'**
+  String get helpA6;
+
+  /// No description provided for @helpQ7.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you offer luxury beauty brands?'**
+  String get helpQ7;
+
+  /// No description provided for @helpA7.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes. Zoonze offers a curated collection of premium international brands across fragrances, skincare, makeup, and haircare.'**
+  String get helpA7;
+
+  /// No description provided for @helpQ8.
+  ///
+  /// In en, this message translates to:
+  /// **'Can I return or exchange products?'**
+  String get helpQ8;
+
+  /// No description provided for @helpA8.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes. We provide an easy return and exchange process in line with our policy.'**
+  String get helpA8;
+
+  /// No description provided for @helpQ9.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you provide customer support after purchase?'**
+  String get helpQ9;
+
+  /// No description provided for @helpA9.
+  ///
+  /// In en, this message translates to:
+  /// **'Absolutely. From 10 AM until 10 PM, our customer support team is available before and after your purchase to ensure a seamless shopping experience.'**
+  String get helpA9;
+
+  /// No description provided for @helpQ10.
+  ///
+  /// In en, this message translates to:
+  /// **'Why should I shop from Zoonze?'**
+  String get helpQ10;
+
+  /// No description provided for @helpA10.
+  ///
+  /// In en, this message translates to:
+  /// **'Zoonze combines 100% authentic products, competitive pricing, fast delivery, trusted service, and years of beauty-industry experience since 2008.'**
+  String get helpA10;
+
   /// No description provided for @helpQOrders.
   ///
   /// In en, this message translates to:
-  /// **'How do I track my order?'**
+  /// **'How can I track my order?'**
   String get helpQOrders;
 
   /// No description provided for @helpAOrders.
@@ -809,7 +1073,7 @@ abstract class AppLocalizations {
   /// No description provided for @helpQPayments.
   ///
   /// In en, this message translates to:
-  /// **'Which payment methods can I use?'**
+  /// **'What payment methods do you accept?'**
   String get helpQPayments;
 
   /// No description provided for @helpAPayments.
@@ -821,26 +1085,38 @@ abstract class AppLocalizations {
   /// No description provided for @helpQDelivery.
   ///
   /// In en, this message translates to:
-  /// **'Where do you deliver?'**
+  /// **'How fast is delivery?'**
   String get helpQDelivery;
 
   /// No description provided for @helpADelivery.
   ///
   /// In en, this message translates to:
-  /// **'We deliver across the United Arab Emirates.'**
+  /// **'Free 3-hour delivery in Dubai, Sharjah & Ajman on orders over AED 150. The rest of the UAE is delivered within 24 hours.'**
   String get helpADelivery;
 
   /// No description provided for @helpQReturns.
   ///
   /// In en, this message translates to:
-  /// **'How do I return an item?'**
+  /// **'How do I return or exchange a product?'**
   String get helpQReturns;
 
   /// No description provided for @helpAReturns.
   ///
   /// In en, this message translates to:
-  /// **'Contact our support team within 14 days of delivery to arrange a return.'**
+  /// **'Contact our support team within 14 days of delivery to arrange a return or exchange.'**
   String get helpAReturns;
+
+  /// No description provided for @helpQAuthentic.
+  ///
+  /// In en, this message translates to:
+  /// **'Are all products 100% authentic?'**
+  String get helpQAuthentic;
+
+  /// No description provided for @helpAAuthentic.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes. Every product is sourced from authorised distributors and is guaranteed 100% authentic.'**
+  String get helpAAuthentic;
 
   /// No description provided for @helpQLanguage.
   ///
@@ -923,13 +1199,13 @@ abstract class AppLocalizations {
   /// No description provided for @cartEmptyTitle.
   ///
   /// In en, this message translates to:
-  /// **'Your cart is empty'**
+  /// **'Your bag is empty'**
   String get cartEmptyTitle;
 
   /// No description provided for @cartEmptyBody.
   ///
   /// In en, this message translates to:
-  /// **'Browse the catalogue and add your favourites.'**
+  /// **'Looks like you haven\'t added anything yet. Explore our bestsellers and find your signature scent.'**
   String get cartEmptyBody;
 
   /// No description provided for @cartContinueShopping.
@@ -938,17 +1214,65 @@ abstract class AppLocalizations {
   /// **'Continue shopping'**
   String get cartContinueShopping;
 
+  /// No description provided for @cartStartShopping.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Shopping'**
+  String get cartStartShopping;
+
+  /// No description provided for @cartOrderSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Summary'**
+  String get cartOrderSummary;
+
   /// No description provided for @cartSubtotal.
   ///
   /// In en, this message translates to:
   /// **'Subtotal'**
   String get cartSubtotal;
 
+  /// No description provided for @cartSubtotalCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtotal ({count, plural, =1{1 item} other{{count} items}})'**
+  String cartSubtotalCount(int count);
+
+  /// No description provided for @cartPromoCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Promo ({code})'**
+  String cartPromoCode(String code);
+
   /// No description provided for @cartDiscount.
   ///
   /// In en, this message translates to:
   /// **'Discount'**
   String get cartDiscount;
+
+  /// No description provided for @cartDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery (3-hour)'**
+  String get cartDelivery;
+
+  /// No description provided for @cartDeliveryFree.
+  ///
+  /// In en, this message translates to:
+  /// **'FREE'**
+  String get cartDeliveryFree;
+
+  /// No description provided for @cartFreeDeliveryUnlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ve unlocked FREE 3-hour delivery!'**
+  String get cartFreeDeliveryUnlocked;
+
+  /// No description provided for @cartFreeDeliveryRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'Add {amount} more for FREE 3-hour delivery'**
+  String cartFreeDeliveryRemaining(String amount);
 
   /// No description provided for @cartTotal.
   ///
@@ -965,7 +1289,7 @@ abstract class AppLocalizations {
   /// No description provided for @cartCouponHint.
   ///
   /// In en, this message translates to:
-  /// **'Promo code'**
+  /// **'Gift or promo code'**
   String get cartCouponHint;
 
   /// No description provided for @cartApply.
@@ -973,6 +1297,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Apply'**
   String get cartApply;
+
+  /// No description provided for @cartCouponApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'{code} applied'**
+  String cartCouponApplied(String code);
 
   /// No description provided for @cartAdded.
   ///
@@ -1118,6 +1448,84 @@ abstract class AppLocalizations {
   /// **'View details'**
   String get orderViewDetails;
 
+  /// No description provided for @orderItemCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 item} other{{count} items}}'**
+  String orderItemCount(int count);
+
+  /// No description provided for @orderTotalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get orderTotalLabel;
+
+  /// No description provided for @orderTrack.
+  ///
+  /// In en, this message translates to:
+  /// **'Track'**
+  String get orderTrack;
+
+  /// No description provided for @orderReorder.
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder'**
+  String get orderReorder;
+
+  /// No description provided for @orderReorderAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Items added to your cart'**
+  String get orderReorderAdded;
+
+  /// No description provided for @orderReorderFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reorder these items. Please try again.'**
+  String get orderReorderFailed;
+
+  /// No description provided for @trackOrderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Track Order'**
+  String get trackOrderTitle;
+
+  /// No description provided for @orderStatusTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Status'**
+  String get orderStatusTitle;
+
+  /// No description provided for @orderPlaced.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Placed'**
+  String get orderPlaced;
+
+  /// No description provided for @orderDeliveryAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery Address'**
+  String get orderDeliveryAddress;
+
+  /// No description provided for @orderItemsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Items ({count})'**
+  String orderItemsCount(int count);
+
+  /// No description provided for @orderQty.
+  ///
+  /// In en, this message translates to:
+  /// **'Qty {count}'**
+  String orderQty(int count);
+
+  /// No description provided for @orderNeedHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Need help with this order?'**
+  String get orderNeedHelp;
+
   /// No description provided for @addressesEmpty.
   ///
   /// In en, this message translates to:
@@ -1157,13 +1565,13 @@ abstract class AppLocalizations {
   /// No description provided for @fieldPhone.
   ///
   /// In en, this message translates to:
-  /// **'Phone'**
+  /// **'Phone Number'**
   String get fieldPhone;
 
   /// No description provided for @fieldStreet.
   ///
   /// In en, this message translates to:
-  /// **'Street address'**
+  /// **'Street'**
   String get fieldStreet;
 
   /// No description provided for @fieldCity.
@@ -1190,11 +1598,95 @@ abstract class AppLocalizations {
   /// **'Country code'**
   String get fieldCountry;
 
+  /// No description provided for @fieldFullName.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Name'**
+  String get fieldFullName;
+
+  /// No description provided for @fieldEmirate.
+  ///
+  /// In en, this message translates to:
+  /// **'Emirate'**
+  String get fieldEmirate;
+
+  /// No description provided for @fieldArea.
+  ///
+  /// In en, this message translates to:
+  /// **'Area'**
+  String get fieldArea;
+
+  /// No description provided for @fieldApartment.
+  ///
+  /// In en, this message translates to:
+  /// **'Apartment / Floor (optional)'**
+  String get fieldApartment;
+
   /// No description provided for @addressDefaultShipping.
   ///
   /// In en, this message translates to:
-  /// **'Set as default shipping'**
+  /// **'Set as default address'**
   String get addressDefaultShipping;
+
+  /// No description provided for @addressAddNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Add New Address'**
+  String get addressAddNew;
+
+  /// No description provided for @addressSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Address'**
+  String get addressSave;
+
+  /// No description provided for @addressHintName.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Hassan Ahmed'**
+  String get addressHintName;
+
+  /// No description provided for @addressHintPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'+971 50 000 0000'**
+  String get addressHintPhone;
+
+  /// No description provided for @addressHintArea.
+  ///
+  /// In en, this message translates to:
+  /// **'Jumeirah 1'**
+  String get addressHintArea;
+
+  /// No description provided for @addressHintStreet.
+  ///
+  /// In en, this message translates to:
+  /// **'Street 9'**
+  String get addressHintStreet;
+
+  /// No description provided for @contactInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Information'**
+  String get contactInformation;
+
+  /// No description provided for @checkoutEmailHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Order updates will be sent to this email.'**
+  String get checkoutEmailHelp;
+
+  /// No description provided for @checkoutDeliveryAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery Address'**
+  String get checkoutDeliveryAddress;
+
+  /// No description provided for @actionChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get actionChange;
 
   /// No description provided for @profileTitle.
   ///
@@ -1433,7 +1925,7 @@ abstract class AppLocalizations {
   /// No description provided for @orderSuccessTitle.
   ///
   /// In en, this message translates to:
-  /// **'Order placed!'**
+  /// **'Order Placed!'**
   String get orderSuccessTitle;
 
   /// No description provided for @orderPendingTitle.
@@ -1447,6 +1939,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Thank you. Your order number is {number}.'**
   String orderSuccessBody(String number);
+
+  /// No description provided for @orderSuccessThanks.
+  ///
+  /// In en, this message translates to:
+  /// **'Thank you! Your order is confirmed and on its way.'**
+  String get orderSuccessThanks;
+
+  /// No description provided for @orderSuccessThanksNamed.
+  ///
+  /// In en, this message translates to:
+  /// **'Thank you, {name}! Your order is confirmed and on its way.'**
+  String orderSuccessThanksNamed(String name);
 
   /// No description provided for @orderNumberLabel.
   ///
@@ -1472,18 +1976,6 @@ abstract class AppLocalizations {
   /// **'Your order is placed and awaiting payment confirmation. We\'ll notify you once your payment is completed.'**
   String get paymentRedirectPending;
 
-  /// No description provided for @badgeNew.
-  ///
-  /// In en, this message translates to:
-  /// **'NEW'**
-  String get badgeNew;
-
-  /// No description provided for @badgeBestseller.
-  ///
-  /// In en, this message translates to:
-  /// **'BESTSELLER'**
-  String get badgeBestseller;
-
   /// No description provided for @priceFrom.
   ///
   /// In en, this message translates to:
@@ -1502,17 +1994,23 @@ abstract class AppLocalizations {
   /// **'Out of stock'**
   String get productOutOfStock;
 
-  /// No description provided for @tabDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Description'**
-  String get tabDescription;
-
   /// No description provided for @tabDetails.
   ///
   /// In en, this message translates to:
   /// **'Details'**
   String get tabDetails;
+
+  /// No description provided for @tabKeyFeatures.
+  ///
+  /// In en, this message translates to:
+  /// **'Key Features'**
+  String get tabKeyFeatures;
+
+  /// No description provided for @tabMoreInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'More Information'**
+  String get tabMoreInformation;
 
   /// No description provided for @tabReviews.
   ///
@@ -1543,6 +2041,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{rating}% rating · {count} reviews'**
   String reviewsSummary(int rating, int count);
+
+  /// No description provided for @pdpQuantityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get pdpQuantityLabel;
+
+  /// No description provided for @pdpYouMayAlsoLike.
+  ///
+  /// In en, this message translates to:
+  /// **'You may also like'**
+  String get pdpYouMayAlsoLike;
+
+  /// No description provided for @reviewsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} reviews'**
+  String reviewsCount(int count);
+
+  /// No description provided for @pdpRatingReviews.
+  ///
+  /// In en, this message translates to:
+  /// **'{rating} · {count} reviews'**
+  String pdpRatingReviews(String rating, int count);
+
+  /// No description provided for @pdpTrustAuthenticValue.
+  ///
+  /// In en, this message translates to:
+  /// **'100%'**
+  String get pdpTrustAuthenticValue;
+
+  /// No description provided for @pdpTrustAuthenticLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Authentic'**
+  String get pdpTrustAuthenticLabel;
+
+  /// No description provided for @pdpTrustFreeValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Free'**
+  String get pdpTrustFreeValue;
+
+  /// No description provided for @pdpTrustFreeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'over AED 150'**
+  String get pdpTrustFreeLabel;
+
+  /// No description provided for @pdpTrustDeliveryValue.
+  ///
+  /// In en, this message translates to:
+  /// **'3-Hour'**
+  String get pdpTrustDeliveryValue;
+
+  /// No description provided for @pdpTrustDeliveryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery'**
+  String get pdpTrustDeliveryLabel;
 
   /// No description provided for @menuShop.
   ///
@@ -1613,7 +2171,7 @@ abstract class AppLocalizations {
   /// No description provided for @footerRights.
   ///
   /// In en, this message translates to:
-  /// **'© 2026 ZoonZE Beauty · All rights reserved.'**
+  /// **'© 2026 Zoonze Beauty · All rights reserved.'**
   String get footerRights;
 
   /// No description provided for @footerTagline.

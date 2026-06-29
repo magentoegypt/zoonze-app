@@ -14,8 +14,10 @@ import '../../../cart/presentation/cart_controller.dart';
 import '../../../checkout/payments/tabby_promo.dart';
 import '../../../wishlist/presentation/widgets/wishlist_heart.dart';
 import '../../domain/money.dart';
+import '../../domain/product.dart';
 import '../../domain/product_detail.dart';
 import '../catalog_providers.dart';
+import '../widgets/product_card.dart';
 
 class ProductDetailScreen extends ConsumerStatefulWidget {
   const ProductDetailScreen({super.key, required this.urlKey});
@@ -30,6 +32,7 @@ class ProductDetailScreen extends ConsumerStatefulWidget {
 class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   final Map<String, int> _selection = <String, int>{};
   int _tab = 0;
+  int _quantity = 1;
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +46,11 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       bottomBar: detail.maybeWhen(
         data: (product) => product == null
             ? null
-            : _StickyAddToCart(product: product, selection: _selection),
+            : _StickyAddToCart(
+                product: product,
+                selection: _selection,
+                quantity: _quantity,
+              ),
         orElse: () => null,
       ),
       body: AsyncValueView(
@@ -57,8 +64,10 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
             product: product,
             selection: _selection,
             tab: _tab,
+            quantity: _quantity,
             onSelect: (code, value) => setState(() => _selection[code] = value),
             onTab: (index) => setState(() => _tab = index),
+            onQuantity: (value) => setState(() => _quantity = value),
           );
         },
       ),
@@ -71,15 +80,19 @@ class _Content extends StatelessWidget {
     required this.product,
     required this.selection,
     required this.tab,
+    required this.quantity,
     required this.onSelect,
     required this.onTab,
+    required this.onQuantity,
   });
 
   final ProductDetail product;
   final Map<String, int> selection;
   final int tab;
+  final int quantity;
   final void Function(String code, int value) onSelect;
   final ValueChanged<int> onTab;
+  final ValueChanged<int> onQuantity;
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +106,13 @@ class _Content extends StatelessWidget {
     return ListView(
       padding: EdgeInsets.zero,
       children: [
-        _Gallery(images: images, sku: product.sku, urlKey: product.urlKey),
+        _Gallery(
+          images: images,
+          sku: product.sku,
+          urlKey: product.urlKey,
+          badge: product.badge,
+          discountPercent: product.discountPercent,
+        ),
         Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -108,17 +127,21 @@ class _Content extends StatelessWidget {
                 product.name,
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
+              // Rating line under the title (Figma) — only when real reviews
+              // exist; never fabricate stars.
+              if (product.hasReviews) ...[
+                const SizedBox(height: 6),
+                _RatingLine(
+                  ratingSummary: product.ratingSummary,
+                  reviewCount: product.reviewCount,
+                ),
+              ],
               const SizedBox(height: 12),
               _PriceRow(
                 price: price,
                 product: product,
                 showStruck: variant == null,
               ),
-              if (price != null)
-                TabbyPromo(
-                  price: price,
-                  padding: const EdgeInsets.only(top: 8),
-                ),
               const SizedBox(height: 16),
               for (final option in product.options)
                 _OptionSelector(
@@ -126,7 +149,13 @@ class _Content extends StatelessWidget {
                   selectedValue: selection[option.attributeCode],
                   onSelect: (value) => onSelect(option.attributeCode, value),
                 ),
-              const SizedBox(height: 8),
+              const _SectionDivider(),
+              _QuantityStepper(quantity: quantity, onChanged: onQuantity),
+              if (price != null) ...[
+                const _SectionDivider(),
+                TabbyPromo(price: price),
+              ],
+              const SizedBox(height: 16),
               const _TrustRow(),
               const SizedBox(height: 24),
               _Tabs(current: tab, onTab: onTab),
@@ -135,7 +164,149 @@ class _Content extends StatelessWidget {
             ],
           ),
         ),
+        _RelatedProducts(products: product.alsoLike),
         const MarketingFooter(),
+      ],
+    );
+  }
+}
+
+/// "You may also like" horizontal rail (Figma), driven by Magento
+/// `also_like_products`. Hidden entirely when the field is empty (no
+/// fabricated recommendations).
+class _RelatedProducts extends StatelessWidget {
+  const _RelatedProducts({required this.products});
+  final List<Product> products;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final related = products;
+    if (related.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionDivider(),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          child: Text(
+            l10n.pdpYouMayAlsoLike,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ),
+        SizedBox(
+          height: 240,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: related.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (_, i) {
+              final product = related[i];
+              return SizedBox(
+                width: 150,
+                child: ProductCard(
+                  product: product,
+                  onTap: () =>
+                      context.push(AppRoutes.product(product.urlKey)),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+}
+
+/// Hairline section separator used between PDP info blocks (Figma).
+class _SectionDivider extends StatelessWidget {
+  const _SectionDivider();
+
+  @override
+  Widget build(BuildContext context) => const Padding(
+    padding: EdgeInsets.symmetric(vertical: 12),
+    child: Divider(height: 1, thickness: 1, color: AppColors.borderDefault),
+  );
+}
+
+/// Star + "4.6 · N reviews" line under the product title (Figma).
+class _RatingLine extends StatelessWidget {
+  const _RatingLine({required this.ratingSummary, required this.reviewCount});
+
+  /// 0–100 (Magento `rating_summary`).
+  final int ratingSummary;
+  final int reviewCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final rating = ratingSummary / 20; // 0–5
+    final filled = rating.round();
+    return Row(
+      children: [
+        for (var i = 1; i <= 5; i++)
+          Icon(
+            i <= filled ? Icons.star : Icons.star_border,
+            size: 16,
+            color: AppColors.accentGold,
+          ),
+        const SizedBox(width: 6),
+        Text(
+          l10n.pdpRatingReviews(rating.toStringAsFixed(1), reviewCount),
+          style: const TextStyle(color: AppColors.inkMuted, fontSize: 13),
+        ),
+      ],
+    );
+  }
+}
+
+/// Quantity stepper (− N +) shown above the Tabby promo (Figma).
+class _QuantityStepper extends StatelessWidget {
+  const _QuantityStepper({required this.quantity, required this.onChanged});
+
+  final int quantity;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          l10n.pdpQuantityLabel,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.borderDefault),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              IconButton(
+                onPressed: quantity > 1 ? () => onChanged(quantity - 1) : null,
+                icon: const Icon(Icons.remove, size: 18),
+                visualDensity: VisualDensity.compact,
+              ),
+              SizedBox(
+                width: 32,
+                child: Text(
+                  '$quantity',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+              IconButton(
+                onPressed: () => onChanged(quantity + 1),
+                icon: const Icon(Icons.add, size: 18),
+                visualDensity: VisualDensity.compact,
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -146,10 +317,14 @@ class _Gallery extends StatefulWidget {
     required this.images,
     required this.sku,
     required this.urlKey,
+    required this.badge,
+    required this.discountPercent,
   });
   final List<String> images;
   final String sku;
   final String urlKey;
+  final ProductBadge badge;
+  final int? discountPercent;
 
   @override
   State<_Gallery> createState() => _GalleryState();
@@ -163,6 +338,15 @@ class _GalleryState extends State<_Gallery> {
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  String? _badgeLabel(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return switch (widget.badge) {
+      ProductBadge.isNew => l10n.badgeNew,
+      ProductBadge.bestseller => l10n.badgeBestseller,
+      ProductBadge.none => null,
+    };
   }
 
   Future<void> _share(BuildContext context) async {
@@ -207,6 +391,32 @@ class _GalleryState extends State<_Gallery> {
                             Container(color: AppColors.surfaceTint),
                       ),
                     ),
+                    // Merchandising + discount badges (Figma) — top-start,
+                    // mirroring the product card (NEW/BESTSELLER over -N%).
+                    PositionedDirectional(
+                      top: 12,
+                      start: 12,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (_badgeLabel(context) != null)
+                            _GalleryBadge(
+                              label: _badgeLabel(context)!,
+                              color: widget.badge == ProductBadge.bestseller
+                                  ? AppColors.accentGold
+                                  : AppColors.brandPrimary,
+                            ),
+                          if (_badgeLabel(context) != null &&
+                              widget.discountPercent != null)
+                            const SizedBox(height: 6),
+                          if (widget.discountPercent != null)
+                            _GalleryBadge(
+                              label: '-${widget.discountPercent}%',
+                              color: AppColors.accentSale,
+                            ),
+                        ],
+                      ),
+                    ),
                     PositionedDirectional(
                       top: 8,
                       end: 8,
@@ -223,6 +433,35 @@ class _GalleryState extends State<_Gallery> {
                         ],
                       ),
                     ),
+                    // Page-dot indicator (Figma) — current image in the gallery.
+                    if (images.length > 1)
+                      Positioned(
+                        bottom: 12,
+                        left: 0,
+                        right: 0,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            for (var i = 0; i < images.length; i++)
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 3,
+                                ),
+                                width: i == _index ? 18 : 6,
+                                height: 6,
+                                decoration: BoxDecoration(
+                                  color: i == _index
+                                      ? AppColors.brandPrimary
+                                      : AppColors.inkMuted.withValues(
+                                          alpha: 0.35,
+                                        ),
+                                  borderRadius: BorderRadius.circular(3),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
         ),
@@ -271,6 +510,33 @@ class _GalleryState extends State<_Gallery> {
   }
 }
 
+/// Small pill badge over the PDP gallery image (Figma), matching the product
+/// card's NEW/BESTSELLER/discount badge style.
+class _GalleryBadge extends StatelessWidget {
+  const _GalleryBadge({required this.label, required this.color});
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    decoration: BoxDecoration(
+      color: color,
+      borderRadius: BorderRadius.circular(6),
+    ),
+    child: Text(
+      label,
+      textDirection: TextDirection.ltr,
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.2,
+      ),
+    ),
+  );
+}
+
 class _PriceRow extends StatelessWidget {
   const _PriceRow({
     required this.price,
@@ -286,6 +552,8 @@ class _PriceRow extends StatelessWidget {
   Widget build(BuildContext context) {
     if (price == null) return const SizedBox.shrink();
     final regular = product.regularPrice;
+    final showSale = showStruck && product.isOnSale && regular != null;
+    final discount = showSale ? (product.discountPercent ?? 0) : 0;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
@@ -298,7 +566,7 @@ class _PriceRow extends StatelessWidget {
             color: AppColors.brandPrimary,
           ),
         ),
-        if (showStruck && product.isOnSale && regular != null) ...[
+        if (showSale) ...[
           const SizedBox(width: 12),
           Text(
             regular.formatted(),
@@ -308,6 +576,25 @@ class _PriceRow extends StatelessWidget {
               color: AppColors.inkMuted,
             ),
           ),
+          if (discount > 0) ...[
+            const SizedBox(width: 10),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: AppColors.accentSale,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                '-$discount%',
+                textDirection: TextDirection.ltr,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
         ],
       ],
     );
@@ -375,19 +662,56 @@ class _Tabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final labels = [l10n.tabDescription, l10n.tabDetails, l10n.tabReviews];
-    return Row(
-      children: [
-        for (var i = 0; i < labels.length; i++)
-          Padding(
-            padding: const EdgeInsetsDirectional.only(end: 8),
-            child: ChoiceChip(
-              label: Text(labels[i]),
-              selected: current == i,
-              onSelected: (_) => onTab(i),
-            ),
-          ),
-      ],
+    final labels = [
+      l10n.tabDetails,
+      l10n.tabKeyFeatures,
+      l10n.tabMoreInformation,
+      l10n.tabReviews,
+    ];
+    // Four tabs don't fit a 390px row, so the bar scrolls horizontally while
+    // the active tab keeps its burgundy underline.
+    return Container(
+      decoration: const BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: AppColors.borderDefault),
+        ),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            for (var i = 0; i < labels.length; i++)
+              InkWell(
+                onTap: () => onTab(i),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(
+                        color: current == i
+                            ? AppColors.brandPrimary
+                            : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                  child: Text(
+                    labels[i],
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: current == i
+                          ? AppColors.brandPrimary
+                          : AppColors.inkMuted,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -396,10 +720,15 @@ class _Tabs extends StatelessWidget {
 /// showing "Add to Cart · price". Recomputes the variant/price from the live
 /// swatch selection.
 class _StickyAddToCart extends ConsumerWidget {
-  const _StickyAddToCart({required this.product, required this.selection});
+  const _StickyAddToCart({
+    required this.product,
+    required this.selection,
+    required this.quantity,
+  });
 
   final ProductDetail product;
   final Map<String, int> selection;
+  final int quantity;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -413,45 +742,45 @@ class _StickyAddToCart extends ConsumerWidget {
     );
     final enabled = inStock && !needsSelection && !isMutating;
 
+    // No SafeArea here — this bar sits *above* the bottom nav, which already
+    // applies the system bottom inset. Wrapping it again added a large empty
+    // gap below the button.
     return Material(
       color: Theme.of(context).scaffoldBackgroundColor,
       elevation: 8,
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: AppColors.inkMuted.withValues(alpha: 0.3),
-                  ),
-                  borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: AppColors.inkMuted.withValues(alpha: 0.3),
                 ),
-                child: WishlistHeart(sku: product.sku),
+                borderRadius: BorderRadius.circular(12),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: FilledButton(
-                  onPressed: enabled ? () => _add(context, ref, l10n) : null,
-                  child: isMutating
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(
-                          !inStock
-                              ? l10n.productOutOfStock
-                              : price == null
-                              ? l10n.productAddToCart
-                              : '${l10n.productAddToCart} · ${price.formatted()}',
-                        ),
-                ),
+              child: WishlistHeart(sku: product.sku),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: FilledButton(
+                onPressed: enabled ? () => _add(context, ref, l10n) : null,
+                child: isMutating
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(
+                        !inStock
+                            ? l10n.productOutOfStock
+                            : price == null
+                            ? l10n.productAddToCart
+                            : '${l10n.productAddToCart} · ${price.formatted()}',
+                      ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -474,7 +803,11 @@ class _StickyAddToCart extends ConsumerWidget {
     try {
       await ref
           .read(cartControllerProvider.notifier)
-          .addToCart(sku: product.sku, selectedOptionUids: uids);
+          .addToCart(
+            sku: product.sku,
+            quantity: quantity,
+            selectedOptionUids: uids,
+          );
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
@@ -498,7 +831,7 @@ class _TrustRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
         color: AppColors.surfaceTint,
         borderRadius: BorderRadius.circular(12),
@@ -507,15 +840,18 @@ class _TrustRow extends StatelessWidget {
         children: [
           _TrustItem(
             icon: Icons.verified_user_outlined,
-            label: l10n.homeTrustOriginalTitle,
+            value: l10n.pdpTrustAuthenticValue,
+            label: l10n.pdpTrustAuthenticLabel,
           ),
           _TrustItem(
             icon: Icons.local_shipping_outlined,
-            label: l10n.homeTrustDeliveryTitle,
+            value: l10n.pdpTrustFreeValue,
+            label: l10n.pdpTrustFreeLabel,
           ),
           _TrustItem(
-            icon: Icons.headset_mic_outlined,
-            label: l10n.homeTrustServiceTitle,
+            icon: Icons.schedule,
+            value: l10n.pdpTrustDeliveryValue,
+            label: l10n.pdpTrustDeliveryLabel,
           ),
         ],
       ),
@@ -524,28 +860,138 @@ class _TrustRow extends StatelessWidget {
 }
 
 class _TrustItem extends StatelessWidget {
-  const _TrustItem({required this.icon, required this.label});
+  const _TrustItem({
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
   final IconData icon;
+  final String value;
   final String label;
 
   @override
   Widget build(BuildContext context) => Expanded(
     child: Column(
       children: [
-        Icon(icon, color: AppColors.brandPrimary, size: 20),
-        const SizedBox(height: 4),
+        Icon(icon, color: AppColors.brandPrimary, size: 22),
+        const SizedBox(height: 6),
+        Text(
+          value,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: AppColors.inkHeading,
+          ),
+        ),
         Text(
           label,
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: AppColors.inkHeading,
-          ),
+          style: const TextStyle(fontSize: 11, color: AppColors.inkMuted),
         ),
       ],
     ),
   );
+}
+
+/// Reviews summary block (Figma): big average, star row, total count, and
+/// per-star distribution bars derived from the loaded reviews.
+class _ReviewsSummary extends StatelessWidget {
+  const _ReviewsSummary({required this.product});
+  final ProductDetail product;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final average = product.ratingSummary / 20; // 0–5
+    // Server `rating_histogram` keyed by star (5★ → 1★). Bar lengths use the
+    // percent the resolver already computed.
+    final byStar = <int, RatingBar>{
+      for (final b in product.ratingHistogram) b.stars: b,
+    };
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Column(
+          children: [
+            Text(
+              average.toStringAsFixed(1),
+              style: const TextStyle(
+                fontSize: 40,
+                fontWeight: FontWeight.w700,
+                color: AppColors.inkHeading,
+              ),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (var i = 1; i <= 5; i++)
+                  Icon(
+                    i <= average.round() ? Icons.star : Icons.star_border,
+                    size: 14,
+                    color: AppColors.accentGold,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              l10n.reviewsCount(product.reviewCount),
+              style: const TextStyle(color: AppColors.inkMuted, fontSize: 12),
+            ),
+          ],
+        ),
+        const SizedBox(width: 20),
+        // Per-star bars, 5★ at the top.
+        Expanded(
+          child: Column(
+            children: [
+              for (var star = 5; star >= 1; star--)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Row(
+                    children: [
+                      Text(
+                        '$star',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.inkMuted,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(3),
+                          child: LinearProgressIndicator(
+                            value: (byStar[star]?.percent ?? 0) / 100,
+                            minHeight: 6,
+                            backgroundColor: AppColors.surfaceMuted,
+                            valueColor: const AlwaysStoppedAnimation(
+                              AppColors.accentGold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        width: 20,
+                        child: Text(
+                          '${byStar[star]?.count ?? 0}',
+                          textAlign: TextAlign.end,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.inkMuted,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _ReviewCard extends StatelessWidget {
@@ -555,10 +1001,42 @@ class _ReviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            children: [
+              // Avatar with initials (Figma) — derived from the reviewer name.
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: AppColors.surfaceTint,
+                child: Text(
+                  _initials(review.nickname),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.brandPrimary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  review.nickname,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+              if (review.date.isNotEmpty)
+                Text(
+                  review.date,
+                  style: const TextStyle(
+                    color: AppColors.inkMuted,
+                    fontSize: 12,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
           Row(
             children: [
               for (var i = 1; i <= 5; i++)
@@ -567,31 +1045,33 @@ class _ReviewCard extends StatelessWidget {
                   size: 16,
                   color: AppColors.accentGold,
                 ),
-              const SizedBox(width: 8),
-              Text(
-                review.nickname,
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
             ],
           ),
-          if (review.summary.isNotEmpty)
+          if (review.summary.isNotEmpty) ...[
+            const SizedBox(height: 6),
             Text(
               review.summary,
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
-          if (review.text.isNotEmpty)
+          ],
+          if (review.text.isNotEmpty) ...[
+            const SizedBox(height: 4),
             Text(
               review.text,
               style: const TextStyle(color: AppColors.inkMuted),
             ),
-          if (review.date.isNotEmpty)
-            Text(
-              review.date,
-              style: const TextStyle(color: AppColors.inkMuted, fontSize: 12),
-            ),
+          ],
         ],
       ),
     );
+  }
+
+  String _initials(String name) {
+    final parts = name.trim().split(RegExp(r'\s+'));
+    if (parts.isEmpty || parts.first.isEmpty) return '?';
+    if (parts.length == 1) return parts.first.characters.first.toUpperCase();
+    return (parts.first.characters.first + parts.last.characters.first)
+        .toUpperCase();
   }
 }
 
@@ -604,26 +1084,29 @@ class _TabContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     switch (tab) {
+      // Short Description (key features).
       case 1:
+        return Text(product.shortDescription ?? l10n.stateEmpty);
+      // More Information.
+      case 2:
         return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               '${l10n.specSku}: ',
               style: const TextStyle(fontWeight: FontWeight.w600),
             ),
-            Text(product.sku),
+            Expanded(child: Text(product.sku)),
           ],
         );
-      case 2:
+      // Reviews.
+      case 3:
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (product.hasReviews) ...[
-              Text(
-                l10n.reviewsSummary(product.ratingSummary, product.reviewCount),
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 12),
+              _ReviewsSummary(product: product),
+              const SizedBox(height: 16),
               for (final review in product.reviews) _ReviewCard(review: review),
             ] else ...[
               Text(
@@ -644,6 +1127,7 @@ class _TabContent extends StatelessWidget {
             ),
           ],
         );
+      // Description.
       case 0:
       default:
         return Text(product.description ?? l10n.stateEmpty);

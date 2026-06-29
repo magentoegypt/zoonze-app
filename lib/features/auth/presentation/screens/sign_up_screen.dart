@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/routes.dart';
+import '../../../../app/theme/app_colors.dart';
 import '../../../../core/validation/validators.dart';
 import '../../../../core/widgets/brand_logo.dart';
 import '../../../../l10n/l10n.dart';
 import '../auth_controller.dart';
+import '../widgets/auth_field.dart';
 import '../widgets/auth_header.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
@@ -18,8 +20,7 @@ class SignUpScreen extends ConsumerStatefulWidget {
 
 class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _firstName = TextEditingController();
-  final _lastName = TextEditingController();
+  final _fullName = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
   bool _busy = false;
@@ -28,23 +29,39 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
 
   @override
   void dispose() {
-    _firstName.dispose();
-    _lastName.dispose();
+    _fullName.dispose();
     _email.dispose();
     _password.dispose();
     super.dispose();
   }
 
+  /// Splits the single "Full name" into Magento's required firstname/lastname
+  /// (last token is the surname; a single token fills both).
+  ({String first, String last}) _splitName() {
+    final parts = _fullName.text
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((s) => s.isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return (first: '', last: '');
+    if (parts.length == 1) return (first: parts.first, last: parts.first);
+    return (
+      first: parts.sublist(0, parts.length - 1).join(' '),
+      last: parts.last,
+    );
+  }
+
   Future<void> _submit() async {
     if (!_agreedToTerms) return;
     if (!_formKey.currentState!.validate()) return;
+    final name = _splitName();
     setState(() => _busy = true);
     try {
       await ref
           .read(authControllerProvider.notifier)
           .register(
-            firstName: _firstName.text.trim(),
-            lastName: _lastName.text.trim(),
+            firstName: name.first,
+            lastName: name.last,
             email: _email.text.trim(),
             password: _password.text,
           );
@@ -79,54 +96,39 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   subtitle: l10n.authSignUpSubtitle,
                 ),
                 const SizedBox(height: 24),
-                TextFormField(
-                  controller: _firstName,
-                  textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(
-                    labelText: l10n.fieldFirstName,
-                    prefixIcon: const Icon(Icons.person_outline),
-                  ),
+                AuthField(
+                  controller: _fullName,
+                  icon: Icons.person_outline,
+                  hint: l10n.fieldFullName,
+                  textCapitalization: TextCapitalization.words,
                   validator: (v) => Validators.required(context, v),
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
-                  controller: _lastName,
-                  textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(
-                    labelText: l10n.fieldLastName,
-                    prefixIcon: const Icon(Icons.person_outline),
-                  ),
-                  validator: (v) => Validators.required(context, v),
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
+                AuthField(
                   controller: _email,
+                  icon: Icons.mail_outline,
+                  hint: l10n.authEmailHint,
                   keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(
-                    labelText: l10n.fieldEmail,
-                    prefixIcon: const Icon(Icons.mail_outline),
-                  ),
                   validator: (v) => Validators.email(context, v),
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
+                AuthField(
                   controller: _password,
+                  icon: Icons.lock_outline,
+                  hint: l10n.fieldPassword,
                   obscureText: _obscure,
-                  decoration: InputDecoration(
-                    labelText: l10n.fieldPassword,
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscure
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
-                      ),
-                      onPressed: () => setState(() => _obscure = !_obscure),
+                  textInputAction: TextInputAction.done,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscure
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                      color: AppColors.inkFaint,
                     ),
+                    onPressed: () => setState(() => _obscure = !_obscure),
                   ),
                   validator: (v) => Validators.password(context, v),
-                  onFieldSubmitted: (_) => _submit(),
+                  onSubmitted: (_) => _submit(),
                 ),
                 const SizedBox(height: 16),
                 // Terms agreement — gates the Create Account button (Figma).

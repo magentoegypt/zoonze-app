@@ -24,6 +24,20 @@ query CategoryTree {
       image
       include_in_menu
       product_count
+      children {
+        uid
+        name
+        url_key
+        include_in_menu
+        product_count
+        children {
+          uid
+          name
+          url_key
+          include_in_menu
+          product_count
+        }
+      }
     }
   }
 }
@@ -57,6 +71,8 @@ query Products(
       name
       url_key
       stock_status
+      is_new_arrival
+      is_bestseller
       image {
         url
         label
@@ -98,8 +114,36 @@ query ProductDetail($urlKey: String!) {
       name
       url_key
       stock_status
+      is_new_arrival
+      is_bestseller
       rating_summary
       review_count
+      rating_histogram {
+        stars
+        count
+        percent
+      }
+      also_like_products(pageSize: 8) {
+        sku
+        name
+        url_key
+        stock_status
+        image {
+          url
+        }
+        price_range {
+          minimum_price {
+            regular_price {
+              value
+              currency
+            }
+            final_price {
+              value
+              currency
+            }
+          }
+        }
+      }
       reviews(pageSize: 20) {
         items {
           nickname
@@ -110,6 +154,9 @@ query ProductDetail($urlKey: String!) {
         }
       }
       description {
+        html
+      }
+      short_description {
         html
       }
       image {

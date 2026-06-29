@@ -54,6 +54,12 @@ final graphqlClientProvider = Provider<GraphQLClient>((ref) {
   return GraphQLClient(
     link: link,
     cache: GraphQLCache(store: InMemoryStore()),
+    // Disable graphql's built-in request timeout: its 5s default times out
+    // mutations against the CloudFront/WAF-fronted endpoint, and its timeout
+    // path double-completes the response completer when ResilienceLink retries
+    // ("Bad state: Future already completed", graphql 5.2.4). ResilienceLink
+    // owns the timeout instead (consumed via `await for`, so no double-complete).
+    queryRequestTimeout: null,
     defaultPolicies: DefaultPolicies(
       query: Policies(fetch: FetchPolicy.networkOnly),
     ),

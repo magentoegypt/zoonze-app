@@ -14,6 +14,7 @@ abstract final class AppRoutes {
   static const String resetPassword = '/reset-password';
   static const String orders = '/orders';
   static const String orderDetail = '/order-detail';
+  static const String orderTracking = '/order-tracking';
   static const String addresses = '/addresses';
   static const String addressForm = '/address';
   static const String editProfile = '/profile';
@@ -26,6 +27,7 @@ abstract final class AppRoutes {
   static const String completePayment = '/complete-payment';
 
   static String category(String uid) => '/category/$uid';
+  static String subcategories(String uid) => '/subcategories/$uid';
   static String product(String urlKey) => '/product/$urlKey';
   static String review(String sku) => '/review/$sku';
 }

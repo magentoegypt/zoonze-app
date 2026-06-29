@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/routes.dart';
+import '../../../../app/theme/app_colors.dart';
 import '../../../../core/validation/validators.dart';
 import '../../../../core/widgets/brand_logo.dart';
 import '../../../../l10n/l10n.dart';
 import '../auth_controller.dart';
+import '../widgets/auth_field.dart';
 import '../widgets/auth_header.dart';
 
 class SignInScreen extends ConsumerStatefulWidget {
@@ -68,34 +70,31 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   subtitle: l10n.authSignInSubtitle,
                 ),
                 const SizedBox(height: 24),
-                TextFormField(
+                AuthField(
                   controller: _email,
+                  icon: Icons.mail_outline,
+                  hint: l10n.authEmailHint,
                   keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  decoration: InputDecoration(
-                    labelText: l10n.fieldEmail,
-                    prefixIcon: const Icon(Icons.mail_outline),
-                  ),
                   validator: (v) => Validators.email(context, v),
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
+                AuthField(
                   controller: _password,
+                  icon: Icons.lock_outline,
+                  hint: l10n.fieldPassword,
                   obscureText: _obscure,
-                  decoration: InputDecoration(
-                    labelText: l10n.fieldPassword,
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscure
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
-                      ),
-                      onPressed: () => setState(() => _obscure = !_obscure),
+                  textInputAction: TextInputAction.done,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscure
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                      color: AppColors.inkFaint,
                     ),
+                    onPressed: () => setState(() => _obscure = !_obscure),
                   ),
                   validator: (v) => Validators.required(context, v),
-                  onFieldSubmitted: (_) => _submit(),
+                  onSubmitted: (_) => _submit(),
                 ),
                 Align(
                   alignment: AlignmentDirectional.centerEnd,

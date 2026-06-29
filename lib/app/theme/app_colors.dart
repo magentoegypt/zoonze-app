@@ -18,11 +18,23 @@ abstract final class AppColors {
   /// `BESTSELLER` badge and review stars.
   static const Color accentGold = Color(0xFFC9A24C);
 
+  /// Positive states — "FREE" delivery, in-stock, unlocked thresholds.
+  static const Color success = Color(0xFF16A34A);
+
   /// Headings / primary text.
   static const Color inkHeading = Color(0xFF1F2937);
 
   /// Secondary text, struck-through prices.
   static const Color inkMuted = Color(0xFF6B7280);
+
+  /// Faint text — input placeholders, inline field icons (Figma `text/muted`).
+  static const Color inkFaint = Color(0xFF9CA3AF);
+
+  /// Default hairline border (`border/default`) — card outlines, dividers.
+  static const Color borderDefault = Color(0xFFE5E7EB);
+
+  /// Light neutral band — section separators between sticky header and content.
+  static const Color surfaceMuted = Color(0xFFF3F4F6);
 
   /// Dark surfaces.
   static const Color surfaceDark = Color(0xFF1F2937);

@@ -13,6 +13,11 @@ fragment CartFields on Cart {
       sku
       name
       image { url }
+      price_range {
+        minimum_price {
+          regular_price { value currency }
+        }
+      }
     }
     prices {
       price { value currency }

@@ -49,7 +49,7 @@ class CategoriesScreen extends ConsumerWidget {
               ),
               // Tap-to-search box (the page has a search box per the design).
               Padding(
-                padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 8),
+                padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 12),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(12),
                   onTap: () => context.push(AppRoutes.search),
@@ -64,31 +64,117 @@ class CategoriesScreen extends ConsumerWidget {
                   ),
                 ),
               ),
-              if (items.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Center(child: Text(l10n.stateEmpty)),
-                )
-              else
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(16),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.82,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                  ),
-                  itemCount: items.length,
-                  itemBuilder: (context, index) =>
-                      _CategoryCard(category: items[index]),
-                ),
+              // 8px section band separating the header from the grid (Figma 57:23).
+              const SizedBox(
+                height: 8,
+                child: ColoredBox(color: AppColors.surfaceMuted),
+              ),
+              _CategoryGrid(items: items),
               const MarketingFooter(),
             ],
           );
         },
       ),
+    );
+  }
+}
+
+/// Sub-category drill-down: tapping a parent category lists its child
+/// categories (which themselves drill down or open the PLP when they're leaves).
+class SubcategoriesScreen extends ConsumerWidget {
+  const SubcategoriesScreen({
+    super.key,
+    required this.categoryUid,
+    this.title,
+  });
+
+  final String categoryUid;
+  final String? title;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final category = ref.watch(categoryByUidProvider(categoryUid));
+
+    return ZoonzeScaffold(
+      currentTab: AppTab.categories,
+      body: AsyncValueView(
+        value: category,
+        onRetry: () => ref.invalidate(categoryTreeProvider),
+        data: (cat) {
+          final subs = (cat?.children ?? const <Category>[])
+              .where((c) => c.includeInMenu)
+              .toList(growable: false);
+          return ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 4),
+                child: Text(
+                  cat?.name ?? title ?? l10n.navCategories,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 4),
+                child: Text(
+                  l10n.categoryCount(subs.length),
+                  style: const TextStyle(color: AppColors.inkMuted),
+                ),
+              ),
+              _CategoryGrid(items: subs),
+              const MarketingFooter(),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Opens a tapped category: drills into its sub-categories when it has
+/// navigable children, otherwise jumps straight to its product listing.
+void _openCategory(BuildContext context, Category category) {
+  final hasSubcategories = category.children.any((c) => c.includeInMenu);
+  context.push(
+    hasSubcategories
+        ? AppRoutes.subcategories(category.uid)
+        : AppRoutes.category(category.uid),
+    extra: category.name,
+  );
+}
+
+/// Two-column grid of category cards, shared by the top-level Categories tab
+/// and the sub-category drill-down.
+class _CategoryGrid extends StatelessWidget {
+  const _CategoryGrid({required this.items});
+
+  final List<Category> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    if (items.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(24),
+        child: Center(child: Text(l10n.stateEmpty)),
+      );
+    }
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        // Figma card ≈ 170×147 (photo 94 + label panel 53).
+        childAspectRatio: 170 / 147,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+      ),
+      itemCount: items.length,
+      itemBuilder: (context, index) => _CategoryCard(category: items[index]),
     );
   }
 }
@@ -100,63 +186,79 @@ class _CategoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return InkWell(
-      onTap: () => context.push(
-        AppRoutes.category(category.uid),
-        extra: category.name,
+    return Material(
+      color: Colors.white,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        side: const BorderSide(color: AppColors.borderDefault),
+        borderRadius: BorderRadius.circular(12),
       ),
-      borderRadius: BorderRadius.circular(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: () => _openCategory(context, category),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Full-bleed photo area (Figma 94px of a 147px card).
+            Expanded(
               child: SizedBox(
                 width: double.infinity,
                 child: (category.image == null || category.image!.isEmpty)
-                    ? Container(
-                        color: AppColors.surfaceTint,
-                        child: const Center(
-                          child: Icon(
-                            Icons.spa_outlined,
-                            color: AppColors.brandPrimary,
-                          ),
-                        ),
-                      )
+                    ? const _CategoryPlaceholder()
                     : CachedNetworkImage(
                         imageUrl: category.image!,
                         fit: BoxFit.cover,
                         placeholder: (_, __) =>
-                            Container(color: AppColors.surfaceTint),
-                        errorWidget: (_, __, ___) => Container(
-                          color: AppColors.surfaceTint,
-                          child: const Center(
-                            child: Icon(
-                              Icons.spa_outlined,
-                              color: AppColors.brandPrimary,
-                            ),
-                          ),
-                        ),
+                            const ColoredBox(color: AppColors.surfaceTint),
+                        errorWidget: (_, __, ___) => const _CategoryPlaceholder(),
                       ),
               ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            category.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              color: AppColors.inkHeading,
+            // White label panel — name + product count.
+            Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(12, 10, 12, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    category.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13.5,
+                      color: AppColors.inkHeading,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    l10n.categoryProductCount(category.productCount),
+                    style: const TextStyle(
+                      color: AppColors.inkMuted,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          Text(
-            l10n.categoryProductCount(category.productCount),
-            style: const TextStyle(color: AppColors.inkMuted, fontSize: 12),
-          ),
-        ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Blush chip with a burgundy droplet — the empty/error state for a category
+/// tile that has no photo (Figma: teardrop on `surface/tint`).
+class _CategoryPlaceholder extends StatelessWidget {
+  const _CategoryPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return const ColoredBox(
+      color: AppColors.surfaceTint,
+      child: Center(
+        child: Icon(Icons.water_drop, color: AppColors.brandPrimary),
       ),
     );
   }

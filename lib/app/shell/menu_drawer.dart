@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/store/store_controller.dart';
 import '../../core/widgets/brand_logo.dart';
+import '../../core/widgets/language_toggle.dart';
 import '../../features/account/data/account_repository.dart';
 import '../../features/auth/presentation/auth_controller.dart';
+import '../../features/catalog/domain/category.dart';
 import '../../features/catalog/presentation/catalog_providers.dart';
 import '../../features/wishlist/presentation/wishlist_controller.dart';
 import '../../l10n/l10n.dart';
@@ -28,21 +30,27 @@ class MenuDrawer extends ConsumerWidget {
     final auth = ref.watch(authControllerProvider);
 
     return Drawer(
+      // Figma: white panel; only the profile strip is blush (Material 3 would
+      // otherwise tint the surface pink from the burgundy seed).
+      backgroundColor: Colors.white,
       child: SafeArea(
         child: Column(
           children: [
-            // Brand logo centered; close (×) pinned to the trailing corner
-            // (flips to the leading side in the Arabic/RTL mirror).
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
+            // Brand header (Figma): ZOONZE lockup centered, close (×) pinned to
+            // the top trailing corner (flips to the leading side in RTL).
+            SizedBox(
+              height: 56,
               child: Stack(
-                alignment: Alignment.center,
                 children: [
-                  const BrandLogo(height: 44),
+                  const Center(child: BrandLogo(height: 40)),
                   PositionedDirectional(
+                    top: 4,
                     end: 4,
                     child: IconButton(
-                      icon: const Icon(Icons.close),
+                      icon: const Icon(
+                        Icons.close,
+                        color: AppColors.inkHeading,
+                      ),
                       onPressed: () => _close(context),
                     ),
                   ),
@@ -80,17 +88,18 @@ class MenuDrawer extends ConsumerWidget {
                     data: (items) => Column(
                       children: [
                         for (final category in items)
-                          _DrawerTile(
-                            icon: _categoryIcon(category.urlKey, category.name),
-                            label: category.name,
-                            onTap: () {
-                              _close(context);
-                              context.push(
-                                AppRoutes.category(category.uid),
-                                extra: category.name,
-                              );
-                            },
-                          ),
+                          if (category.includeInMenu && category.name.isNotEmpty)
+                            _CategoryNode(
+                              category: category,
+                              depth: 0,
+                              onLeafTap: (c) {
+                                _close(context);
+                                context.push(
+                                  AppRoutes.category(c.uid),
+                                  extra: c.name,
+                                );
+                              },
+                            ),
                       ],
                     ),
                   ),
@@ -134,19 +143,11 @@ class MenuDrawer extends ConsumerWidget {
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const Spacer(),
-                  SegmentedButton<String>(
-                    showSelectedIcon: false,
-                    style: const ButtonStyle(
-                      visualDensity: VisualDensity.compact,
-                    ),
-                    segments: const [
-                      ButtonSegment<String>(value: 'en', label: Text('EN')),
-                      ButtonSegment<String>(value: 'ar', label: Text('AR')),
-                    ],
-                    selected: {store.activeLocale == 'ar' ? 'ar' : 'en'},
-                    onSelectionChanged: (selection) => ref
+                  LanguageToggle(
+                    activeLocale: store.activeLocale,
+                    onChanged: (v) => ref
                         .read(storeControllerProvider.notifier)
-                        .switchLocale(selection.first),
+                        .switchLocale(v),
                   ),
                 ],
               ),
@@ -318,6 +319,95 @@ class _DrawerTile extends StatelessWidget {
     title: Text(label),
     trailing: const Icon(Icons.chevron_right, color: AppColors.inkMuted),
     onTap: onTap,
+  );
+}
+
+/// A SHOP category row. Expands to reveal subcategories (and their
+/// sub-subcategories) when present; a leaf navigates to its PLP. Indents by
+/// [depth]; only the top level shows the blush icon badge.
+class _CategoryNode extends StatelessWidget {
+  const _CategoryNode({
+    required this.category,
+    required this.depth,
+    required this.onLeafTap,
+  });
+
+  final Category category;
+  final int depth;
+  final void Function(Category) onLeafTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final children = category.children
+        .where((c) => c.includeInMenu && c.name.isNotEmpty)
+        .toList();
+    final indent = 16.0 + depth * 20.0;
+    final title = Text(
+      category.name,
+      style: TextStyle(
+        fontWeight: depth == 0 ? FontWeight.w500 : FontWeight.w400,
+        color: depth == 0 ? AppColors.inkHeading : AppColors.inkMuted,
+        fontSize: depth == 0 ? 15 : 14,
+      ),
+    );
+    final leading = depth == 0 ? _IconBadge(category: category) : null;
+
+    if (children.isEmpty) {
+      return ListTile(
+        dense: depth > 0,
+        contentPadding: EdgeInsetsDirectional.only(start: indent, end: 8),
+        leading: leading,
+        title: title,
+        trailing: const Icon(
+          Icons.chevron_right,
+          color: AppColors.inkMuted,
+          size: 20,
+        ),
+        onTap: () => onLeafTap(category),
+      );
+    }
+
+    return ExpansionTile(
+      tilePadding: EdgeInsetsDirectional.only(start: indent, end: 8),
+      childrenPadding: EdgeInsets.zero,
+      dense: depth > 0,
+      shape: const Border(),
+      collapsedShape: const Border(),
+      leading: leading,
+      title: title,
+      iconColor: AppColors.brandPrimary,
+      collapsedIconColor: AppColors.inkMuted,
+      children: [
+        for (final child in children)
+          _CategoryNode(
+            category: child,
+            depth: depth + 1,
+            onLeafTap: onLeafTap,
+          ),
+      ],
+    );
+  }
+}
+
+/// Blush rounded-square icon badge for a top-level SHOP category (Figma).
+class _IconBadge extends StatelessWidget {
+  const _IconBadge({required this.category});
+  final Category category;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 36,
+    height: 36,
+    decoration: BoxDecoration(
+      color: AppColors.surfaceTint,
+      borderRadius: BorderRadius.circular(10),
+    ),
+    alignment: Alignment.center,
+    child: Icon(
+      _categoryIcon(category.urlKey, category.name),
+      color: AppColors.brandPrimary,
+      size: 20,
+    ),
   );
 }
 

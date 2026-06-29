@@ -21,6 +21,7 @@ class ResilienceLink extends Link {
     required this.onAuthError,
     this.maxAttempts = 3,
     this.initialBackoff = const Duration(milliseconds: 400),
+    this.requestTimeout = const Duration(seconds: 30),
   });
 
   /// Called (at most once per operation) when the response reports the token is
@@ -34,6 +35,16 @@ class ResilienceLink extends Link {
   /// Base delay; doubles each retry (400ms → 800ms → 1600ms …).
   final Duration initialBackoff;
 
+  /// Per-attempt response timeout. We own the request timeout here (consumed via
+  /// `await for`, so a timeout is just a stream error we catch) instead of using
+  /// graphql's `queryRequestTimeout`: that path completes a response `Completer`
+  /// from an unguarded `listen(onData)`, so a retry's late response double-
+  /// completes it → "Bad state: Future already completed" (graphql 5.2.4). The
+  /// client passes `queryRequestTimeout: null` to disable it. 30s suits the
+  /// CloudFront/WAF-fronted endpoint, where the old 5s default timed out
+  /// checkout mutations (CLAUDE.md §7).
+  final Duration requestTimeout;
+
   @override
   Stream<Response> request(Request request, [NextLink? forward]) async* {
     assert(forward != null, 'ResilienceLink must not be the terminating link');
@@ -42,7 +53,7 @@ class ResilienceLink extends Link {
     while (true) {
       attempt++;
       try {
-        await for (final response in forward!(request)) {
+        await for (final response in forward!(request).timeout(requestTimeout)) {
           if (_responseHasAuthError(response)) onAuthError();
           yield response;
         }

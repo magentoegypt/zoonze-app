@@ -23,25 +23,26 @@ class AuthHeader extends StatelessWidget {
     return Column(
       children: [
         CircleAvatar(
-          radius: 34,
+          radius: 42,
           backgroundColor: AppColors.surfaceTint,
-          child: Icon(icon, color: AppColors.brandPrimary, size: 30),
+          child: Icon(icon, color: AppColors.brandPrimary, size: 34),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 14),
         Text(
           title,
           textAlign: TextAlign.center,
           style: theme.textTheme.headlineSmall?.copyWith(
+            fontSize: 24,
             fontWeight: FontWeight.w700,
             color: AppColors.inkHeading,
           ),
         ),
         if (subtitle != null) ...[
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           Text(
             subtitle!,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.inkMuted),
+            style: const TextStyle(color: AppColors.inkMuted, fontSize: 13),
           ),
         ],
       ],

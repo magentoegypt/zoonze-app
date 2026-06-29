@@ -13,6 +13,23 @@ final categoryTreeProvider = FutureProvider.autoDispose<List<Category>>((ref) {
   return ref.watch(catalogRepositoryProvider).fetchCategoryTree();
 });
 
+/// Resolves a single category (top-level or nested) by uid from the already
+/// loaded tree — backs the sub-category drill-down without an extra fetch.
+final categoryByUidProvider = FutureProvider.autoDispose
+    .family<Category?, String>((ref, uid) async {
+      final cats = await ref.watch(categoryTreeProvider.future);
+      Category? find(List<Category> list) {
+        for (final c in list) {
+          if (c.uid == uid) return c;
+          final nested = find(c.children);
+          if (nested != null) return nested;
+        }
+        return null;
+      }
+
+      return find(cats);
+    });
+
 /// Featured products for the home screen — first page of the first category.
 final featuredProductsProvider = FutureProvider.autoDispose<List<Product>>((
   ref,

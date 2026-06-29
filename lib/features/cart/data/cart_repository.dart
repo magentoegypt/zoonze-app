@@ -197,6 +197,8 @@ class CartRepository {
   CartItem _parseItem(Map<String, dynamic> json) {
     final product = json['product'] as Map<String, dynamic>?;
     final prices = json['prices'] as Map<String, dynamic>?;
+    final priceRange = product?['price_range'] as Map<String, dynamic>?;
+    final minimumPrice = priceRange?['minimum_price'] as Map<String, dynamic>?;
     final options = (json['configurable_options'] as List<dynamic>? ?? const [])
         .whereType<Map<String, dynamic>>()
         .map((o) => '${o['option_label']}: ${o['value_label']}')
@@ -210,6 +212,9 @@ class CartRepository {
         (product?['image'] as Map<String, dynamic>?)?['url'] as String?,
       ),
       unitPrice: _parseMoney(prices?['price'] as Map<String, dynamic>?),
+      originalUnitPrice: _parseMoney(
+        minimumPrice?['regular_price'] as Map<String, dynamic>?,
+      ),
       rowTotal: _parseMoney(prices?['row_total'] as Map<String, dynamic>?),
       options: options,
     );

@@ -3,8 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/routes.dart';
+import '../../../../app/shell/marketing_footer.dart';
+import '../../../../app/shell/zoonze_bottom_nav.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/address/regions.dart';
 import '../../../../core/validation/validators.dart';
+import '../../../../core/widgets/address_form.dart';
+import '../../../../core/widgets/brand_logo.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../catalog/domain/money.dart';
@@ -24,13 +29,7 @@ class CheckoutScreen extends ConsumerStatefulWidget {
 class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   final _formKey = GlobalKey<FormState>();
   final _email = TextEditingController();
-  final _firstName = TextEditingController();
-  final _lastName = TextEditingController();
-  final _phone = TextEditingController();
-  final _street = TextEditingController();
-  final _city = TextEditingController();
-  final _postcode = TextEditingController();
-  final _region = TextEditingController();
+  late final AddressFormController _address;
 
   /// Re-entrancy guard for the place-order → redirect handoff.
   bool _placing = false;
@@ -38,46 +37,43 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   @override
   void initState() {
     super.initState();
+    _address = AddressFormController();
     final customer = ref.read(authControllerProvider).customer;
     if (customer != null) {
       _email.text = customer.email;
-      _firstName.text = customer.firstName;
-      _lastName.text = customer.lastName;
+      _address.fullName.text = '${customer.firstName} ${customer.lastName}'
+          .trim();
     }
   }
 
   @override
   void dispose() {
-    for (final c in [
-      _email,
-      _firstName,
-      _lastName,
-      _phone,
-      _street,
-      _city,
-      _postcode,
-      _region,
-    ]) {
-      c.dispose();
-    }
+    _email.dispose();
+    _address.dispose();
     super.dispose();
   }
 
   CheckoutController get _controller =>
       ref.read(checkoutControllerProvider.notifier);
 
-  Map<String, dynamic> _addressInput() => <String, dynamic>{
-    'firstname': _firstName.text.trim(),
-    'lastname': _lastName.text.trim(),
-    'telephone': _phone.text.trim(),
-    'street': [_street.text.trim()],
-    'city': _city.text.trim(),
-    if (_postcode.text.trim().isNotEmpty) 'postcode': _postcode.text.trim(),
-    // UAE-only storefront — country is fixed. Magento's CartAddressInput.region
-    // is a plain String (unlike CustomerAddressInput's nested object).
-    'country_code': 'AE',
-    if (_region.text.trim().isNotEmpty) 'region': _region.text.trim(),
-  };
+  /// Magento `CartAddressInput`. AE has system regions, so a valid `region_id`
+  /// is posted (from the emirate picker); the single Full Name is split into
+  /// firstname/lastname and the apartment line becomes `street[1]`.
+  Map<String, dynamic> _addressInput() {
+    final name = _address.splitName();
+    return <String, dynamic>{
+      'firstname': name.first,
+      'lastname': name.last,
+      'telephone': _address.phone.text.trim(),
+      'street': _address.streetLines(),
+      'city': _address.area.text.trim(),
+      'country_code': addressCountryCode,
+      if (_address.regionId.value != null)
+        'region_id': _address.regionId.value
+      else if (_address.region.text.trim().isNotEmpty)
+        'region': _address.region.text.trim(),
+    };
+  }
 
   Future<void> _submitAddress() async {
     if (!_formKey.currentState!.validate()) return;
@@ -182,9 +178,29 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   void _goSuccess(String number, {required bool pending}) {
+    final state = ref.read(checkoutControllerProvider);
+    // Resolve the emirate name for the order-success delivery chip.
+    String? location;
+    final regionId = _address.regionId.value;
+    if (regionId != null) {
+      final regions = ref.read(regionsProvider).valueOrNull;
+      if (regions != null) {
+        for (final r in regions) {
+          if (r.id == regionId) {
+            location = r.name;
+            break;
+          }
+        }
+      }
+    }
     context.go(
       AppRoutes.orderSuccess,
-      extra: {'number': number, 'pending': pending},
+      extra: {
+        'number': number,
+        'pending': pending,
+        'eta': pending ? null : state.selectedShipping?.title,
+        'location': location,
+      },
     );
   }
 
@@ -206,77 +222,56 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final busy = state.isBusy || _placing;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.checkoutTitle)),
+      appBar: AppBar(
+        toolbarHeight: 60,
+        centerTitle: true,
+        title: const BrandLogo(height: 44),
+      ),
+      bottomNavigationBar: const ZoonzeBottomNav(current: AppTab.cart),
       body: Stack(
         children: [
           AbsorbPointer(
             absorbing: busy,
             child: ListView(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.zero,
               children: [
-                _StepHeader(index: 1, title: l10n.checkoutShippingAddress),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Text(
+                    l10n.checkoutTitle,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                // Contact Information — email (Figma: a separate top section,
+                // not a numbered step). Read-only for a signed-in customer.
+                _SectionHeader(title: l10n.contactInformation),
                 Form(
                   key: _formKey,
                   child: Column(
                     children: [
-                      if (isGuest)
-                        _field(
-                          _email,
-                          l10n.fieldEmail,
-                          validator: (v) => Validators.email(context, v),
-                          keyboard: TextInputType.emailAddress,
-                        ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _field(
-                              _firstName,
-                              l10n.fieldFirstName,
-                              validator: (v) => Validators.required(context, v),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _field(
-                              _lastName,
-                              l10n.fieldLastName,
-                              validator: (v) => Validators.required(context, v),
-                            ),
-                          ),
-                        ],
-                      ),
-                      _field(
-                        _phone,
-                        l10n.fieldPhone,
-                        keyboard: TextInputType.phone,
-                        validator: (v) => Validators.required(context, v),
-                      ),
-                      _field(
-                        _street,
-                        l10n.fieldStreet,
-                        validator: (v) => Validators.required(context, v),
-                      ),
-                      _field(
-                        _city,
-                        l10n.fieldCity,
-                        validator: (v) => Validators.required(context, v),
-                      ),
-                      Row(
-                        children: [
-                          Expanded(child: _field(_region, l10n.fieldRegion)),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _field(_postcode, l10n.fieldPostcode),
-                          ),
-                        ],
-                      ),
                       TextFormField(
-                        enabled: false,
-                        initialValue: l10n.countryUae,
+                        controller: _email,
+                        enabled: isGuest,
+                        keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(
-                          labelText: l10n.fieldCountryLabel,
+                          labelText: l10n.fieldEmail,
+                          helperText: l10n.checkoutEmailHelp,
                         ),
+                        validator: (v) => Validators.email(context, v),
                       ),
+                      const SizedBox(height: 24),
+                      _StepHeader(
+                        index: 1,
+                        title: l10n.checkoutDeliveryAddress,
+                      ),
+                      AddressForm(controller: _address),
                     ],
                   ),
                 ),
@@ -362,6 +357,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     ),
                   ),
                 ],
+                    ],
+                  ),
+                ),
+                const MarketingFooter(),
               ],
             ),
           ),
@@ -378,19 +377,19 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       ),
     );
   }
+}
 
-  Widget _field(
-    TextEditingController controller,
-    String label, {
-    TextInputType? keyboard,
-    String? Function(String?)? validator,
-  }) => Padding(
+/// Plain (non-numbered) section header — used for "Contact Information".
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title});
+  final String title;
+
+  @override
+  Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 12),
-    child: TextFormField(
-      controller: controller,
-      keyboardType: keyboard,
-      decoration: InputDecoration(labelText: label),
-      validator: validator,
+    child: Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: Text(title, style: Theme.of(context).textTheme.titleMedium),
     ),
   );
 }

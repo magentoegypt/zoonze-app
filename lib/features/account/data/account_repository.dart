@@ -4,6 +4,7 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/error/graphql_failure_mapper.dart';
 import '../../../core/graphql/graphql_client.dart';
+import '../../../core/util/media.dart';
 import '../../catalog/data/product_mapper.dart';
 import '../domain/customer_address.dart';
 import '../domain/order.dart';
@@ -89,6 +90,12 @@ class AccountRepository {
             price: moneyFromJson(
               l['product_sale_price'] as Map<String, dynamic>?,
             ),
+            imageUrl: httpsMediaUrl(
+              (l['product'] as Map<String, dynamic>?)?['image']?['url']
+                  as String?,
+            ),
+            sku: l['product_sku'] as String?,
+            urlKey: l['product_url_key'] as String?,
           ),
         )
         .toList();
@@ -109,6 +116,16 @@ class AccountRepository {
         );
       }
     }
+    final comments = (json['comments'] as List<dynamic>? ?? const [])
+        .whereType<Map<String, dynamic>>()
+        .map(
+          (c) => OrderComment(
+            message: (c['message'] as String?) ?? '',
+            timestamp: (c['timestamp'] as String?) ?? '',
+          ),
+        )
+        .toList();
+    final addr = json['shipping_address'] as Map<String, dynamic>?;
     return CustomerOrder(
       number: (json['number'] as String?) ?? '',
       status: (json['status'] as String?) ?? '',
@@ -120,25 +137,52 @@ class AccountRepository {
       ),
       shippingMethod: json['shipping_method'] as String?,
       carrier: json['carrier'] as String?,
+      shippingName: _recipientName(addr),
+      shippingAddress: _formatAddress(addr),
       lines: lines,
       trackings: trackings,
+      comments: comments,
     );
   }
 
-  CustomerAddress _parseAddress(Map<String, dynamic> json) {
-    final street = (json['street'] as List<dynamic>? ?? const [])
+  String? _recipientName(Map<String, dynamic>? a) {
+    if (a == null) return null;
+    final name = [a['firstname'], a['lastname']]
         .whereType<String>()
+        .where((s) => s.isNotEmpty)
+        .join(' ');
+    return name.isEmpty ? null : name;
+  }
+
+  String? _formatAddress(Map<String, dynamic>? a) {
+    if (a == null) return null;
+    final street = (a['street'] as List<dynamic>? ?? const [])
+        .whereType<String>()
+        .where((s) => s.isNotEmpty)
         .join(', ');
+    final parts = [street, a['city'] as String?, a['region'] as String?]
+        .whereType<String>()
+        .where((s) => s.isNotEmpty)
+        .toList();
+    return parts.isEmpty ? null : parts.join(', ');
+  }
+
+  CustomerAddress _parseAddress(Map<String, dynamic> json) {
+    final streetLines = (json['street'] as List<dynamic>? ?? const [])
+        .whereType<String>()
+        .toList();
     final region = json['region'] as Map<String, dynamic>?;
     return CustomerAddress(
       id: (json['id'] as num?)?.toInt(),
       firstName: (json['firstname'] as String?) ?? '',
       lastName: (json['lastname'] as String?) ?? '',
       telephone: (json['telephone'] as String?) ?? '',
-      street: street,
+      street: streetLines.isNotEmpty ? streetLines.first : '',
+      apartment: streetLines.length > 1 ? streetLines.sublist(1).join(', ') : '',
       city: (json['city'] as String?) ?? '',
       postcode: (json['postcode'] as String?) ?? '',
       region: (region?['region'] as String?) ?? '',
+      regionId: (region?['region_id'] as num?)?.toInt(),
       countryCode: (json['country_code'] as String?) ?? 'AE',
       defaultShipping: (json['default_shipping'] as bool?) ?? false,
       defaultBilling: (json['default_billing'] as bool?) ?? false,

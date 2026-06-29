@@ -10,8 +10,36 @@ query ProductDetail($urlKey: String!) {
       name
       url_key
       stock_status
+      is_new_arrival
+      is_bestseller
       rating_summary
       review_count
+      rating_histogram {
+        stars
+        count
+        percent
+      }
+      also_like_products(pageSize: 8) {
+        sku
+        name
+        url_key
+        stock_status
+        image {
+          url
+        }
+        price_range {
+          minimum_price {
+            regular_price {
+              value
+              currency
+            }
+            final_price {
+              value
+              currency
+            }
+          }
+        }
+      }
       reviews(pageSize: 20) {
         items {
           nickname
@@ -22,6 +50,9 @@ query ProductDetail($urlKey: String!) {
         }
       }
       description {
+        html
+      }
+      short_description {
         html
       }
       image {

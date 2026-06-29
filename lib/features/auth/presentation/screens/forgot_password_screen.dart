@@ -7,6 +7,7 @@ import '../../../../core/validation/validators.dart';
 import '../../../../core/widgets/brand_logo.dart';
 import '../../../../l10n/l10n.dart';
 import '../auth_controller.dart';
+import '../widgets/auth_field.dart';
 import '../widgets/auth_header.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
@@ -94,15 +95,14 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                         subtitle: l10n.authForgotIntro,
                       ),
                       const SizedBox(height: 24),
-                      TextFormField(
+                      AuthField(
                         controller: _email,
+                        icon: Icons.mail_outline,
+                        hint: l10n.authEmailHint,
                         keyboardType: TextInputType.emailAddress,
-                        decoration: InputDecoration(
-                          labelText: l10n.fieldEmail,
-                          prefixIcon: const Icon(Icons.mail_outline),
-                        ),
+                        textInputAction: TextInputAction.done,
                         validator: (v) => Validators.email(context, v),
-                        onFieldSubmitted: (_) => _submit(),
+                        onSubmitted: (_) => _submit(),
                       ),
                       const SizedBox(height: 24),
                       FilledButton(
@@ -117,9 +117,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                               )
                             : Text(l10n.authForgotSubmit),
                       ),
+                      const SizedBox(height: 8),
                       TextButton(
-                        onPressed: _busy ? null : _goReset,
-                        child: Text(l10n.authHaveResetCode),
+                        onPressed: _busy ? null : () => context.pop(),
+                        child: Text(l10n.authBackToSignIn),
                       ),
                     ],
                   ),

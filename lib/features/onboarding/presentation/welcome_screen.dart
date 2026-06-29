@@ -8,6 +8,7 @@ import '../../../app/theme/app_theme.dart';
 import '../../../core/assets/app_images.dart';
 import '../../../core/store/store_controller.dart';
 import '../../../core/widgets/brand_lockup.dart';
+import '../../../core/widgets/language_toggle.dart';
 import '../../../l10n/l10n.dart';
 
 /// Welcome screen (Figma "Splash — Welcome"): EN/AR language pill, brand lockup,
@@ -34,7 +35,7 @@ class WelcomeScreen extends ConsumerWidget {
               // Store header + Directionality via the atomic store switch.
               Align(
                 alignment: AlignmentDirectional.centerEnd,
-                child: _LanguagePill(
+                child: LanguageToggle(
                   activeLocale: activeLocale,
                   onChanged: (locale) => ref
                       .read(storeControllerProvider.notifier)
@@ -144,34 +145,6 @@ class WelcomeScreen extends ConsumerWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-/// Compact EN/AR pill matching the Figma toggle (burgundy-filled active
-/// segment). Shares the store switch with the drawer/settings toggles.
-class _LanguagePill extends StatelessWidget {
-  const _LanguagePill({required this.activeLocale, required this.onChanged});
-
-  final String activeLocale;
-  final ValueChanged<String> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return SegmentedButton<String>(
-      showSelectedIcon: false,
-      style: ButtonStyle(
-        visualDensity: VisualDensity.compact,
-        textStyle: WidgetStatePropertyAll(
-          Theme.of(context).textTheme.labelLarge,
-        ),
-      ),
-      segments: const [
-        ButtonSegment<String>(value: 'en', label: Text('EN')),
-        ButtonSegment<String>(value: 'ar', label: Text('AR')),
-      ],
-      selected: {activeLocale == 'ar' ? 'ar' : 'en'},
-      onSelectionChanged: (selection) => onChanged(selection.first),
     );
   }
 }

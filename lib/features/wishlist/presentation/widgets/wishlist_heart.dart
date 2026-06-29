@@ -8,10 +8,19 @@ import '../wishlist_controller.dart';
 /// Heart toggle that reflects and mutates wishlist membership for [sku].
 /// Prompts sign-in (snackbar) when the user is a guest.
 class WishlistHeart extends ConsumerWidget {
-  const WishlistHeart({super.key, required this.sku, this.color});
+  const WishlistHeart({
+    super.key,
+    required this.sku,
+    this.color,
+    this.compact = false,
+  });
 
   final String sku;
   final Color? color;
+
+  /// Tight 26×26 button with a 15px heart — fits the product card's circular
+  /// action chip. Default is the standard 48px tap target.
+  final bool compact;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -19,6 +28,11 @@ class WishlistHeart extends ConsumerWidget {
       wishlistControllerProvider.select((s) => s.contains(sku)),
     );
     return IconButton(
+      iconSize: compact ? 15 : null,
+      padding: compact ? EdgeInsets.zero : null,
+      constraints: compact
+          ? const BoxConstraints.tightFor(width: 26, height: 26)
+          : null,
       icon: Icon(
         inWishlist ? Icons.favorite : Icons.favorite_border,
         color: inWishlist

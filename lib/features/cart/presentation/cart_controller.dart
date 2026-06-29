@@ -93,10 +93,29 @@ class CartController extends Notifier<CartState> {
   Future<String> _ensureCartId() async {
     final existing = _cartId;
     if (existing != null) return existing;
+    // Logged-in customers add to their own (Magento-managed) cart; guests get a
+    // lazily-created guest cart whose id is persisted in Hive.
+    if (ref.read(authControllerProvider).isAuthenticated) {
+      final customerId = await _repo.customerCartId();
+      if (customerId != null && customerId.isNotEmpty) {
+        _cartId = customerId;
+        return customerId;
+      }
+    }
     final id = await _repo.createGuestCart();
     _cartId = id;
     await _cache.writeString(_guestKey, id);
     return id;
+  }
+
+  /// Drops the active cart id (and the persisted guest id) so the next
+  /// [_ensureCartId] creates a fresh cart. Used when a cart is consumed
+  /// server-side (e.g. after placing an order) or found to be stale.
+  Future<void> _resetCart() async {
+    _cartId = null;
+    if (!ref.read(authControllerProvider).isAuthenticated) {
+      await _cache.deleteKey(_guestKey);
+    }
   }
 
   Future<void> _reload() async {
@@ -116,21 +135,36 @@ class CartController extends Notifier<CartState> {
     List<String> selectedOptionUids = const [],
   }) async {
     state = state.copyWith(isMutating: true, error: null);
+    final item = <String, dynamic>{
+      'sku': sku,
+      'quantity': quantity,
+      if (selectedOptionUids.isNotEmpty) 'selected_options': selectedOptionUids,
+    };
     try {
-      final id = await _ensureCartId();
-      final cart = await _repo.addProducts(id, [
-        <String, dynamic>{
-          'sku': sku,
-          'quantity': quantity,
-          if (selectedOptionUids.isNotEmpty)
-            'selected_options': selectedOptionUids,
-        },
-      ]);
+      // If a *cached* cart id fails, it may be consumed/expired (e.g. the cart
+      // was just turned into an order) — reset and retry once with a fresh cart
+      // so add-to-cart self-heals instead of failing on every tap.
+      final hadCachedId = _cartId != null;
+      Cart cart;
+      try {
+        cart = await _repo.addProducts(await _ensureCartId(), [item]);
+      } catch (error) {
+        if (!hadCachedId) rethrow;
+        await _resetCart();
+        cart = await _repo.addProducts(await _ensureCartId(), [item]);
+      }
       state = state.copyWith(cart: cart, isMutating: false);
     } catch (error) {
       state = state.copyWith(isMutating: false, error: error);
       rethrow;
     }
+  }
+
+  /// The order consumed the cart server-side — reset to an empty cart so it
+  /// reads empty and the next add creates a fresh one.
+  Future<void> clearAfterOrder() async {
+    await _resetCart();
+    state = const CartState();
   }
 
   Future<void> setQuantity(String uid, int quantity) async {

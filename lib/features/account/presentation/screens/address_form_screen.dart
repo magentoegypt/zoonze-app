@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/validation/validators.dart';
+import '../../../../app/theme/app_colors.dart';
+import '../../../../core/address/regions.dart';
+import '../../../../core/widgets/address_form.dart';
 import '../../../../l10n/l10n.dart';
 import '../../data/account_repository.dart';
 import '../../domain/customer_address.dart';
@@ -18,65 +20,47 @@ class AddressFormScreen extends ConsumerStatefulWidget {
 
 class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _firstName;
-  late final TextEditingController _lastName;
-  late final TextEditingController _phone;
-  late final TextEditingController _street;
-  late final TextEditingController _city;
-  late final TextEditingController _postcode;
-  late final TextEditingController _region;
-  late final TextEditingController _country;
-  late bool _defaultShipping;
+  late final AddressFormController _address;
   bool _busy = false;
 
   @override
   void initState() {
     super.initState();
     final a = widget.initial;
-    _firstName = TextEditingController(text: a?.firstName ?? '');
-    _lastName = TextEditingController(text: a?.lastName ?? '');
-    _phone = TextEditingController(text: a?.telephone ?? '');
-    _street = TextEditingController(text: a?.street ?? '');
-    _city = TextEditingController(text: a?.city ?? '');
-    _postcode = TextEditingController(text: a?.postcode ?? '');
-    _region = TextEditingController(text: a?.region ?? '');
-    _country = TextEditingController(text: a?.countryCode ?? 'AE');
-    _defaultShipping = a?.defaultShipping ?? false;
+    _address = AddressFormController(
+      fullName: a?.fullName ?? '',
+      phone: a?.telephone ?? '',
+      area: a?.city ?? '',
+      street: a?.street ?? '',
+      apartment: a?.apartment ?? '',
+      region: a?.region ?? '',
+      regionId: a?.regionId,
+      isDefault: a?.defaultShipping ?? false,
+    );
   }
 
   @override
   void dispose() {
-    for (final c in [
-      _firstName,
-      _lastName,
-      _phone,
-      _street,
-      _city,
-      _postcode,
-      _region,
-      _country,
-    ]) {
-      c.dispose();
-    }
+    _address.dispose();
     super.dispose();
   }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _busy = true);
+    final name = _address.splitName();
     final address = CustomerAddress(
       id: widget.initial?.id,
-      firstName: _firstName.text.trim(),
-      lastName: _lastName.text.trim(),
-      telephone: _phone.text.trim(),
-      street: _street.text.trim(),
-      city: _city.text.trim(),
-      postcode: _postcode.text.trim(),
-      region: _region.text.trim(),
-      countryCode: _country.text.trim().isEmpty
-          ? 'AE'
-          : _country.text.trim().toUpperCase(),
-      defaultShipping: _defaultShipping,
+      firstName: name.first,
+      lastName: name.last,
+      telephone: _address.phone.text.trim(),
+      street: _address.street.text.trim(),
+      apartment: _address.apartment.text.trim(),
+      city: _address.area.text.trim(),
+      region: _address.region.text.trim(),
+      regionId: _address.regionId.value,
+      countryCode: addressCountryCode,
+      defaultShipping: _address.isDefault.value,
     );
     try {
       final repo = ref.read(accountRepositoryProvider);
@@ -111,55 +95,47 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
           child: Form(
             key: _formKey,
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _field(
-                  _firstName,
-                  l10n.fieldFirstName,
-                  validator: (v) => Validators.required(context, v),
-                ),
-                _field(
-                  _lastName,
-                  l10n.fieldLastName,
-                  validator: (v) => Validators.required(context, v),
-                ),
-                _field(
-                  _phone,
-                  l10n.fieldPhone,
-                  keyboard: TextInputType.phone,
-                  validator: (v) => Validators.required(context, v),
-                ),
-                _field(
-                  _street,
-                  l10n.fieldStreet,
-                  validator: (v) => Validators.required(context, v),
-                ),
-                _field(
-                  _city,
-                  l10n.fieldCity,
-                  validator: (v) => Validators.required(context, v),
-                ),
-                _field(_region, l10n.fieldRegion),
-                _field(_postcode, l10n.fieldPostcode),
-                _field(_country, l10n.fieldCountry),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  value: _defaultShipping,
-                  onChanged: (v) => setState(() => _defaultShipping = v),
-                  title: Text(l10n.addressDefaultShipping),
+                AddressForm(controller: _address),
+                const SizedBox(height: 16),
+                // Set as default address (Figma 64:92) — label + burgundy toggle.
+                ValueListenableBuilder<bool>(
+                  valueListenable: _address.isDefault,
+                  builder: (context, value, _) => Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        l10n.addressDefaultShipping,
+                        style: const TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.inkHeading,
+                        ),
+                      ),
+                      Switch(
+                        value: value,
+                        onChanged: (v) => _address.isDefault.value = v,
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: _busy ? null : _save,
-                    child: _busy
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : Text(l10n.actionSave),
-                  ),
+                const Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: AppColors.borderDefault,
+                ),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: _busy ? null : _save,
+                  child: _busy
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(l10n.addressSave),
                 ),
               ],
             ),
@@ -168,19 +144,4 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
       ),
     );
   }
-
-  Widget _field(
-    TextEditingController controller,
-    String label, {
-    TextInputType? keyboard,
-    String? Function(String?)? validator,
-  }) => Padding(
-    padding: const EdgeInsets.only(bottom: 12),
-    child: TextFormField(
-      controller: controller,
-      keyboardType: keyboard,
-      decoration: InputDecoration(labelText: label),
-      validator: validator,
-    ),
-  );
 }

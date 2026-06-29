@@ -155,11 +155,13 @@ class PlpController extends AutoDisposeFamilyNotifier<PlpState, String> {
     Map<String, Set<String>> filters, {
     double? priceFrom,
     double? priceTo,
+    ProductSortField? sort,
   }) {
     state = state.copyWith(
       selectedFilters: filters,
       priceFrom: priceFrom,
       priceTo: priceTo,
+      sort: sort ?? state.sort,
       products: const [],
       currentPage: 0,
       totalPages: 0,
