@@ -51,6 +51,9 @@ class HealthCheckScreen extends ConsumerWidget {
                 message: error is Failure
                     ? failureMessage(context, error)
                     : l10n.errorGeneric,
+                // Raw cause so iOS/transport failures are diagnosable on-device
+                // (FailureKind: network=DNS/TLS, service=WAF/HTML, server=GraphQL).
+                detail: error.toString(),
                 onRetry: () => ref.invalidate(storeConfigProvider),
                 retryLabel: l10n.actionRetry,
               ),
@@ -250,9 +253,11 @@ class _ErrorBlock extends StatelessWidget {
     required this.message,
     required this.onRetry,
     required this.retryLabel,
+    this.detail,
   });
 
   final String message;
+  final String? detail;
   final VoidCallback onRetry;
   final String retryLabel;
 
@@ -261,6 +266,18 @@ class _ErrorBlock extends StatelessWidget {
     return Column(
       children: [
         Text(message, textAlign: TextAlign.center),
+        if (detail != null) ...[
+          const SizedBox(height: 8),
+          SelectableText(
+            detail!,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 12,
+              fontFamily: 'monospace',
+              color: Colors.grey,
+            ),
+          ),
+        ],
         const SizedBox(height: 16),
         FilledButton(onPressed: onRetry, child: Text(retryLabel)),
       ],
