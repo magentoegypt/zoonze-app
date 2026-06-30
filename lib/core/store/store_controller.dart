@@ -2,9 +2,11 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../config/app_config.dart';
+import '../error/failure.dart';
 import '../graphql/graphql_client.dart';
 import '../storage/local_cache.dart';
 import '../storage/locale_prefs.dart';
+import '../storage/secure_token_store.dart';
 import 'store_repository.dart';
 import 'store_view.dart';
 
@@ -71,6 +73,14 @@ class StoreController extends Notifier<StoreState> {
 
   /// Loads store views: cache first (fast paint), then refreshes from the
   /// network and persists. Failures keep the provisional/cached mapping.
+  ///
+  /// Self-heal: a stale/expired token in secure storage makes Magento reject
+  /// this very first request (`auth` — "Consumer key has expired"; or, for a
+  /// malformed token, an edge `service` 403). Browsing needs no token (guest
+  /// GraphQL returns 200), so on those failures we drop the token and retry
+  /// once as guest, recovering in-session instead of failing every request.
+  /// A plain network blip keeps the provisional/cached mapping (the token may
+  /// be perfectly valid — the device is just offline).
   Future<void> loadStores() async {
     final cache = ref.read(localCacheProvider);
     final cached = cache.readStores();
@@ -78,17 +88,33 @@ class StoreController extends Notifier<StoreState> {
       _applyStores(cached.map(StoreView.fromJson).toList(growable: false));
     }
     try {
-      final stores = await ref
-          .read(storeRepositoryProvider)
-          .fetchAvailableStores();
-      if (stores.isNotEmpty) {
-        _applyStores(stores);
-        await cache.writeStores(
-          stores.map((s) => s.toJson()).toList(growable: false),
-        );
+      await _fetchAndApplyStores(cache);
+    } on Failure catch (failure) {
+      final tokenRelated =
+          failure.kind == FailureKind.auth ||
+          failure.kind == FailureKind.service;
+      if (!tokenRelated) return;
+      await ref.read(secureTokenStoreProvider).clear();
+      ref.invalidate(graphqlClientProvider);
+      try {
+        await _fetchAndApplyStores(cache);
+      } on Object {
+        // Still down — provisional/cached mapping remains in effect.
       }
     } on Object {
       // Non-fatal: provisional/cached mapping remains in effect.
+    }
+  }
+
+  Future<void> _fetchAndApplyStores(LocalCache cache) async {
+    final stores = await ref
+        .read(storeRepositoryProvider)
+        .fetchAvailableStores();
+    if (stores.isNotEmpty) {
+      _applyStores(stores);
+      await cache.writeStores(
+        stores.map((s) => s.toJson()).toList(growable: false),
+      );
     }
   }
 
