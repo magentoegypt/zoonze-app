@@ -134,7 +134,10 @@ xcodebuild -exportArchive \
 ENTITLEMENTS="${RUNNER_TEMP:-/tmp}/app.entitlements.plist"
 /usr/libexec/PlistBuddy -x -c "Print :Entitlements" /dev/stdin <<<"${PROFILE_PLIST}" \
   > "${ENTITLEMENTS}"
+# Absolute path — the re-zip below runs after `cd "${RESIGN}"`, so a relative
+# build/ios/ipa/… path would resolve under RESIGN and the zip would fail.
 IPA="$(ls build/ios/ipa/*.ipa | head -1)"
+IPA="$(cd "$(dirname "${IPA}")" && pwd)/$(basename "${IPA}")"
 IDENTITY="$(security find-identity -v -p codesigning "${KEYCHAIN}" \
   | grep -oE '[0-9A-F]{40}' | head -1)"
 RESIGN="${RUNNER_TEMP:-/tmp}/resign"
