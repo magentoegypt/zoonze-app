@@ -121,4 +121,36 @@ xcodebuild -exportArchive \
   -exportPath build/ios/ipa \
   -exportOptionsPlist "${EXPORT_PLIST}"
 
-echo "✅ Signed ad-hoc IPA → $(ls build/ios/ipa/*.ipa 2>/dev/null | head -1)"
+# 5d) Re-sign Runner.app with the profile's FULL entitlements.
+# The archive was built UNSIGNED (CODE_SIGNING_ALLOWED=NO, step 5b), so
+# Runner.entitlements (incl. aps-environment) was never embedded — and
+# `-exportArchive` only applies the fixed entitlements (application-identifier,
+# team, get-task-allow, keychain-access-groups). It DROPS capability
+# entitlements like aps-environment, so the app ships with none and APNs
+# registration fails: "no valid 'aps-environment' entitlement". Re-signing the
+# app with the provisioning profile's own Entitlements dict (which carries
+# aps-environment=production) restores it. Only the app bundle is re-signed;
+# the export already signed the nested frameworks.
+ENTITLEMENTS="${RUNNER_TEMP:-/tmp}/app.entitlements.plist"
+/usr/libexec/PlistBuddy -x -c "Print :Entitlements" /dev/stdin <<<"${PROFILE_PLIST}" \
+  > "${ENTITLEMENTS}"
+IPA="$(ls build/ios/ipa/*.ipa | head -1)"
+IDENTITY="$(security find-identity -v -p codesigning "${KEYCHAIN}" \
+  | grep -oE '[0-9A-F]{40}' | head -1)"
+RESIGN="${RUNNER_TEMP:-/tmp}/resign"
+rm -rf "${RESIGN}"; mkdir -p "${RESIGN}"
+unzip -q "${IPA}" -d "${RESIGN}"
+codesign --force --sign "${IDENTITY}" --keychain "${KEYCHAIN}" \
+  --entitlements "${ENTITLEMENTS}" "${RESIGN}/Payload/Runner.app"
+rm -f "${IPA}"
+( cd "${RESIGN}" && zip -qry "${IPA}" Payload )
+
+# Verify the entitlement is actually present now (fail the build otherwise).
+if codesign -d --entitlements :- "${RESIGN}/Payload/Runner.app" 2>/dev/null \
+    | grep -q "aps-environment"; then
+  echo "✅ aps-environment entitlement embedded"
+else
+  echo "::error::aps-environment still missing after re-sign"; exit 1
+fi
+
+echo "✅ Signed ad-hoc IPA → ${IPA}"
