@@ -290,22 +290,20 @@ class _TransportProbeState extends ConsumerState<_TransportProbe> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Raw transport test',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
-                FilledButton(onPressed: _run, child: const Text('Run')),
-              ],
+            Text(
+              'Raw transport test',
+              style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 4),
             const Text(
               'POSTs storeConfig through the platform HTTP client '
               '(NSURLSession on iOS) and shows the raw edge response.',
               style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: FilledButton(onPressed: _run, child: const Text('Run')),
             ),
             if (_result != null) ...[
               const SizedBox(height: 12),
