@@ -106,9 +106,30 @@ class NotificationService {
     await android?.requestNotificationsPermission();
   }
 
+  /// iOS Firebase config — mirrors `ios/Runner/GoogleService-Info.plist`, which
+  /// is NOT in the Runner target's Copy Bundle Resources, so the plist-based
+  /// auto-init throws and FCM never comes up (token stays null → the device
+  /// token silently fails to register, incl. after login). Initialising from
+  /// explicit options fixes that without depending on the Xcode target. Firebase
+  /// client keys aren't secret — they identify the project; access is gated by
+  /// Firebase rules + the APNs key. (Android keeps the native
+  /// google-services.json path.)
+  static const FirebaseOptions _iosFirebaseOptions = FirebaseOptions(
+    apiKey: 'AIzaSyAxJd7zE7oJUQzv9M6h4SqJHGQ3N1KheuU',
+    appId: '1:430391293935:ios:9e32756a368ba456e9681a',
+    messagingSenderId: '430391293935',
+    projectId: 'zoonze',
+    storageBucket: 'zoonze.firebasestorage.app',
+    iosBundleId: 'com.zoonze.shop',
+  );
+
   Future<void> _initFirebase() async {
     try {
-      await Firebase.initializeApp();
+      if (defaultTargetPlatform == TargetPlatform.iOS) {
+        await Firebase.initializeApp(options: _iosFirebaseOptions);
+      } else {
+        await Firebase.initializeApp();
+      }
       _fcmAvailable = true;
     } catch (error, stack) {
       // No Firebase config bundled — FCM stays disabled (see docs/decisions).
