@@ -48,6 +48,7 @@ SCREENS=(
   "65:53|24-notifications"
   "66:2|25-help-faq"
   "111:2|26-edit-profile"
+  "420:2|27-brands"
 )
 
 # One images API call returns a render URL per node id.

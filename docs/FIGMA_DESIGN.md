@@ -44,14 +44,14 @@ between the Figma source of truth and the Flutter implementation in this repo.
 > page's footer has a **32 px top gap** separating it from the page content (a
 > transparent spacer on Home; bottom-block offset on the other screens).
 
-The canvas holds **26 screens** organized into four labelled sections (Figma
+The canvas holds **27 screens** organized into four labelled sections (Figma
 *Sections*), stacked top-to-bottom in app-flow order:
 
 | # | Section | Screens |
 |---|---------|---------|
 | 01 | Splash & Authentication | Splash — Launch, Splash — Welcome, Sign In, Sign Up, Forgot Password |
 | 02 | Home & Discovery | Home (UAE / EN), Menu Drawer (side nav), Categories, Search, Search Results, Filters (Sheet), PLP — Fragrance |
-| 03 | Product · Wishlist · Cart | PDP (Coco Mademoiselle), Wishlist, Cart, Cart — Empty, Checkout, Order Success |
+| 03 | Product · Wishlist · Cart | PDP (Coco Mademoiselle), Wishlist, Cart, Cart — Empty, Checkout, Order Success, Our Brands (Explore Brands) |
 | 04 | Orders & Account | My Orders, Order Tracking, My Account, Saved Addresses, Add Address, Notifications, Help & FAQ, Edit Profile |
 
 Sign-up collects **name, email, password only** — no mobile number and no SMS/OTP
@@ -63,7 +63,7 @@ in two variants — **English / LTR** and a full **Arabic / RTL** mirror — lai
 as two parallel, banner-labelled column groups on the canvas: **EN · English (LTR)**
 on the left and **AR · العربية (RTL)** on the right, with each language's sections
 suffixed `(EN / LTR)` / `(AR / RTL)` and aligned row-by-row for side-by-side
-comparison. That's **26 screens × 2 = 52 frames**.
+comparison. That's **27 screens × 2 = 54 frames**.
 
 ### Arabic / RTL
 

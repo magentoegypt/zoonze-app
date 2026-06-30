@@ -49,6 +49,11 @@ To export locally instead: `FIGMA_TOKEN=<token> bash tool/figma_export.sh`.
 | `24-notifications.png` | Notifications | `65:53` |
 | `25-help-faq.png` | Help & FAQ | `66:2` |
 | `26-edit-profile.png` | Edit Profile | `111:2` |
+| `27-brands.png` | Our Brands (Explore Brands) | `420:2` |
 
 > The Arabic/RTL mirrors live under the `140:*` / `186:*` node ranges in the
 > same file; add them to `tool/figma_export.sh` if you want them exported too.
+> The **Our Brands** screen is the full directory the home `explore-brands`
+> SEE MORE routes to (live source `/uae-en/shopbrand/`): branded ZOONZE header,
+> "Search a brand" field, A–Z filter chips, and a lettered 2-column grid of real
+> brand logos. Its AR/RTL mirror is node `450:2` (outside the `140:*` range).
