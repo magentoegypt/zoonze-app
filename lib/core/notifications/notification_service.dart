@@ -34,8 +34,45 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _local =
       FlutterLocalNotificationsPlugin();
   bool _fcmAvailable = false;
+  String? _initError;
 
   bool get fcmAvailable => _fcmAvailable;
+
+  /// The `Firebase.initializeApp` failure reason, if FCM is unavailable. Shown
+  /// on the diagnostics screen to tell an init failure apart from a not-yet-
+  /// ready APNs token.
+  String? get initError => _initError;
+
+  /// The raw APNs device token (iOS/macOS) — null until the OS hands it to
+  /// Firebase (requires Push capability in the provisioning profile, granted
+  /// notification permission, a physical device, and network). When this is
+  /// null but [fcmAvailable] is true, the problem is APNs/provisioning, not
+  /// Firebase init.
+  Future<String?> apnsToken() async {
+    if (!_fcmAvailable) return null;
+    if (defaultTargetPlatform != TargetPlatform.iOS &&
+        defaultTargetPlatform != TargetPlatform.macOS) {
+      return 'n/a (not iOS)';
+    }
+    try {
+      return await FirebaseMessaging.instance.getAPNSToken();
+    } catch (error) {
+      return 'error: $error';
+    }
+  }
+
+  /// The current notification authorization status (`authorized` / `denied` /
+  /// `notDetermined` / `provisional`).
+  Future<String> permissionStatus() async {
+    if (!_fcmAvailable) return 'n/a (FCM off)';
+    try {
+      final settings = await FirebaseMessaging.instance
+          .getNotificationSettings();
+      return settings.authorizationStatus.name;
+    } catch (error) {
+      return 'error';
+    }
+  }
 
   /// Data payloads of notifications the user tapped (foreground-local or a
   /// backgrounded FCM message). The app layer maps these to a route. Stays
@@ -134,6 +171,7 @@ class NotificationService {
     } catch (error, stack) {
       // No Firebase config bundled — FCM stays disabled (see docs/decisions).
       _fcmAvailable = false;
+      _initError = error.toString();
       debugPrint('FCM disabled (Firebase.initializeApp failed): $error');
       if (defaultTargetPlatform == TargetPlatform.iOS) {
         // On iOS a real config can still fail init if GoogleService-Info.plist

@@ -148,19 +148,27 @@ class _PushDiagnostics extends StatefulWidget {
 }
 
 class _PushDiagnosticsState extends State<_PushDiagnostics> {
-  late Future<String?> _token;
+  late Future<({String permission, String? apns, String? fcm})> _diag;
 
   @override
   void initState() {
     super.initState();
-    _token = NotificationService.instance.token();
+    _diag = _gather();
   }
 
-  void _refresh() =>
-      setState(() => _token = NotificationService.instance.token());
+  Future<({String permission, String? apns, String? fcm})> _gather() async {
+    final svc = NotificationService.instance;
+    return (
+      permission: await svc.permissionStatus(),
+      apns: await svc.apnsToken(),
+      fcm: await svc.token(),
+    );
+  }
 
-  Future<void> _copy(String token) async {
-    await Clipboard.setData(ClipboardData(text: token));
+  void _refresh() => setState(() => _diag = _gather());
+
+  Future<void> _copy(String text) async {
+    await Clipboard.setData(ClipboardData(text: text));
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context).actionLinkCopied)),
@@ -168,10 +176,18 @@ class _PushDiagnosticsState extends State<_PushDiagnostics> {
     }
   }
 
+  Widget _line(String label, String value) => Padding(
+    padding: const EdgeInsets.only(top: 4),
+    child: SelectableText(
+      '$label: $value',
+      style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final available = NotificationService.instance.fcmAvailable;
+    final svc = NotificationService.instance;
     return Card(
       child: Padding(
         padding: const EdgeInsetsDirectional.all(16),
@@ -193,57 +209,73 @@ class _PushDiagnosticsState extends State<_PushDiagnostics> {
                 ),
               ],
             ),
-            Text('FCM available: ${available ? 'yes' : 'no'}'),
-            const SizedBox(height: 8),
-            FutureBuilder<String?>(
-              future: _token,
+            _line('FCM available', svc.fcmAvailable ? 'yes' : 'no'),
+            if (svc.initError != null) _line('Init error', svc.initError!),
+            FutureBuilder<({String permission, String? apns, String? fcm})>(
+              future: _diag,
               builder: (context, snapshot) {
                 if (snapshot.connectionState != ConnectionState.done) {
-                  return const Text('Fetching FCM token…');
+                  return _line('Status', 'checking…');
                 }
-                final token = snapshot.data;
-                if (token == null || token.isEmpty) {
-                  return const Text(
-                    'FCM token: unavailable — FCM is disabled or the APNs token '
-                    "isn't ready yet (iOS). Check GoogleService-Info.plist / "
-                    'the APNs key, then Refresh.',
-                  );
-                }
+                final data = snapshot.data;
+                if (data == null) return _line('Status', 'error');
+                final apns = data.apns;
+                final apnsText = apns == null
+                    ? 'null — not ready / no Push capability / permission'
+                    : (apns.startsWith('error') || apns.startsWith('n/a')
+                          ? apns
+                          : 'present (${apns.length} chars)');
+                final fcm = data.fcm;
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'FCM token (tap to copy):',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 6),
-                    InkWell(
-                      onTap: () => _copy(token),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: SelectableText(
-                          token,
-                          style: const TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 12,
+                    _line('Permission', data.permission),
+                    _line('APNs token', apnsText),
+                    const SizedBox(height: 8),
+                    if (fcm == null || fcm.isEmpty)
+                      const Text(
+                        'FCM token: unavailable. Read the lines above — '
+                        'an Init error means Firebase failed; APNs null while '
+                        'available=yes means Push capability/provisioning/'
+                        'permission; permission=denied means grant it.',
+                        style: TextStyle(fontSize: 12),
+                      )
+                    else ...[
+                      const Text(
+                        'FCM token (tap to copy):',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 6),
+                      InkWell(
+                        onTap: () => _copy(fcm),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: SelectableText(
+                            fcm,
+                            style: const TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 12,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Align(
-                      alignment: AlignmentDirectional.centerEnd,
-                      child: OutlinedButton.icon(
-                        onPressed: () => _copy(token),
-                        icon: const Icon(Icons.copy, size: 18),
-                        label: Text(l10n.actionCopy),
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: AlignmentDirectional.centerEnd,
+                        child: OutlinedButton.icon(
+                          onPressed: () => _copy(fcm),
+                          icon: const Icon(Icons.copy, size: 18),
+                          label: Text(l10n.actionCopy),
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 );
               },
