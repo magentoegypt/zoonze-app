@@ -16,14 +16,52 @@ import 'store_link.dart';
 /// and can hit TLS/connection edge cases that NSURLSession handles — which
 /// presented as "all GraphQL failing on iOS while Safari + Android work".
 /// Android keeps `dart:io` (it works and avoids an unnecessary native client).
-http.Client _platformHttpClient() {
+///
+/// The stable [userAgent] is pinned at the session-configuration level
+/// (`httpAdditionalHeaders`) so the allow-listed UA reaches AWS WAF on *every*
+/// request — otherwise NSURLSession sends its default `app/version CFNetwork/…
+/// Darwin/…` UA, which the WAF blocks (returns an HTML page → `service` error).
+http.Client _platformHttpClient(String userAgent) {
   if (defaultTargetPlatform == TargetPlatform.iOS ||
       defaultTargetPlatform == TargetPlatform.macOS) {
-    return CupertinoClient.fromSessionConfiguration(
-      URLSessionConfiguration.defaultSessionConfiguration(),
-    );
+    final configuration =
+        URLSessionConfiguration.defaultSessionConfiguration()
+          ..httpAdditionalHeaders = {'User-Agent': userAgent};
+    return CupertinoClient.fromSessionConfiguration(configuration);
   }
   return http.Client();
+}
+
+/// Diagnostic probe: hits the GraphQL endpoint with the **platform** HTTP client
+/// (NSURLSession on iOS) and the app's real headers, returning the raw status,
+/// content-type and a body snippet. Bypasses graphql_flutter so we can see
+/// exactly what the edge returns on the actual iOS transport — JSON vs a
+/// WAF/CloudFront HTML page. Surfaced on the diagnostics screen.
+Future<({int status, String contentType, String body})> rawTransportProbe(
+  AppConfig config,
+  String storeCode,
+) async {
+  final client = _platformHttpClient(config.userAgent);
+  try {
+    final response = await client.post(
+      Uri.parse(config.graphqlEndpoint),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'User-Agent': config.userAgent,
+        'Store': storeCode,
+      },
+      body: '{"query":"{storeConfig{store_code}}"}',
+    );
+    final body = response.body;
+    return (
+      status: response.statusCode,
+      contentType: response.headers['content-type'] ?? '—',
+      body: body.length > 600 ? '${body.substring(0, 600)}…' : body,
+    );
+  } finally {
+    client.close();
+  }
 }
 
 /// Builds the GraphQL client with the link chain:
@@ -45,7 +83,7 @@ final graphqlClientProvider = Provider<GraphQLClient>((ref) {
   final httpLink = HttpLink(
     config.graphqlEndpoint,
     defaultHeaders: {'User-Agent': config.userAgent},
-    httpClient: _platformHttpClient(),
+    httpClient: _platformHttpClient(config.userAgent),
   );
 
   final authLink = AuthLink(

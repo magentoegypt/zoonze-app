@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/config/app_config.dart';
 import '../../../core/error/failure.dart';
+import '../../../core/graphql/graphql_client.dart';
 import '../../../core/notifications/notification_service.dart';
 import '../../../core/store/store_controller.dart';
 import '../../../core/widgets/failure_message.dart';
@@ -69,6 +71,8 @@ class HealthCheckScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
             const _PushDiagnostics(),
+            const SizedBox(height: 24),
+            const _TransportProbe(),
             const SizedBox(height: 24),
             if (store.stores.isNotEmpty) ...[
               Text(
@@ -241,6 +245,118 @@ class _PushDiagnosticsState extends State<_PushDiagnostics> {
                 );
               },
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Raw transport probe — POSTs `storeConfig` through the **platform** HTTP
+/// client (NSURLSession on iOS) with the app's real headers and shows the raw
+/// status + body. Lets us see exactly what the edge (CloudFront/WAF) returns on
+/// the actual iOS transport: a JSON `200` (good) vs an HTML block page (the
+/// `service` error). Bypasses graphql_flutter and the link chain entirely.
+class _TransportProbe extends ConsumerStatefulWidget {
+  const _TransportProbe();
+
+  @override
+  ConsumerState<_TransportProbe> createState() => _TransportProbeState();
+}
+
+class _TransportProbeState extends ConsumerState<_TransportProbe> {
+  Future<({int status, String contentType, String body})>? _result;
+
+  void _run() {
+    final config = ref.read(appConfigProvider);
+    final storeCode = ref.read(storeControllerProvider).activeStoreCode;
+    setState(() => _result = rawTransportProbe(config, storeCode));
+  }
+
+  Future<void> _copy(String text) async {
+    await Clipboard.setData(ClipboardData(text: text));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).actionLinkCopied)),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsetsDirectional.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Raw transport test',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                FilledButton(onPressed: _run, child: const Text('Run')),
+              ],
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'POSTs storeConfig through the platform HTTP client '
+              '(NSURLSession on iOS) and shows the raw edge response.',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            if (_result != null) ...[
+              const SizedBox(height: 12),
+              FutureBuilder<({int status, String contentType, String body})>(
+                future: _result,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState != ConnectionState.done) {
+                    return const Text('Running…');
+                  }
+                  if (snapshot.hasError) {
+                    final text = 'Transport error: ${snapshot.error}';
+                    return InkWell(
+                      onTap: () => _copy(text),
+                      child: SelectableText(
+                        text,
+                        style: const TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 12,
+                          color: Colors.red,
+                        ),
+                      ),
+                    );
+                  }
+                  final data = snapshot.data!;
+                  final text =
+                      'HTTP ${data.status}\n'
+                      'content-type: ${data.contentType}\n\n'
+                      '${data.body}';
+                  return InkWell(
+                    onTap: () => _copy(text),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: SelectableText(
+                        text,
+                        style: const TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
           ],
         ),
       ),
