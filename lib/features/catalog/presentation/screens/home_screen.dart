@@ -14,6 +14,7 @@ import '../../../../core/assets/app_images.dart';
 import '../../../../core/util/launch.dart';
 import '../../../../core/widgets/async_value_view.dart';
 import '../../../../core/widgets/brand_logo.dart';
+import '../../../../core/widgets/shimmer.dart';
 import '../../../notifications/presentation/notification_bell.dart';
 import '../../../../l10n/l10n.dart';
 import '../../data/brands_provider.dart';
@@ -25,6 +26,7 @@ import '../../domain/hero_slide.dart';
 import '../../domain/product.dart';
 import '../catalog_providers.dart';
 import '../widgets/product_card.dart';
+import '../widgets/product_skeletons.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -62,6 +64,7 @@ class HomeScreen extends ConsumerWidget {
             AsyncValueView(
               value: categories,
               onRetry: () => ref.invalidate(categoryTreeProvider),
+              loading: () => const _CategoryGridSkeleton(),
               data: (items) {
                 if (items.isEmpty) {
                   return Padding(
@@ -752,12 +755,13 @@ class _NewArrivalsSection extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     return ref
         .watch(newArrivalsProvider)
-        .maybeWhen(
+        .when(
+          loading: () => _ProductSectionSkeleton(title: l10n.homeNewArrivals),
+          error: (_, __) => const SizedBox.shrink(),
           data: (section) => _ProductSection(
             title: l10n.homeNewArrivals,
             section: section,
           ),
-          orElse: () => const SizedBox.shrink(),
         );
   }
 }
@@ -771,12 +775,13 @@ class _BestsellersSection extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     return ref
         .watch(bestsellersProvider)
-        .maybeWhen(
+        .when(
+          loading: () => _ProductSectionSkeleton(title: l10n.homeBestsellers),
+          error: (_, __) => const SizedBox.shrink(),
           data: (section) => _ProductSection(
             title: l10n.homeBestsellers,
             section: section,
           ),
-          orElse: () => const SizedBox.shrink(),
         );
   }
 }
@@ -821,12 +826,27 @@ class _ExploreBrands extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final brands = ref
+    return ref
         .watch(brandsProvider)
-        .maybeWhen(data: (b) => b, orElse: () => const <Brand>[]);
-    if (brands.isEmpty) return const SizedBox.shrink();
-    final shown = brands.take(15).toList();
+        .when(
+          loading: () => const _BrandsRailSkeleton(),
+          error: (_, __) => const SizedBox.shrink(),
+          data: (brands) => brands.isEmpty
+              ? const SizedBox.shrink()
+              : _BrandsRail(brands: brands.take(15).toList()),
+        );
+  }
+}
+
+/// The "Explore Our Brands" rail itself (header + horizontal logo cards + See
+/// More), shown once real brands have loaded.
+class _BrandsRail extends StatelessWidget {
+  const _BrandsRail({required this.brands});
+  final List<Brand> brands;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -836,9 +856,9 @@ class _ExploreBrands extends ConsumerWidget {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: shown.length,
+            itemCount: brands.length,
             separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (context, index) => _BrandCard(brand: shown[index]),
+            itemBuilder: (context, index) => _BrandCard(brand: brands[index]),
           ),
         ),
         Padding(
@@ -916,10 +936,12 @@ class _SpecialOffer extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return ref
         .watch(specialOfferProvider)
-        .maybeWhen(
-          data: (offer) =>
-              offer.isVisible ? _SpecialOfferCard(offer: offer) : const SizedBox.shrink(),
-          orElse: () => const SizedBox.shrink(),
+        .when(
+          loading: () => const _SpecialOfferSkeleton(),
+          error: (_, __) => const SizedBox.shrink(),
+          data: (offer) => offer.isVisible
+              ? _SpecialOfferCard(offer: offer)
+              : const SizedBox.shrink(),
         );
   }
 }
@@ -1097,6 +1119,128 @@ class _TrustBadge extends StatelessWidget {
             style: const TextStyle(color: AppColors.inkMuted, fontSize: 11),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Loading skeletons ──────────────────────────────────────────────────────
+// Shown only while a section's provider resolves. The real sections collapse
+// themselves to nothing when empty/disabled, so after load nothing spurious
+// renders. Each skeleton mirrors the dimensions of the section it stands in for.
+
+/// Mirrors `_CategoryGrid` (3-col, 0.82): grey circle + label line per cell.
+class _CategoryGridSkeleton extends StatelessWidget {
+  const _CategoryGridSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer(
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          childAspectRatio: 0.82,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+        ),
+        itemCount: 6,
+        itemBuilder: (_, __) => const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SkeletonBox.circle(size: 72),
+            SizedBox(height: 8),
+            SkeletonBox(width: 52, height: 10, borderRadius: 4),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Mirrors `_BrandsRail`: section header + a row of 124×72 logo-card blocks.
+class _BrandsRailSkeleton extends StatelessWidget {
+  const _BrandsRailSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _SectionHeader(title: l10n.homeExploreBrands),
+        SizedBox(
+          height: 72,
+          child: Shimmer(
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: 6,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (_, __) =>
+                  const SkeletonBox(width: 124, height: 72, borderRadius: 12),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Section header + a 2-col product grid (0.58) of card skeletons, for the
+/// New Arrivals / Bestsellers loading state.
+class _ProductSectionSkeleton extends StatelessWidget {
+  const _ProductSectionSkeleton({required this.title});
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _SectionHeader(title: title),
+        const ProductGridSkeleton(childAspectRatio: 0.58, count: 4),
+      ],
+    );
+  }
+}
+
+/// Mirrors `_SpecialOfferCard`: blush card with a circle avatar + two text
+/// lines. The blush surface is drawn outside the [Shimmer]; only the inner
+/// blocks shimmer.
+class _SpecialOfferSkeleton extends StatelessWidget {
+  const _SpecialOfferSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 20, 16, 4),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceTint,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: const Shimmer(
+        child: Row(
+          children: [
+            SkeletonBox.circle(size: 44),
+            SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SkeletonBox(width: 150, height: 14, borderRadius: 4),
+                  SizedBox(height: 8),
+                  SkeletonBox(height: 11, borderRadius: 4),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

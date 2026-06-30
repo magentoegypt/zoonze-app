@@ -6,6 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Background message handler — runs in its own isolate; keep it minimal.
 @pragma('vm:entry-point')
@@ -58,6 +59,19 @@ class NotificationService {
       return await FirebaseMessaging.instance.getAPNSToken();
     } catch (error) {
       return 'error: $error';
+    }
+  }
+
+  /// The native APNs registration outcome recorded by the AppDelegate
+  /// (`registered OK …` or `FAILED: <reason>`), or null if neither callback has
+  /// fired yet. Distinguishes a *registration failure* (entitlement/network)
+  /// from registration succeeding but the token not reaching Firebase.
+  Future<String?> apnsRegistrationStatus() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString('apnsRegStatus');
+    } catch (_) {
+      return null;
     }
   }
 

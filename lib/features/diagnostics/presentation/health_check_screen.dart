@@ -148,7 +148,10 @@ class _PushDiagnostics extends StatefulWidget {
 }
 
 class _PushDiagnosticsState extends State<_PushDiagnostics> {
-  late Future<({String permission, String? apns, String? fcm})> _diag;
+  late Future<
+    ({String permission, String? regStatus, String? apns, String? fcm})
+  >
+  _diag;
 
   @override
   void initState() {
@@ -156,10 +159,12 @@ class _PushDiagnosticsState extends State<_PushDiagnostics> {
     _diag = _gather();
   }
 
-  Future<({String permission, String? apns, String? fcm})> _gather() async {
+  Future<({String permission, String? regStatus, String? apns, String? fcm})>
+  _gather() async {
     final svc = NotificationService.instance;
     return (
       permission: await svc.permissionStatus(),
+      regStatus: await svc.apnsRegistrationStatus(),
       apns: await svc.apnsToken(),
       fcm: await svc.token(),
     );
@@ -211,7 +216,9 @@ class _PushDiagnosticsState extends State<_PushDiagnostics> {
             ),
             _line('FCM available', svc.fcmAvailable ? 'yes' : 'no'),
             if (svc.initError != null) _line('Init error', svc.initError!),
-            FutureBuilder<({String permission, String? apns, String? fcm})>(
+            FutureBuilder<
+              ({String permission, String? regStatus, String? apns, String? fcm})
+            >(
               future: _diag,
               builder: (context, snapshot) {
                 if (snapshot.connectionState != ConnectionState.done) {
@@ -230,6 +237,7 @@ class _PushDiagnosticsState extends State<_PushDiagnostics> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _line('Permission', data.permission),
+                    _line('APNs registration', data.regStatus ?? 'not reported'),
                     _line('APNs token', apnsText),
                     const SizedBox(height: 8),
                     if (fcm == null || fcm.isEmpty)

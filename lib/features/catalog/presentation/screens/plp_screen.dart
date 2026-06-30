@@ -16,6 +16,7 @@ import '../catalog_providers.dart';
 import '../plp_controller.dart';
 import '../widgets/filter_sheet.dart';
 import '../widgets/product_card.dart';
+import '../widgets/product_skeletons.dart';
 
 /// Product listing for a category: aggregation-driven filters, sort, and
 /// append-on-scroll pagination.
@@ -110,11 +111,21 @@ class _PlpScreenState extends ConsumerState<PlpScreen> {
 
   Widget _body(AppLocalizations l10n, PlpState state, List<Category> subcats) {
     if (state.isLoading && state.products.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(40),
-          child: CircularProgressIndicator(),
-        ),
+      // Keep the title stable and show shaped card placeholders.
+      return ListView(
+        children: [
+          Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 12),
+            child: Text(
+              widget.title ?? l10n.navCategories,
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+            ),
+          ),
+          const Divider(height: 1, thickness: 1, color: AppColors.borderDefault),
+          const ProductGridSkeleton(childAspectRatio: 0.66, count: 6),
+        ],
       );
     }
     if (state.error != null && state.products.isEmpty) {
@@ -183,10 +194,7 @@ class _PlpScreenState extends ConsumerState<PlpScreen> {
           ),
         if (state.isLoadingMore)
           const SliverToBoxAdapter(
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Center(child: CircularProgressIndicator()),
-            ),
+            child: ProductGridSkeleton(childAspectRatio: 0.66, count: 2),
           ),
         const SliverToBoxAdapter(child: MarketingFooter()),
       ],

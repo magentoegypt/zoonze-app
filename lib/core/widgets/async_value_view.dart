@@ -13,22 +13,28 @@ class AsyncValueView<T> extends StatelessWidget {
     required this.value,
     required this.data,
     this.onRetry,
+    this.loading,
   });
 
   final AsyncValue<T> value;
   final Widget Function(T data) data;
   final VoidCallback? onRetry;
 
+  /// Optional loading placeholder (e.g. a shimmer skeleton). Falls back to a
+  /// centered spinner when omitted.
+  final Widget Function()? loading;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return value.when(
-      loading: () => const Center(
-        child: Padding(
-          padding: EdgeInsets.all(40),
-          child: CircularProgressIndicator(),
-        ),
-      ),
+      loading: loading ??
+          () => const Center(
+            child: Padding(
+              padding: EdgeInsets.all(40),
+              child: CircularProgressIndicator(),
+            ),
+          ),
       error: (error, _) => Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
