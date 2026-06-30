@@ -9,16 +9,21 @@ import 'failure.dart';
 Failure mapOperationException(OperationException exception) {
   final linkException = exception.linkException;
   if (linkException != null) {
-    final text = linkException.toString().toLowerCase();
-    // A non-JSON / HTML body (WAF, CloudFront error page, maintenance) surfaces
-    // as a parse/format failure rather than a clean GraphQL error.
+    final raw = linkException.toString();
+    final detail = raw.length > 400 ? '${raw.substring(0, 400)}…' : raw;
+    final text = raw.toLowerCase();
+    // A non-JSON / HTML body (WAF, CloudFront error page, maintenance) — or a
+    // response the transport couldn't decode into JSON — surfaces as a
+    // parse/format failure rather than a clean GraphQL error. Keep the raw
+    // cause in `detail` so transport-specific issues (e.g. an undecoded
+    // compressed body on iOS) stay diagnosable on the connection-test screen.
     if (text.contains('format') ||
         text.contains('parse') ||
         text.contains('html') ||
         text.contains('<!doctype')) {
-      return const Failure(FailureKind.service);
+      return Failure(FailureKind.service, detail: detail);
     }
-    return const Failure(FailureKind.network);
+    return Failure(FailureKind.network, detail: detail);
   }
 
   final graphqlErrors = exception.graphqlErrors;

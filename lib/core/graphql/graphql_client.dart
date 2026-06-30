@@ -26,7 +26,17 @@ http.Client _platformHttpClient(String userAgent) {
       defaultTargetPlatform == TargetPlatform.macOS) {
     final configuration =
         URLSessionConfiguration.defaultSessionConfiguration()
-          ..httpAdditionalHeaders = {'User-Agent': userAgent};
+          ..httpAdditionalHeaders = {
+            'User-Agent': userAgent,
+            // Force uncompressed responses on iOS. Once the app sets
+            // Accept-Encoding, NSURLSession stops auto-decompressing — so we
+            // ask the edge for `identity` (CloudFront honours it) and get plain
+            // JSON. This sidesteps a compressed body that gql_http_link's
+            // utf8→json decoder can't parse (it surfaced as a `service`
+            // failure on the larger storeConfig response while a tiny probe
+            // response — uncompressed — succeeded).
+            'Accept-Encoding': 'identity',
+          };
     return CupertinoClient.fromSessionConfiguration(configuration);
   }
   return http.Client();
@@ -37,12 +47,25 @@ http.Client _platformHttpClient(String userAgent) {
 /// content-type and a body snippet. Bypasses graphql_flutter so we can see
 /// exactly what the edge returns on the actual iOS transport — JSON vs a
 /// WAF/CloudFront HTML page. Surfaced on the diagnostics screen.
-Future<({int status, String contentType, String body})> rawTransportProbe(
-  AppConfig config,
-  String storeCode,
-) async {
+Future<
+  ({
+    int status,
+    String contentType,
+    String contentEncoding,
+    int bytes,
+    String body,
+  })
+>
+rawTransportProbe(AppConfig config, String storeCode) async {
   final client = _platformHttpClient(config.userAgent);
   try {
+    // Use the *full* storeConfig query (all fields) so the probe exercises the
+    // same larger response that fails through the GraphQL link chain — not a
+    // tiny one-field response that always parses.
+    const query =
+        '{"query":"query{storeConfig{store_code store_name locale '
+        'base_currency_code default_display_currency_code base_url '
+        'secure_base_url base_media_url}}"}';
     final response = await client.post(
       Uri.parse(config.graphqlEndpoint),
       headers: {
@@ -51,13 +74,15 @@ Future<({int status, String contentType, String body})> rawTransportProbe(
         'User-Agent': config.userAgent,
         'Store': storeCode,
       },
-      body: '{"query":"{storeConfig{store_code}}"}',
+      body: query,
     );
     final body = response.body;
     return (
       status: response.statusCode,
       contentType: response.headers['content-type'] ?? '—',
-      body: body.length > 600 ? '${body.substring(0, 600)}…' : body,
+      contentEncoding: response.headers['content-encoding'] ?? 'identity',
+      bytes: response.bodyBytes.length,
+      body: body.length > 500 ? '${body.substring(0, 500)}…' : body,
     );
   } finally {
     client.close();
@@ -82,7 +107,13 @@ final graphqlClientProvider = Provider<GraphQLClient>((ref) {
   // likely to block (CLAUDE.md §7). The Store header stays dynamic in the link.
   final httpLink = HttpLink(
     config.graphqlEndpoint,
-    defaultHeaders: {'User-Agent': config.userAgent},
+    // Pin Accept to application/json (gql_http_link defaults to `*/*`, which
+    // lets the edge content-negotiate a different/compressed payload) — match
+    // the raw-probe request that succeeds on iOS.
+    defaultHeaders: {
+      'User-Agent': config.userAgent,
+      'Accept': 'application/json',
+    },
     httpClient: _platformHttpClient(config.userAgent),
   );
 

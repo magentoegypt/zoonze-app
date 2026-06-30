@@ -265,7 +265,16 @@ class _TransportProbe extends ConsumerStatefulWidget {
 }
 
 class _TransportProbeState extends ConsumerState<_TransportProbe> {
-  Future<({int status, String contentType, String body})>? _result;
+  Future<
+    ({
+      int status,
+      String contentType,
+      String contentEncoding,
+      int bytes,
+      String body,
+    })
+  >?
+  _result;
 
   void _run() {
     final config = ref.read(appConfigProvider);
@@ -307,7 +316,15 @@ class _TransportProbeState extends ConsumerState<_TransportProbe> {
             ),
             if (_result != null) ...[
               const SizedBox(height: 12),
-              FutureBuilder<({int status, String contentType, String body})>(
+              FutureBuilder<
+                ({
+                  int status,
+                  String contentType,
+                  String contentEncoding,
+                  int bytes,
+                  String body,
+                })
+              >(
                 future: _result,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState != ConnectionState.done) {
@@ -330,7 +347,9 @@ class _TransportProbeState extends ConsumerState<_TransportProbe> {
                   final data = snapshot.data!;
                   final text =
                       'HTTP ${data.status}\n'
-                      'content-type: ${data.contentType}\n\n'
+                      'content-type: ${data.contentType}\n'
+                      'content-encoding: ${data.contentEncoding}\n'
+                      'bytes: ${data.bytes}\n\n'
                       '${data.body}';
                   return InkWell(
                     onTap: () => _copy(text),
