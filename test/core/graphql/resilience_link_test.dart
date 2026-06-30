@@ -122,5 +122,38 @@ void main() {
       await link.request(_query(), forward).toList();
       expect(triggered, 0);
     });
+
+    test('invokes onAuthError when a thrown ServerException carries an auth '
+        'error (Magento 401), then rethrows', () async {
+      var triggered = 0;
+      final link = ResilienceLink(
+        onAuthError: () => triggered++,
+        maxAttempts: 2,
+        initialBackoff: Duration.zero,
+      );
+      var calls = 0;
+      Stream<Response> forward(Request r) async* {
+        calls++;
+        throw const ServerException(
+          statusCode: 401,
+          parsedResponse: Response(
+            response: {},
+            errors: [
+              GraphQLError(
+                message: 'Consumer key has expired',
+                extensions: {'category': 'graphql-authentication'},
+              ),
+            ],
+          ),
+        );
+      }
+
+      await expectLater(
+        link.request(_query(), forward).toList(),
+        throwsA(isA<ServerException>()),
+      );
+      expect(triggered, 1, reason: 'stale token must be dropped to guest');
+      expect(calls, 1, reason: 'an auth error is not transient — no retry');
+    });
   });
 }

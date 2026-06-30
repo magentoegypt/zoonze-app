@@ -59,6 +59,11 @@ class ResilienceLink extends Link {
         }
         return;
       } catch (error) {
+        // Magento returns auth failures as HTTP 401 + an errors payload, which
+        // graphql throws as a ServerException (it never reaches the yielded-
+        // response check above). Detect the auth error here too so the stale
+        // token is dropped to guest — otherwise every request keeps failing.
+        if (_thrownHasAuthError(error)) onAuthError();
         if (!retryable || attempt >= maxAttempts || !_isTransient(error)) {
           rethrow;
         }
@@ -80,6 +85,17 @@ class ResilienceLink extends Link {
     final errors = response.errors;
     if (errors == null || errors.isEmpty) return false;
     return errors.any(isAuthGraphqlError);
+  }
+
+  /// True when a *thrown* exception carries a parsed auth error — i.e. a
+  /// ServerException from a non-200 (Magento 401) whose payload reports the
+  /// token is invalid/expired (`graphql-authorization`/`graphql-authentication`).
+  static bool _thrownHasAuthError(Object error) {
+    if (error is ServerException) {
+      final errors = error.parsedResponse?.errors;
+      return errors != null && errors.any(isAuthGraphqlError);
+    }
+    return false;
   }
 
   /// String-based, version-robust transient detection (mirrors the failure

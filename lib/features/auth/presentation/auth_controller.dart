@@ -107,10 +107,16 @@ class AuthController extends Notifier<AuthState> {
   /// the session to guest locally — no revoke round-trip, since the token is
   /// already rejected — and resets the cache so customer data is cleared.
   Future<void> handleSessionExpired() async {
-    if (state.status != AuthStatus.authenticated) return;
+    // Clear the token unconditionally. A stale/expired token can linger in
+    // secure storage even while the state already reads guest — AuthLink sends
+    // whatever token is stored on every request, so Magento then rejects every
+    // call with "Consumer key has expired". Wiping it lets requests proceed as
+    // guest and recover, instead of failing forever.
     await _tokens.clear();
     ref.invalidate(graphqlClientProvider);
-    state = const AuthState(status: AuthStatus.guest);
+    if (state.status != AuthStatus.guest) {
+      state = const AuthState(status: AuthStatus.guest);
+    }
   }
 
   /// Re-fetches the customer profile (e.g. after an Edit Profile save).

@@ -9,16 +9,30 @@ import 'failure.dart';
 Failure mapOperationException(OperationException exception) {
   final linkException = exception.linkException;
   if (linkException != null) {
+    // A link exception can still carry a *parsed* GraphQL response: Magento
+    // returns auth failures (e.g. "Consumer key has expired",
+    // `graphql-authentication`) as HTTP 401 + an errors payload, which graphql
+    // wraps in a ServerException. Classify by those errors (auth/server) rather
+    // than mistaking it for a transport/service failure — otherwise the stale
+    // token is never cleared and every request keeps failing.
+    if (linkException is ServerException) {
+      final errors = linkException.parsedResponse?.errors;
+      if (errors != null && errors.isNotEmpty) {
+        if (errors.any(isAuthGraphqlError)) {
+          return const Failure(FailureKind.auth);
+        }
+        return Failure(FailureKind.server, detail: errors.first.message);
+      }
+    }
     final raw = linkException.toString();
     final detail = raw.length > 400 ? '${raw.substring(0, 400)}…' : raw;
     final text = raw.toLowerCase();
-    // A non-JSON / HTML body (WAF, CloudFront error page, maintenance) — or a
-    // response the transport couldn't decode into JSON — surfaces as a
-    // parse/format failure rather than a clean GraphQL error. Keep the raw
-    // cause in `detail` so transport-specific issues (e.g. an undecoded
-    // compressed body on iOS) stay diagnosable on the connection-test screen.
+    // Otherwise a non-JSON / HTML body (WAF, CloudFront error page, maintenance)
+    // — or a response the transport couldn't decode into JSON — surfaces as a
+    // parse/format failure. Keep the raw cause in `detail` so transport-specific
+    // issues (e.g. an undecoded compressed body on iOS) stay diagnosable on the
+    // connection-test screen.
     if (text.contains('format') ||
-        text.contains('parse') ||
         text.contains('html') ||
         text.contains('<!doctype')) {
       return Failure(FailureKind.service, detail: detail);

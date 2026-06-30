@@ -41,5 +41,40 @@ void main() {
         FailureKind.unknown,
       );
     });
+
+    test('maps a ServerException carrying an auth error (Magento 401) to auth', () {
+      // Magento returns "Consumer key has expired" as HTTP 401 + an errors
+      // payload — graphql wraps it in a ServerException, not a yielded response.
+      final exception = OperationException(
+        linkException: const ServerException(
+          statusCode: 401,
+          parsedResponse: Response(
+            response: {},
+            errors: [
+              GraphQLError(
+                message: 'Consumer key has expired',
+                extensions: {'category': 'graphql-authentication'},
+              ),
+            ],
+          ),
+        ),
+      );
+      expect(mapOperationException(exception).kind, FailureKind.auth);
+    });
+
+    test('maps a ServerException carrying a generic error to server', () {
+      final exception = OperationException(
+        linkException: const ServerException(
+          statusCode: 500,
+          parsedResponse: Response(
+            response: {},
+            errors: [GraphQLError(message: 'Internal error')],
+          ),
+        ),
+      );
+      final failure = mapOperationException(exception);
+      expect(failure.kind, FailureKind.server);
+      expect(failure.detail, 'Internal error');
+    });
   });
 }
