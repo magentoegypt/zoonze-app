@@ -1,5 +1,8 @@
+import 'package:cupertino_http/cupertino_http.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
+import 'package:http/http.dart' as http;
 
 import '../../features/auth/presentation/auth_controller.dart';
 import '../config/app_config.dart';
@@ -7,6 +10,21 @@ import '../storage/secure_token_store.dart';
 import '../store/store_controller.dart';
 import 'resilience_link.dart';
 import 'store_link.dart';
+
+/// On iOS/macOS, route HTTP through `NSURLSession` (the same stack Safari uses)
+/// instead of `dart:io`'s `HttpClient`. `dart:io` ignores the system proxy/VPN
+/// and can hit TLS/connection edge cases that NSURLSession handles — which
+/// presented as "all GraphQL failing on iOS while Safari + Android work".
+/// Android keeps `dart:io` (it works and avoids an unnecessary native client).
+http.Client _platformHttpClient() {
+  if (defaultTargetPlatform == TargetPlatform.iOS ||
+      defaultTargetPlatform == TargetPlatform.macOS) {
+    return CupertinoClient.fromSessionConfiguration(
+      URLSessionConfiguration.defaultSessionConfiguration(),
+    );
+  }
+  return http.Client();
+}
 
 /// Builds the GraphQL client with the link chain:
 ///   AuthLink (bearer when present) → StoreHeaderLink (dynamic `Store` header)
@@ -27,6 +45,7 @@ final graphqlClientProvider = Provider<GraphQLClient>((ref) {
   final httpLink = HttpLink(
     config.graphqlEndpoint,
     defaultHeaders: {'User-Agent': config.userAgent},
+    httpClient: _platformHttpClient(),
   );
 
   final authLink = AuthLink(
