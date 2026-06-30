@@ -106,11 +106,11 @@ class MenuDrawer extends ConsumerWidget {
                   const Divider(height: 1),
                   _SectionHeader(label: l10n.menuAccountSection),
                   _DrawerTile(
-                    icon: Icons.location_on_outlined,
-                    label: l10n.accountAddresses,
+                    icon: Icons.settings_outlined,
+                    label: l10n.settingsTitle,
                     onTap: () {
                       _close(context);
-                      context.push(AppRoutes.addresses);
+                      context.push(AppRoutes.settings);
                     },
                   ),
                   _DrawerTile(
