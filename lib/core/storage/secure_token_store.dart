@@ -26,7 +26,18 @@ class SecureTokenStore {
     await _storage.write(key: _tokenKey, value: token);
   }
 
-  Future<void> clear() => _storage.delete(key: _tokenKey);
+  /// Removes the token. Belt-and-suspenders for iOS: a legacy item written by
+  /// an earlier build under a different Keychain accessibility can survive a
+  /// plain `delete(key:)`, so if one lingers we `deleteAll()` (this store only
+  /// ever holds the customer token, so that's equivalent and safe). Without
+  /// this, a stuck stale token keeps being sent → "Consumer key has expired".
+  Future<void> clear() async {
+    await _storage.delete(key: _tokenKey);
+    final remaining = await _storage.read(key: _tokenKey);
+    if (remaining != null) {
+      await _storage.deleteAll();
+    }
+  }
 }
 
 final secureTokenStoreProvider = Provider<SecureTokenStore>(

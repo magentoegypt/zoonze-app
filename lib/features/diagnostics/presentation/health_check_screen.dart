@@ -6,6 +6,7 @@ import '../../../core/config/app_config.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/graphql/graphql_client.dart';
 import '../../../core/notifications/notification_service.dart';
+import '../../../core/storage/secure_token_store.dart';
 import '../../../core/store/store_controller.dart';
 import '../../../core/widgets/failure_message.dart';
 import '../../../l10n/l10n.dart';
@@ -71,6 +72,8 @@ class HealthCheckScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
             const _PushDiagnostics(),
+            const SizedBox(height: 24),
+            const _TokenDiagnostics(),
             const SizedBox(height: 24),
             const _TransportProbe(),
             const SizedBox(height: 24),
@@ -244,6 +247,103 @@ class _PushDiagnosticsState extends State<_PushDiagnostics> {
                   ],
                 );
               },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Customer-token diagnostics. The app attaches any stored token as
+/// `Authorization: Bearer` on every request; a stale/expired one makes Magento
+/// reject everything ("Consumer key has expired") even though guest GraphQL
+/// (the raw transport test, no token) returns 200. This card shows whether a
+/// token is stored, wipes it, **re-reads to confirm the iOS Keychain delete
+/// took**, and re-runs the store-view test as guest.
+class _TokenDiagnostics extends ConsumerStatefulWidget {
+  const _TokenDiagnostics();
+
+  @override
+  ConsumerState<_TokenDiagnostics> createState() => _TokenDiagnosticsState();
+}
+
+class _TokenDiagnosticsState extends ConsumerState<_TokenDiagnostics> {
+  String _status = '…';
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _refresh();
+  }
+
+  Future<void> _refresh() async {
+    final token = await ref.read(secureTokenStoreProvider).read();
+    if (!mounted) return;
+    setState(() {
+      _status = (token == null || token.isEmpty)
+          ? 'none — requests go out as guest'
+          : 'PRESENT (${token.length} chars, '
+                '${token.substring(0, token.length < 6 ? token.length : 6)}…) '
+                '— sent on every request';
+    });
+  }
+
+  Future<void> _clear() async {
+    setState(() => _busy = true);
+    final store = ref.read(secureTokenStoreProvider);
+    await store.clear();
+    // Re-read to confirm the iOS Keychain delete actually removed the item.
+    final after = await store.read();
+    ref.invalidate(graphqlClientProvider);
+    ref.invalidate(storeConfigProvider);
+    await _refresh();
+    if (!mounted) return;
+    setState(() => _busy = false);
+    final wiped = after == null || after.isEmpty;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          wiped
+              ? 'Token cleared — re-running the store view test as guest.'
+              : 'WARNING: token still present after delete (iOS Keychain).',
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsetsDirectional.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Customer token',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Browsing needs NO token (guest GraphQL returns 200). A stale '
+              'token makes every request fail. Clear it to recover.',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const SizedBox(height: 10),
+            SelectableText(
+              'Stored token: $_status',
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+            ),
+            const SizedBox(height: 12),
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: FilledButton.icon(
+                onPressed: _busy ? null : _clear,
+                icon: const Icon(Icons.logout, size: 18),
+                label: const Text('Clear token & retry as guest'),
+              ),
             ),
           ],
         ),
