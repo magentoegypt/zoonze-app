@@ -5,6 +5,7 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import '../../../core/app_info.dart';
 import '../../../core/graphql/graphql_client.dart';
 import '../../../core/notifications/notification_service.dart';
+import '../../../core/storage/local_cache.dart';
 
 /// Registers/removes this device's FCM token with Magento (the
 /// `MagentoEgypt_NotificationGraphQl` module — see
@@ -81,8 +82,22 @@ class DeviceTokenSync {
   String get _platform =>
       defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android';
 
-  /// Register the current FCM token (no-op when FCM is off / token is null).
+  /// Register the current FCM token (no-op when FCM is off / token is null, or
+  /// when the user has turned push OFF). The opt-out check makes the launch /
+  /// login / token-refresh heartbeat respect the Edit Profile / Settings toggle
+  /// — otherwise it would silently re-add a token the user removed.
   Future<void> register() async {
+    // Persisted by NotificationSettings under 'notif_promotions' (the push
+    // opt-in). Absent/anything-but-'false' means enabled (default on). Read
+    // defensively — if the cache isn't wired (e.g. in tests) treat as enabled.
+    try {
+      if (_ref.read(localCacheProvider).readString('notif_promotions') ==
+          'false') {
+        return;
+      }
+    } catch (_) {
+      // Cache unavailable — fall through and register (default-on behaviour).
+    }
     final token = await NotificationService.instance.token();
     if (token == null || token.isEmpty) return;
     final version = _ref
