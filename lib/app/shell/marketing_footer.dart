@@ -179,11 +179,6 @@ class _MarketingFooterState extends ConsumerState<MarketingFooter> {
             l10n.footerRights,
             style: const TextStyle(color: Colors.white70, fontSize: 12),
           ),
-          const SizedBox(height: 4),
-          Text(
-            l10n.developedBy,
-            style: const TextStyle(color: Colors.white54, fontSize: 12),
-          ),
         ],
       ),
     );

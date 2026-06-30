@@ -1250,9 +1250,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get footerRights => '© 2026 Zoonze Beauty · All rights reserved.';
 
   @override
-  String get developedBy => 'Developed by Magento Egypt';
-
-  @override
   String get footerTagline =>
       'Your destination for authentic beauty & fragrance in the UAE.';
 
