@@ -841,6 +841,15 @@ class _ExploreBrands extends ConsumerWidget {
             itemBuilder: (context, index) => _BrandCard(brand: shown[index]),
           ),
         ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Center(
+            child: OutlinedButton(
+              onPressed: () => context.push(AppRoutes.brands),
+              child: Text(l10n.homeSeeMore),
+            ),
+          ),
+        ),
       ],
     );
   }

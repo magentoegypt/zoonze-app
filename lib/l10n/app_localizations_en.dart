@@ -157,6 +157,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeSeeMore => 'See More';
 
   @override
+  String get brandsTitle => 'Our Brands';
+
+  @override
+  String get brandsSubtitle => 'Discover authentic beauty & fragrance houses';
+
+  @override
+  String get brandsSearchHint => 'Search a brand';
+
+  @override
+  String get brandsFilterAll => 'All';
+
+  @override
+  String get brandsEmpty => 'No brands found';
+
+  @override
   String get homeAnnouncement =>
       'Free shipping on orders over AED 150 · delivery within 3 hours';
 

@@ -155,6 +155,21 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeSeeMore => 'عرض المزيد';
 
   @override
+  String get brandsTitle => 'علامتنا التجارية';
+
+  @override
+  String get brandsSubtitle => 'اكتشف دور الجمال والعطور الأصلية';
+
+  @override
+  String get brandsSearchHint => 'ابحث عن علامة تجارية';
+
+  @override
+  String get brandsFilterAll => 'الكل';
+
+  @override
+  String get brandsEmpty => 'لا توجد علامات تجارية';
+
+  @override
   String get homeAnnouncement =>
       'شحن مجاني للطلبات فوق 150 درهمًا · التوصيل خلال 3 ساعات';
 

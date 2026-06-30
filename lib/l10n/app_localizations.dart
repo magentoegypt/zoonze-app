@@ -386,6 +386,36 @@ abstract class AppLocalizations {
   /// **'See More'**
   String get homeSeeMore;
 
+  /// No description provided for @brandsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Our Brands'**
+  String get brandsTitle;
+
+  /// No description provided for @brandsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discover authentic beauty & fragrance houses'**
+  String get brandsSubtitle;
+
+  /// No description provided for @brandsSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search a brand'**
+  String get brandsSearchHint;
+
+  /// No description provided for @brandsFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get brandsFilterAll;
+
+  /// No description provided for @brandsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No brands found'**
+  String get brandsEmpty;
+
   /// No description provided for @homeAnnouncement.
   ///
   /// In en, this message translates to:
