@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../app/routes.dart';
 import '../../../../core/validation/validators.dart';
 import '../../../../core/widgets/brand_logo.dart';
 import '../../../../l10n/l10n.dart';
@@ -30,15 +29,6 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     super.dispose();
   }
 
-  void _goReset() {
-    final email = _email.text.trim();
-    context.push(
-      email.isEmpty
-          ? AppRoutes.resetPassword
-          : '${AppRoutes.resetPassword}?email=${Uri.encodeQueryComponent(email)}',
-    );
-  }
-
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _busy = true);
@@ -62,11 +52,18 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(centerTitle: true, title: const BrandLogo(height: 40)),
+      appBar: AppBar(
+        centerTitle: true,
+        toolbarHeight: 80,
+        title: const BrandLogo(height: 52),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: _sent
+              // The reset email carries a link (not a code), so the old
+              // "I have a reset code" path was a dead end — removed. The
+              // confirmation just points the customer back to Sign In.
               ? Column(
                   children: [
                     const SizedBox(height: 24),
@@ -75,12 +72,8 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     Text(l10n.authForgotSent, textAlign: TextAlign.center),
                     const SizedBox(height: 24),
                     FilledButton(
-                      onPressed: () => _goReset(),
-                      child: Text(l10n.authHaveResetCode),
-                    ),
-                    TextButton(
                       onPressed: () => context.pop(),
-                      child: Text(l10n.authSignInTitle),
+                      child: Text(l10n.authBackToSignIn),
                     ),
                   ],
                 )

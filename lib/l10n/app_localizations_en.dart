@@ -182,16 +182,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeTrustOriginalBody => 'Guaranteed authentic';
 
   @override
-  String get homeTrustDeliveryTitle => 'Free Delivery';
+  String get homeTrustDeliveryTitle => 'Free Shipping';
 
   @override
-  String get homeTrustDeliveryBody => 'On orders over AED 150';
+  String get homeTrustDeliveryBody => 'On orders over AED 200';
 
   @override
   String get homeTrustFastTitle => 'Delivery in 3 Hours';
 
   @override
-  String get homeTrustFastBody => 'Dubai, Sharjah & Ajman · rest of UAE in 24h';
+  String get homeTrustFastBody => 'In Dubai · rest of UAE in 48h';
 
   @override
   String get homeTrustServiceTitle => 'Customer Service';
@@ -298,6 +298,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String resultsCount(int count) {
     return '$count results';
+  }
+
+  @override
+  String searchResultsFor(String query) {
+    return 'Search results for “$query”';
   }
 
   @override
@@ -1243,7 +1248,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get footerShop => 'Shop';
 
   @override
-  String get footerSupport => 'Support';
+  String get footerSupport => 'Customer Service';
 
   @override
   String get footerNewsletterTitle => 'Newsletter';
@@ -1275,7 +1280,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get footerAbout => 'About Us';
 
   @override
-  String get footerContact => 'Contact';
+  String get footerContact => 'Contact Us';
 
   @override
   String get footerStoreLocator => 'Store Locator';
@@ -1293,11 +1298,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get footerPrivacy => 'Privacy Policy';
 
   @override
-  String get footerTerms => 'Terms of Service';
+  String get footerTerms => 'Terms & Conditions';
 
   @override
-  String get footerShipping => 'Shipping';
+  String get footerShipping => 'Shipping & Delivery';
 
   @override
-  String get footerReturns => 'Returns';
+  String get footerReturns => 'Returns & Exchanges';
 }

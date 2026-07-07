@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/config/store_contact.dart';
+import '../../core/store/store_controller.dart';
 import '../../core/util/launch.dart';
 import '../../core/validation/validators.dart';
 import '../../core/widgets/brand_logo.dart';
@@ -43,8 +44,35 @@ class _MarketingFooterState extends ConsumerState<MarketingFooter> {
     messenger.showSnackBar(SnackBar(content: Text(l10n.footerSubscribed)));
   }
 
-  Future<void> _openWebsite() =>
-      _openUrl(ref.read(storeContactProvider).website);
+  /// Slug for a store CMS page, relative to the active store's base URL. "About
+  /// Us" has an AR-specific slug; the rest are shared. Verified against the live
+  /// zoonze.com footer (uae-en / uae-ar).
+  String _cmsSlug(String page, bool isAr) => switch (page) {
+    'about' => isAr ? 'about-us-ar' : 'about-us',
+    'faqs' => 'faqs',
+    'shipping' => 'shipping-delivery',
+    'returns' => 'returns-exchanges',
+    'privacy' => 'privacy-policy-cookie-restriction-mode',
+    'terms' => 'terms-conditions',
+    _ => '',
+  };
+
+  /// Opens a store CMS page on the active store's website (correct per-locale
+  /// URL), instead of dumping the user on the homepage.
+  Future<void> _openCms(String page) async {
+    final store = ref.read(storeControllerProvider);
+    var base = ref.read(storeContactProvider).website;
+    for (final s in store.stores) {
+      if (s.storeCode == store.activeStoreCode) {
+        final b = s.secureBaseUrl.isNotEmpty ? s.secureBaseUrl : s.baseUrl;
+        if (b.isNotEmpty) base = b;
+        break;
+      }
+    }
+    final slug = _cmsSlug(page, store.activeLocale == 'ar');
+    final sep = base.endsWith('/') ? '' : '/';
+    await _openUrl('$base$sep$slug/');
+  }
 
   Future<void> _openUrl(String url) async {
     final messenger = ScaffoldMessenger.of(context);
@@ -88,16 +116,17 @@ class _MarketingFooterState extends ConsumerState<MarketingFooter> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // "About Us" column — matches the website footer grouping.
               Expanded(
                 child: _LinkColumn(
                   heading: l10n.footerAboutHeading,
                   links: [
-                    (label: l10n.footerAbout, onTap: _openWebsite),
+                    (label: l10n.footerAbout, onTap: () => _openCms('about')),
+                    (label: l10n.footerFaqs, onTap: () => _openCms('faqs')),
                     (
                       label: l10n.footerContact,
                       onTap: () => context.push(AppRoutes.help),
                     ),
-                    (label: l10n.footerStoreLocator, onTap: _openWebsite),
                     (
                       label: l10n.footerTrackOrder,
                       onTap: () => context.push(AppRoutes.orders),
@@ -105,20 +134,21 @@ class _MarketingFooterState extends ConsumerState<MarketingFooter> {
                   ],
                 ),
               ),
+              // "Customer Service" column — matches the website footer grouping.
               Expanded(
                 child: _LinkColumn(
                   heading: l10n.footerSupport,
                   links: [
                     (
-                      label: l10n.footerShippingReturns,
-                      onTap: () => context.push(AppRoutes.help),
+                      label: l10n.footerShipping,
+                      onTap: () => _openCms('shipping'),
                     ),
                     (
-                      label: l10n.footerFaqs,
-                      onTap: () => context.push(AppRoutes.help),
+                      label: l10n.footerReturns,
+                      onTap: () => _openCms('returns'),
                     ),
-                    (label: l10n.footerPrivacy, onTap: _openWebsite),
-                    (label: l10n.footerTerms, onTap: _openWebsite),
+                    (label: l10n.footerPrivacy, onTap: () => _openCms('privacy')),
+                    (label: l10n.footerTerms, onTap: () => _openCms('terms')),
                   ],
                 ),
               ),
@@ -175,14 +205,114 @@ class _MarketingFooterState extends ConsumerState<MarketingFooter> {
           const SizedBox(height: 24),
           const Divider(color: Colors.white24, height: 1),
           const SizedBox(height: 16),
-          Text(
-            l10n.footerRights,
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
+          // Accepted payment methods — matches the website footer.
+          const Center(child: _PaymentBadges()),
+          const SizedBox(height: 14),
+          // Copyright — centered like the website (was start-aligned).
+          Center(
+            child: Text(
+              l10n.footerRights,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white70, fontSize: 12),
+            ),
           ),
         ],
       ),
     );
   }
+}
+
+/// Accepted-payment badges row shown above the footer copyright (card · tabby ·
+/// Mastercard · Visa), mirroring the website footer. Rendered as lightweight
+/// brand chips; swap in official brand assets if/when they're provided.
+class _PaymentBadges extends StatelessWidget {
+  const _PaymentBadges();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _PayChip(child: Icon(Icons.credit_card, size: 18, color: Color(0xFF1F2937))),
+        SizedBox(width: 8),
+        _PayChip(
+          child: Text(
+            'tabby',
+            style: TextStyle(
+              color: Color(0xFF3EB34F),
+              fontWeight: FontWeight.w800,
+              fontSize: 12,
+            ),
+          ),
+        ),
+        SizedBox(width: 8),
+        _PayChip(child: _MastercardMark()),
+        SizedBox(width: 8),
+        _PayChip(
+          child: Text(
+            'VISA',
+            style: TextStyle(
+              color: Color(0xFF1A1F71),
+              fontStyle: FontStyle.italic,
+              fontWeight: FontWeight.w900,
+              fontSize: 12,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// White rounded chip that hosts one payment mark.
+class _PayChip extends StatelessWidget {
+  const _PayChip({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: 42,
+    height: 27,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(5),
+    ),
+    child: child,
+  );
+}
+
+/// Mastercard's two overlapping circles.
+class _MastercardMark extends StatelessWidget {
+  const _MastercardMark();
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: 26,
+    height: 16,
+    child: Stack(
+      children: [
+        Positioned(
+          left: 0,
+          child: _dot(const Color(0xFFEB001B)),
+        ),
+        Positioned(
+          right: 0,
+          child: _dot(const Color(0xFFF79E1B)),
+        ),
+      ],
+    ),
+  );
+
+  Widget _dot(Color color) => Container(
+    width: 16,
+    height: 16,
+    decoration: BoxDecoration(
+      color: color,
+      shape: BoxShape.circle,
+    ),
+  );
 }
 
 /// Circular bordered social button (icon or short label) for the footer.

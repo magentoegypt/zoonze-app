@@ -5,7 +5,6 @@ import '../data/catalog_repository.dart';
 import '../domain/category.dart';
 import '../domain/product.dart';
 import '../domain/product_detail.dart';
-import '../domain/product_page.dart';
 
 /// Top-level category tree. Refetches when the active store view changes.
 final categoryTreeProvider = FutureProvider.autoDispose<List<Category>>((ref) {
@@ -99,15 +98,4 @@ final reviewRatingsMetadataProvider =
     FutureProvider.autoDispose<List<ReviewRatingMetadata>>((ref) {
       ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
       return ref.watch(catalogRepositoryProvider).fetchReviewRatingsMetadata();
-    });
-
-/// Search results for a query string (native `products(search:)`).
-final searchResultsProvider = FutureProvider.autoDispose
-    .family<ProductPage, String>((ref, query) {
-      ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
-      final trimmed = query.trim();
-      if (trimmed.isEmpty) return Future.value(ProductPage.empty);
-      return ref
-          .watch(catalogRepositoryProvider)
-          .fetchProducts(search: trimmed, pageSize: 20);
     });

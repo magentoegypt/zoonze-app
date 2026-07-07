@@ -61,10 +61,10 @@
   "homeAnnouncement": "شحن مجاني للطلبات فوق 150 درهمًا · التوصيل خلال 3 ساعات",
   "homeTrustOriginalTitle": "أصلي 100%",
   "homeTrustOriginalBody": "منتجات أصلية مضمونة",
-  "homeTrustDeliveryTitle": "توصيل مجاني",
-  "homeTrustDeliveryBody": "للطلبات فوق 150 درهمًا",
+  "homeTrustDeliveryTitle": "شحن مجاني",
+  "homeTrustDeliveryBody": "للطلبات فوق 200 درهم",
   "homeTrustFastTitle": "التوصيل خلال 3 ساعات",
-  "homeTrustFastBody": "دبي والشارقة وعجمان · وبقية الإمارات خلال 24 ساعة",
+  "homeTrustFastBody": "داخل دبي · وبقية الإمارات خلال 48 ساعة",
   "homeTrustServiceTitle": "خدمة العملاء",
   "homeTrustServiceBody": "من 10 صباحًا حتى 10 مساءً",
   "homeSpecialOfferTitle": "عرض خاص!",
@@ -109,6 +109,8 @@
   "applyLabel": "تطبيق",
   "clearLabel": "مسح",
   "resultsCount": "{count} نتيجة",
+
+  "searchResultsFor": "نتائج البحث عن: ”{query}“",
 
   "searchHint": "ابحث عن المنتجات",
   "comingSoon": "قريبًا",
@@ -406,7 +408,7 @@
   "drawerVouchers": "القسائم",
 
   "footerShop": "تسوّق",
-  "footerSupport": "الدعم",
+  "footerSupport": "خدمة العملاء",
   "footerNewsletterTitle": "النشرة البريدية",
   "footerNewsletterSubtitle": "اشترك لتصلك العروض الخاصة وآخر المستجدات.",
   "footerNewsletterHint": "بريدك الإلكتروني",
@@ -422,7 +424,7 @@
   "footerShippingReturns": "الشحن والإرجاع",
   "footerFaqs": "الأسئلة الشائعة",
   "footerPrivacy": "سياسة الخصوصية",
-  "footerTerms": "شروط الخدمة",
-  "footerShipping": "الشحن",
-  "footerReturns": "الإرجاع"
+  "footerTerms": "الشروط والأحكام",
+  "footerShipping": "الشحن والتوصيل",
+  "footerReturns": "الإرجاع والاستبدال"
 }

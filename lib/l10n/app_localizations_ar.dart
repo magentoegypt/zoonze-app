@@ -180,17 +180,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeTrustOriginalBody => 'منتجات أصلية مضمونة';
 
   @override
-  String get homeTrustDeliveryTitle => 'توصيل مجاني';
+  String get homeTrustDeliveryTitle => 'شحن مجاني';
 
   @override
-  String get homeTrustDeliveryBody => 'للطلبات فوق 150 درهمًا';
+  String get homeTrustDeliveryBody => 'للطلبات فوق 200 درهم';
 
   @override
   String get homeTrustFastTitle => 'التوصيل خلال 3 ساعات';
 
   @override
-  String get homeTrustFastBody =>
-      'دبي والشارقة وعجمان · وبقية الإمارات خلال 24 ساعة';
+  String get homeTrustFastBody => 'داخل دبي · وبقية الإمارات خلال 48 ساعة';
 
   @override
   String get homeTrustServiceTitle => 'خدمة العملاء';
@@ -297,6 +296,11 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String resultsCount(int count) {
     return '$count نتيجة';
+  }
+
+  @override
+  String searchResultsFor(String query) {
+    return 'نتائج البحث عن: ”$query“';
   }
 
   @override
@@ -1209,7 +1213,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get footerShop => 'تسوّق';
 
   @override
-  String get footerSupport => 'الدعم';
+  String get footerSupport => 'خدمة العملاء';
 
   @override
   String get footerNewsletterTitle => 'النشرة البريدية';
@@ -1258,11 +1262,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get footerPrivacy => 'سياسة الخصوصية';
 
   @override
-  String get footerTerms => 'شروط الخدمة';
+  String get footerTerms => 'الشروط والأحكام';
 
   @override
-  String get footerShipping => 'الشحن';
+  String get footerShipping => 'الشحن والتوصيل';
 
   @override
-  String get footerReturns => 'الإرجاع';
+  String get footerReturns => 'الإرجاع والاستبدال';
 }

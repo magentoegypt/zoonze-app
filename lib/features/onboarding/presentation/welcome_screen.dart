@@ -47,12 +47,13 @@ class WelcomeScreen extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     // Brand logo (burgundy on transparent → reads on the light
-                    // background); falls back to the wordmark if absent.
+                    // background); falls back to the wordmark if absent. Sized
+                    // up to match Figma — the 48px version read as too small.
                     Image.asset(
                       AppImages.logo,
-                      height: 48,
+                      height: 72,
                       errorBuilder: (_, __, ___) =>
-                          const BrandLockup(fontSize: 28),
+                          const BrandLockup(fontSize: 40),
                     ),
                     const SizedBox(height: 32),
                     // Circular flatlay visual (Figma uses a contained circle,
@@ -102,12 +103,11 @@ class WelcomeScreen extends ConsumerWidget {
                   children: [
                     Text(l10n.welcomeGetStarted),
                     const SizedBox(width: 8),
-                    Icon(
-                      Directionality.of(context) == TextDirection.rtl
-                          ? Icons.arrow_back
-                          : Icons.arrow_forward,
-                      size: 18,
-                    ),
+                    // arrow_forward auto-mirrors under RTL (matchTextDirection:
+                    // true), so it points "forward" in both LTR and AR. The old
+                    // manual rtl→arrow_back flip double-mirrored and pointed the
+                    // wrong way in Arabic.
+                    const Icon(Icons.arrow_forward, size: 18),
                   ],
                 ),
               ),

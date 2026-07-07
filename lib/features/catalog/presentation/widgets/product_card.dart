@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/store/store_controller.dart';
 import '../../../../l10n/l10n.dart';
+import '../../../cart/presentation/cart_controller.dart';
 import '../../../wishlist/presentation/widgets/wishlist_heart.dart';
 import '../../domain/product.dart';
 import 'price_view.dart';
@@ -15,14 +16,23 @@ import 'price_view.dart';
 /// share actions (top-end), then a name + stacked-price panel. Image degrades
 /// to a neutral placeholder and the merchandising badge only shows when the
 /// catalogue actually flags it (no fabricated imagery or badges).
-class ProductCard extends ConsumerWidget {
+class ProductCard extends ConsumerStatefulWidget {
   const ProductCard({super.key, required this.product, this.onTap});
 
   final Product product;
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProductCard> createState() => _ProductCardState();
+}
+
+class _ProductCardState extends ConsumerState<ProductCard> {
+  bool _adding = false;
+
+  Product get product => widget.product;
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final discount = product.discountPercent;
     final badgeLabel = _badgeLabel(l10n);
@@ -35,7 +45,7 @@ class ProductCard extends ConsumerWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: InkWell(
-        onTap: onTap,
+        onTap: widget.onTap,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -91,7 +101,7 @@ class ProductCard extends ConsumerWidget {
                           Icons.ios_share,
                           color: AppColors.inkHeading,
                         ),
-                        onPressed: () => _share(ref, l10n),
+                        onPressed: () => _share(l10n),
                       ),
                     ),
                   ),
@@ -125,7 +135,14 @@ class ProductCard extends ConsumerWidget {
                       ),
                     )
                   else
-                    PriceView(product: product),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Expanded(child: PriceView(product: product)),
+                        const SizedBox(width: 6),
+                        _AddToCartButton(busy: _adding, onTap: _add),
+                      ],
+                    ),
                 ],
               ),
             ),
@@ -141,9 +158,36 @@ class ProductCard extends ConsumerWidget {
     ProductBadge.none => null,
   };
 
+  /// Adds the product to the cart (simple products add directly; the cart
+  /// controller self-heals a stale/consumed cart). Configurable products that
+  /// need option selection surface a generic error — the card's tap still opens
+  /// the PDP where options can be chosen.
+  Future<void> _add() async {
+    final l10n = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    setState(() => _adding = true);
+    try {
+      await ref
+          .read(cartControllerProvider.notifier)
+          .addToCart(sku: product.sku);
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(l10n.cartAdded),
+          duration: const Duration(milliseconds: 1200),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      messenger.showSnackBar(SnackBar(content: Text(l10n.errorGeneric)));
+    } finally {
+      if (mounted) setState(() => _adding = false);
+    }
+  }
+
   /// Shares the product via the OS share sheet, using the active store's
   /// canonical web URL when available (falls back to a name-only message).
-  Future<void> _share(WidgetRef ref, AppLocalizations l10n) async {
+  Future<void> _share(AppLocalizations l10n) async {
     final store = ref.read(storeControllerProvider);
     var base = '';
     for (final s in store.stores) {
@@ -158,6 +202,48 @@ class ProductCard extends ConsumerWidget {
         : null;
     await SharePlus.instance.share(
       ShareParams(text: url == null ? message : '$message\n$url'),
+    );
+  }
+}
+
+/// Compact burgundy add-to-cart button in the card footer (Figma / site grid
+/// card). Shows a spinner while the add is in flight.
+class _AddToCartButton extends StatelessWidget {
+  const _AddToCartButton({required this.busy, required this.onTap});
+
+  final bool busy;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Material(
+      color: AppColors.brandPrimary,
+      shape: const CircleBorder(),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: busy ? null : onTap,
+        child: SizedBox(
+          width: 34,
+          height: 34,
+          child: busy
+              ? const Padding(
+                  padding: EdgeInsets.all(9),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : Tooltip(
+                  message: l10n.productAddToCart,
+                  child: const Icon(
+                    Icons.add_shopping_cart,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                ),
+        ),
+      ),
     );
   }
 }

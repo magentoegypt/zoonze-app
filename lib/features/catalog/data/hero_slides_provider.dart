@@ -67,3 +67,19 @@ String? categoryUidFromUrl(String url) {
   if (match == null) return null;
   return base64.encode(utf8.encode(match.group(1)!));
 }
+
+/// Extracts a product `url_key` from a storefront product URL — the last
+/// non-empty path segment with a trailing `.html` stripped — so a hero CTA that
+/// points at a product page can open the in-app PDP instead of the browser.
+/// Returns null when there's nothing usable.
+String? productUrlKeyFromStoreUrl(String url) {
+  final uri = Uri.tryParse(url);
+  if (uri == null) return null;
+  final segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
+  if (segments.isEmpty) return null;
+  var last = segments.last;
+  if (last.toLowerCase().endsWith('.html')) {
+    last = last.substring(0, last.length - 5);
+  }
+  return last.isEmpty ? null : last;
+}

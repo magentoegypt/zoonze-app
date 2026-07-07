@@ -437,13 +437,13 @@ abstract class AppLocalizations {
   /// No description provided for @homeTrustDeliveryTitle.
   ///
   /// In en, this message translates to:
-  /// **'Free Delivery'**
+  /// **'Free Shipping'**
   String get homeTrustDeliveryTitle;
 
   /// No description provided for @homeTrustDeliveryBody.
   ///
   /// In en, this message translates to:
-  /// **'On orders over AED 150'**
+  /// **'On orders over AED 200'**
   String get homeTrustDeliveryBody;
 
   /// No description provided for @homeTrustFastTitle.
@@ -455,7 +455,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeTrustFastBody.
   ///
   /// In en, this message translates to:
-  /// **'Dubai, Sharjah & Ajman · rest of UAE in 24h'**
+  /// **'In Dubai · rest of UAE in 48h'**
   String get homeTrustFastBody;
 
   /// No description provided for @homeTrustServiceTitle.
@@ -655,6 +655,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} results'**
   String resultsCount(int count);
+
+  /// No description provided for @searchResultsFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Search results for “{query}”'**
+  String searchResultsFor(String query);
 
   /// No description provided for @searchHint.
   ///
@@ -2285,7 +2291,7 @@ abstract class AppLocalizations {
   /// No description provided for @footerSupport.
   ///
   /// In en, this message translates to:
-  /// **'Support'**
+  /// **'Customer Service'**
   String get footerSupport;
 
   /// No description provided for @footerNewsletterTitle.
@@ -2345,7 +2351,7 @@ abstract class AppLocalizations {
   /// No description provided for @footerContact.
   ///
   /// In en, this message translates to:
-  /// **'Contact'**
+  /// **'Contact Us'**
   String get footerContact;
 
   /// No description provided for @footerStoreLocator.
@@ -2381,19 +2387,19 @@ abstract class AppLocalizations {
   /// No description provided for @footerTerms.
   ///
   /// In en, this message translates to:
-  /// **'Terms of Service'**
+  /// **'Terms & Conditions'**
   String get footerTerms;
 
   /// No description provided for @footerShipping.
   ///
   /// In en, this message translates to:
-  /// **'Shipping'**
+  /// **'Shipping & Delivery'**
   String get footerShipping;
 
   /// No description provided for @footerReturns.
   ///
   /// In en, this message translates to:
-  /// **'Returns'**
+  /// **'Returns & Exchanges'**
   String get footerReturns;
 }
 

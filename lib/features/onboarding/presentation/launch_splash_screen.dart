@@ -27,10 +27,11 @@ class _LaunchSplashScreenState extends ConsumerState<LaunchSplashScreen> {
   }
 
   Future<void> _routeOnboarding() async {
-    // Hold the splash briefly for branding while reading the persisted token.
+    // Hold the splash long enough for the branding to register (QA: it flashed
+    // by in under a second) while reading the persisted token.
     final results = await Future.wait<Object?>([
       ref.read(secureTokenStoreProvider).read(),
-      Future<void>.delayed(const Duration(milliseconds: 1500)),
+      Future<void>.delayed(const Duration(milliseconds: 2600)),
     ]);
     if (!mounted) return;
     final token = results.first as String?;

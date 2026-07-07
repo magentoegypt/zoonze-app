@@ -81,7 +81,11 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(centerTitle: true, title: const BrandLogo(height: 40)),
+      appBar: AppBar(
+        centerTitle: true,
+        toolbarHeight: 80,
+        title: const BrandLogo(height: 52),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),

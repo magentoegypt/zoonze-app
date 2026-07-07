@@ -5,12 +5,14 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../../../app/routes.dart';
 import '../../../../app/shell/marketing_footer.dart';
 import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/assets/app_images.dart';
+import '../../../../core/store/store_controller.dart';
 import '../../../../core/util/launch.dart';
 import '../../../../core/widgets/async_value_view.dart';
 import '../../../../core/widgets/brand_logo.dart';
@@ -35,13 +37,19 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final categories = ref.watch(categoryTreeProvider);
+    // Only the admin-configured announcement is shown — no hardcoded fallback
+    // (QA: the default "free shipping" line isn't on the site). Empty → the
+    // strip is omitted entirely (the app bar shrinks to just the header).
+    final announcement = ref
+        .watch(announcementMessageProvider)
+        .maybeWhen(data: (m) => m.trim(), orElse: () => '');
 
     return ZoonzeScaffold(
       currentTab: AppTab.home,
       // The home body already has a search bar — no app-bar search icon.
       showSearch: false,
       // Figma: the burgundy announcement strip sits above the ZOONZE header.
-      appBar: const _HomeAppBar(),
+      appBar: _HomeAppBar(announcement: announcement),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(categoryTreeProvider);
@@ -91,7 +99,10 @@ class HomeScreen extends ConsumerWidget {
 /// Home app bar (Figma): the burgundy announcement strip on top, then the
 /// centered ZOONZE lockup with a hamburger that opens the drawer.
 class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const _HomeAppBar();
+  const _HomeAppBar({required this.announcement});
+
+  /// The resolved announcement message; empty → the strip is omitted.
+  final String announcement;
 
   static const double _announcementHeight = 30;
   static const double _headerHeight = 56;
@@ -100,7 +111,8 @@ class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   Size get preferredSize {
     final view = WidgetsBinding.instance.platformDispatcher.views.first;
     final top = view.viewPadding.top / view.devicePixelRatio;
-    return Size.fromHeight(top + _announcementHeight + _headerHeight);
+    final strip = announcement.isEmpty ? 0.0 : _announcementHeight;
+    return Size.fromHeight(top + strip + _headerHeight);
   }
 
   @override
@@ -112,7 +124,7 @@ class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const _AnnouncementBar(),
+            if (announcement.isNotEmpty) _AnnouncementBar(message: announcement),
             SizedBox(
               height: _headerHeight,
               child: Stack(
@@ -146,38 +158,117 @@ class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
-/// Thin burgundy top strip (Figma) — single line. Message comes from the admin
-/// announcement config (magentoegypt_beauty/announcement/message); falls back to
-/// the localized default when not configured.
-class _AnnouncementBar extends ConsumerWidget {
-  const _AnnouncementBar();
+/// Thin burgundy top strip (Figma) — single line. The [message] is the
+/// admin-configured announcement (magentoegypt_beauty/announcement/message);
+/// the caller omits this strip entirely when there's no configured message.
+class _AnnouncementBar extends StatelessWidget {
+  const _AnnouncementBar({required this.message});
+
+  final String message;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final configured = ref
-        .watch(announcementMessageProvider)
-        .maybeWhen(data: (m) => m, orElse: () => '');
-    final message = configured.isNotEmpty ? configured : l10n.homeAnnouncement;
+  Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
       height: _HomeAppBar._announcementHeight,
       color: AppColors.brandPrimary,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       alignment: Alignment.center,
-      // Always one line — scale the text down to fit rather than wrap.
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: Text(
-          message,
+      // One line at a readable size — centered when it fits, auto-scrolling
+      // (marquee) when it doesn't, instead of shrinking to an unreadable size.
+      child: _AnnouncementText(message: message),
+    );
+  }
+}
+
+/// The announcement message at a fixed readable size. Centers short messages;
+/// long ones scroll horizontally on a gentle loop so nothing is clipped or
+/// shrunk (QA: the old FittedBox scaled the text down until it was too small).
+class _AnnouncementText extends StatefulWidget {
+  const _AnnouncementText({required this.message});
+  final String message;
+
+  @override
+  State<_AnnouncementText> createState() => _AnnouncementTextState();
+}
+
+class _AnnouncementTextState extends State<_AnnouncementText> {
+  static const TextStyle _style = TextStyle(
+    color: Colors.white,
+    fontSize: 13.5,
+    fontWeight: FontWeight.w600,
+  );
+
+  final ScrollController _scroll = ScrollController();
+  bool _looping = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeScroll());
+  }
+
+  @override
+  void didUpdateWidget(covariant _AnnouncementText old) {
+    super.didUpdateWidget(old);
+    if (old.message != widget.message) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _maybeScroll());
+    }
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  Future<void> _maybeScroll() async {
+    if (_looping) return;
+    _looping = true;
+    try {
+      while (mounted && _scroll.hasClients) {
+        final max = _scroll.position.maxScrollExtent;
+        if (max <= 0) break; // Message fits — nothing to scroll.
+        await _scroll.animateTo(
+          max,
+          duration: Duration(milliseconds: 2500 + (max * 22).round()),
+          curve: Curves.linear,
+        );
+        if (!mounted || !_scroll.hasClients) break;
+        await Future<void>.delayed(const Duration(milliseconds: 1200));
+        if (!mounted || !_scroll.hasClients) break;
+        await _scroll.animateTo(
+          0,
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeOut,
+        );
+        await Future<void>.delayed(const Duration(milliseconds: 1200));
+      }
+    } finally {
+      _looping = false;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final tp = TextPainter(
+          text: TextSpan(text: widget.message, style: _style),
           maxLines: 1,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ),
+          textDirection: Directionality.of(context),
+        )..layout();
+        final text = Text(widget.message, maxLines: 1, style: _style);
+        if (tp.width <= constraints.maxWidth) {
+          return Center(child: text);
+        }
+        return SingleChildScrollView(
+          controller: _scroll,
+          scrollDirection: Axis.horizontal,
+          physics: const NeverScrollableScrollPhysics(),
+          child: text,
+        );
+      },
     );
   }
 }
@@ -241,6 +332,9 @@ class _HeroBannerView extends StatelessWidget {
     required this.onCta,
     required this.imageProvider,
     this.showPlay = false,
+    this.videoUrl,
+    this.isActive = true,
+    this.onVideoCompleted,
   });
 
   final String eyebrow;
@@ -251,26 +345,68 @@ class _HeroBannerView extends StatelessWidget {
   final ImageProvider imageProvider;
   final bool showPlay;
 
+  /// When set, the video fills the whole banner (poster = [imageProvider])
+  /// instead of showing a static play badge in the circle.
+  final String? videoUrl;
+
+  /// True when this slide is the carousel's current slide (drives playback).
+  final bool isActive;
+
+  /// Called when the banner's video finishes (lets the carousel advance).
+  final VoidCallback? onVideoCompleted;
+
   @override
   Widget build(BuildContext context) {
+    final hasVideo = videoUrl != null && videoUrl!.isNotEmpty;
+    final rtl = Directionality.of(context) == TextDirection.rtl;
     return Container(
       color: _kHeroBg,
       child: Stack(
         clipBehavior: Clip.hardEdge,
         children: [
-          // Layered product circles (Figma): a big blurred circle behind a
-          // smaller sharp one, bleeding off the end edge.
-          PositionedDirectional(
-            top: 0,
-            bottom: 0,
-            end: -40,
-            child: Center(
-              child: _HeroImageGroup(
-                provider: imageProvider,
-                showPlay: showPlay,
+          if (hasVideo) ...[
+            // Video slide: the video fills the whole banner (poster =
+            // imageProvider until it's ready), not just a circle.
+            Positioned.fill(
+              child: _HeroVideo(
+                url: videoUrl!,
+                poster: imageProvider,
+                isActive: isActive,
+                onCompleted: onVideoCompleted,
               ),
             ),
-          ),
+            // Beige→transparent scrim on the start side so the overlaid text
+            // stays readable over the video.
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: rtl ? Alignment.centerRight : Alignment.centerLeft,
+                    end: rtl ? Alignment.centerLeft : Alignment.centerRight,
+                    colors: [
+                      _kHeroBg,
+                      _kHeroBg.withValues(alpha: 0.55),
+                      _kHeroBg.withValues(alpha: 0.0),
+                    ],
+                    stops: const [0.0, 0.5, 0.85],
+                  ),
+                ),
+              ),
+            ),
+          ] else
+            // Image slide: layered product circles (Figma) — a big blurred
+            // circle behind a smaller sharp one, bleeding off the end edge.
+            PositionedDirectional(
+              top: 0,
+              bottom: 0,
+              end: -40,
+              child: Center(
+                child: _HeroImageGroup(
+                  provider: imageProvider,
+                  showPlay: showPlay,
+                ),
+              ),
+            ),
           // Text block on the start side.
           PositionedDirectional(
             start: 48,
@@ -333,12 +469,9 @@ class _HeroBannerView extends StatelessWidget {
                         children: [
                           Text(ctaLabel),
                           const SizedBox(width: 8),
-                          Icon(
-                            Directionality.of(context) == TextDirection.rtl
-                                ? Icons.arrow_back
-                                : Icons.arrow_forward,
-                            size: 16,
-                          ),
+                          // Auto-mirrors under RTL (matchTextDirection) so it
+                          // points forward in both EN and AR.
+                          const Icon(Icons.arrow_forward, size: 16),
                         ],
                       ),
                     ),
@@ -502,20 +635,18 @@ class _HeroCarouselState extends State<_HeroCarousel> {
   Timer? _timer;
   int _index = 0;
 
+  /// Fixed dwell for an image slide.
+  static const Duration _imageDwell = Duration(seconds: 5);
+
+  /// Safety-net dwell for a video slide — used only if the video never loads or
+  /// finishes; normally the advance is driven by the video completing (see
+  /// [_onVideoCompleted]), so the dwell follows the video's own length.
+  static const Duration _videoFallback = Duration(seconds: 30);
+
   @override
   void initState() {
     super.initState();
-    if (widget.slides.length > 1) {
-      _timer = Timer.periodic(const Duration(seconds: 5), (_) {
-        if (!mounted || !_controller.hasClients) return;
-        final next = (_index + 1) % widget.slides.length;
-        _controller.animateToPage(
-          next,
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeInOut,
-        );
-      });
-    }
+    _scheduleDwell();
   }
 
   @override
@@ -523,6 +654,29 @@ class _HeroCarouselState extends State<_HeroCarousel> {
     _timer?.cancel();
     _controller.dispose();
     super.dispose();
+  }
+
+  /// (Re)arm the auto-advance for the current slide: a fixed timer for image
+  /// slides; for a video slide we wait for playback to finish and only keep a
+  /// long fallback timer. Single-slide heroes never auto-advance.
+  void _scheduleDwell() {
+    _timer?.cancel();
+    if (widget.slides.length < 2) return;
+    final current = _index;
+    final dwell = widget.slides[current].hasVideo ? _videoFallback : _imageDwell;
+    _timer = Timer(dwell, () => _advanceFrom(current));
+  }
+
+  void _advanceFrom(int i) {
+    if (!mounted || i != _index) return;
+    _go(1);
+  }
+
+  /// The current slide's video finished — advance now (dynamic timing that
+  /// follows the video's own timeline).
+  void _onVideoCompleted(int i) {
+    if (!mounted || i != _index) return;
+    _go(1);
   }
 
   void _go(int delta) {
@@ -544,9 +698,17 @@ class _HeroCarouselState extends State<_HeroCarousel> {
         children: [
           PageView.builder(
             controller: _controller,
-            onPageChanged: (i) => setState(() => _index = i),
+            onPageChanged: (i) {
+              setState(() => _index = i);
+              _scheduleDwell();
+            },
             itemCount: widget.slides.length,
-            itemBuilder: (context, i) => _HeroSlideCard(slide: widget.slides[i]),
+            itemBuilder: (context, i) => _HeroSlideCard(
+              slide: widget.slides[i],
+              isActive: i == _index,
+              onVideoCompleted:
+                  widget.slides.length > 1 ? () => _onVideoCompleted(i) : null,
+            ),
           ),
           if (multi) ...[
             PositionedDirectional(
@@ -600,21 +762,44 @@ class _HeroCarouselState extends State<_HeroCarousel> {
 /// One hero slide — blush card with eyebrow/title/description/CTA and a circular
 /// image. A play badge marks a video slide; the poster image is shown until
 /// inline video playback is wired.
-class _HeroSlideCard extends StatelessWidget {
-  const _HeroSlideCard({required this.slide});
+class _HeroSlideCard extends ConsumerWidget {
+  const _HeroSlideCard({
+    required this.slide,
+    this.isActive = true,
+    this.onVideoCompleted,
+  });
   final HeroSlide slide;
 
-  void _onCta(BuildContext context) {
-    final uid = categoryUidFromUrl(slide.ctaUrl);
+  /// True when this is the carousel's current slide (drives video playback).
+  final bool isActive;
+
+  /// Called when this slide's video finishes, so the carousel can advance.
+  final VoidCallback? onVideoCompleted;
+
+  /// Route the CTA inside the app wherever possible: a Magento category URL →
+  /// PLP; any other store-domain URL → the in-app PDP by url_key. Only genuinely
+  /// external (non-store) links fall out to the browser — QA saw "Shop Now"
+  /// leaving the app for a product page that should have opened in the PDP.
+  void _onCta(BuildContext context, WidgetRef ref) {
+    final url = slide.ctaUrl;
+    if (url.isEmpty) return;
+    final uid = categoryUidFromUrl(url);
     if (uid != null) {
       context.push(AppRoutes.category(uid), extra: slide.title);
-    } else if (slide.ctaUrl.isNotEmpty) {
-      launchExternalUri(Uri.parse(slide.ctaUrl));
+      return;
     }
+    if (_isInternalStoreUrl(ref, url)) {
+      final key = productUrlKeyFromStoreUrl(url);
+      if (key != null) {
+        context.push(AppRoutes.product(key));
+        return;
+      }
+    }
+    launchExternalUri(Uri.parse(url));
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final ImageProvider provider = slide.imageUrl.isNotEmpty
         ? CachedNetworkImageProvider(slide.imageUrl)
         : const AssetImage(AppImages.banner);
@@ -623,41 +808,191 @@ class _HeroSlideCard extends StatelessWidget {
       title: slide.title,
       subtitle: slide.description,
       ctaLabel: slide.ctaLabel,
-      onCta: () => _onCta(context),
+      onCta: () => _onCta(context, ref),
       imageProvider: provider,
       showPlay: slide.hasVideo,
+      videoUrl: slide.hasVideo ? slide.videoUrl : null,
+      isActive: isActive,
+      onVideoCompleted: onVideoCompleted,
     );
   }
 }
 
-/// Circular category images in a grid (Figma "Shop by category").
+/// Inline, muted, full-bleed playback for a hero slide's video. Shows the
+/// [poster] image (with a play badge) while it loads — and leaves it in place if
+/// playback fails — then the video (cover-cropped) once it's ready. Plays only
+/// while [isActive]; when [onCompleted] is set it plays once and reports the end
+/// (so the carousel advances when the video finishes), otherwise it loops.
+class _HeroVideo extends StatefulWidget {
+  const _HeroVideo({
+    required this.url,
+    this.poster,
+    this.isActive = true,
+    this.onCompleted,
+  });
+  final String url;
+  final ImageProvider? poster;
+
+  /// Whether this is the carousel's current slide — the video plays only while
+  /// active (and restarts when it becomes active).
+  final bool isActive;
+
+  /// Fired once when the video finishes. When null the video loops (e.g. a
+  /// single-slide hero with nothing to advance to).
+  final VoidCallback? onCompleted;
+
+  @override
+  State<_HeroVideo> createState() => _HeroVideoState();
+}
+
+class _HeroVideoState extends State<_HeroVideo> {
+  VideoPlayerController? _controller;
+  bool _ready = false;
+  bool _completed = false;
+
+  /// Loop only when there's no completion handler (nothing to advance to).
+  bool get _loop => widget.onCompleted == null;
+
+  @override
+  void initState() {
+    super.initState();
+    _init();
+  }
+
+  Future<void> _init() async {
+    final controller = VideoPlayerController.networkUrl(Uri.parse(widget.url));
+    _controller = controller;
+    try {
+      await controller.initialize();
+      await controller.setLooping(_loop);
+      await controller.setVolume(0);
+      controller.addListener(_onTick);
+      if (widget.isActive) await controller.play();
+      if (mounted) setState(() => _ready = true);
+    } catch (_) {
+      // Leave the poster + play badge in place on any playback error; the
+      // carousel's fallback timer still advances so it never hangs here.
+    }
+  }
+
+  /// Detects end-of-playback (non-looping) and reports it once, so the carousel
+  /// advances exactly when the video finishes.
+  void _onTick() {
+    final c = _controller;
+    if (c == null || !c.value.isInitialized) return;
+    if (_loop || _completed || !widget.isActive) return;
+    final v = c.value;
+    final atEnd =
+        v.duration > Duration.zero &&
+        v.position >= v.duration - const Duration(milliseconds: 120);
+    if (atEnd && !v.isPlaying) {
+      _completed = true;
+      widget.onCompleted?.call();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _HeroVideo old) {
+    super.didUpdateWidget(old);
+    final c = _controller;
+    if (c == null || !c.value.isInitialized) return;
+    if (widget.isActive && !old.isActive) {
+      // Became the current slide → restart so its timeline drives the dwell.
+      _completed = false;
+      c.seekTo(Duration.zero);
+      c.play();
+    } else if (!widget.isActive && old.isActive) {
+      c.pause();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.removeListener(_onTick);
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = _controller;
+    if (!_ready || controller == null || !controller.value.isInitialized) {
+      // Poster fills the banner while the video loads (or if it fails), with a
+      // play badge to signal it's a video.
+      return Stack(
+        fit: StackFit.expand,
+        children: [
+          if (widget.poster != null)
+            Image(
+              image: widget.poster!,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => const ColoredBox(color: _kHeroBg),
+            ),
+          const Center(
+            child: Icon(
+              Icons.play_circle_fill,
+              color: Colors.white70,
+              size: 48,
+            ),
+          ),
+        ],
+      );
+    }
+    return FittedBox(
+      fit: BoxFit.cover,
+      clipBehavior: Clip.hardEdge,
+      child: SizedBox(
+        width: controller.value.size.width,
+        height: controller.value.size.height,
+        child: VideoPlayer(controller),
+      ),
+    );
+  }
+}
+
+/// True when [url]'s host is the storefront's own domain (so the link should
+/// open inside the app, not the external browser).
+bool _isInternalStoreUrl(WidgetRef ref, String url) {
+  final host = Uri.tryParse(url)?.host.toLowerCase() ?? '';
+  if (host.isEmpty) return false;
+  if (host == 'zoonze.com' || host.endsWith('.zoonze.com')) return true;
+  for (final s in ref.read(storeControllerProvider).stores) {
+    for (final base in [s.secureBaseUrl, s.baseUrl]) {
+      final h = Uri.tryParse(base)?.host.toLowerCase();
+      if (h != null && h.isNotEmpty && h == host) return true;
+    }
+  }
+  return false;
+}
+
+/// Circular category images in a horizontal carousel (site "Shop by category").
 class _CategoryGrid extends StatelessWidget {
   const _CategoryGrid({required this.categories});
   final List<Category> categories;
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(16),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
-        childAspectRatio: 0.82,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
+    return SizedBox(
+      height: 116,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: categories.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 14),
+        itemBuilder: (context, index) {
+          final category = categories[index];
+          return SizedBox(
+            width: 80,
+            child: _CategoryCircle(
+              category: category,
+              onTap: () => context.push(
+                AppRoutes.category(category.uid),
+                extra: category.name,
+              ),
+            ),
+          );
+        },
       ),
-      itemCount: categories.length,
-      itemBuilder: (context, index) {
-        final category = categories[index];
-        return _CategoryCircle(
-          category: category,
-          onTap: () => context.push(
-            AppRoutes.category(category.uid),
-            extra: category.name,
-          ),
-        );
-      },
     );
   }
 }
@@ -1129,31 +1464,32 @@ class _TrustBadge extends StatelessWidget {
 // themselves to nothing when empty/disabled, so after load nothing spurious
 // renders. Each skeleton mirrors the dimensions of the section it stands in for.
 
-/// Mirrors `_CategoryGrid` (3-col, 0.82): grey circle + label line per cell.
+/// Mirrors `_CategoryGrid` (horizontal rail): grey circle + label line per cell.
 class _CategoryGridSkeleton extends StatelessWidget {
   const _CategoryGridSkeleton();
 
   @override
   Widget build(BuildContext context) {
     return Shimmer(
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          childAspectRatio: 0.82,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-        ),
-        itemCount: 6,
-        itemBuilder: (_, __) => const Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SkeletonBox.circle(size: 72),
-            SizedBox(height: 8),
-            SkeletonBox(width: 52, height: 10, borderRadius: 4),
-          ],
+      child: SizedBox(
+        height: 116,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: 6,
+          separatorBuilder: (_, __) => const SizedBox(width: 14),
+          itemBuilder: (_, __) => const SizedBox(
+            width: 80,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SkeletonBox.circle(size: 72),
+                SizedBox(height: 8),
+                SkeletonBox(width: 52, height: 10, borderRadius: 4),
+              ],
+            ),
+          ),
         ),
       ),
     );
