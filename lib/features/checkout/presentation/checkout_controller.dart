@@ -76,6 +76,15 @@ class CheckoutController extends Notifier<CheckoutState> {
   @override
   CheckoutState build() => const CheckoutState();
 
+  /// Clears all checkout progress back to a clean slate. This controller is a
+  /// session-wide singleton, so the checkout screen calls this on entry —
+  /// otherwise a *second* checkout in the same session (or a checkout after
+  /// logout) reuses the previous order's shipping method / payment / total.
+  /// That both shows a stale grand total and makes the UI treat shipping/payment
+  /// as already-done, so it skips those mutations on the new cart and
+  /// `placeOrder` then fails ("Something went wrong").
+  void reset() => state = const CheckoutState();
+
   CheckoutRepository get _repo => ref.read(checkoutRepositoryProvider);
 
   String? get _cartId {

@@ -52,6 +52,15 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       _address.fullName.text = '${customer.firstName} ${customer.lastName}'
           .trim();
     }
+    // Start every checkout from a clean slate. The checkout controller is a
+    // session-wide singleton, so without this a second checkout in the same
+    // session (or a checkout after logout) inherits the previous order's
+    // shipping/payment/total. Post-frame because a provider can't be mutated
+    // during the widget-tree build that mounts this screen; the stale sections
+    // only render below the address form, so the one-frame pre-reset is unseen.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) ref.read(checkoutControllerProvider.notifier).reset();
+    });
   }
 
   @override

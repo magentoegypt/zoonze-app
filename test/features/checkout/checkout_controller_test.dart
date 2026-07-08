@@ -158,6 +158,45 @@ void main() {
       },
     );
 
+    test('reset() clears progress so the next checkout starts clean', () async {
+      // Regression: the controller is a session-wide singleton. Without a reset
+      // on checkout entry, a second checkout (or a checkout after logout)
+      // reused the previous order's shipping/payment/total — a stale grand
+      // total, and placeOrder failing because shipping/payment were treated as
+      // already-set on the new cart.
+      final repo = FakeCheckoutRepository();
+      final container = await _seededContainer(repo);
+      final checkout = container.read(checkoutControllerProvider.notifier);
+
+      await checkout.submitAddress(
+        email: 'guest@example.com',
+        address: _address,
+        isGuest: true,
+      );
+      var state = container.read(checkoutControllerProvider);
+      await checkout.selectShipping(state.shippingMethods.first);
+      state = container.read(checkoutControllerProvider);
+      await checkout.selectPayment(state.paymentMethods.first);
+      // Sanity: the controller is now carrying full checkout progress.
+      state = container.read(checkoutControllerProvider);
+      expect(state.paymentDone, isTrue);
+      expect(state.grandTotal, isNotNull);
+
+      checkout.reset();
+
+      state = container.read(checkoutControllerProvider);
+      expect(state.addressDone, isFalse);
+      expect(state.shippingDone, isFalse);
+      expect(state.paymentDone, isFalse);
+      expect(state.shippingMethods, isEmpty);
+      expect(state.paymentMethods, isEmpty);
+      expect(state.selectedShipping, isNull);
+      expect(state.selectedPayment, isNull);
+      expect(state.grandTotal, isNull);
+      expect(state.email, isEmpty);
+      expect(state.isGuest, isFalse);
+    });
+
     test('submitAddress is a no-op without a cart', () async {
       // No addToCart → cart id stays empty → checkout cannot proceed.
       final repo = FakeCheckoutRepository();
