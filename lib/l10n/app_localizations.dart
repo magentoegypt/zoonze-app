@@ -1745,8 +1745,14 @@ abstract class AppLocalizations {
   /// No description provided for @fieldEmirate.
   ///
   /// In en, this message translates to:
-  /// **'Emirate'**
+  /// **'State'**
   String get fieldEmirate;
+
+  /// No description provided for @fieldCountryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Country'**
+  String get fieldCountryLabel;
 
   /// No description provided for @fieldArea.
   ///
@@ -1760,11 +1766,23 @@ abstract class AppLocalizations {
   /// **'Apartment / Floor (optional)'**
   String get fieldApartment;
 
+  /// No description provided for @checkoutUseNewAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a new address'**
+  String get checkoutUseNewAddress;
+
   /// No description provided for @addressDefaultShipping.
   ///
   /// In en, this message translates to:
   /// **'Set as default address'**
   String get addressDefaultShipping;
+
+  /// No description provided for @addressDefaultBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get addressDefaultBadge;
 
   /// No description provided for @addressAddNew.
   ///
@@ -2041,12 +2059,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tabby is unavailable for this order. Please choose another payment method.'**
   String get paymentSessionUnavailable;
-
-  /// No description provided for @fieldCountryLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Country'**
-  String get fieldCountryLabel;
 
   /// No description provided for @countryUae.
   ///

@@ -11,6 +11,8 @@ import '../../../../core/validation/validators.dart';
 import '../../../../core/widgets/address_form.dart';
 import '../../../../core/widgets/brand_logo.dart';
 import '../../../../l10n/l10n.dart';
+import '../../../account/data/account_repository.dart';
+import '../../../account/domain/customer_address.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../catalog/domain/money.dart';
 import '../../domain/payment_session.dart';
@@ -33,6 +35,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
   /// Re-entrancy guard for the place-order → redirect handoff.
   bool _placing = false;
+
+  /// Saved-address selection (signed-in customers). `_useNewAddress` reveals the
+  /// form; otherwise the effective selection defaults to the customer's default
+  /// shipping address.
+  int? _selectedAddressId;
+  bool _useNewAddress = false;
 
   @override
   void initState() {
@@ -75,16 +83,94 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     };
   }
 
+  /// Default shipping address id (or the first) from the saved list.
+  int? _defaultId(List<CustomerAddress> list) {
+    for (final a in list) {
+      if (a.defaultShipping) return a.id;
+    }
+    return list.isEmpty ? null : list.first.id;
+  }
+
+  /// Magento `CartAddressInput` from a saved [CustomerAddress].
+  Map<String, dynamic> _savedAddressInput(CustomerAddress a) => <String, dynamic>{
+    'firstname': a.firstName,
+    'lastname': a.lastName,
+    'telephone': a.telephone,
+    'street': [a.street, if (a.apartment.isNotEmpty) a.apartment],
+    'city': a.city,
+    'country_code': a.countryCode,
+    if (a.regionId != null)
+      'region_id': a.regionId
+    else if (a.region.isNotEmpty)
+      'region': a.region,
+  };
+
   Future<void> _submitAddress() async {
+    // Only the email (and, when shown, the new-address form) is validated — a
+    // selected saved address needs no form validation.
     if (!_formKey.currentState!.validate()) return;
     final isGuest = !ref.read(authControllerProvider).isAuthenticated;
+    final saved =
+        ref.read(addressesProvider).valueOrNull ?? const <CustomerAddress>[];
+    final useSaved = !isGuest && !_useNewAddress && saved.isNotEmpty;
+    final Map<String, dynamic> address;
+    if (useSaved) {
+      final id = _selectedAddressId ?? _defaultId(saved);
+      final a = saved.firstWhere((x) => x.id == id, orElse: () => saved.first);
+      address = _savedAddressInput(a);
+    } else {
+      address = _addressInput();
+    }
     final ok = await _controller.submitAddress(
       email: _email.text.trim(),
-      address: _addressInput(),
+      address: address,
       isGuest: isGuest,
     );
     if (!mounted) return;
     if (!ok) _snack(AppLocalizations.of(context).errorGeneric);
+  }
+
+  /// Address step body: a signed-in customer with saved addresses picks one
+  /// (default auto-selected) or opens the new-address form; guests / customers
+  /// with no saved addresses get the form directly.
+  Widget _addressSection(AppLocalizations l10n, bool isGuest) {
+    if (isGuest) return AddressForm(controller: _address);
+    return ref
+        .watch(addressesProvider)
+        .maybeWhen(
+          data: (list) {
+            if (list.isEmpty) return AddressForm(controller: _address);
+            final selectedId =
+                _useNewAddress ? null : (_selectedAddressId ?? _defaultId(list));
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final a in list)
+                  _AddressRadioCard(
+                    address: a,
+                    selected: !_useNewAddress && a.id == selectedId,
+                    onTap: () => setState(() {
+                      _useNewAddress = false;
+                      _selectedAddressId = a.id;
+                    }),
+                  ),
+                _NewAddressTile(
+                  label: l10n.checkoutUseNewAddress,
+                  selected: _useNewAddress,
+                  onTap: () => setState(() {
+                    _useNewAddress = true;
+                    _selectedAddressId = null;
+                  }),
+                ),
+                if (_useNewAddress) ...[
+                  const SizedBox(height: 12),
+                  AddressForm(controller: _address),
+                ],
+              ],
+            );
+          },
+          orElse: () => AddressForm(controller: _address),
+        );
   }
 
   Future<void> _placeOrder() async {
@@ -271,7 +357,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         index: 1,
                         title: l10n.checkoutDeliveryAddress,
                       ),
-                      AddressForm(controller: _address),
+                      _addressSection(l10n, isGuest),
                     ],
                   ),
                 ),
@@ -415,6 +501,159 @@ class _StepHeader extends StatelessWidget {
         const SizedBox(width: 12),
         Text(title, style: Theme.of(context).textTheme.titleMedium),
       ],
+    ),
+  );
+}
+
+/// A selectable saved-address card (Figma): radio + name (+ "Default" badge) +
+/// phone + single-line address.
+class _AddressRadioCard extends StatelessWidget {
+  const _AddressRadioCard({
+    required this.address,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final CustomerAddress address;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.surfaceTint : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: selected ? AppColors.brandPrimary : AppColors.borderDefault,
+              width: selected ? 1.5 : 1,
+            ),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                selected
+                    ? Icons.radio_button_checked
+                    : Icons.radio_button_unchecked,
+                color: selected ? AppColors.brandPrimary : AppColors.inkMuted,
+                size: 20,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            address.fullName,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                        if (address.defaultShipping)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.brandPrimary,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              l10n.addressDefaultBadge,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    if (address.telephone.isNotEmpty)
+                      Text(
+                        address.telephone,
+                        textDirection: TextDirection.ltr,
+                        style: const TextStyle(
+                          color: AppColors.inkMuted,
+                          fontSize: 12,
+                        ),
+                      ),
+                    const SizedBox(height: 2),
+                    Text(
+                      address.summary,
+                      style: const TextStyle(
+                        color: AppColors.inkMuted,
+                        fontSize: 12.5,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The "Use a new address" option below the saved-address cards.
+class _NewAddressTile extends StatelessWidget {
+  const _NewAddressTile({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(12),
+    child: Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: selected ? AppColors.surfaceTint : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: selected ? AppColors.brandPrimary : AppColors.borderDefault,
+          width: selected ? 1.5 : 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            selected
+                ? Icons.radio_button_checked
+                : Icons.radio_button_unchecked,
+            color: selected ? AppColors.brandPrimary : AppColors.inkMuted,
+            size: 20,
+          ),
+          const SizedBox(width: 12),
+          const Icon(
+            Icons.add_location_alt_outlined,
+            size: 18,
+            color: AppColors.brandPrimary,
+          ),
+          const SizedBox(width: 8),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+        ],
+      ),
     ),
   );
 }

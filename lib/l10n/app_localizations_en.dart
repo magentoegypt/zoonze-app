@@ -954,7 +954,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fieldFullName => 'Full Name';
 
   @override
-  String get fieldEmirate => 'Emirate';
+  String get fieldEmirate => 'State';
+
+  @override
+  String get fieldCountryLabel => 'Country';
 
   @override
   String get fieldArea => 'Area';
@@ -963,7 +966,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fieldApartment => 'Apartment / Floor (optional)';
 
   @override
+  String get checkoutUseNewAddress => 'Use a new address';
+
+  @override
   String get addressDefaultShipping => 'Set as default address';
+
+  @override
+  String get addressDefaultBadge => 'Default';
 
   @override
   String get addressAddNew => 'Add New Address';
@@ -1107,9 +1116,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get paymentSessionUnavailable =>
       'Tabby is unavailable for this order. Please choose another payment method.';
-
-  @override
-  String get fieldCountryLabel => 'Country';
 
   @override
   String get countryUae => 'United Arab Emirates';

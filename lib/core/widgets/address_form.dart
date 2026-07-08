@@ -129,12 +129,8 @@ class AddressForm extends ConsumerWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _LabeledField(
-                label: l10n.fieldArea,
-                child: _input(
-                  controller.area,
-                  l10n.addressHintArea,
-                  validator: (v) => Validators.required(context, v),
-                ),
+                label: l10n.fieldCountryLabel,
+                child: _countryField(l10n),
               ),
             ),
           ],
@@ -177,7 +173,19 @@ class AddressForm extends ConsumerWidget {
           for (final r in list)
             DropdownMenuItem<int>(value: r.id, child: Text(r.name)),
         ],
-        onChanged: (v) => controller.regionId.value = v,
+        onChanged: (v) {
+          controller.regionId.value = v;
+          // There's no separate Area/City field now (matching the website), so
+          // derive Magento's required `city` from the selected state name.
+          if (v != null) {
+            for (final r in list) {
+              if (r.id == v) {
+                controller.area.text = r.name;
+                break;
+              }
+            }
+          }
+        },
         validator: (v) => v == null ? l10n.validationRequired : null,
       ),
     ),
@@ -199,6 +207,14 @@ class AddressForm extends ConsumerWidget {
       controller: controller.region,
       validator: (v) => Validators.required(context, v),
     ),
+  );
+
+  /// Country is fixed to the UAE (the only market) — a read-only field that
+  /// matches the website's Country dropdown.
+  Widget _countryField(AppLocalizations l10n) => TextFormField(
+    enabled: false,
+    initialValue: l10n.countryUae,
+    decoration: const InputDecoration(),
   );
 
   Widget _input(

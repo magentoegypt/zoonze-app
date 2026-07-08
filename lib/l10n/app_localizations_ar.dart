@@ -922,7 +922,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get fieldFullName => 'الاسم الكامل';
 
   @override
-  String get fieldEmirate => 'الإمارة';
+  String get fieldEmirate => 'ولاية/محافظة';
+
+  @override
+  String get fieldCountryLabel => 'الدولة';
 
   @override
   String get fieldArea => 'المنطقة';
@@ -931,7 +934,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get fieldApartment => 'شقة / طابق (اختياري)';
 
   @override
+  String get checkoutUseNewAddress => 'استخدام عنوان جديد';
+
+  @override
   String get addressDefaultShipping => 'تعيين كعنوان افتراضي';
+
+  @override
+  String get addressDefaultBadge => 'الرئيسية';
 
   @override
   String get addressAddNew => 'إضافة عنوان جديد';
@@ -1074,9 +1083,6 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get paymentSessionUnavailable =>
       'تابي غير متاح لهذا الطلب. يرجى اختيار طريقة دفع أخرى.';
-
-  @override
-  String get fieldCountryLabel => 'الدولة';
 
   @override
   String get countryUae => 'الإمارات العربية المتحدة';
