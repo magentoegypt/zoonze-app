@@ -426,10 +426,11 @@
   "productAddToCart": "أضف إلى السلة",
   "productOutOfStock": "غير متوفّر",
 
+  "tabDescription": "الوصف",
   "tabDetails": "التفاصيل",
   "tabKeyFeatures": "المميزات الرئيسية",
   "tabMoreInformation": "تفاصيل المنتج",
-  "tabReviews": "مراجعات العملاء",
+  "tabReviews": "المراجعات",
   "specSku": "رقم المنتج",
   "reviewsEmptyTitle": "لا توجد مراجعات بعد",
   "reviewsEmptyBody": "كن أوّل من يقيّم هذا المنتج.",

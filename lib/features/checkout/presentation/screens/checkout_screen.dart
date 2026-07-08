@@ -370,12 +370,26 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   key: _formKey,
                   child: Column(
                     children: [
+                      // Label above the field (not a floating label) so it never
+                      // overlaps the box border — matters in Arabic/RTL (QA).
+                      Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text(
+                          l10n.fieldEmail,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                            color: AppColors.inkHeading,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
                       TextFormField(
                         controller: _email,
                         enabled: isGuest,
                         keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(
-                          labelText: l10n.fieldEmail,
+                          hintText: l10n.authEmailHint,
                           helperText: l10n.checkoutEmailHelp,
                         ),
                         validator: (v) => Validators.email(context, v),

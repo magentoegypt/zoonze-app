@@ -40,12 +40,14 @@ query CategoryTree {
         uid
         name
         url_key
+        image
         include_in_menu
         product_count
         children {
           uid
           name
           url_key
+          image
           include_in_menu
           product_count
         }

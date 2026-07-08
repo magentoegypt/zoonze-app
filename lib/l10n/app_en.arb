@@ -462,10 +462,11 @@
   "productAddToCart": "Add to Cart",
   "productOutOfStock": "Out of stock",
 
+  "tabDescription": "Description",
   "tabDetails": "Details",
   "tabKeyFeatures": "Key Features",
   "tabMoreInformation": "Product Details",
-  "tabReviews": "Customer Reviews",
+  "tabReviews": "Reviews",
   "specSku": "SKU",
   "reviewsEmptyTitle": "No reviews yet",
   "reviewsEmptyBody": "Be the first to review this product.",

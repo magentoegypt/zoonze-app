@@ -10,10 +10,11 @@ import '../widgets/auth_header.dart';
 import '../../../../l10n/l10n.dart';
 import '../auth_controller.dart';
 
-/// Completes a password reset using the token from the reset email. Reachable
-/// from Forgot Password ("I have a reset code") and via a deep link that
-/// pre-fills the email + token query params. On success the customer is signed
-/// in with the new password.
+/// Completes a password reset using the token from the reset email. Reached via
+/// the deep link in that email (which pre-fills the email + token query params).
+/// Magento sends a reset *link*, not an in-app code, so there is intentionally
+/// no "I have a reset code" entry point. On success the customer is signed in
+/// with the new password.
 class ResetPasswordScreen extends ConsumerStatefulWidget {
   const ResetPasswordScreen({super.key, this.initialEmail, this.initialToken});
 

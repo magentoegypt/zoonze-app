@@ -426,7 +426,7 @@ class _GalleryState extends State<_Gallery> {
                           IconButton(
                             onPressed: () => _share(context),
                             icon: const Icon(
-                              Icons.share_outlined,
+                              Icons.ios_share,
                               color: AppColors.inkHeading,
                             ),
                           ),
@@ -662,14 +662,9 @@ class _Tabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final labels = [
-      l10n.tabDetails,
-      l10n.tabKeyFeatures,
-      l10n.tabMoreInformation,
-      l10n.tabReviews,
-    ];
-    // Four tabs don't fit a 390px row, so the bar scrolls horizontally while
-    // the active tab keeps its burgundy underline.
+    final labels = [l10n.tabDescription, l10n.tabDetails, l10n.tabReviews];
+    // Three tabs (Description · Details · Reviews); the active one keeps its
+    // burgundy underline. Kept scrollable so long AR labels never overflow.
     return Container(
       decoration: const BoxDecoration(
         border: Border(
@@ -1084,23 +1079,29 @@ class _TabContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     switch (tab) {
-      // Short Description (key features).
+      // Details: short description + key specs (SKU).
       case 1:
-        return Text(product.shortDescription ?? l10n.stateEmpty);
-      // More Information.
-      case 2:
-        return Row(
+        return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              '${l10n.specSku}: ',
-              style: const TextStyle(fontWeight: FontWeight.w600),
+            if ((product.shortDescription ?? '').isNotEmpty) ...[
+              Text(product.shortDescription!),
+              const SizedBox(height: 12),
+            ],
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${l10n.specSku}: ',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                Expanded(child: Text(product.sku)),
+              ],
             ),
-            Expanded(child: Text(product.sku)),
           ],
         );
       // Reviews.
-      case 3:
+      case 2:
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

@@ -2390,6 +2390,12 @@ abstract class AppLocalizations {
   /// **'Out of stock'**
   String get productOutOfStock;
 
+  /// No description provided for @tabDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get tabDescription;
+
   /// No description provided for @tabDetails.
   ///
   /// In en, this message translates to:
@@ -2411,7 +2417,7 @@ abstract class AppLocalizations {
   /// No description provided for @tabReviews.
   ///
   /// In en, this message translates to:
-  /// **'Customer Reviews'**
+  /// **'Reviews'**
   String get tabReviews;
 
   /// No description provided for @specSku.

@@ -1273,6 +1273,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get productOutOfStock => 'غير متوفّر';
 
   @override
+  String get tabDescription => 'الوصف';
+
+  @override
   String get tabDetails => 'التفاصيل';
 
   @override
@@ -1282,7 +1285,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tabMoreInformation => 'تفاصيل المنتج';
 
   @override
-  String get tabReviews => 'مراجعات العملاء';
+  String get tabReviews => 'المراجعات';
 
   @override
   String get specSku => 'رقم المنتج';

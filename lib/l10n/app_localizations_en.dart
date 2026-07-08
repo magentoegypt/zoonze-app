@@ -1308,6 +1308,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get productOutOfStock => 'Out of stock';
 
   @override
+  String get tabDescription => 'Description';
+
+  @override
   String get tabDetails => 'Details';
 
   @override
@@ -1317,7 +1320,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabMoreInformation => 'Product Details';
 
   @override
-  String get tabReviews => 'Customer Reviews';
+  String get tabReviews => 'Reviews';
 
   @override
   String get specSku => 'SKU';

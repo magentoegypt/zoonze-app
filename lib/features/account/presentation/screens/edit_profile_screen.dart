@@ -25,8 +25,7 @@ class EditProfileScreen extends ConsumerStatefulWidget {
 class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _profileKey = GlobalKey<FormState>();
   final _passwordKey = GlobalKey<FormState>();
-  late final TextEditingController _firstName;
-  late final TextEditingController _lastName;
+  late final TextEditingController _fullName;
   final _currentPassword = TextEditingController();
   final _newPassword = TextEditingController();
   bool _savingProfile = false;
@@ -37,14 +36,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   void initState() {
     super.initState();
     final customer = ref.read(authControllerProvider).customer;
-    _firstName = TextEditingController(text: customer?.firstName ?? '');
-    _lastName = TextEditingController(text: customer?.lastName ?? '');
+    _fullName = TextEditingController(text: customer?.fullName ?? '');
   }
 
   @override
   void dispose() {
-    _firstName.dispose();
-    _lastName.dispose();
+    _fullName.dispose();
     _currentPassword.dispose();
     _newPassword.dispose();
     super.dispose();
@@ -55,12 +52,22 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     setState(() => _savingProfile = true);
     final l10n = AppLocalizations.of(context);
     try {
+      // Single Full Name field (Figma) → split for Magento's first/last. Last
+      // token is the surname; a single token fills both so validation passes.
+      final parts = _fullName.text
+          .trim()
+          .split(RegExp(r'\s+'))
+          .where((s) => s.isNotEmpty)
+          .toList();
+      final first = parts.isEmpty
+          ? ''
+          : (parts.length == 1
+                ? parts.first
+                : parts.sublist(0, parts.length - 1).join(' '));
+      final last = parts.isEmpty ? '' : parts.last;
       await ref
           .read(accountRepositoryProvider)
-          .updateProfile(
-            firstName: _firstName.text.trim(),
-            lastName: _lastName.text.trim(),
-          );
+          .updateProfile(firstName: first, lastName: last);
       await ref.read(authControllerProvider.notifier).refreshCustomer();
       _snack(l10n.profileSaved);
     } catch (_) {
@@ -151,15 +158,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               child: Column(
                 children: [
                   _ProfileField(
-                    controller: _firstName,
-                    label: l10n.fieldFirstName,
-                    icon: Icons.person_outline,
-                    validator: (v) => Validators.required(context, v),
-                  ),
-                  const SizedBox(height: 12),
-                  _ProfileField(
-                    controller: _lastName,
-                    label: l10n.fieldLastName,
+                    controller: _fullName,
+                    label: l10n.fieldFullName,
                     icon: Icons.person_outline,
                     validator: (v) => Validators.required(context, v),
                   ),
@@ -192,7 +192,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        isAr ? l10n.languageArabic : l10n.languageEnglish,
+                        isAr ? 'AR' : 'EN',
                         style: const TextStyle(color: AppColors.inkMuted),
                       ),
                       const SizedBox(width: 4),
@@ -501,7 +501,8 @@ class _PrefToggleRow extends StatelessWidget {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeThumbColor: AppColors.brandPrimary,
+            activeThumbColor: Colors.white,
+            activeTrackColor: AppColors.brandPrimary,
           ),
         ],
       ),
