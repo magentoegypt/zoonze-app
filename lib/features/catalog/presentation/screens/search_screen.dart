@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,9 +7,11 @@ import '../../../../app/routes.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/store/store_controller.dart';
+import '../../../../core/widgets/brand_logo.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/failure_message.dart';
 import '../../../../l10n/l10n.dart';
+import '../../domain/brand.dart';
 import '../plp_controller.dart';
 import '../search_controller.dart';
 import '../widgets/filter_sheet.dart';
@@ -18,10 +21,14 @@ import '../widgets/product_skeletons.dart';
 /// Native catalogue search (`products(search:)`). If Live Search is later
 /// confirmed (Open Q §4), swap the provider to the productSearch schema.
 class SearchScreen extends ConsumerStatefulWidget {
-  const SearchScreen({super.key, this.initialQuery});
+  const SearchScreen({super.key, this.initialQuery, this.brand});
 
-  /// Optional pre-filled query (e.g. tapping a brand on the home screen).
+  /// Optional pre-filled query.
   final String? initialQuery;
+
+  /// When set, this renders a brand landing: a brand image + name header (no
+  /// search field), whose results are the brand's products.
+  final Brand? brand;
 
   @override
   ConsumerState<SearchScreen> createState() => _SearchScreenState();
@@ -50,6 +57,18 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final brand = widget.brand;
+    // Brand landing: no search field; the brand header sits above the results.
+    if (brand != null) {
+      return Scaffold(
+        appBar: AppBar(
+          centerTitle: true,
+          toolbarHeight: 60,
+          title: const BrandLogo(height: 44),
+        ),
+        body: _Results(query: brand.title, brand: brand),
+      );
+    }
     return Scaffold(
       appBar: AppBar(
         title: TextField(
@@ -83,8 +102,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
 /// Search results grid with a "Search results for …" header and the shared
 /// aggregation-driven Filters + Sort sheet (same engine as the PLP).
 class _Results extends ConsumerStatefulWidget {
-  const _Results({required this.query});
+  const _Results({required this.query, this.brand});
   final String query;
+  final Brand? brand;
 
   @override
   ConsumerState<_Results> createState() => _ResultsState();
@@ -159,6 +179,7 @@ class _ResultsState extends ConsumerState<_Results> {
             query: widget.query,
             state: state,
             onFilters: () => _openFilters(state),
+            brand: widget.brand,
           ),
           const ProductGridSkeleton(childAspectRatio: 0.58, count: 6),
         ],
@@ -241,30 +262,62 @@ class _Header extends StatelessWidget {
     required this.query,
     required this.state,
     required this.onFilters,
+    this.brand,
   });
 
   final String query;
   final PlpState state;
   final VoidCallback onFilters;
+  final Brand? brand;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final b = brand;
     final filtersLabel = state.activeFilterCount > 0
         ? '${l10n.filtersLabel} (${state.activeFilterCount})'
         : l10n.filtersLabel;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 4),
-          child: Text(
-            l10n.searchResultsFor(query),
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+        if (b != null)
+          // Brand landing header: logo + name above the product count.
+          Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 8),
+            child: Column(
+              children: [
+                if (b.imageUrl.isNotEmpty) ...[
+                  SizedBox(
+                    height: 60,
+                    child: CachedNetworkImage(
+                      imageUrl: b.imageUrl,
+                      fit: BoxFit.contain,
+                      placeholder: (_, __) => const SizedBox.shrink(),
+                      errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                Text(
+                  b.title,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                ),
+              ],
+            ),
+          )
+        else
+          Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 4),
+            child: Text(
+              l10n.searchResultsFor(query),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+            ),
           ),
-        ),
         Padding(
           padding: const EdgeInsetsDirectional.fromSTEB(16, 4, 16, 12),
           child: Row(

@@ -21,6 +21,7 @@ import '../features/checkout/presentation/screens/complete_payment_screen.dart';
 import '../features/checkout/presentation/screens/order_success_screen.dart';
 import '../features/auth/presentation/screens/sign_in_screen.dart';
 import '../features/auth/presentation/screens/sign_up_screen.dart';
+import '../features/catalog/domain/brand.dart';
 import '../features/catalog/presentation/screens/brands_screen.dart';
 import '../features/catalog/presentation/screens/categories_screen.dart';
 import '../features/catalog/presentation/screens/home_screen.dart';
@@ -84,6 +85,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.brands,
         builder: (context, state) => const BrandsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.brand,
+        builder: (context, state) =>
+            SearchScreen(brand: state.extra as Brand?),
       ),
       GoRoute(
         path: '/review/:sku',

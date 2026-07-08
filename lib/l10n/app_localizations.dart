@@ -2165,13 +2165,13 @@ abstract class AppLocalizations {
   /// No description provided for @tabMoreInformation.
   ///
   /// In en, this message translates to:
-  /// **'More Information'**
+  /// **'Product Details'**
   String get tabMoreInformation;
 
   /// No description provided for @tabReviews.
   ///
   /// In en, this message translates to:
-  /// **'Reviews'**
+  /// **'Customer Reviews'**
   String get tabReviews;
 
   /// No description provided for @specSku.

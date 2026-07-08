@@ -1179,10 +1179,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabKeyFeatures => 'Key Features';
 
   @override
-  String get tabMoreInformation => 'More Information';
+  String get tabMoreInformation => 'Product Details';
 
   @override
-  String get tabReviews => 'Reviews';
+  String get tabReviews => 'Customer Reviews';
 
   @override
   String get specSku => 'SKU';

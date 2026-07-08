@@ -1218,7 +1218,7 @@ class _BrandCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () => context.push(AppRoutes.search, extra: brand.title),
+      onTap: () => context.push(AppRoutes.brand, extra: brand),
       borderRadius: BorderRadius.circular(12),
       child: Container(
         width: 124,

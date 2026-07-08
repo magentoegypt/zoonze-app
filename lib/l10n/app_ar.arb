@@ -384,9 +384,9 @@
   "productOutOfStock": "غير متوفّر",
 
   "tabDetails": "التفاصيل",
-  "tabKeyFeatures": "أبرز المزايا",
-  "tabMoreInformation": "معلومات إضافية",
-  "tabReviews": "المراجعات",
+  "tabKeyFeatures": "المميزات الرئيسية",
+  "tabMoreInformation": "تفاصيل المنتج",
+  "tabReviews": "مراجعات العملاء",
   "specSku": "رقم المنتج",
   "reviewsEmptyTitle": "لا توجد مراجعات بعد",
   "reviewsEmptyBody": "كن أوّل من يقيّم هذا المنتج.",

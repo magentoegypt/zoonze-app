@@ -1141,13 +1141,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tabDetails => 'التفاصيل';
 
   @override
-  String get tabKeyFeatures => 'أبرز المزايا';
+  String get tabKeyFeatures => 'المميزات الرئيسية';
 
   @override
-  String get tabMoreInformation => 'معلومات إضافية';
+  String get tabMoreInformation => 'تفاصيل المنتج';
 
   @override
-  String get tabReviews => 'المراجعات';
+  String get tabReviews => 'مراجعات العملاء';
 
   @override
   String get specSku => 'رقم المنتج';
