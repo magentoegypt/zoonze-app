@@ -4,6 +4,7 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/error/graphql_failure_mapper.dart';
 import '../../../core/graphql/graphql_client.dart';
+import '../../../core/store/store_controller.dart';
 import '../../../core/util/media.dart';
 import '../../catalog/data/product_mapper.dart';
 import '../domain/customer_address.dart';
@@ -292,6 +293,15 @@ class OrdersController extends AutoDisposeNotifier<OrdersState> {
 
   @override
   OrdersState build() {
+    // Re-fetch against the new store view when the language/store switches (the
+    // GraphQL cache is reset on switch); otherwise the list keeps the previous
+    // store view's data or goes empty. Mirrors CartController's store listener.
+    ref.listen<String>(
+      storeControllerProvider.select((s) => s.activeStoreCode),
+      (prev, next) {
+        if (prev != null && prev != next) Future.microtask(_loadFirst);
+      },
+    );
     Future.microtask(_loadFirst);
     return const OrdersState();
   }

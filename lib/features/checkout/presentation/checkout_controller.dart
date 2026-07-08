@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/failure.dart';
+import '../../../core/store/store_controller.dart';
 import '../../../core/validation/phone.dart';
 import '../../cart/presentation/cart_controller.dart';
 import '../../catalog/domain/money.dart';
@@ -94,7 +95,20 @@ class CheckoutState {
 /// Drives the sequential checkout mutations against the active cart.
 class CheckoutController extends Notifier<CheckoutState> {
   @override
-  CheckoutState build() => const CheckoutState();
+  CheckoutState build() {
+    // A language/store switch re-evaluates the cart against the new store view
+    // and resets the GraphQL cache. The shipping/payment method titles + totals
+    // held here are store- and locale-specific, so clear them; the user re-runs
+    // the steps (address → shipping → payment) in the new language. Without this
+    // the checkout kept the previous language's method labels + a stale total.
+    ref.listen<String>(
+      storeControllerProvider.select((s) => s.activeStoreCode),
+      (prev, next) {
+        if (prev != null && prev != next) state = const CheckoutState();
+      },
+    );
+    return const CheckoutState();
+  }
 
   /// Clears all checkout progress back to a clean slate. This controller is a
   /// session-wide singleton, so the checkout screen calls this on entry —
