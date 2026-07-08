@@ -19,6 +19,24 @@ class RegionOption {
 /// address `country_code` both derive from this.
 const String addressCountryCode = 'AE';
 
+/// The seven UAE emirates as Magento system regions, with the live `region_id`s
+/// (1148–1154) confirmed against zoonze.com. Used as a fallback when the live
+/// `country(id:"AE")` query fails or returns empty, so the emirate picker always
+/// offers a valid `region_id`. Magento rejects an AE address that carries
+/// neither `region_id` nor a resolvable `region` ("Region is required."), which
+/// otherwise blocks (guest) checkout at the "Continue" step. Order matches the
+/// live query (alphabetical by name); Arabic labels come from the live query
+/// when it succeeds — this English fallback only appears if that call fails.
+const List<RegionOption> uaeFallbackRegions = [
+  RegionOption(id: 1148, code: 'AZ', name: 'Abu Dhabi'),
+  RegionOption(id: 1151, code: 'AJ', name: 'Ajman'),
+  RegionOption(id: 1149, code: 'DU', name: 'Dubai'),
+  RegionOption(id: 1154, code: 'FU', name: 'Fujairah'),
+  RegionOption(id: 1153, code: 'RK', name: 'Ras Al Khaimah'),
+  RegionOption(id: 1150, code: 'SH', name: 'Sharjah'),
+  RegionOption(id: 1152, code: 'UQ', name: 'Umm Al Quwain'),
+];
+
 /// Fetches a country's system regions from the live schema
 /// (`country(id:){ available_regions }`). Cross-cutting (checkout + account),
 /// so it lives in core rather than a single feature.
@@ -37,29 +55,40 @@ query CountryRegions($id: String!) {
 ''';
 
   Future<List<RegionOption>> fetchRegions(String countryCode) async {
-    final result = await _client.query(
-      QueryOptions(
-        document: gql(_query),
-        variables: {'id': countryCode},
-        // Region lists are effectively static — cache across the session.
-        fetchPolicy: FetchPolicy.cacheFirst,
-      ),
-    );
-    if (result.hasException) throw mapOperationException(result.exception!);
-    final regions =
-        (result.data?['country'] as Map<String, dynamic>?)?['available_regions']
-            as List<dynamic>?;
-    return (regions ?? const [])
-        .whereType<Map<String, dynamic>>()
-        .where((r) => r['id'] != null)
-        .map(
-          (r) => RegionOption(
-            id: (r['id'] as num).toInt(),
-            code: (r['code'] as String?) ?? '',
-            name: (r['name'] as String?) ?? '',
-          ),
-        )
-        .toList();
+    try {
+      final result = await _client.query(
+        QueryOptions(
+          document: gql(_query),
+          variables: {'id': countryCode},
+          // Region lists are effectively static — cache across the session.
+          fetchPolicy: FetchPolicy.cacheFirst,
+        ),
+      );
+      if (result.hasException) throw mapOperationException(result.exception!);
+      final regions =
+          (result.data?['country']
+                  as Map<String, dynamic>?)?['available_regions']
+              as List<dynamic>?;
+      final parsed = (regions ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .where((r) => r['id'] != null)
+          .map(
+            (r) => RegionOption(
+              id: (r['id'] as num).toInt(),
+              code: (r['code'] as String?) ?? '',
+              name: (r['name'] as String?) ?? '',
+            ),
+          )
+          .toList();
+      if (parsed.isNotEmpty) return parsed;
+      // Server returned no regions — fall through to the static fallback so an
+      // AE address can still carry a valid region_id.
+    } on Object {
+      // Live fetch failed (network / WAF-HTML / parse). For AE we still have a
+      // known-good region set, so degrade to it rather than blocking checkout.
+    }
+    if (countryCode == addressCountryCode) return uaeFallbackRegions;
+    return const [];
   }
 }
 
