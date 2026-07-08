@@ -44,18 +44,38 @@ between the Figma source of truth and the Flutter implementation in this repo.
 > page's footer has a **32 px top gap** separating it from the page content (a
 > transparent spacer on Home; bottom-block offset on the other screens).
 
-The canvas holds **27 screens** organized into four labelled sections (Figma
+> **Phone-OTP verification screens — 2026-07-08.** The live site added phone-OTP
+> across authentication (`MagentoEgypt_OtpVerification`) and guest checkout; the Figma
+> now mirrors it (EN + AR). **Sign In** gains an `Email | Phone Number` pill tab bar,
+> plus two state frames — **Sign In · Phone** (country-code `🇦🇪 +971` field → **Get
+> OTP**) and **Sign In · Verify Code** (6-digit boxes → **Verify & Sign In**, Resend).
+> **Registration** gains an inline **Mobile Number** field verified via **WhatsApp**
+> ("Send WhatsApp code", green `#25d366`), with an expanded **Sign Up · Verify Phone**
+> state (6 boxes → Verify). **Forgot Password** gains the same `Email | Phone` tabs plus
+> **Forgot Password · Phone** (Get OTP) and **Forgot Password · Reset** (code + New /
+> Confirm password → Reset Password). **Checkout** gains a guest variant **Checkout ·
+> Guest Verify** — a *Verify Mobile Number* card (6 boxes → Verify) sitting directly
+> under the Delivery Address, verifying the **address phone** before Place Order (no
+> separate mobile field). The 6-digit boxes stay LTR even in Arabic. These map 1:1 to
+> the 8 OTP GraphQL mutations — login / registration / password-reset keyed by `phone`,
+> guest-checkout keyed by `cartId`, all anonymous (`OtpResult` / `OtpLoginResult`).
+> **+6 screens per language.**
+
+The canvas holds **33 screens** organized into four labelled sections (Figma
 *Sections*), stacked top-to-bottom in app-flow order:
 
 | # | Section | Screens |
 |---|---------|---------|
-| 01 | Splash & Authentication | Splash — Launch, Splash — Welcome, Sign In, Sign Up, Forgot Password |
+| 01 | Splash & Authentication | Splash — Launch, Splash — Welcome, Sign In, **Sign In · Phone**, **Sign In · Verify Code**, Sign Up, **Sign Up · Verify Phone**, Forgot Password, **Forgot Password · Phone**, **Forgot Password · Reset** |
 | 02 | Home & Discovery | Home (UAE / EN), Menu Drawer (side nav), Categories, Search, Search Results, Filters (Sheet), PLP — Fragrance |
-| 03 | Product · Wishlist · Cart | PDP (Coco Mademoiselle), Wishlist, Cart, Cart — Empty, Checkout, Order Success, Our Brands (Explore Brands) |
+| 03 | Product · Wishlist · Cart | PDP (Coco Mademoiselle), Wishlist, Cart, Cart — Empty, Checkout, **Checkout · Guest Verify**, Order Success, Our Brands (Explore Brands) |
 | 04 | Orders & Account | My Orders, Order Tracking, My Account, Saved Addresses, Add Address, Notifications, Help & FAQ, Edit Profile |
 
-Sign-up collects **name, email, password only** — no mobile number and no SMS/OTP
-verification step. Account details and preferences are edited on the **Edit Profile**
+Registration now collects **name, email, password + a mobile number**, and the mobile
+is **WhatsApp-OTP verified** before the account is created (Create Account stays
+disabled until verified). Login and password-reset each offer a **phone-OTP** path
+alongside email, and **guest checkout** verifies the delivery-address phone by OTP
+before Place Order. Account details and preferences are edited on the **Edit Profile**
 screen (reachable from My Account).
 
 All device frames are **390 px** wide (iPhone logical width). Every screen exists
@@ -63,7 +83,7 @@ in two variants — **English / LTR** and a full **Arabic / RTL** mirror — lai
 as two parallel, banner-labelled column groups on the canvas: **EN · English (LTR)**
 on the left and **AR · العربية (RTL)** on the right, with each language's sections
 suffixed `(EN / LTR)` / `(AR / RTL)` and aligned row-by-row for side-by-side
-comparison. That's **27 screens × 2 = 54 frames**.
+comparison. That's **33 screens × 2 = 66 frames**.
 
 ### Arabic / RTL
 
