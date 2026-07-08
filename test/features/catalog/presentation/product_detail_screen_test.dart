@@ -85,7 +85,7 @@ void main() {
     await tester.pumpWidget(_harness('en'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Customer Reviews'));
+    await tester.tap(find.text('Reviews'));
     await tester.pumpAndSettle();
 
     expect(find.text('No reviews yet'), findsOneWidget);
