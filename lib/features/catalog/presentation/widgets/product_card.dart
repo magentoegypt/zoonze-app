@@ -17,10 +17,19 @@ import 'price_view.dart';
 /// to a neutral placeholder and the merchandising badge only shows when the
 /// catalogue actually flags it (no fabricated imagery or badges).
 class ProductCard extends ConsumerStatefulWidget {
-  const ProductCard({super.key, required this.product, this.onTap});
+  const ProductCard({
+    super.key,
+    required this.product,
+    this.onTap,
+    this.onAddedToCart,
+  });
 
   final Product product;
   final VoidCallback? onTap;
+
+  /// Called after the product is successfully added to the cart (e.g. the
+  /// wishlist removes the item on add).
+  final VoidCallback? onAddedToCart;
 
   @override
   ConsumerState<ProductCard> createState() => _ProductCardState();
@@ -171,6 +180,7 @@ class _ProductCardState extends ConsumerState<ProductCard> {
           .read(cartControllerProvider.notifier)
           .addToCart(sku: product.sku);
       if (!mounted) return;
+      widget.onAddedToCart?.call();
       messenger.showSnackBar(
         SnackBar(
           content: Text(l10n.cartAdded),

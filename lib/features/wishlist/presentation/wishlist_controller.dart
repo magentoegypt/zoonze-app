@@ -76,6 +76,27 @@ class WishlistController extends Notifier<WishlistState> {
 
   Future<void> refresh() => _load();
 
+  /// Removes several products by sku in one round-trip — e.g. after they were
+  /// added to the cart, so bought items leave the wishlist. No-op for skus not
+  /// currently saved.
+  Future<void> removeSkus(List<String> skus) async {
+    if (skus.isEmpty || !_isAuthed) return;
+    final wishlistId = state.id;
+    if (wishlistId == null) return;
+    final itemIds = <String>[];
+    for (final sku in skus) {
+      final id = state.itemIdForSku(sku);
+      if (id != null) itemIds.add(id);
+    }
+    if (itemIds.isEmpty) return;
+    try {
+      final data = await _repo.removeItems(wishlistId, itemIds);
+      state = WishlistState(id: data.id, entries: data.entries);
+    } catch (error) {
+      state = state.copyWith(error: error);
+    }
+  }
+
   /// Adds or removes [sku]. Returns false when the user must sign in first.
   Future<bool> toggle(String sku) async {
     if (!_isAuthed) return false;

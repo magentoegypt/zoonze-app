@@ -160,6 +160,40 @@ class CartController extends Notifier<CartState> {
     }
   }
 
+  /// Batch add (one round-trip) — used by the wishlist "Add all to Bag" so it's
+  /// no longer N sequential requests. Best-effort: items the server can't add
+  /// (configurables needing options) are skipped, not fatal.
+  Future<void> addManyToCart(List<String> skus) async {
+    if (skus.isEmpty) return;
+    state = state.copyWith(isMutating: true, error: null);
+    final items = <Map<String, dynamic>>[
+      for (final sku in skus) <String, dynamic>{'sku': sku, 'quantity': 1},
+    ];
+    try {
+      final hadCachedId = _cartId != null;
+      Cart cart;
+      try {
+        cart = await _repo.addProducts(
+          await _ensureCartId(),
+          items,
+          throwOnUserError: false,
+        );
+      } catch (error) {
+        if (!hadCachedId) rethrow;
+        await _resetCart();
+        cart = await _repo.addProducts(
+          await _ensureCartId(),
+          items,
+          throwOnUserError: false,
+        );
+      }
+      state = state.copyWith(cart: cart, isMutating: false);
+    } catch (error) {
+      state = state.copyWith(isMutating: false, error: error);
+      rethrow;
+    }
+  }
+
   /// The order consumed the cart server-side — reset to an empty cart so it
   /// reads empty and the next add creates a fresh one.
   Future<void> clearAfterOrder() async {

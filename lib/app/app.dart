@@ -6,6 +6,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/notifications/notification_service.dart';
 import '../core/store/store_controller.dart';
+import '../features/auth/presentation/auth_controller.dart';
+import '../features/cart/presentation/cart_controller.dart';
+import '../features/wishlist/presentation/wishlist_controller.dart';
 import '../l10n/l10n.dart';
 import 'notification_routes.dart';
 import 'router.dart';
@@ -22,12 +25,14 @@ class ZoonzeApp extends ConsumerStatefulWidget {
   ConsumerState<ZoonzeApp> createState() => _ZoonzeAppState();
 }
 
-class _ZoonzeAppState extends ConsumerState<ZoonzeApp> {
+class _ZoonzeAppState extends ConsumerState<ZoonzeApp>
+    with WidgetsBindingObserver {
   StreamSubscription<Map<String, dynamic>>? _openedSub;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _openedSub = NotificationService.instance.onNotificationOpened.listen(
       _handleNotification,
     );
@@ -38,6 +43,18 @@ class _ZoonzeAppState extends ConsumerState<ZoonzeApp> {
     });
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Real-time sync: on returning to the app, pull the server cart (and, when
+    // signed in, the wishlist) so changes made on the website appear.
+    if (state == AppLifecycleState.resumed) {
+      ref.read(cartControllerProvider.notifier).refresh();
+      if (ref.read(authControllerProvider).isAuthenticated) {
+        ref.read(wishlistControllerProvider.notifier).refresh();
+      }
+    }
+  }
+
   void _handleNotification(Map<String, dynamic> data) {
     final route = notificationRoute(data);
     if (route != null) ref.read(routerProvider).go(route);
@@ -45,6 +62,7 @@ class _ZoonzeAppState extends ConsumerState<ZoonzeApp> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _openedSub?.cancel();
     super.dispose();
   }

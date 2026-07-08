@@ -104,20 +104,20 @@ class FakeCartRepository implements CartRepository {
   @override
   Future<Cart> addProducts(
     String cartId,
-    List<Map<String, dynamic>> items,
-  ) async {
-    final sku = items.first['sku'] as String;
-    final qty = (items.first['quantity'] as int?) ?? 1;
+    List<Map<String, dynamic>> items, {
+    bool throwOnUserError = true,
+  }) async {
     _cart = Cart(
       id: cartId,
       items: [
-        CartItem(
-          uid: 'i-$sku',
-          sku: sku,
-          name: sku,
-          quantity: qty,
-          rowTotal: const Money(amount: 100, currency: 'AED'),
-        ),
+        for (final item in items)
+          CartItem(
+            uid: 'i-${item['sku']}',
+            sku: item['sku'] as String,
+            name: item['sku'] as String,
+            quantity: (item['quantity'] as int?) ?? 1,
+            rowTotal: const Money(amount: 100, currency: 'AED'),
+          ),
       ],
     );
     return _cart;
@@ -322,6 +322,18 @@ class FakeWishlistRepository implements WishlistRepository {
     _data = WishlistData(
       id: wishlistId,
       entries: _data.entries.where((e) => e.id != itemId).toList(),
+    );
+    return _data;
+  }
+
+  @override
+  Future<WishlistData> removeItems(
+    String wishlistId,
+    List<String> itemIds,
+  ) async {
+    _data = WishlistData(
+      id: wishlistId,
+      entries: _data.entries.where((e) => !itemIds.contains(e.id)).toList(),
     );
     return _data;
   }

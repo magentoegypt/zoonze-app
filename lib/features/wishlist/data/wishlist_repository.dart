@@ -48,10 +48,17 @@ class WishlistRepository {
     return _parse(result?['wishlist'] as Map<String, dynamic>?);
   }
 
-  Future<WishlistData> removeItem(String wishlistId, String itemId) async {
+  Future<WishlistData> removeItem(String wishlistId, String itemId) =>
+      removeItems(wishlistId, [itemId]);
+
+  /// Removes several items in one round-trip (the mutation already takes a list).
+  Future<WishlistData> removeItems(
+    String wishlistId,
+    List<String> itemIds,
+  ) async {
     final data = await _run(WishlistQueries.removeFromWishlist, {
       'wishlistId': wishlistId,
-      'itemIds': [itemId],
+      'itemIds': itemIds,
     }, mutation: true);
     final result = data['removeProductsFromWishlist'] as Map<String, dynamic>?;
     return _parse(result?['wishlist'] as Map<String, dynamic>?);

@@ -13,11 +13,29 @@ import '../../../catalog/presentation/widgets/product_card.dart';
 import '../../domain/wishlist_entry.dart';
 import '../wishlist_controller.dart';
 
-class WishlistScreen extends ConsumerWidget {
+class WishlistScreen extends ConsumerStatefulWidget {
   const WishlistScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<WishlistScreen> createState() => _WishlistScreenState();
+}
+
+class _WishlistScreenState extends ConsumerState<WishlistScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Real-time sync: refetch on tab entry so a wishlist change made on the
+    // website (same account) shows without a relogin.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (ref.read(authControllerProvider).isAuthenticated) {
+        ref.read(wishlistControllerProvider.notifier).refresh();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final auth = ref.watch(authControllerProvider);
     final state = ref.watch(wishlistControllerProvider);
@@ -62,7 +80,7 @@ class WishlistScreen extends ConsumerWidget {
                   child: FilledButton.icon(
                     onPressed: state.isLoading
                         ? null
-                        : () => _addAll(context, ref, state.entries, l10n),
+                        : () => _addAll(state.entries, l10n),
                     icon: const Icon(Icons.shopping_bag_outlined, size: 18),
                     label: Text(l10n.wishlistAddAll),
                   ),
@@ -86,6 +104,10 @@ class WishlistScreen extends ConsumerWidget {
               return ProductCard(
                 product: product,
                 onTap: () => context.push(AppRoutes.product(product.urlKey)),
+                // Added to the bag → drop it from the wishlist (QA).
+                onAddedToCart: () => ref
+                    .read(wishlistControllerProvider.notifier)
+                    .removeSkus([product.sku]),
               );
             },
           ),
@@ -101,25 +123,33 @@ class WishlistScreen extends ConsumerWidget {
     );
   }
 
-  /// Best-effort "Add all to Bag": adds each saved product to the cart. Items
-  /// that need an option choice (configurables) are skipped silently.
+  /// "Add all to Bag": one batched add (was N sequential requests — very slow),
+  /// then drop from the wishlist the items that actually landed in the cart.
+  /// Configurables needing option selection stay in the wishlist.
   Future<void> _addAll(
-    BuildContext context,
-    WidgetRef ref,
     List<WishlistEntry> entries,
     AppLocalizations l10n,
   ) async {
     final messenger = ScaffoldMessenger.of(context);
     final cart = ref.read(cartControllerProvider.notifier);
-    for (final entry in entries) {
-      try {
-        await cart.addToCart(sku: entry.product.sku);
-      } catch (_) {
-        // Skip items that require selecting options before adding.
+    final wishlist = ref.read(wishlistControllerProvider.notifier);
+    final skus = [for (final e in entries) e.product.sku];
+    try {
+      await cart.addManyToCart(skus);
+      final inCart = ref
+          .read(cartControllerProvider)
+          .cart
+          .items
+          .map((i) => i.sku)
+          .toSet();
+      await wishlist.removeSkus(skus.where(inCart.contains).toList());
+      if (mounted) {
+        messenger.showSnackBar(SnackBar(content: Text(l10n.cartAdded)));
       }
-    }
-    if (context.mounted) {
-      messenger.showSnackBar(SnackBar(content: Text(l10n.cartAdded)));
+    } catch (_) {
+      if (mounted) {
+        messenger.showSnackBar(SnackBar(content: Text(l10n.errorGeneric)));
+      }
     }
   }
 }

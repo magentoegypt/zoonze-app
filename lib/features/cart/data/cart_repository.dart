@@ -51,15 +51,19 @@ class CartRepository {
 
   Future<Cart> addProducts(
     String cartId,
-    List<Map<String, dynamic>> items,
-  ) async {
+    List<Map<String, dynamic>> items, {
+    // Batch adds (e.g. wishlist "Add all") pass false so one unaddable item
+    // (a configurable needing options) doesn't fail the whole batch — the
+    // server still adds the valid items and returns the rest as user_errors.
+    bool throwOnUserError = true,
+  }) async {
     final data = await _run(CartQueries.addProducts, {
       'cartId': cartId,
       'items': items,
     }, mutation: true);
     final result = data['addProductsToCart'] as Map<String, dynamic>?;
     final errors = result?['user_errors'] as List<dynamic>?;
-    if (errors != null && errors.isNotEmpty) {
+    if (throwOnUserError && errors != null && errors.isNotEmpty) {
       final message = (errors.first as Map)['message'] as String?;
       throw Failure(FailureKind.server, detail: message);
     }

@@ -26,6 +26,16 @@ class _CartScreenState extends ConsumerState<CartScreen> {
   final TextEditingController _coupon = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    // Real-time sync: refetch the (customer) cart on tab entry so an add/remove
+    // done on the website (same account) shows without a relogin.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) ref.read(cartControllerProvider.notifier).refresh();
+    });
+  }
+
+  @override
   void dispose() {
     _coupon.dispose();
     super.dispose();
