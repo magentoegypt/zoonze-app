@@ -335,13 +335,13 @@ abstract class AppLocalizations {
   /// No description provided for @welcomeHeadline.
   ///
   /// In en, this message translates to:
-  /// **'Beauty & fragrance, delivered across the UAE'**
+  /// **'Beauty, delivered in hours'**
   String get welcomeHeadline;
 
   /// No description provided for @welcomeSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Authentic brands, curated for you'**
+  /// **'Shop authentic fragrance & beauty with free 3-hour delivery across Dubai, Sharjah & Ajman'**
   String get welcomeSubtitle;
 
   /// No description provided for @homeShopByCategory.
@@ -665,8 +665,14 @@ abstract class AppLocalizations {
   /// No description provided for @searchHint.
   ///
   /// In en, this message translates to:
-  /// **'Search for products'**
+  /// **'Search for products…'**
   String get searchHint;
+
+  /// No description provided for @searchHintExpanded.
+  ///
+  /// In en, this message translates to:
+  /// **'Search for products, brands…'**
+  String get searchHintExpanded;
 
   /// No description provided for @comingSoon.
   ///

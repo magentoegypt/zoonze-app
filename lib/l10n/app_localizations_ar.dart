@@ -128,10 +128,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get welcomeContinueGuest => 'المتابعة كزائر';
 
   @override
-  String get welcomeHeadline => 'الجمال والعطور، توصيل في جميع أنحاء الإمارات';
+  String get welcomeHeadline => 'الجمال يصلك خلال ساعات';
 
   @override
-  String get welcomeSubtitle => 'علامات أصلية، مختارة لك';
+  String get welcomeSubtitle =>
+      'تسوّق العطور ومنتجات الجمال الأصلية مع توصيل مجاني خلال 3 ساعات في دبي والشارقة وعجمان';
 
   @override
   String get homeShopByCategory => 'تسوّق حسب الفئة';
@@ -146,7 +147,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeBestsellers => 'الأكثر مبيعًا';
 
   @override
-  String get homeExploreBrands => 'استكشف علاماتنا';
+  String get homeExploreBrands => 'استكشف ماركاتنا';
 
   @override
   String get homeSeeAll => 'عرض الكل';
@@ -304,7 +305,10 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get searchHint => 'ابحث عن المنتجات';
+  String get searchHint => 'ابحث في المتجر كامل هنا…';
+
+  @override
+  String get searchHintExpanded => 'ابحث عن المنتجات والعلامات…';
 
   @override
   String get comingSoon => 'قريبًا';
@@ -738,7 +742,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get cartTitle => 'السلة';
 
   @override
-  String get cartHeading => 'سلّتي';
+  String get cartHeading => 'سلتي';
 
   @override
   String cartItemCount(int count) {
@@ -760,7 +764,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get cartEmptyBody =>
-      'يبدو أنك لم تُضِف أي شيء بعد. تصفّح الأكثر مبيعاً واعثر على عطرك المميّز.';
+      'يبدو أنك لم تُضف شيئًا بعد. استكشف الأكثر مبيعًا واعثر على عطرك المميّز.';
 
   @override
   String get cartContinueShopping => 'متابعة التسوّق';
@@ -788,7 +792,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get cartDiscount => 'الخصم';
 
   @override
-  String get cartDelivery => 'التوصيل (خلال ٣ ساعات)';
+  String get cartDelivery => 'التوصيل (3 ساعات)';
 
   @override
   String get cartDeliveryFree => 'مجاني';
@@ -798,11 +802,11 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get cartFreeDeliveryUnlocked =>
-      'لقد حصلت على توصيل مجاني خلال ٣ ساعات!';
+      'لقد حصلت على توصيل مجاني خلال 3 ساعات!';
 
   @override
   String cartFreeDeliveryRemaining(String amount) {
-    return 'أضف $amount للحصول على توصيل مجاني خلال ٣ ساعات';
+    return 'أضف $amount للحصول على توصيل مجاني خلال 3 ساعات';
   }
 
   @override
@@ -812,14 +816,14 @@ class AppLocalizationsAr extends AppLocalizations {
   String get cartCheckout => 'إتمام الشراء';
 
   @override
-  String get cartCouponHint => 'بطاقة هدية أو رمز خصم';
+  String get cartCouponHint => 'رمز هدية أو خصم';
 
   @override
   String get cartApply => 'تطبيق';
 
   @override
   String cartCouponApplied(String code) {
-    return '$code مُطبّق';
+    return 'تم تطبيق $code';
   }
 
   @override
@@ -829,7 +833,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get cartCouponError => 'هذا الرمز غير صالح.';
 
   @override
-  String get wishlistHeading => 'قائمة مفضلتي';
+  String get wishlistHeading => 'مفضّلتي';
 
   @override
   String wishlistSavedCount(int count) {
@@ -1050,11 +1054,11 @@ class AppLocalizationsAr extends AppLocalizations {
   String get addressHintStreet => 'شارع 9';
 
   @override
-  String get contactInformation => 'معلومات الاتصال';
+  String get contactInformation => 'معلومات التواصل';
 
   @override
   String get checkoutEmailHelp =>
-      'سيتم إرسال تحديثات الطلب إلى هذا البريد الإلكتروني.';
+      'مسجّل الدخول — ستُرسل تحديثات الطلب إلى هذا البريد';
 
   @override
   String get checkoutDeliveryAddress => 'عنوان التوصيل';
@@ -1145,10 +1149,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get reviewSubmitted => 'شكرًا لك! مراجعتك قيد المراجعة.';
 
   @override
-  String get checkoutTitle => 'إتمام الشراء';
+  String get checkoutTitle => 'إتمام الطلب';
 
   @override
-  String get checkoutContact => 'معلومات الاتصال';
+  String get checkoutContact => 'معلومات التواصل';
 
   @override
   String get checkoutShippingAddress => 'عنوان الشحن';

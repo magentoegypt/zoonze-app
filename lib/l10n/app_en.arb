@@ -45,8 +45,8 @@
   "welcomeGetStarted": "Get Started",
   "welcomeSignIn": "Sign In",
   "welcomeContinueGuest": "Continue as guest",
-  "welcomeHeadline": "Beauty & fragrance, delivered across the UAE",
-  "welcomeSubtitle": "Authentic brands, curated for you",
+  "welcomeHeadline": "Beauty, delivered in hours",
+  "welcomeSubtitle": "Shop authentic fragrance & beauty with free 3-hour delivery across Dubai, Sharjah & Ajman",
 
   "homeShopByCategory": "Shop by category",
   "homeFeatured": "Featured",
@@ -120,7 +120,8 @@
     "placeholders": { "query": { "type": "String" } }
   },
 
-  "searchHint": "Search for products",
+  "searchHint": "Search for products…",
+  "searchHintExpanded": "Search for products, brands…",
   "comingSoon": "Coming soon",
   "comingSoonBody": "This section arrives in a later phase.",
 

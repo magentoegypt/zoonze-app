@@ -130,10 +130,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get welcomeContinueGuest => 'Continue as guest';
 
   @override
-  String get welcomeHeadline => 'Beauty & fragrance, delivered across the UAE';
+  String get welcomeHeadline => 'Beauty, delivered in hours';
 
   @override
-  String get welcomeSubtitle => 'Authentic brands, curated for you';
+  String get welcomeSubtitle =>
+      'Shop authentic fragrance & beauty with free 3-hour delivery across Dubai, Sharjah & Ajman';
 
   @override
   String get homeShopByCategory => 'Shop by category';
@@ -306,7 +307,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get searchHint => 'Search for products';
+  String get searchHint => 'Search for products…';
+
+  @override
+  String get searchHintExpanded => 'Search for products, brands…';
 
   @override
   String get comingSoon => 'Coming soon';
