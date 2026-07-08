@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:ui' as ui;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +19,7 @@ import '../../../../core/widgets/shimmer.dart';
 import '../../../notifications/presentation/notification_bell.dart';
 import '../../../../l10n/l10n.dart';
 import '../../data/brands_provider.dart';
+import '../../data/catalog_repository.dart';
 import '../../data/hero_slides_provider.dart';
 import '../../data/special_offer_provider.dart';
 import '../../domain/brand.dart';
@@ -331,7 +331,6 @@ class _HeroBannerView extends StatelessWidget {
     required this.ctaLabel,
     required this.onCta,
     required this.imageProvider,
-    this.showPlay = false,
     this.videoUrl,
     this.isActive = true,
     this.onVideoCompleted,
@@ -343,7 +342,6 @@ class _HeroBannerView extends StatelessWidget {
   final String ctaLabel;
   final VoidCallback onCta;
   final ImageProvider imageProvider;
-  final bool showPlay;
 
   /// When set, the video fills the whole banner (poster = [imageProvider])
   /// instead of showing a static play badge in the circle.
@@ -364,9 +362,9 @@ class _HeroBannerView extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.hardEdge,
         children: [
-          if (hasVideo) ...[
-            // Video slide: the video fills the whole banner (poster =
-            // imageProvider until it's ready), not just a circle.
+          // Background media fills the whole banner (BoxFit.cover), matching
+          // the website: a video when the slide has one, otherwise the image.
+          if (hasVideo)
             Positioned.fill(
               child: _HeroVideo(
                 url: videoUrl!,
@@ -374,39 +372,33 @@ class _HeroBannerView extends StatelessWidget {
                 isActive: isActive,
                 onCompleted: onVideoCompleted,
               ),
-            ),
-            // Beige→transparent scrim on the start side so the overlaid text
-            // stays readable over the video.
+            )
+          else
             Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: rtl ? Alignment.centerRight : Alignment.centerLeft,
-                    end: rtl ? Alignment.centerLeft : Alignment.centerRight,
-                    colors: [
-                      _kHeroBg,
-                      _kHeroBg.withValues(alpha: 0.55),
-                      _kHeroBg.withValues(alpha: 0.0),
-                    ],
-                    stops: const [0.0, 0.5, 0.85],
-                  ),
+              child: Image(
+                image: imageProvider,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const ColoredBox(color: _kHeroBg),
+              ),
+            ),
+          // Beige→transparent scrim on the start side so the overlaid text
+          // stays readable over the media (image or video).
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: rtl ? Alignment.centerRight : Alignment.centerLeft,
+                  end: rtl ? Alignment.centerLeft : Alignment.centerRight,
+                  colors: [
+                    _kHeroBg,
+                    _kHeroBg.withValues(alpha: 0.55),
+                    _kHeroBg.withValues(alpha: 0.0),
+                  ],
+                  stops: const [0.0, 0.5, 0.85],
                 ),
               ),
             ),
-          ] else
-            // Image slide: layered product circles (Figma) — a big blurred
-            // circle behind a smaller sharp one, bleeding off the end edge.
-            PositionedDirectional(
-              top: 0,
-              bottom: 0,
-              end: -40,
-              child: Center(
-                child: _HeroImageGroup(
-                  provider: imageProvider,
-                  showPlay: showPlay,
-                ),
-              ),
-            ),
+          ),
           // Text block on the start side.
           PositionedDirectional(
             start: 48,
@@ -477,79 +469,6 @@ class _HeroBannerView extends StatelessWidget {
                     ),
                   ],
                 ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Two overlapping product circles (Figma node 3:2): a big **blurred** circle
-/// behind a smaller **sharp** one, both fed from the same image. An optional
-/// play badge marks a video slide.
-class _HeroImageGroup extends StatelessWidget {
-  const _HeroImageGroup({required this.provider, this.showPlay = false});
-  final ImageProvider provider;
-  final bool showPlay;
-
-  Widget _image() => Image(
-    image: provider,
-    fit: BoxFit.cover,
-    errorBuilder: (_, __, ___) => Container(color: Colors.white),
-  );
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 220,
-      height: 220,
-      child: Stack(
-        children: [
-          // Big softly-blurred circle (back) — fills most of the area.
-          Positioned(
-            left: 6,
-            top: 8,
-            child: ClipOval(
-              child: SizedBox(
-                width: 196,
-                height: 196,
-                child: ImageFiltered(
-                  imageFilter: ui.ImageFilter.blur(sigmaX: 2.5, sigmaY: 2.5),
-                  child: _image(),
-                ),
-              ),
-            ),
-          ),
-          // Small sharp circle (front) — overlaps the big one's lower-end side.
-          Positioned(
-            right: 0,
-            bottom: 16,
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: _kHeroBg, width: 3),
-              ),
-              child: ClipOval(
-                child: SizedBox(
-                  width: 132,
-                  height: 132,
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      _image(),
-                      if (showPlay)
-                        const Center(
-                          child: Icon(
-                            Icons.play_circle_fill,
-                            color: Colors.white,
-                            size: 36,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
               ),
             ),
           ),
@@ -776,11 +695,16 @@ class _HeroSlideCard extends ConsumerWidget {
   /// Called when this slide's video finishes, so the carousel can advance.
   final VoidCallback? onVideoCompleted;
 
-  /// Route the CTA inside the app wherever possible: a Magento category URL →
-  /// PLP; any other store-domain URL → the in-app PDP by url_key. Only genuinely
-  /// external (non-store) links fall out to the browser — QA saw "Shop Now"
-  /// leaving the app for a product page that should have opened in the PDP.
-  void _onCta(BuildContext context, WidgetRef ref) {
+  /// Route the CTA inside the app wherever possible. An explicit
+  /// `/catalog/category/view/id/N/` URL maps straight to the PLP; any other
+  /// storefront URL (a friendly `.html` category or product) is resolved via
+  /// Magento's `urlResolver` so a CATEGORY opens the PLP and a PRODUCT the PDP.
+  /// Only genuinely external (non-store) links fall out to the browser.
+  ///
+  /// QA hit "Shop Now" landing on an empty page: the friendly category URLs
+  /// (`fragrance/for-her.html`) were being mistaken for a product url_key and
+  /// opened a non-existent PDP. Resolving the URL fixes the target.
+  Future<void> _onCta(BuildContext context, WidgetRef ref) async {
     final url = slide.ctaUrl;
     if (url.isEmpty) return;
     final uid = categoryUidFromUrl(url);
@@ -789,10 +713,17 @@ class _HeroSlideCard extends ConsumerWidget {
       return;
     }
     if (_isInternalStoreUrl(ref, url)) {
-      final key = productUrlKeyFromStoreUrl(url);
-      if (key != null) {
-        context.push(AppRoutes.product(key));
-        return;
+      final resolved = await ref.read(catalogRepositoryProvider).resolveUrl(url);
+      if (!context.mounted) return;
+      if (resolved != null) {
+        if (resolved.type == 'CATEGORY' && resolved.uid.isNotEmpty) {
+          context.push(AppRoutes.category(resolved.uid), extra: slide.title);
+          return;
+        }
+        if (resolved.type == 'PRODUCT' && resolved.urlKey != null) {
+          context.push(AppRoutes.product(resolved.urlKey!));
+          return;
+        }
       }
     }
     launchExternalUri(Uri.parse(url));
@@ -810,7 +741,6 @@ class _HeroSlideCard extends ConsumerWidget {
       ctaLabel: slide.ctaLabel,
       onCta: () => _onCta(context, ref),
       imageProvider: provider,
-      showPlay: slide.hasVideo,
       videoUrl: slide.hasVideo ? slide.videoUrl : null,
       isActive: isActive,
       onVideoCompleted: onVideoCompleted,
@@ -938,13 +868,30 @@ class _HeroVideoState extends State<_HeroVideo> {
         ],
       );
     }
+    final size = controller.value.size;
+    // The clip has a 1–2px green seam baked into its very bottom edge (an
+    // Android video-decoder artifact — QA flagged it; it doesn't match the web).
+    // Crop a few source rows off the bottom with a ClipRect wrapped directly
+    // around the VideoPlayer (Stack/overlay clips don't reliably catch the
+    // Texture edge) before cover-fitting, so the seam never reaches the screen.
+    // Lossless: the clip carries a beige frame around its content.
+    const cropBottom = 8.0;
+    final heightFactor = size.height <= cropBottom
+        ? 1.0
+        : (size.height - cropBottom) / size.height;
     return FittedBox(
       fit: BoxFit.cover,
       clipBehavior: Clip.hardEdge,
-      child: SizedBox(
-        width: controller.value.size.width,
-        height: controller.value.size.height,
-        child: VideoPlayer(controller),
+      child: ClipRect(
+        child: Align(
+          alignment: Alignment.topCenter,
+          heightFactor: heightFactor,
+          child: SizedBox(
+            width: size.width,
+            height: size.height,
+            child: VideoPlayer(controller),
+          ),
+        ),
       ),
     );
   }

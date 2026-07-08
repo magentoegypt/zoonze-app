@@ -472,6 +472,11 @@ class FakeCatalogRepository implements CatalogRepository {
   Future<List<Category>> fetchCategoryTree() async => categories;
 
   @override
+  Future<({String type, String uid, String? urlKey})?> resolveUrl(
+    String storeUrl,
+  ) async => null;
+
+  @override
   Future<ProductPage> fetchProducts({
     String? search,
     String? categoryUid,

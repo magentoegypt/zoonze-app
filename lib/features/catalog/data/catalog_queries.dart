@@ -10,6 +10,18 @@
 /// lands, `dart run build_runner build` generates their typed Dart and this
 /// file is replaced by the generated documents. See `docs/decisions/codegen.md`.
 abstract final class CatalogQueries {
+  /// Resolves a store-relative URL (a friendly `.html` category/product path) to
+  /// its entity, so a hero CTA opens the right in-app screen instead of guessing.
+  static const String urlResolve = r'''
+query ResolveUrl($url: String!) {
+  urlResolver(url: $url) {
+    type
+    entity_uid
+    relative_url
+  }
+}
+''';
+
   /// Top-level category tree (menu / home "shop by category").
   static const String categoryTree = r'''
 query CategoryTree {

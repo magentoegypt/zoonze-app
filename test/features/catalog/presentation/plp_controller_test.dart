@@ -75,6 +75,11 @@ class _PagingRepo implements CatalogRepository {
   Future<List<Category>> fetchCategoryTree() async => kSampleCategories;
 
   @override
+  Future<({String type, String uid, String? urlKey})?> resolveUrl(
+    String storeUrl,
+  ) async => null;
+
+  @override
   Future<ProductDetail?> fetchProductDetail(String urlKey) async =>
       kSampleDetail;
 

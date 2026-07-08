@@ -40,6 +40,50 @@ class CatalogRepository {
     return source.where((c) => c.includeInMenu).toList(growable: false);
   }
 
+  /// Resolves a storefront URL (e.g. a hero CTA's friendly `.html` category or
+  /// product URL) to its entity via Magento's `urlResolver`, so the app opens
+  /// the right in-app screen instead of guessing from the path. `uid` is the
+  /// entity uid (used for a CATEGORY PLP); for a PRODUCT, `urlKey` carries the
+  /// PDP key. Null when it can't be resolved.
+  Future<({String type, String uid, String? urlKey})?> resolveUrl(
+    String storeUrl,
+  ) async {
+    final path = _storeRelativePath(storeUrl);
+    if (path.isEmpty) return null;
+    try {
+      final data = await _query(CatalogQueries.urlResolve, {'url': path});
+      final r = data['urlResolver'] as Map<String, dynamic>?;
+      if (r == null) return null;
+      final relative = (r['relative_url'] as String?) ?? path;
+      final segs = relative.split('/').where((s) => s.isNotEmpty).toList();
+      final last = segs.isEmpty ? '' : segs.last;
+      final urlKey = last.toLowerCase().endsWith('.html')
+          ? last.substring(0, last.length - 5)
+          : last;
+      return (
+        type: (r['type'] as String?) ?? '',
+        uid: (r['entity_uid'] as String?) ?? '',
+        urlKey: urlKey.isEmpty ? null : urlKey,
+      );
+    } on Object {
+      return null;
+    }
+  }
+
+  /// Strips the scheme/host and a leading store-code segment (e.g. `uae-en`,
+  /// `eg_ar`) from a storefront URL, leaving the store-relative path that
+  /// `urlResolver` expects (it's scoped by the active Store header).
+  String _storeRelativePath(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return '';
+    var segs = uri.pathSegments.where((s) => s.isNotEmpty).toList();
+    if (segs.isNotEmpty &&
+        RegExp(r'^[a-z]{2,4}[-_][a-z]{2}$').hasMatch(segs.first)) {
+      segs = segs.sublist(1);
+    }
+    return segs.join('/');
+  }
+
   Future<ProductPage> fetchProducts({
     String? search,
     String? categoryUid,
