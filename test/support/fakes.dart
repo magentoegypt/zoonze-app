@@ -196,6 +196,7 @@ class FakeCheckoutRepository implements CheckoutRepository {
     this.paymentSession,
     this.tabbyConfig,
     this.fail = false,
+    this.guestOtpVerifyFails = false,
   });
 
   final List<ShippingMethodOption> shippingMethods;
@@ -210,7 +211,10 @@ class FakeCheckoutRepository implements CheckoutRepository {
   /// Tabby config returned by [fetchTabbyConfig]; null mimics Tabby unconfigured.
   final TabbyConfig? tabbyConfig;
   final bool fail;
+  final bool guestOtpVerifyFails;
 
+  String? guestOtpCartId;
+  String? guestOtpCode;
   String? guestEmail;
   Map<String, dynamic>? lastAddress;
   String? selectedShippingMethod;
@@ -259,6 +263,24 @@ class FakeCheckoutRepository implements CheckoutRepository {
   Future<void> setPaymentMethod(String cartId, String code) async {
     if (fail) throw const Failure(FailureKind.unknown);
     selectedPaymentCode = code;
+  }
+
+  @override
+  Future<void> requestGuestCheckoutOtp(String cartId) async {
+    if (fail) throw const Failure(FailureKind.unknown);
+    guestOtpCartId = cartId;
+  }
+
+  @override
+  Future<void> verifyGuestCheckoutOtp(String cartId, String code) async {
+    if (guestOtpVerifyFails) {
+      throw const Failure(
+        FailureKind.server,
+        detail: 'The verification code is incorrect.',
+      );
+    }
+    guestOtpCartId = cartId;
+    guestOtpCode = code;
   }
 
   @override
@@ -342,11 +364,21 @@ class FakeWishlistRepository implements WishlistRepository {
 class FakeAuthRepository implements AuthRepository {
   FakeAuthRepository({
     this.loginFails = false,
+    this.otpLoginFails = false,
+    this.registrationOtpFails = false,
     this.customer = kSampleCustomer,
   });
 
   final bool loginFails;
+  final bool otpLoginFails;
+  final bool registrationOtpFails;
   final Customer customer;
+
+  // Recorded inputs for assertions.
+  String? lastMobileNumber;
+  String? lastOtpPhone;
+  String? lastOtpCode;
+  String? lastResetPassword;
 
   @override
   Future<String> login(String email, String password) async {
@@ -360,7 +392,10 @@ class FakeAuthRepository implements AuthRepository {
     required String lastName,
     required String email,
     required String password,
-  }) async {}
+    String? mobileNumber,
+  }) async {
+    lastMobileNumber = mobileNumber;
+  }
 
   @override
   Future<void> revokeToken() async {}
@@ -377,6 +412,49 @@ class FakeAuthRepository implements AuthRepository {
 
   @override
   Future<Customer> fetchCustomer() async => customer;
+
+  // --- WhatsApp OTP ---
+  @override
+  Future<void> requestLoginOtp(String phone) async => lastOtpPhone = phone;
+
+  @override
+  Future<String> loginWithOtp(String phone, String code) async {
+    if (otpLoginFails) throw const Failure(FailureKind.auth);
+    lastOtpPhone = phone;
+    lastOtpCode = code;
+    return 'fake-token';
+  }
+
+  @override
+  Future<void> requestRegistrationOtp(String phone) async =>
+      lastOtpPhone = phone;
+
+  @override
+  Future<void> verifyRegistrationOtp(String phone, String code) async {
+    if (registrationOtpFails) {
+      throw const Failure(
+        FailureKind.server,
+        detail: 'The verification code is incorrect.',
+      );
+    }
+    lastOtpPhone = phone;
+    lastOtpCode = code;
+  }
+
+  @override
+  Future<void> requestPasswordResetOtp(String phone) async =>
+      lastOtpPhone = phone;
+
+  @override
+  Future<void> resetPasswordWithOtp({
+    required String phone,
+    required String code,
+    required String newPassword,
+  }) async {
+    lastOtpPhone = phone;
+    lastOtpCode = code;
+    lastResetPassword = newPassword;
+  }
 }
 
 class FakeCatalogRepository implements CatalogRepository {

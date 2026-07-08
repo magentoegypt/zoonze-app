@@ -7,9 +7,14 @@ import '../../../../app/shell/marketing_footer.dart';
 import '../../../../app/shell/zoonze_bottom_nav.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/address/regions.dart';
+import '../../../../core/validation/phone.dart';
 import '../../../../core/validation/validators.dart';
 import '../../../../core/widgets/address_form.dart';
 import '../../../../core/widgets/brand_logo.dart';
+import '../../../../core/widgets/button_spinner.dart';
+import '../../../../core/widgets/failure_message.dart';
+import '../../../../core/widgets/otp_code_field.dart';
+import '../../../../core/widgets/resend_countdown.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../account/data/account_repository.dart';
 import '../../../account/domain/customer_address.dart';
@@ -35,6 +40,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
   /// Re-entrancy guard for the place-order → redirect handoff.
   bool _placing = false;
+
+  /// True once an address has actually been submitted in THIS screen instance.
+  /// The guest-verify card (which auto-sends a live WhatsApp OTP) is gated on
+  /// this — never on the session-wide `state.addressDone`, which can still hold
+  /// a previous checkout's value on the first frame before `reset()` runs, and
+  /// would otherwise fire a spurious OTP send on checkout re-entry.
+  bool _addressSubmitted = false;
 
   /// Saved-address selection (signed-in customers). `_useNewAddress` reveals the
   /// form; otherwise the effective selection defaults to the customer's default
@@ -136,7 +148,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       isGuest: isGuest,
     );
     if (!mounted) return;
-    if (!ok) _snack(AppLocalizations.of(context).errorGeneric);
+    if (ok) {
+      setState(() => _addressSubmitted = true);
+    } else {
+      _snack(AppLocalizations.of(context).errorGeneric);
+    }
   }
 
   /// Address step body: a signed-in customer with saved addresses picks one
@@ -315,6 +331,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     // _placing spans the whole place-order → session → present flow; state.isBusy
     // covers the individual address/shipping/payment mutations.
     final busy = state.isBusy || _placing;
+    // A guest must verify the delivery-phone OTP before the order can be placed
+    // (server-enforced). Gates the Place Order button below.
+    final needsGuestOtp = isGuest && !state.guestOtpVerified;
 
     return Scaffold(
       appBar: AppBar(
@@ -375,6 +394,20 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   onPressed: busy ? null : _submitAddress,
                   child: Text(l10n.checkoutContinue),
                 ),
+                // Guest checkout verifies the delivery-address phone by OTP
+                // before the order can be placed (server-enforced). The card
+                // sits directly under Delivery Address (Figma) and gates Place
+                // Order below. Keyed by the *submitted* phone so a changed
+                // number remounts it (re-requesting the code); shown only after
+                // a real submit this session so it never auto-sends on re-entry.
+                if (isGuest && _addressSubmitted && state.addressDone)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 20),
+                    child: _GuestVerifyCard(
+                      key: ValueKey(state.submittedPhone),
+                      phone: state.submittedPhone,
+                    ),
+                  ),
                 if (state.addressDone) ...[
                   const SizedBox(height: 24),
                   _StepHeader(index: 2, title: l10n.checkoutShippingMethod),
@@ -437,7 +470,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                     ),
                   const SizedBox(height: 16),
                   FilledButton(
-                    onPressed: busy ? null : _placeOrder,
+                    onPressed: (busy || needsGuestOtp) ? null : _placeOrder,
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -451,6 +484,18 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       ],
                     ),
                   ),
+                  if (needsGuestOtp)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        l10n.checkoutVerifyMobileTitle,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: AppColors.inkMuted,
+                          fontSize: 12.5,
+                        ),
+                      ),
+                    ),
                 ],
                     ],
                   ),
@@ -664,5 +709,151 @@ class _NewAddressTile extends StatelessWidget {
         ],
       ),
     ),
+  );
+}
+
+/// Guest-checkout "Verify Mobile Number" card (Figma): auto-requests a WhatsApp
+/// OTP to the cart's delivery phone on appear, then 6 boxes → Verify + Resend.
+/// On success the checkout controller flips `guestOtpVerified`, which both
+/// re-renders this card to the verified state and unlocks Place Order.
+class _GuestVerifyCard extends ConsumerStatefulWidget {
+  const _GuestVerifyCard({super.key, required this.phone});
+
+  final String phone;
+
+  @override
+  ConsumerState<_GuestVerifyCard> createState() => _GuestVerifyCardState();
+}
+
+class _GuestVerifyCardState extends ConsumerState<_GuestVerifyCard> {
+  final _otp = TextEditingController();
+  bool _busy = false;
+  bool _requested = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _otp.addListener(_onOtp);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _request(initial: true));
+  }
+
+  @override
+  void dispose() {
+    _otp.removeListener(_onOtp);
+    _otp.dispose();
+    super.dispose();
+  }
+
+  void _onOtp() => setState(() {});
+
+  CheckoutController get _controller =>
+      ref.read(checkoutControllerProvider.notifier);
+
+  Future<void> _request({bool initial = false}) async {
+    // The initial call is a post-frame callback — bail if the card was unmounted
+    // (e.g. reset() dropped it) before it ran, so no stray live OTP is sent.
+    if (!mounted) return;
+    // Send the code once automatically; a manual Resend re-sends and clears.
+    if (initial && _requested) return;
+    _requested = true;
+    if (!initial) _otp.clear();
+    try {
+      await _controller.requestGuestOtp();
+    } catch (error) {
+      if (!mounted) return;
+      _snack(
+        serverMessageOr(
+          context,
+          error,
+          AppLocalizations.of(context).authOtpRequestError,
+        ),
+      );
+    }
+  }
+
+  Future<void> _verify() async {
+    if (_otp.text.length != 6) return;
+    setState(() => _busy = true);
+    try {
+      await _controller.verifyGuestOtp(_otp.text);
+    } catch (error) {
+      if (!mounted) return;
+      _otp.clear();
+      _snack(
+        serverMessageOr(
+          context,
+          error,
+          AppLocalizations.of(context).authOtpVerifyError,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  void _snack(String m) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m)));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final verified = ref.watch(
+      checkoutControllerProvider.select((s) => s.guestOtpVerified),
+    );
+    // A plain section (Figma) — no card border/tint; it sits inline between the
+    // Delivery Address card and the Shipping Method step.
+    return verified ? _verifiedView(l10n) : _entryView(l10n);
+  }
+
+  Widget _verifiedView(AppLocalizations l10n) => Row(
+    children: [
+      const Icon(Icons.check_circle, color: AppColors.success, size: 20),
+      const SizedBox(width: 10),
+      Text(
+        l10n.authMobileVerified,
+        style: const TextStyle(
+          color: AppColors.success,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    ],
+  );
+
+  Widget _entryView(AppLocalizations l10n) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Text(
+        l10n.checkoutVerifyMobileTitle,
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      const SizedBox(height: 6),
+      Text(
+        l10n.checkoutVerifyMobileIntro(Phone.maskBidi(widget.phone)),
+        style: const TextStyle(color: AppColors.inkMuted, fontSize: 12.5),
+      ),
+      const SizedBox(height: 14),
+      OtpCodeField(
+        controller: _otp,
+        autofocus: false,
+        onCompleted: (_) => _verify(),
+      ),
+      const SizedBox(height: 14),
+      FilledButton(
+        onPressed: (_busy || _otp.text.length != 6) ? null : _verify,
+        child: _busy ? const ButtonSpinner() : Text(l10n.authVerify),
+      ),
+      Center(
+        child: ResendCountdown(
+          onResend: () => _request(),
+          resendLabel: l10n.authResendCode,
+          countingLabel: l10n.authResendIn,
+        ),
+      ),
+    ],
   );
 }

@@ -419,7 +419,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeAnnouncement.
   ///
   /// In en, this message translates to:
-  /// **'Free shipping on orders over AED 200 · delivery within 3 hours'**
+  /// **'Free shipping on qualifying orders · delivery within 3 hours'**
   String get homeAnnouncement;
 
   /// No description provided for @homeTrustOriginalTitle.
@@ -835,6 +835,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t sign you in. Please check your details.'**
   String get authSignInError;
+
+  /// No description provided for @authMethodEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get authMethodEmail;
+
+  /// No description provided for @authMethodPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone Number'**
+  String get authMethodPhone;
+
+  /// No description provided for @authGetOtp.
+  ///
+  /// In en, this message translates to:
+  /// **'Get OTP'**
+  String get authGetOtp;
+
+  /// No description provided for @authPhoneHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter phone number'**
+  String get authPhoneHint;
+
+  /// No description provided for @authOtpEnter.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the 6-digit code'**
+  String get authOtpEnter;
+
+  /// No description provided for @authOtpSentTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Code sent to {phone}'**
+  String authOtpSentTo(String phone);
+
+  /// No description provided for @authResendCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend code'**
+  String get authResendCode;
+
+  /// No description provided for @authResendIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend in {seconds}s'**
+  String authResendIn(int seconds);
+
+  /// No description provided for @authVerifyAndSignIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify & Sign In'**
+  String get authVerifyAndSignIn;
+
+  /// No description provided for @authVerify.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify'**
+  String get authVerify;
+
+  /// No description provided for @authSendWhatsappCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Send WhatsApp code'**
+  String get authSendWhatsappCode;
+
+  /// No description provided for @authSignUpMobileHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll WhatsApp a 6-digit code to confirm this number.'**
+  String get authSignUpMobileHelp;
+
+  /// No description provided for @authMobileVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Mobile number verified'**
+  String get authMobileVerified;
+
+  /// No description provided for @authChangeNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Change number'**
+  String get authChangeNumber;
+
+  /// No description provided for @authForgotPhoneIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'No worries! Verify your phone number to reset your password.'**
+  String get authForgotPhoneIntro;
+
+  /// No description provided for @authResetPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Password'**
+  String get authResetPassword;
+
+  /// No description provided for @authResetSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Password updated. Sign in with your new password.'**
+  String get authResetSuccess;
+
+  /// No description provided for @authOtpRequestError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t send the code. Please try again.'**
+  String get authOtpRequestError;
+
+  /// No description provided for @authOtpVerifyError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t verify the code. Please try again.'**
+  String get authOtpVerifyError;
+
+  /// No description provided for @fieldMobileNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Mobile Number'**
+  String get fieldMobileNumber;
+
+  /// No description provided for @fieldConfirmPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm password'**
+  String get fieldConfirmPassword;
+
+  /// No description provided for @validationPhoneUae.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid UAE mobile number'**
+  String get validationPhoneUae;
+
+  /// No description provided for @validationPasswordMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords don\'t match'**
+  String get validationPasswordMatch;
+
+  /// No description provided for @checkoutVerifyMobileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify Mobile Number'**
+  String get checkoutVerifyMobileTitle;
+
+  /// No description provided for @checkoutVerifyMobileIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the 6-digit code sent to your delivery number {phone}'**
+  String checkoutVerifyMobileIntro(String phone);
 
   /// No description provided for @validationRequired.
   ///
@@ -1903,6 +2053,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save Changes'**
   String get profileSaveChanges;
+
+  /// No description provided for @profileMobileChange.
+  ///
+  /// In en, this message translates to:
+  /// **'Change'**
+  String get profileMobileChange;
+
+  /// No description provided for @profileMobileAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get profileMobileAdd;
+
+  /// No description provided for @profileMobileNotSet.
+  ///
+  /// In en, this message translates to:
+  /// **'No mobile number added'**
+  String get profileMobileNotSet;
+
+  /// No description provided for @profileMobileVerifyUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify & Update'**
+  String get profileMobileVerifyUpdate;
+
+  /// No description provided for @profileMobileUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Mobile number updated'**
+  String get profileMobileUpdated;
+
+  /// No description provided for @profileMobileUpdateError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t update your mobile number. Please try again.'**
+  String get profileMobileUpdateError;
+
+  /// No description provided for @actionCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get actionCancel;
 
   /// No description provided for @profilePasswordSection.
   ///

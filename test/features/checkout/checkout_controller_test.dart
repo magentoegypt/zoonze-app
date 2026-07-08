@@ -213,4 +213,104 @@ void main() {
       expect(repo.lastAddress, isNull);
     });
   });
+
+  group('CheckoutController — guest OTP', () {
+    test('submitAddress records the normalized submitted phone', () async {
+      final repo = FakeCheckoutRepository();
+      final container = await _seededContainer(repo);
+      final checkout = container.read(checkoutControllerProvider.notifier);
+
+      await checkout.submitAddress(
+        email: 'guest@example.com',
+        address: _address, // telephone '0500000000'
+        isGuest: true,
+      );
+
+      expect(
+        container.read(checkoutControllerProvider).submittedPhone,
+        '+971500000000',
+      );
+    });
+
+    test('verifyGuestOtp binds the code and marks the cart verified', () async {
+      final repo = FakeCheckoutRepository();
+      final container = await _seededContainer(repo);
+      final checkout = container.read(checkoutControllerProvider.notifier);
+
+      await checkout.submitAddress(
+        email: 'guest@example.com',
+        address: _address,
+        isGuest: true,
+      );
+      await checkout.requestGuestOtp();
+      await checkout.verifyGuestOtp('123456');
+
+      expect(repo.guestOtpCode, '123456');
+      expect(
+        container.read(checkoutControllerProvider).guestOtpVerified,
+        isTrue,
+      );
+    });
+
+    test('verifyGuestOtp surfaces a wrong-code failure and stays unverified',
+        () async {
+      final repo = FakeCheckoutRepository(guestOtpVerifyFails: true);
+      final container = await _seededContainer(repo);
+      final checkout = container.read(checkoutControllerProvider.notifier);
+
+      await checkout.submitAddress(
+        email: 'guest@example.com',
+        address: _address,
+        isGuest: true,
+      );
+      await expectLater(
+        checkout.verifyGuestOtp('000000'),
+        throwsA(isA<Object>()),
+      );
+      expect(
+        container.read(checkoutControllerProvider).guestOtpVerified,
+        isFalse,
+      );
+    });
+
+    test('re-submitting the same phone keeps verification; a new phone resets it',
+        () async {
+      final repo = FakeCheckoutRepository();
+      final container = await _seededContainer(repo);
+      final checkout = container.read(checkoutControllerProvider.notifier);
+
+      await checkout.submitAddress(
+        email: 'guest@example.com',
+        address: _address,
+        isGuest: true,
+      );
+      await checkout.verifyGuestOtp('123456');
+      expect(
+        container.read(checkoutControllerProvider).guestOtpVerified,
+        isTrue,
+      );
+
+      // Same phone, edited street → verification is kept.
+      await checkout.submitAddress(
+        email: 'guest@example.com',
+        address: {..._address, 'street': ['2 New Street']},
+        isGuest: true,
+      );
+      expect(
+        container.read(checkoutControllerProvider).guestOtpVerified,
+        isTrue,
+      );
+
+      // Different phone → verification is reset.
+      await checkout.submitAddress(
+        email: 'guest@example.com',
+        address: {..._address, 'telephone': '0521111111'},
+        isGuest: true,
+      );
+      expect(
+        container.read(checkoutControllerProvider).guestOtpVerified,
+        isFalse,
+      );
+    });
+  });
 }

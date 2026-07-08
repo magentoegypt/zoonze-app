@@ -114,4 +114,17 @@ mutation ChangePassword($currentPassword: String!, $newPassword: String!) {
   }
 }
 ''';
+
+  /// Sets the `mobile_number` custom attribute. Guarded app-side by the WhatsApp
+  /// OTP flow (the module has no dedicated change-mobile OTP endpoint; the number
+  /// is verified via the registration OTP before this runs).
+  static const String updateMobile = r'''
+mutation UpdateMobile($value: String!) {
+  updateCustomerV2(
+    input: { custom_attributes: [{ attribute_code: "mobile_number", value: $value }] }
+  ) {
+    customer { firstname }
+  }
+}
+''';
 }

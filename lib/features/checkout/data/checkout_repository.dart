@@ -94,6 +94,19 @@ class CheckoutRepository {
     {'cartId': cartId, 'code': code},
   );
 
+  /// Sends a guest-checkout OTP to the cart's shipping phone. The address (with
+  /// a +971 telephone) must already be on the cart. Throws [Failure] (with the
+  /// localized message in `detail`) if the cart has no phone / OTP send fails.
+  Future<void> requestGuestCheckoutOtp(String cartId) =>
+      _mutate(CheckoutQueries.requestGuestCheckoutOtp, {'cartId': cartId});
+
+  /// Verifies the guest-checkout OTP and binds the challenge to the quote so
+  /// `placeOrder` is allowed. Throws [Failure] on a wrong/expired code.
+  Future<void> verifyGuestCheckoutOtp(String cartId, String code) => _mutate(
+    CheckoutQueries.verifyGuestCheckoutOtp,
+    {'cartId': cartId, 'code': code},
+  );
+
   Future<PlaceOrderResult> placeOrder(String cartId) async {
     final data = await _mutate(CheckoutQueries.placeOrder, {'cartId': cartId});
     final placed = data['placeOrder'] as Map<String, dynamic>?;

@@ -8,6 +8,24 @@ mutation SetGuestEmail($cartId: String!, $email: String!) {
 }
 ''';
 
+  // --- Guest-checkout WhatsApp OTP (MagentoEgypt_OtpVerification) ------------
+  // Cart-bound: reads the cart's shipping (fallback billing) `telephone`, so the
+  // address (with a full +971… phone) must be set first. `verify` binds the
+  // challenge to the quote; the server then lets `placeOrder` through
+  // (INTEGRATION.md §7d/§9). On failure both return a GraphQL error with a
+  // localized message.
+  static const String requestGuestCheckoutOtp = r'''
+mutation RequestGuestCheckoutOtp($cartId: String!) {
+  requestGuestCheckoutOtp(cartId: $cartId) { success message }
+}
+''';
+
+  static const String verifyGuestCheckoutOtp = r'''
+mutation VerifyGuestCheckoutOtp($cartId: String!, $code: String!) {
+  verifyGuestCheckoutOtp(cartId: $cartId, code: $code) { success message }
+}
+''';
+
   static const String setShippingAddress = r'''
 mutation SetShippingAddress($cartId: String!, $address: CartAddressInput!) {
   setShippingAddressesOnCart(

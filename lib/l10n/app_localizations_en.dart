@@ -173,7 +173,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeAnnouncement =>
-      'Free shipping on orders over AED 200 · delivery within 3 hours';
+      'Free shipping on qualifying orders · delivery within 3 hours';
 
   @override
   String get homeTrustOriginalTitle => '100% Original';
@@ -398,6 +398,92 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get authSignInError =>
       'Couldn\'t sign you in. Please check your details.';
+
+  @override
+  String get authMethodEmail => 'Email';
+
+  @override
+  String get authMethodPhone => 'Phone Number';
+
+  @override
+  String get authGetOtp => 'Get OTP';
+
+  @override
+  String get authPhoneHint => 'Enter phone number';
+
+  @override
+  String get authOtpEnter => 'Enter the 6-digit code';
+
+  @override
+  String authOtpSentTo(String phone) {
+    return 'Code sent to $phone';
+  }
+
+  @override
+  String get authResendCode => 'Resend code';
+
+  @override
+  String authResendIn(int seconds) {
+    return 'Resend in ${seconds}s';
+  }
+
+  @override
+  String get authVerifyAndSignIn => 'Verify & Sign In';
+
+  @override
+  String get authVerify => 'Verify';
+
+  @override
+  String get authSendWhatsappCode => 'Send WhatsApp code';
+
+  @override
+  String get authSignUpMobileHelp =>
+      'We\'ll WhatsApp a 6-digit code to confirm this number.';
+
+  @override
+  String get authMobileVerified => 'Mobile number verified';
+
+  @override
+  String get authChangeNumber => 'Change number';
+
+  @override
+  String get authForgotPhoneIntro =>
+      'No worries! Verify your phone number to reset your password.';
+
+  @override
+  String get authResetPassword => 'Reset Password';
+
+  @override
+  String get authResetSuccess =>
+      'Password updated. Sign in with your new password.';
+
+  @override
+  String get authOtpRequestError =>
+      'Couldn\'t send the code. Please try again.';
+
+  @override
+  String get authOtpVerifyError =>
+      'Couldn\'t verify the code. Please try again.';
+
+  @override
+  String get fieldMobileNumber => 'Mobile Number';
+
+  @override
+  String get fieldConfirmPassword => 'Confirm password';
+
+  @override
+  String get validationPhoneUae => 'Enter a valid UAE mobile number';
+
+  @override
+  String get validationPasswordMatch => 'Passwords don\'t match';
+
+  @override
+  String get checkoutVerifyMobileTitle => 'Verify Mobile Number';
+
+  @override
+  String checkoutVerifyMobileIntro(String phone) {
+    return 'Enter the 6-digit code sent to your delivery number $phone';
+  }
 
   @override
   String get validationRequired => 'Required';
@@ -1034,6 +1120,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileSaveChanges => 'Save Changes';
+
+  @override
+  String get profileMobileChange => 'Change';
+
+  @override
+  String get profileMobileAdd => 'Add';
+
+  @override
+  String get profileMobileNotSet => 'No mobile number added';
+
+  @override
+  String get profileMobileVerifyUpdate => 'Verify & Update';
+
+  @override
+  String get profileMobileUpdated => 'Mobile number updated';
+
+  @override
+  String get profileMobileUpdateError =>
+      'Couldn\'t update your mobile number. Please try again.';
+
+  @override
+  String get actionCancel => 'Cancel';
 
   @override
   String get profilePasswordSection => 'Change Password';

@@ -171,7 +171,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get homeAnnouncement =>
-      'شحن مجاني للطلبات فوق 200 درهمًا · التوصيل خلال 3 ساعات';
+      'شحن مجاني للطلبات المؤهلة · التوصيل خلال 3 ساعات';
 
   @override
   String get homeTrustOriginalTitle => 'أصلي 100%';
@@ -394,6 +394,92 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get authSignInError => 'تعذّر تسجيل الدخول. يرجى التحقّق من بياناتك.';
+
+  @override
+  String get authMethodEmail => 'البريد الإلكتروني';
+
+  @override
+  String get authMethodPhone => 'رقم الهاتف';
+
+  @override
+  String get authGetOtp => 'إرسال الرمز';
+
+  @override
+  String get authPhoneHint => 'أدخل رقم هاتفك';
+
+  @override
+  String get authOtpEnter => 'أدخل الرمز المكوّن من 6 أرقام';
+
+  @override
+  String authOtpSentTo(String phone) {
+    return 'تم إرسال الرمز إلى $phone';
+  }
+
+  @override
+  String get authResendCode => 'إعادة إرسال الرمز';
+
+  @override
+  String authResendIn(int seconds) {
+    return 'إعادة الإرسال خلال $seconds ث';
+  }
+
+  @override
+  String get authVerifyAndSignIn => 'التحقّق وتسجيل الدخول';
+
+  @override
+  String get authVerify => 'تحقّق';
+
+  @override
+  String get authSendWhatsappCode => 'إرسال رمز عبر واتساب';
+
+  @override
+  String get authSignUpMobileHelp =>
+      'سنرسل رمزًا من 6 أرقام عبر واتساب لتأكيد هذا الرقم.';
+
+  @override
+  String get authMobileVerified => 'تم التحقّق من رقم الهاتف';
+
+  @override
+  String get authChangeNumber => 'تغيير الرقم';
+
+  @override
+  String get authForgotPhoneIntro =>
+      'لا تقلق! تحقّق من رقم هاتفك لإعادة تعيين كلمة المرور.';
+
+  @override
+  String get authResetPassword => 'إعادة تعيين كلمة المرور';
+
+  @override
+  String get authResetSuccess =>
+      'تم تحديث كلمة المرور. سجّل الدخول بكلمة المرور الجديدة.';
+
+  @override
+  String get authOtpRequestError =>
+      'تعذّر إرسال الرمز. يرجى المحاولة مرة أخرى.';
+
+  @override
+  String get authOtpVerifyError =>
+      'تعذّر التحقّق من الرمز. يرجى المحاولة مرة أخرى.';
+
+  @override
+  String get fieldMobileNumber => 'رقم الهاتف';
+
+  @override
+  String get fieldConfirmPassword => 'تأكيد كلمة المرور';
+
+  @override
+  String get validationPhoneUae => 'أدخل رقم هاتف إماراتي صحيح';
+
+  @override
+  String get validationPasswordMatch => 'كلمتا المرور غير متطابقتين';
+
+  @override
+  String get checkoutVerifyMobileTitle => 'التحقّق من رقم الهاتف';
+
+  @override
+  String checkoutVerifyMobileIntro(String phone) {
+    return 'أدخل الرمز المكوّن من 6 أرقام المُرسَل إلى رقم التوصيل $phone';
+  }
 
   @override
   String get validationRequired => 'مطلوب';
@@ -1002,6 +1088,28 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get profileSaveChanges => 'حفظ التغييرات';
+
+  @override
+  String get profileMobileChange => 'تغيير';
+
+  @override
+  String get profileMobileAdd => 'إضافة';
+
+  @override
+  String get profileMobileNotSet => 'لم تتم إضافة رقم هاتف';
+
+  @override
+  String get profileMobileVerifyUpdate => 'التحقّق والتحديث';
+
+  @override
+  String get profileMobileUpdated => 'تم تحديث رقم الهاتف';
+
+  @override
+  String get profileMobileUpdateError =>
+      'تعذّر تحديث رقم هاتفك. يرجى المحاولة مرة أخرى.';
+
+  @override
+  String get actionCancel => 'إلغاء';
 
   @override
   String get profilePasswordSection => 'تغيير كلمة المرور';

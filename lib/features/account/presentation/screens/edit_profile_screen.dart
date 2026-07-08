@@ -12,6 +12,7 @@ import '../../../auth/presentation/auth_controller.dart';
 import '../../../notifications/presentation/notification_settings_controller.dart';
 import '../../data/account_repository.dart';
 import '../email_offers_controller.dart';
+import '../widgets/mobile_number_editor.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -168,6 +169,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     icon: Icons.mail_outline,
                     enabled: false,
                   ),
+                  const SizedBox(height: 12),
+                  // Mobile number — OTP-gated in-place editor (WhatsApp verify).
+                  const MobileNumberEditor(),
                 ],
               ),
             ),

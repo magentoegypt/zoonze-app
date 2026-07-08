@@ -54,6 +54,10 @@ query CurrentCustomer {
     firstname
     lastname
     email
+    custom_attributes {
+      code
+      ... on AttributeValue { value }
+    }
   }
 }
 ''';

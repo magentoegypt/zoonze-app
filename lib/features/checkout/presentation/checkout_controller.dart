@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/error/failure.dart';
+import '../../../core/validation/phone.dart';
 import '../../cart/presentation/cart_controller.dart';
 import '../../catalog/domain/money.dart';
 import '../data/checkout_repository.dart';
@@ -16,6 +18,8 @@ class CheckoutState {
     this.paymentMethods = const <PaymentMethodOption>[],
     this.selectedPayment,
     this.grandTotal,
+    this.submittedPhone = '',
+    this.guestOtpVerified = false,
     this.isBusy = false,
     this.error,
   });
@@ -30,6 +34,18 @@ class CheckoutState {
   final List<PaymentMethodOption> paymentMethods;
   final PaymentMethodOption? selectedPayment;
   final Money? grandTotal;
+
+  /// The normalized (E.164) telephone last submitted with the shipping address —
+  /// the number the guest-checkout OTP is actually sent to. Drives the "Code
+  /// sent to …" caption and the verify-card key so they track the *submitted*
+  /// number, not the live (possibly-edited) address field.
+  final String submittedPhone;
+
+  /// Guest-checkout OTP has been verified for the current cart. Gates Place
+  /// Order for guests (the server rejects `placeOrder` without it). Reset with
+  /// the rest of the state on checkout entry via [CheckoutController.reset].
+  final bool guestOtpVerified;
+
   final bool isBusy;
   final Object? error;
 
@@ -49,6 +65,8 @@ class CheckoutState {
     List<PaymentMethodOption>? paymentMethods,
     Object? selectedPayment = _keep,
     Object? grandTotal = _keep,
+    String? submittedPhone,
+    bool? guestOtpVerified,
     bool? isBusy,
     Object? error = _keep,
   }) => CheckoutState(
@@ -66,6 +84,8 @@ class CheckoutState {
     grandTotal: identical(grandTotal, _keep)
         ? this.grandTotal
         : grandTotal as Money?,
+    submittedPhone: submittedPhone ?? this.submittedPhone,
+    guestOtpVerified: guestOtpVerified ?? this.guestOtpVerified,
     isBusy: isBusy ?? this.isBusy,
     error: identical(error, _keep) ? this.error : error,
   );
@@ -105,6 +125,12 @@ class CheckoutController extends Notifier<CheckoutState> {
         await _repo.setGuestEmail(cartId, email);
       }
       final methods = await _repo.setShippingAddress(cartId, address);
+      final phone = Phone.normalizeUae((address['telephone'] as String?) ?? '');
+      // Keep a prior guest-OTP verification only when the phone is unchanged —
+      // the challenge is bound to the cart's number, so editing an unrelated
+      // address field (same phone) shouldn't force re-verification, but a new
+      // number must.
+      final phoneChanged = phone != state.submittedPhone;
       state = state.copyWith(
         email: email,
         lastname: (address['lastname'] as String?) ?? '',
@@ -113,6 +139,8 @@ class CheckoutController extends Notifier<CheckoutState> {
         selectedShipping: null,
         paymentMethods: const [],
         selectedPayment: null,
+        submittedPhone: phone,
+        guestOtpVerified: phoneChanged ? false : state.guestOtpVerified,
         isBusy: false,
       );
       return true;
@@ -159,6 +187,25 @@ class CheckoutController extends Notifier<CheckoutState> {
       state = state.copyWith(isBusy: false, error: error);
       return false;
     }
+  }
+
+  /// Sends a guest-checkout OTP to the cart's shipping phone. Throws [Failure]
+  /// (localized `detail`) so the verify card can surface the backend message;
+  /// deliberately does **not** touch `isBusy` (the card owns its own local
+  /// spinner, avoiding the screen-wide busy barrier for a small inline action).
+  Future<void> requestGuestOtp() async {
+    final cartId = _cartId;
+    if (cartId == null) throw const Failure(FailureKind.unknown);
+    await _repo.requestGuestCheckoutOtp(cartId);
+  }
+
+  /// Verifies the guest-checkout OTP and binds it to the quote so `placeOrder`
+  /// is allowed. Throws [Failure] on a wrong/expired code.
+  Future<void> verifyGuestOtp(String code) async {
+    final cartId = _cartId;
+    if (cartId == null) throw const Failure(FailureKind.unknown);
+    await _repo.verifyGuestCheckoutOtp(cartId, code);
+    state = state.copyWith(guestOtpVerified: true);
   }
 
   Future<PlaceOrderResult?> placeOrder() async {

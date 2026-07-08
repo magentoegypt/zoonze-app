@@ -63,12 +63,17 @@ class AuthController extends Notifier<AuthState> {
 
   Future<void> login(String email, String password) async {
     final token = await _repo.login(email, password);
+    await _completeLogin(token);
+  }
+
+  /// Shared post-authentication effects for both password and OTP login:
+  /// persist the token, reset the cache (drop guest data; [AuthLink] now sends
+  /// the bearer), load the profile, and re-bind this device's FCM token.
+  Future<void> _completeLogin(String token) async {
     await _tokens.write(token);
-    // Reset the cache so guest data is dropped; AuthLink now sends the bearer.
     ref.invalidate(graphqlClientProvider);
     final customer = await _repo.fetchCustomer();
     state = AuthState(customer: customer, status: AuthStatus.authenticated);
-    // Re-bind this device's FCM token to the now-authenticated customer.
     unawaited(ref.read(deviceTokenSyncProvider).register());
   }
 
@@ -77,15 +82,53 @@ class AuthController extends Notifier<AuthState> {
     required String lastName,
     required String email,
     required String password,
+    String? mobileNumber,
   }) async {
     await _repo.register(
       firstName: firstName,
       lastName: lastName,
       email: email,
       password: password,
+      mobileNumber: mobileNumber,
     );
     await login(email, password);
   }
+
+  // --- WhatsApp OTP ----------------------------------------------------------
+
+  /// Sends a passwordless-login OTP to [phone].
+  Future<void> requestLoginOtp(String phone) => _repo.requestLoginOtp(phone);
+
+  /// Completes a passwordless login: exchanges the code for a token and runs the
+  /// same post-login flow as an email/password sign-in.
+  Future<void> loginWithOtp(String phone, String code) async {
+    final token = await _repo.loginWithOtp(phone, code);
+    await _completeLogin(token);
+  }
+
+  /// Requests / verifies the registration OTP (WhatsApp). Verification must land
+  /// within the module's post-verify window before the account is created.
+  Future<void> requestRegistrationOtp(String phone) =>
+      _repo.requestRegistrationOtp(phone);
+  Future<void> verifyRegistrationOtp(String phone, String code) =>
+      _repo.verifyRegistrationOtp(phone, code);
+
+  /// Requests a password-reset OTP (always succeeds server-side).
+  Future<void> requestPasswordResetOtp(String phone) =>
+      _repo.requestPasswordResetOtp(phone);
+
+  /// Resets the password with a phone OTP. The customer then signs in normally
+  /// (phone or email) — there is no auto-login here since no email is captured
+  /// on the phone path.
+  Future<void> resetPasswordWithOtp({
+    required String phone,
+    required String code,
+    required String newPassword,
+  }) => _repo.resetPasswordWithOtp(
+    phone: phone,
+    code: code,
+    newPassword: newPassword,
+  );
 
   Future<void> logout() async {
     // Unbind this device first, while the bearer is still valid (the resolver

@@ -80,6 +80,15 @@ class AccountRepository {
     mutation: true,
   );
 
+  /// Writes the verified [mobileNumber] (E.164) to the `mobile_number` custom
+  /// attribute. The caller must OTP-verify the number first (see the Edit
+  /// Profile mobile editor).
+  Future<void> updateMobileNumber(String mobileNumber) => _run(
+    AccountQueries.updateMobile,
+    {'value': mobileNumber},
+    mutation: true,
+  );
+
   CustomerOrder _parseOrder(Map<String, dynamic> json) {
     final lines = (json['items'] as List<dynamic>? ?? const [])
         .whereType<Map<String, dynamic>>()

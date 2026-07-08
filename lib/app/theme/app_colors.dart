@@ -21,6 +21,9 @@ abstract final class AppColors {
   /// Positive states — "FREE" delivery, in-stock, unlocked thresholds.
   static const Color success = Color(0xFF16A34A);
 
+  /// WhatsApp brand green — the "Send WhatsApp code" registration action.
+  static const Color whatsappGreen = Color(0xFF25D366);
+
   /// Headings / primary text.
   static const Color inkHeading = Color(0xFF1F2937);
 
