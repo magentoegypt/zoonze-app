@@ -6,6 +6,8 @@ import '../../../../app/routes.dart';
 import '../../../../app/shell/marketing_footer.dart';
 import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/widgets/brand_logo.dart';
+import '../../../../core/widgets/zoonze_back_button.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../cart/presentation/cart_controller.dart';
@@ -119,6 +121,17 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
     return ZoonzeScaffold(
       currentTab: AppTab.wishlist,
       showSearch: false,
+      // Decluttered header per Figma: back chevron + centered logo, no
+      // search/notification icons.
+      appBar: AppBar(
+        toolbarHeight: 60,
+        centerTitle: true,
+        leading: ZoonzeBackButton(
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go(AppRoutes.home),
+        ),
+        title: const BrandLogo(height: 44),
+      ),
       body: body,
     );
   }

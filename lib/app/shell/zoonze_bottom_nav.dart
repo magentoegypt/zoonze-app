@@ -55,8 +55,8 @@ class ZoonzeBottomNav extends ConsumerWidget {
               _NavItem(
                 tab: AppTab.cart,
                 current: current,
-                icon: Icons.shopping_bag_outlined,
-                activeIcon: Icons.shopping_bag,
+                icon: Icons.shopping_cart_outlined,
+                activeIcon: Icons.shopping_cart,
                 label: l10n.navCart,
                 badge: cartCount,
               ),

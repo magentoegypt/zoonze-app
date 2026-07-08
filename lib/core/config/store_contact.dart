@@ -60,12 +60,13 @@ class StoreContact {
 
   /// Non-null social links keyed by network, in display order.
   List<({String key, String url})> get socials => [
-    if (facebook != null) (key: 'facebook', url: facebook!),
+    // Figma footer order: Instagram · X · YouTube · Facebook (then the rest).
     if (instagram != null) (key: 'instagram', url: instagram!),
-    if (tiktok != null) (key: 'tiktok', url: tiktok!),
-    if (youtube != null) (key: 'youtube', url: youtube!),
-    if (pinterest != null) (key: 'pinterest', url: pinterest!),
     if (twitter != null) (key: 'twitter', url: twitter!),
+    if (youtube != null) (key: 'youtube', url: youtube!),
+    if (facebook != null) (key: 'facebook', url: facebook!),
+    if (tiktok != null) (key: 'tiktok', url: tiktok!),
+    if (pinterest != null) (key: 'pinterest', url: pinterest!),
   ];
 }
 

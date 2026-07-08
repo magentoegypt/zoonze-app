@@ -24,6 +24,9 @@ class CategoriesScreen extends ConsumerWidget {
 
     return ZoonzeScaffold(
       currentTab: AppTab.categories,
+      // The page has its own search box, so drop the redundant app-bar search
+      // icon (Figma).
+      showSearch: false,
       body: AsyncValueView(
         value: categories,
         onRetry: () => ref.invalidate(categoryTreeProvider),

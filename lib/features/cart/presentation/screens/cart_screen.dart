@@ -9,7 +9,9 @@ import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/config/free_shipping.dart';
 import '../../../../core/error/failure.dart';
+import '../../../../core/widgets/brand_logo.dart';
 import '../../../../core/widgets/failure_message.dart';
+import '../../../../core/widgets/zoonze_back_button.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../catalog/domain/money.dart';
 import '../../../checkout/payments/tabby_promo.dart';
@@ -52,6 +54,17 @@ class _CartScreenState extends ConsumerState<CartScreen> {
     return ZoonzeScaffold(
       currentTab: AppTab.cart,
       showSearch: false,
+      // Decluttered header per Figma: back chevron + centered logo, no
+      // search/notification icons.
+      appBar: AppBar(
+        toolbarHeight: 60,
+        centerTitle: true,
+        leading: ZoonzeBackButton(
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go(AppRoutes.home),
+        ),
+        title: const BrandLogo(height: 44),
+      ),
       body: _body(l10n, state),
     );
   }

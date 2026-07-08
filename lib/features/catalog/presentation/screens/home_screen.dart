@@ -16,7 +16,6 @@ import '../../../../core/util/launch.dart';
 import '../../../../core/widgets/async_value_view.dart';
 import '../../../../core/widgets/brand_logo.dart';
 import '../../../../core/widgets/shimmer.dart';
-import '../../../notifications/presentation/notification_bell.dart';
 import '../../../../l10n/l10n.dart';
 import '../../data/brands_provider.dart';
 import '../../data/catalog_repository.dart';
@@ -142,12 +141,6 @@ class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
                     ),
                   ),
                   const Center(child: BrandLogo(height: 40)),
-                  const PositionedDirectional(
-                    end: 4,
-                    top: 0,
-                    bottom: 0,
-                    child: NotificationBell(color: AppColors.brandPrimary),
-                  ),
                 ],
               ),
             ),
@@ -1088,6 +1081,9 @@ class _ProductSection extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: Center(
               child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.inkHeading,
+                ),
                 onPressed: () => context.push(
                   AppRoutes.category(category.uid),
                   extra: category.name,
@@ -1147,6 +1143,9 @@ class _BrandsRail extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
           child: Center(
             child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.inkHeading,
+              ),
               onPressed: () => context.push(AppRoutes.brands),
               child: Text(l10n.homeSeeMore),
             ),
