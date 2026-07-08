@@ -60,9 +60,13 @@ bool isAuthGraphqlError(GraphQLError error) {
       category == 'graphql-authentication') {
     return true;
   }
+  // Fall back to auth-SPECIFIC phrases only. A bare "token" match wrongly
+  // classified unrelated errors — paymentSession(token:), cart/form/masked
+  // tokens — as a session expiry, which then logged the customer out
+  // mid-session. "consumer key" catches Magento's "Consumer key has expired".
   final message = error.message.toLowerCase();
   return message.contains('not authorized') ||
       message.contains('current customer') ||
       message.contains('not currently authenticated') ||
-      message.contains('token');
+      message.contains('consumer key');
 }

@@ -35,6 +35,18 @@ void main() {
       expect(failure.detail, 'Field "foo" not found.');
     });
 
+    test('does NOT treat a non-auth "token" error as auth (regression)', () {
+      // paymentSession(token:) / cart / form-token errors mention "token" but
+      // are not a session expiry — they must map to server, not auth, so they
+      // never trigger a spurious mid-session logout.
+      final exception = OperationException(
+        graphqlErrors: [
+          GraphQLError(message: 'Invalid payment session token for order.'),
+        ],
+      );
+      expect(mapOperationException(exception).kind, FailureKind.server);
+    });
+
     test('maps an empty exception to unknown', () {
       expect(
         mapOperationException(OperationException()).kind,

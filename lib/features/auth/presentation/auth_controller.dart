@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/error/failure.dart';
 import '../../../core/graphql/graphql_client.dart';
 import '../../../core/storage/secure_token_store.dart';
 import '../../notifications/data/device_token_repository.dart';
@@ -41,10 +42,22 @@ class AuthController extends Notifier<AuthState> {
     try {
       final customer = await _repo.fetchCustomer();
       state = AuthState(customer: customer, status: AuthStatus.authenticated);
+    } on Failure catch (failure) {
+      if (failure.kind == FailureKind.auth) {
+        // Token actually rejected -> drop it and continue as guest.
+        await _tokens.clear();
+        state = const AuthState(status: AuthStatus.guest);
+      } else {
+        // Transient failure at launch (network / WAF-HTML / timeout) — do NOT
+        // log the customer out. Keep the token and stay signed in; the profile
+        // refreshes on the next successful request, and a genuinely-expired
+        // token is caught mid-session by the resilience link.
+        state = const AuthState(status: AuthStatus.authenticated);
+      }
     } on Object {
-      // Token invalid/expired -> drop it and continue as guest.
-      await _tokens.clear();
-      state = const AuthState(status: AuthStatus.guest);
+      // Non-Failure error — be conservative and keep the session rather than
+      // wiping a possibly-valid token on a transient hiccup.
+      state = const AuthState(status: AuthStatus.authenticated);
     }
   }
 
