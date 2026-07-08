@@ -1559,8 +1559,32 @@ abstract class AppLocalizations {
   /// No description provided for @orderViewDetails.
   ///
   /// In en, this message translates to:
-  /// **'View details'**
+  /// **'View Details'**
   String get orderViewDetails;
+
+  /// No description provided for @orderMoreItems.
+  ///
+  /// In en, this message translates to:
+  /// **'+{count} more'**
+  String orderMoreItems(int count);
+
+  /// No description provided for @orderPaymentSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Method'**
+  String get orderPaymentSection;
+
+  /// No description provided for @orderTimelineSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Timeline'**
+  String get orderTimelineSection;
+
+  /// No description provided for @orderBillingAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Billing Address'**
+  String get orderBillingAddress;
 
   /// No description provided for @orderItemCount.
   ///

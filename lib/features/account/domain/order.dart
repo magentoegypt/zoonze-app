@@ -55,6 +55,9 @@ class CustomerOrder {
     this.carrier,
     this.shippingName,
     this.shippingAddress,
+    this.paymentMethodName,
+    this.billingName,
+    this.billingAddress,
     this.lines = const <OrderLine>[],
     this.trackings = const <OrderTracking>[],
     this.comments = const <OrderComment>[],
@@ -72,6 +75,13 @@ class CustomerOrder {
   /// Recipient name + single-line delivery address (shipping address).
   final String? shippingName;
   final String? shippingAddress;
+
+  /// Payment method label (e.g. "Cash on Delivery", "Tabby").
+  final String? paymentMethodName;
+
+  /// Billing recipient name + single-line billing address.
+  final String? billingName;
+  final String? billingAddress;
 
   final List<OrderLine> lines;
   final List<OrderTracking> trackings;

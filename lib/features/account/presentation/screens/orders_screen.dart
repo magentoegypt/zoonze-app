@@ -158,6 +158,8 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                 for (final order in filtered)
                   _OrderCard(
                     order: order,
+                    onDetails: () =>
+                        context.push(AppRoutes.orderDetail, extra: order),
                     onTrack: () =>
                         context.push(AppRoutes.orderTracking, extra: order),
                     onReorder: () => _reorder(order),
@@ -259,11 +261,13 @@ class _Chip extends StatelessWidget {
 class _OrderCard extends StatelessWidget {
   const _OrderCard({
     required this.order,
+    required this.onDetails,
     required this.onTrack,
     required this.onReorder,
   });
 
   final CustomerOrder order;
+  final VoidCallback onDetails;
   final VoidCallback onTrack;
   final VoidCallback onReorder;
 
@@ -304,7 +308,7 @@ class _OrderCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          '${orderFmtDate(order.date)} · ${l10n.orderItemCount(order.itemCount)}',
+                          '${orderFmtDate(order.date, Localizations.localeOf(context).languageCode)} · ${l10n.orderItemCount(order.itemCount)}',
                           style: const TextStyle(
                             color: AppColors.inkMuted,
                             fontSize: 12,
@@ -320,42 +324,51 @@ class _OrderCard extends StatelessWidget {
               if (order.lines.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 _Thumbnails(lines: order.lines),
+                const SizedBox(height: 10),
+                _LineSummary(lines: order.lines),
               ],
               const SizedBox(height: 12),
               const Divider(height: 1, thickness: 1, color: AppColors.borderDefault),
               const SizedBox(height: 12),
-              // Total + action.
+              // Total.
               Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          l10n.orderTotalLabel,
-                          style: const TextStyle(
-                            color: AppColors.inkMuted,
-                            fontSize: 11,
-                          ),
-                        ),
-                        if (order.total != null)
-                          Text(
-                            order.total!.formatted(),
-                            textDirection: TextDirection.ltr,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 15,
-                              color: AppColors.brandPrimary,
-                            ),
-                          ),
-                      ],
+                  Text(
+                    l10n.orderTotalLabel,
+                    style: const TextStyle(
+                      color: AppColors.inkMuted,
+                      fontSize: 11,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  _ActionButton(
-                    label: isPast ? l10n.orderReorder : l10n.orderTrack,
-                    onTap: isPast ? onReorder : onTrack,
+                  const Spacer(),
+                  if (order.total != null)
+                    Text(
+                      order.total!.formatted(),
+                      textDirection: TextDirection.ltr,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                        color: AppColors.brandPrimary,
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // Actions: View Details + (Track in progress / Reorder past).
+              Row(
+                children: [
+                  Expanded(
+                    child: _ActionButton(
+                      label: l10n.orderViewDetails,
+                      onTap: onDetails,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _ActionButton(
+                      label: isPast ? l10n.orderReorder : l10n.orderTrack,
+                      onTap: isPast ? onReorder : onTrack,
+                    ),
                   ),
                 ],
               ),
@@ -410,13 +423,16 @@ class _ActionButton extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(999),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
         decoration: BoxDecoration(
           border: Border.all(color: AppColors.brandPrimary),
           borderRadius: BorderRadius.circular(999),
         ),
         child: Text(
           label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             color: AppColors.brandPrimary,
             fontWeight: FontWeight.w600,
@@ -424,6 +440,44 @@ class _ActionButton extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Compact "Qty × Name" list under the thumbnails (QA: the summary showed only
+/// images). Shows the first couple of lines + a "+N more" overflow line.
+class _LineSummary extends StatelessWidget {
+  const _LineSummary({required this.lines});
+  final List<OrderLine> lines;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    const maxShown = 2;
+    final shown = lines.take(maxShown).toList();
+    final extra = lines.length - shown.length;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final line in shown)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 2),
+            child: Text(
+              '${line.quantity.toInt()} × ${line.name}',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 12.5,
+                color: AppColors.inkHeading,
+              ),
+            ),
+          ),
+        if (extra > 0)
+          Text(
+            l10n.orderMoreItems(extra),
+            style: const TextStyle(fontSize: 12, color: AppColors.inkMuted),
+          ),
+      ],
     );
   }
 }

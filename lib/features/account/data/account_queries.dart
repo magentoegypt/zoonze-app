@@ -1,10 +1,13 @@
 /// Hand-written Magento 2.4.8 customer account operations (orders, addresses,
 /// profile).
 abstract final class AccountQueries {
+  // scope: WEBSITE unifies orders across both store views (uae-en / uae-ar share
+  // one website) — without it `orders` defaults to STORE and each language only
+  // sees the orders placed under its own Store header.
   static const String orders = r'''
 query CustomerOrders($pageSize: Int!, $currentPage: Int!) {
   customer {
-    orders(pageSize: $pageSize, currentPage: $currentPage) {
+    orders(pageSize: $pageSize, currentPage: $currentPage, scope: WEBSITE) {
       total_count
       page_info { current_page total_pages }
       items {
@@ -26,8 +29,18 @@ query CustomerOrders($pageSize: Int!, $currentPage: Int!) {
           product_sale_price { value currency }
           product { image { url } }
         }
+        payment_methods { name type }
         comments { message timestamp }
         shipping_address {
+          firstname
+          lastname
+          street
+          city
+          region
+          postcode
+          telephone
+        }
+        billing_address {
           firstname
           lastname
           street

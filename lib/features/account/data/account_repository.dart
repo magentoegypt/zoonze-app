@@ -126,6 +126,15 @@ class AccountRepository {
         )
         .toList();
     final addr = json['shipping_address'] as Map<String, dynamic>?;
+    final billing = json['billing_address'] as Map<String, dynamic>?;
+    final payments = json['payment_methods'] as List<dynamic>?;
+    String? paymentName;
+    if (payments != null && payments.isNotEmpty) {
+      final first = payments.first;
+      if (first is Map<String, dynamic>) {
+        paymentName = first['name'] as String?;
+      }
+    }
     return CustomerOrder(
       number: (json['number'] as String?) ?? '',
       status: (json['status'] as String?) ?? '',
@@ -139,6 +148,9 @@ class AccountRepository {
       carrier: json['carrier'] as String?,
       shippingName: _recipientName(addr),
       shippingAddress: _formatAddress(addr),
+      paymentMethodName: paymentName,
+      billingName: _recipientName(billing),
+      billingAddress: _formatAddress(billing),
       lines: lines,
       trackings: trackings,
       comments: comments,

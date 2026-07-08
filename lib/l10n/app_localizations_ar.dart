@@ -817,6 +817,20 @@ class AppLocalizationsAr extends AppLocalizations {
   String get orderViewDetails => 'عرض التفاصيل';
 
   @override
+  String orderMoreItems(int count) {
+    return '+$count أخرى';
+  }
+
+  @override
+  String get orderPaymentSection => 'طريقة الدفع';
+
+  @override
+  String get orderTimelineSection => 'سجل الطلب';
+
+  @override
+  String get orderBillingAddress => 'عنوان الفوترة';
+
+  @override
   String orderItemCount(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,

@@ -846,7 +846,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get orderTrackingCopied => 'Tracking number copied';
 
   @override
-  String get orderViewDetails => 'View details';
+  String get orderViewDetails => 'View Details';
+
+  @override
+  String orderMoreItems(int count) {
+    return '+$count more';
+  }
+
+  @override
+  String get orderPaymentSection => 'Payment Method';
+
+  @override
+  String get orderTimelineSection => 'Order Timeline';
+
+  @override
+  String get orderBillingAddress => 'Billing Address';
 
   @override
   String orderItemCount(int count) {
