@@ -292,9 +292,30 @@ class CatalogRepository {
     }
   }
 
+  /// Decodes the HTML entities Page Builder ships — including entity-*encoded*
+  /// tags (`&lt;p&gt;…`) that AR content commonly emits, which would otherwise
+  /// render as literal `<p>` text after the tag strip in [_stripHtml].
+  String _decodeHtmlEntities(String s) => s
+      .replaceAllMapped(
+        RegExp(r'&#(\d+);'),
+        (m) => String.fromCharCode(int.parse(m.group(1)!)),
+      )
+      .replaceAllMapped(
+        RegExp(r'&#x([0-9a-fA-F]+);'),
+        (m) => String.fromCharCode(int.parse(m.group(1)!, radix: 16)),
+      )
+      .replaceAll('&nbsp;', ' ')
+      .replaceAll('&apos;', "'")
+      .replaceAll('&quot;', '"')
+      .replaceAll('&lt;', '<')
+      .replaceAll('&gt;', '>')
+      .replaceAll('&amp;', '&');
+
   String? _stripHtml(String? html) {
     if (html == null || html.isEmpty) return null;
-    final text = html
+    // Decode entities first so entity-encoded tags (AR Page Builder) get
+    // stripped below instead of showing as literal HTML.
+    final text = _decodeHtmlEntities(html)
         // Drop <style>/<script> blocks entirely — Page Builder emits a
         // <style> block whose CSS would otherwise leak into the description.
         .replaceAll(

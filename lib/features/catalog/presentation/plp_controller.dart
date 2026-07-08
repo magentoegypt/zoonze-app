@@ -4,6 +4,7 @@ import '../../../core/store/store_controller.dart';
 import '../data/catalog_repository.dart';
 import '../domain/aggregation.dart';
 import '../domain/product.dart';
+import 'catalog_providers.dart';
 
 /// Paged PLP state: accumulated products + aggregations + active sort/filters.
 class PlpState {
@@ -79,6 +80,10 @@ class PlpState {
 class PlpController extends AutoDisposeFamilyNotifier<PlpState, String> {
   static const int _pageSize = 20;
 
+  /// True once the user picks a sort; until then the first load applies the
+  /// per-category default (see [_defaultSortFor]).
+  bool _userSortSet = false;
+
   @override
   PlpState build(String arg) {
     ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
@@ -88,9 +93,31 @@ class PlpController extends AutoDisposeFamilyNotifier<PlpState, String> {
 
   CatalogRepository get _repo => ref.read(catalogRepositoryProvider);
 
+  /// Default sort for this category, matching the website: price high→low for
+  /// normal categories, but New Arrivals / Best Sellers keep the catalogue's
+  /// own order (relevance).
+  Future<ProductSortField> _defaultSortFor() async {
+    try {
+      final category = await ref.read(categoryByUidProvider(arg).future);
+      final key = category?.urlKey.toLowerCase() ?? '';
+      if (key.contains('new-arriv') ||
+          key.contains('new_arriv') ||
+          key.contains('best')) {
+        return ProductSortField.relevance;
+      }
+    } catch (_) {
+      // Fall through to the price-desc default on any lookup failure.
+    }
+    return ProductSortField.priceDesc;
+  }
+
   Future<void> _loadFirst() async {
     state = state.copyWith(isLoading: true, error: null);
     try {
+      // First load with no user-chosen sort → apply the per-category default.
+      if (!_userSortSet) {
+        state = state.copyWith(sort: await _defaultSortFor());
+      }
       final page = await _repo.fetchProducts(
         categoryUid: arg,
         attributeFilters: state.selectedFilters,
@@ -142,6 +169,7 @@ class PlpController extends AutoDisposeFamilyNotifier<PlpState, String> {
 
   void setSort(ProductSortField sort) {
     if (sort == state.sort) return;
+    _userSortSet = true;
     state = state.copyWith(
       sort: sort,
       products: const [],
@@ -157,6 +185,7 @@ class PlpController extends AutoDisposeFamilyNotifier<PlpState, String> {
     double? priceTo,
     ProductSortField? sort,
   }) {
+    _userSortSet = true;
     state = state.copyWith(
       selectedFilters: filters,
       priceFrom: priceFrom,
