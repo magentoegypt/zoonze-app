@@ -173,7 +173,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeAnnouncement =>
-      'Free shipping on orders over AED 150 · delivery within 3 hours';
+      'Free shipping on orders over AED 200 · delivery within 3 hours';
 
   @override
   String get homeTrustOriginalTitle => '100% Original';
@@ -736,6 +736,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cartDeliveryFree => 'FREE';
+
+  @override
+  String get cartDeliveryCalculated => 'Calculated at checkout';
 
   @override
   String get cartFreeDeliveryUnlocked =>

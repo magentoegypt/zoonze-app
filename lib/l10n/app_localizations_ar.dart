@@ -171,7 +171,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get homeAnnouncement =>
-      'شحن مجاني للطلبات فوق 150 درهمًا · التوصيل خلال 3 ساعات';
+      'شحن مجاني للطلبات فوق 200 درهمًا · التوصيل خلال 3 ساعات';
 
   @override
   String get homeTrustOriginalTitle => 'أصلي 100%';
@@ -706,6 +706,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get cartDeliveryFree => 'مجاني';
+
+  @override
+  String get cartDeliveryCalculated => 'يُحتسب عند الدفع';
 
   @override
   String get cartFreeDeliveryUnlocked =>

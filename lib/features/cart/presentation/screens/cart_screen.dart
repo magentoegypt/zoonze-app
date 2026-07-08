@@ -556,11 +556,11 @@ class _CouponSection extends StatelessWidget {
 
 /// Free shipping threshold (AED) — matches the storefront announcement and
 /// gates both the progress banner and the summary's free-delivery line.
-const double _kFreeDeliveryThreshold = 150;
+const double _kFreeDeliveryThreshold = 200;
 
 /// Order Summary block (Figma 39:27): subtotal, optional promo line, the
-/// free-delivery line (only once the threshold is crossed), a divider, then
-/// the total in burgundy.
+/// delivery line (FREE past the threshold, otherwise "calculated at
+/// checkout"), a divider, then the total in burgundy.
 class _OrderSummary extends StatelessWidget {
   const _OrderSummary({required this.cart});
 
@@ -603,16 +603,18 @@ class _OrderSummary extends StatelessWidget {
               valueColor: AppColors.brandPrimary,
             ),
           ],
-          // Delivery line appears only once free delivery is unlocked.
-          if (freeDelivery) ...[
-            const SizedBox(height: 11),
-            _SummaryRow(
-              label: l10n.cartDelivery,
-              value: l10n.cartDeliveryFree,
-              valueColor: AppColors.brandPrimary,
-              valueWeight: FontWeight.w700,
-            ),
-          ],
+          // Delivery line always shows: FREE once the threshold is met,
+          // otherwise the fee is resolved at checkout (it depends on the
+          // emirate, so the cart can't know the amount yet).
+          const SizedBox(height: 11),
+          _SummaryRow(
+            label: l10n.cartDelivery,
+            value: freeDelivery
+                ? l10n.cartDeliveryFree
+                : l10n.cartDeliveryCalculated,
+            valueColor: freeDelivery ? AppColors.brandPrimary : null,
+            valueWeight: freeDelivery ? FontWeight.w700 : FontWeight.w500,
+          ),
           const SizedBox(height: 11),
           const Divider(
             height: 1,

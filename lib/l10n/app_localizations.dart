@@ -419,7 +419,7 @@ abstract class AppLocalizations {
   /// No description provided for @homeAnnouncement.
   ///
   /// In en, this message translates to:
-  /// **'Free shipping on orders over AED 150 · delivery within 3 hours'**
+  /// **'Free shipping on orders over AED 200 · delivery within 3 hours'**
   String get homeAnnouncement;
 
   /// No description provided for @homeTrustOriginalTitle.
@@ -1375,6 +1375,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'FREE'**
   String get cartDeliveryFree;
+
+  /// No description provided for @cartDeliveryCalculated.
+  ///
+  /// In en, this message translates to:
+  /// **'Calculated at checkout'**
+  String get cartDeliveryCalculated;
 
   /// No description provided for @cartFreeDeliveryUnlocked.
   ///
