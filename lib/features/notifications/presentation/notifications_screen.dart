@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/theme/app_colors.dart';
+import '../../../core/widgets/zoonze_back_button.dart';
 import '../../../l10n/l10n.dart';
 import '../data/notification_inbox.dart';
 import '../domain/notification_item.dart';
@@ -18,7 +19,10 @@ class NotificationsScreen extends ConsumerWidget {
     final inbox = ref.watch(notificationInboxProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.notificationsTitle)),
+      appBar: AppBar(
+        leading: const ZoonzeBackButton(),
+        title: Text(l10n.notificationsTitle),
+      ),
       body: ValueListenableBuilder<List<NotificationItem>>(
         valueListenable: inbox.items,
         builder: (context, items, _) {

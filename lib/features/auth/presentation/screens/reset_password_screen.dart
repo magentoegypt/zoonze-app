@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/routes.dart';
 import '../../../../core/validation/validators.dart';
 import '../../../../core/widgets/brand_logo.dart';
+import '../../../../core/widgets/zoonze_back_button.dart';
 import '../widgets/auth_header.dart';
 import '../../../../l10n/l10n.dart';
 import '../auth_controller.dart';
@@ -73,7 +74,8 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
       appBar: AppBar(
         centerTitle: true,
         toolbarHeight: 80,
-        title: const BrandLogo(height: 52),
+        leading: const ZoonzeBackButton(),
+        title: const BrandLogo(height: 60),
       ),
       body: SafeArea(
         child: SingleChildScrollView(

@@ -12,6 +12,7 @@ import '../../../../core/widgets/failure_message.dart';
 import '../../../../core/widgets/otp_code_field.dart';
 import '../../../../core/widgets/phone_number_field.dart';
 import '../../../../core/widgets/resend_countdown.dart';
+import '../../../../core/widgets/zoonze_back_button.dart';
 import '../../../../l10n/l10n.dart';
 import '../auth_controller.dart';
 import '../widgets/auth_field.dart';
@@ -159,7 +160,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       appBar: AppBar(
         centerTitle: true,
         toolbarHeight: 80,
-        title: const BrandLogo(height: 52),
+        leading: const ZoonzeBackButton(),
+        title: const BrandLogo(height: 60),
       ),
       body: SafeArea(
         child: SingleChildScrollView(

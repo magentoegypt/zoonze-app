@@ -11,6 +11,7 @@ import '../../../../app/theme/app_theme.dart';
 import '../../../../core/widgets/brand_logo.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../l10n/l10n.dart';
+import '../../../../core/widgets/zoonze_back_button.dart';
 import '../../data/brands_provider.dart';
 import '../../domain/brand.dart';
 
@@ -55,7 +56,7 @@ class _BrandsScreenState extends ConsumerState<BrandsScreen> {
       appBar: AppBar(
         toolbarHeight: 60,
         centerTitle: true,
-        leading: const BackButton(),
+        leading: const ZoonzeBackButton(),
         title: const BrandLogo(height: 44),
       ),
       body: brands.when(

@@ -21,7 +21,8 @@ class LanguageToggle extends StatelessWidget {
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
         color: const Color(0xFFF3F4F6),
-        borderRadius: BorderRadius.circular(9),
+        // Oval / stadium pill per Figma.
+        borderRadius: BorderRadius.circular(100),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -40,7 +41,7 @@ class LanguageToggle extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
         decoration: BoxDecoration(
           color: selected ? AppColors.brandPrimary : Colors.transparent,
-          borderRadius: BorderRadius.circular(7),
+          borderRadius: BorderRadius.circular(100),
         ),
         child: Text(
           label,

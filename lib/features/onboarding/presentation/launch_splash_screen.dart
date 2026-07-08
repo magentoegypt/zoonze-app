@@ -44,41 +44,65 @@ class _LaunchSplashScreenState extends ConsumerState<LaunchSplashScreen> {
     final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppColors.brandPrimary,
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // logo.png is a burgundy silhouette on transparent; tint it white so
-            // it reads on the burgundy splash background.
-            Image.asset(
-              AppImages.logo,
-              width: 180,
-              color: Colors.white,
-              colorBlendMode: BlendMode.srcIn,
-              errorBuilder: (_, __, ___) =>
-                  const BrandLockup(color: Colors.white, fontSize: 40),
+      body: Stack(
+        children: [
+          // Faint circular outlines behind the logo (Figma 52:2 background
+          // ellipses) — partly off-screen at three corners.
+          Positioned(top: -80, left: -120, child: _ring(360)),
+          Positioned(top: 120, right: -30, child: _ring(120)),
+          Positioned(bottom: -60, right: -120, child: _ring(260)),
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // logo.png is a burgundy silhouette on transparent; tint it white
+                // so it reads on the burgundy splash. Sized up per QA so the
+                // wordmark dominates the tagline.
+                Image.asset(
+                  AppImages.logo,
+                  width: 210,
+                  color: Colors.white,
+                  colorBlendMode: BlendMode.srcIn,
+                  errorBuilder: (_, __, ___) =>
+                      const BrandLockup(color: Colors.white, fontSize: 44),
+                ),
+                const SizedBox(height: 14),
+                // Short underline beneath the wordmark (Figma).
+                Container(width: 46, height: 1.5, color: Colors.white70),
+                const SizedBox(height: 12),
+                Text(
+                  l10n.launchTagline,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    letterSpacing: 3,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 44),
+                const SizedBox(
+                  width: 26,
+                  height: 26,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            Text(
-              l10n.launchTagline,
-              style: const TextStyle(
-                color: Colors.white,
-                letterSpacing: 3,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 40),
-            const SizedBox(
-              width: 28,
-              height: 28,
-              child: CircularProgressIndicator(
-                strokeWidth: 2.5,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
+
+  /// A faint circular outline used as a soft background decoration on the splash.
+  Widget _ring(double size) => Container(
+    width: size,
+    height: size,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      border: Border.all(color: Colors.white10, width: 1.5),
+    ),
+  );
 }

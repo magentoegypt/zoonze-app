@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/widgets/brand_logo.dart';
+import '../../core/widgets/zoonze_back_button.dart';
 import '../../features/notifications/presentation/notification_bell.dart';
 import '../routes.dart';
 
@@ -27,7 +28,7 @@ class ZoonzeAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       toolbarHeight: 60,
       centerTitle: true,
-      leading: canPop ? const BackButton() : null,
+      leading: canPop ? const ZoonzeBackButton() : null,
       title: const BrandLogo(height: 44),
       actions: [
         if (showSearch)

@@ -42,7 +42,10 @@ abstract final class AppTheme {
         backgroundColor: brightness == Brightness.light
             ? Colors.white
             : AppColors.surfaceDark,
-        foregroundColor: AppColors.brandPrimary,
+        // Ink (near-black) titles + leading/action icons per QA — the burgundy
+        // brand colour stays on the wordmark logo, prices and buttons, not the
+        // page titles. Screens that render the BrandLogo image are unaffected.
+        foregroundColor: AppColors.inkHeading,
         elevation: 0,
         centerTitle: true,
       ),

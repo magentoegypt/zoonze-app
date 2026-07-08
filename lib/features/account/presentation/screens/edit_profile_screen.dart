@@ -7,6 +7,7 @@ import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/store/store_controller.dart';
 import '../../../../core/validation/validators.dart';
+import '../../../../core/widgets/zoonze_back_button.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../notifications/presentation/notification_settings_controller.dart';
@@ -117,7 +118,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       showSearch: false,
       appBar: AppBar(
         centerTitle: true,
-        leading: const BackButton(),
+        leading: const ZoonzeBackButton(),
         title: Text(l10n.profileTitle),
       ),
       body: ListView(

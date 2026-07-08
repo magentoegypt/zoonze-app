@@ -9,6 +9,7 @@ import '../../../../core/config/store_contact.dart';
 import '../../../../core/util/launch.dart';
 import '../../../../core/widgets/brand_logo.dart';
 import '../../../../core/widgets/social_icon.dart';
+import '../../../../core/widgets/zoonze_back_button.dart';
 import '../../../../l10n/l10n.dart';
 
 /// About Zoonze — brand intro, company + contact details, social links,
@@ -30,7 +31,7 @@ class AboutScreen extends ConsumerWidget {
       currentTab: AppTab.account,
       appBar: AppBar(
         centerTitle: true,
-        leading: const BackButton(),
+        leading: const ZoonzeBackButton(),
         title: Text(l10n.accountAbout),
       ),
       body: ListView(

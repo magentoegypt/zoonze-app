@@ -7,6 +7,7 @@ import '../../../../app/routes.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/config/store_contact.dart';
 import '../../../../core/util/launch.dart';
+import '../../../../core/widgets/zoonze_back_button.dart';
 import '../../../../l10n/l10n.dart';
 
 /// Help & FAQ (Figma `66:2`): a help search, three contact actions (Live Chat /
@@ -54,7 +55,7 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
       currentTab: AppTab.account,
       appBar: AppBar(
         centerTitle: true,
-        leading: const BackButton(),
+        leading: const ZoonzeBackButton(),
         title: Text(l10n.accountHelp),
       ),
       body: ListView(

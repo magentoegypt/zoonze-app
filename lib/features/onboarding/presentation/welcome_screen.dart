@@ -51,9 +51,9 @@ class WelcomeScreen extends ConsumerWidget {
                     // up to match Figma — the 48px version read as too small.
                     Image.asset(
                       AppImages.logo,
-                      height: 72,
+                      height: 84,
                       errorBuilder: (_, __, ___) =>
-                          const BrandLockup(fontSize: 40),
+                          const BrandLockup(fontSize: 44),
                     ),
                     const SizedBox(height: 32),
                     // Circular flatlay visual (Figma uses a contained circle,

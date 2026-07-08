@@ -7,6 +7,7 @@ import '../../../../app/shell/marketing_footer.dart';
 import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../l10n/l10n.dart';
+import '../../../../core/widgets/zoonze_back_button.dart';
 import '../../domain/order.dart';
 import '../order_format.dart';
 
@@ -49,7 +50,7 @@ class OrderTrackingScreen extends StatelessWidget {
       currentTab: AppTab.account,
       appBar: AppBar(
         centerTitle: true,
-        leading: const BackButton(),
+        leading: const ZoonzeBackButton(),
         title: Text(l10n.trackOrderTitle),
       ),
       body: ListView(

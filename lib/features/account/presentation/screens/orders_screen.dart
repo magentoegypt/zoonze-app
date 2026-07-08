@@ -13,6 +13,7 @@ import '../../../../core/widgets/failure_message.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../cart/presentation/cart_controller.dart';
 import '../../data/account_repository.dart';
+import '../../../../core/widgets/zoonze_back_button.dart';
 import '../../domain/order.dart';
 import '../order_format.dart';
 
@@ -91,7 +92,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
       currentTab: AppTab.account,
       appBar: AppBar(
         centerTitle: true,
-        leading: const BackButton(),
+        leading: const ZoonzeBackButton(),
         title: Text(l10n.accountOrders),
       ),
       body: _body(l10n, state),

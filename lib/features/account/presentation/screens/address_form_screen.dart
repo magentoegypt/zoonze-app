@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/address/regions.dart';
 import '../../../../core/widgets/address_form.dart';
+import '../../../../core/widgets/zoonze_back_button.dart';
 import '../../../../l10n/l10n.dart';
 import '../../data/account_repository.dart';
 import '../../domain/customer_address.dart';
@@ -88,7 +89,10 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
     final l10n = AppLocalizations.of(context);
     final isEdit = widget.initial != null;
     return Scaffold(
-      appBar: AppBar(title: Text(isEdit ? l10n.addressEdit : l10n.addressAdd)),
+      appBar: AppBar(
+        leading: const ZoonzeBackButton(),
+        title: Text(isEdit ? l10n.addressEdit : l10n.addressAdd),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
