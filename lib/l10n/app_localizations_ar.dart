@@ -667,7 +667,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get cartSecureCheckout => 'الدفع الآمن';
+  String get cartSecureCheckout => 'تأكيد الطلب';
 
   @override
   String get cartEmptyTitle => 'سلتك فارغة';
@@ -1199,6 +1199,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get menuShop => 'تسوّق';
+
+  @override
+  String get menuViewAll => 'عرض الكل';
 
   @override
   String get menuAccountSection => 'الحساب';

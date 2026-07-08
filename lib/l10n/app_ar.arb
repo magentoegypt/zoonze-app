@@ -229,7 +229,7 @@
   "cartTitle": "السلة",
   "cartHeading": "سلّتي",
   "cartItemCount": "{count, plural, =0{لا عناصر} =1{عنصر واحد} other{{count} عناصر}}",
-  "cartSecureCheckout": "الدفع الآمن",
+  "cartSecureCheckout": "تأكيد الطلب",
   "cartEmptyTitle": "سلتك فارغة",
   "cartEmptyBody": "يبدو أنك لم تُضِف أي شيء بعد. تصفّح الأكثر مبيعاً واعثر على عطرك المميّز.",
   "cartContinueShopping": "متابعة التسوّق",
@@ -403,6 +403,7 @@
   "pdpTrustDeliveryLabel": "توصيل",
 
   "menuShop": "تسوّق",
+  "menuViewAll": "عرض الكل",
   "menuAccountSection": "الحساب",
   "menuLogOut": "تسجيل الخروج",
   "drawerVouchers": "القسائم",

@@ -240,7 +240,7 @@
   "@cartItemCount": {
     "placeholders": { "count": { "type": "int" } }
   },
-  "cartSecureCheckout": "Secure Checkout",
+  "cartSecureCheckout": "Proceed To Checkout",
   "cartEmptyTitle": "Your bag is empty",
   "cartEmptyBody": "Looks like you haven't added anything yet. Explore our bestsellers and find your signature scent.",
   "cartContinueShopping": "Continue shopping",
@@ -441,6 +441,7 @@
   "pdpTrustDeliveryLabel": "Delivery",
 
   "menuShop": "Shop",
+  "menuViewAll": "View All",
   "menuAccountSection": "Account",
   "menuLogOut": "Log Out",
   "drawerVouchers": "Vouchers",

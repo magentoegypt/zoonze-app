@@ -6,9 +6,10 @@ import '../../features/notifications/presentation/notification_bell.dart';
 import '../routes.dart';
 
 /// Decluttered app bar per the design review: centered Z-mark + `ZOONZE` logo
-/// lockup, no cart icon. The leading control is handled by the [Scaffold]
-/// automatically — a hamburger on tab roots (drawer present, nothing to pop)
-/// and a back button on pushed routes.
+/// lockup, no cart icon. Because [ZoonzeScaffold] always attaches a drawer, the
+/// AppBar's auto-leading would show the hamburger even on pushed routes — so the
+/// leading is chosen explicitly: a back button on a pushed route, and the drawer
+/// hamburger (leading: null → auto) on a tab root.
 class ZoonzeAppBar extends StatelessWidget implements PreferredSizeWidget {
   const ZoonzeAppBar({super.key, this.showSearch = true});
 
@@ -21,9 +22,12 @@ class ZoonzeAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Pushed route → back button; tab root → null so the drawer hamburger shows.
+    final canPop = ModalRoute.of(context)?.impliesAppBarDismissal ?? false;
     return AppBar(
       toolbarHeight: 60,
       centerTitle: true,
+      leading: canPop ? const BackButton() : null,
       title: const BrandLogo(height: 44),
       actions: [
         if (showSearch)

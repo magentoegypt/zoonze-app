@@ -338,6 +338,7 @@ class _CategoryNode extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final children = category.children
         .where((c) => c.includeInMenu && c.name.isNotEmpty)
         .toList();
@@ -378,6 +379,29 @@ class _CategoryNode extends StatelessWidget {
       iconColor: AppColors.brandPrimary,
       collapsedIconColor: AppColors.inkMuted,
       children: [
+        // "View All" opens the parent category's own PLP (browse everything in
+        // it) — expanding alone only reveals its subcategories.
+        ListTile(
+          dense: true,
+          contentPadding: EdgeInsetsDirectional.only(
+            start: 16.0 + (depth + 1) * 20.0,
+            end: 8,
+          ),
+          title: Text(
+            l10n.menuViewAll,
+            style: const TextStyle(
+              fontWeight: FontWeight.w500,
+              color: AppColors.brandPrimary,
+              fontSize: 14,
+            ),
+          ),
+          trailing: const Icon(
+            Icons.chevron_right,
+            color: AppColors.brandPrimary,
+            size: 20,
+          ),
+          onTap: () => onLeafTap(category),
+        ),
         for (final child in children)
           _CategoryNode(
             category: child,

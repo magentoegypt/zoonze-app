@@ -1307,7 +1307,7 @@ abstract class AppLocalizations {
   /// No description provided for @cartSecureCheckout.
   ///
   /// In en, this message translates to:
-  /// **'Secure Checkout'**
+  /// **'Proceed To Checkout'**
   String get cartSecureCheckout;
 
   /// No description provided for @cartEmptyTitle.
@@ -2263,6 +2263,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Shop'**
   String get menuShop;
+
+  /// No description provided for @menuViewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'View All'**
+  String get menuViewAll;
 
   /// No description provided for @menuAccountSection.
   ///

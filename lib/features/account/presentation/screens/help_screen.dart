@@ -70,7 +70,9 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
                 hintText: l10n.helpSearchHint,
                 prefixIcon: const Icon(Icons.search),
                 filled: true,
-                fillColor: AppColors.surfaceMuted,
+                fillColor: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white10
+                    : AppColors.surfaceMuted,
                 contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -121,10 +123,12 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
             padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 4),
             child: Text(
               l10n.helpFrequentlyAsked,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 16,
-                color: AppColors.inkHeading,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white
+                    : AppColors.inkHeading,
               ),
             ),
           ),
@@ -163,9 +167,13 @@ class _HelpScreenState extends ConsumerState<HelpScreen> {
 class _Band extends StatelessWidget {
   const _Band();
   @override
-  Widget build(BuildContext context) => const SizedBox(
+  Widget build(BuildContext context) => SizedBox(
     height: 8,
-    child: ColoredBox(color: AppColors.surfaceMuted),
+    child: ColoredBox(
+      color: Theme.of(context).brightness == Brightness.dark
+          ? Colors.white10
+          : AppColors.surfaceMuted,
+    ),
   );
 }
 
@@ -183,11 +191,14 @@ class _ContactCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
     return Material(
-      color: Colors.white,
+      color: dark ? const Color(0xFF243244) : Colors.white,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
-        side: const BorderSide(color: AppColors.borderDefault),
+        side: BorderSide(
+          color: dark ? Colors.white24 : AppColors.borderDefault,
+        ),
         borderRadius: BorderRadius.circular(12),
       ),
       child: InkWell(
@@ -208,10 +219,10 @@ class _ContactCard extends StatelessWidget {
               const SizedBox(height: 9),
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
-                  color: AppColors.inkHeading,
+                  color: dark ? Colors.white : AppColors.inkHeading,
                 ),
               ),
             ],
@@ -239,6 +250,10 @@ class _FaqTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Dark mode: the question text was AppColors.inkHeading (#1F2937) on the
+    // #1F2937 dark scaffold — invisible. Branch the text/divider for dark only,
+    // leaving light mode unchanged.
+    final dark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
         ExpansionTile(
@@ -248,30 +263,33 @@ class _FaqTile extends StatelessWidget {
           tilePadding: const EdgeInsets.symmetric(horizontal: 16),
           childrenPadding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 16),
           expandedCrossAxisAlignment: CrossAxisAlignment.start,
-          iconColor: AppColors.inkMuted,
-          collapsedIconColor: AppColors.inkMuted,
+          iconColor: dark ? Colors.white70 : AppColors.inkMuted,
+          collapsedIconColor: dark ? Colors.white70 : AppColors.inkMuted,
           title: Text(
             question,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w600,
               fontSize: 14,
-              color: AppColors.inkHeading,
+              color: dark ? Colors.white : AppColors.inkHeading,
             ),
           ),
           children: [
             Text(
               answer,
-              style: const TextStyle(color: AppColors.inkMuted, height: 1.4),
+              style: TextStyle(
+                color: dark ? Colors.white70 : AppColors.inkMuted,
+                height: 1.4,
+              ),
             ),
           ],
         ),
         if (showDivider)
-          const Divider(
+          Divider(
             height: 1,
             thickness: 1,
             indent: 16,
             endIndent: 16,
-            color: AppColors.borderDefault,
+            color: dark ? Colors.white12 : AppColors.borderDefault,
           ),
       ],
     );

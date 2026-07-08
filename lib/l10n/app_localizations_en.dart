@@ -691,7 +691,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get cartSecureCheckout => 'Secure Checkout';
+  String get cartSecureCheckout => 'Proceed To Checkout';
 
   @override
   String get cartEmptyTitle => 'Your bag is empty';
@@ -1234,6 +1234,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get menuShop => 'Shop';
+
+  @override
+  String get menuViewAll => 'View All';
 
   @override
   String get menuAccountSection => 'Account';
