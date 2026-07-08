@@ -7,6 +7,7 @@ import '../../../../app/routes.dart';
 import '../../../../app/shell/marketing_footer.dart';
 import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/config/free_shipping.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/widgets/failure_message.dart';
 import '../../../../l10n/l10n.dart';
@@ -149,6 +150,13 @@ class _CartScreenState extends ConsumerState<CartScreen> {
 
     final cart = state.cart;
     final itemCount = cart.items.fold<int>(0, (sum, i) => sum + i.quantity);
+    // Free-shipping threshold comes from Magento's Free Shipping "Minimum Order
+    // Amount" (storeConfig.free_shipping_subtotal) — never hardcoded. Null while
+    // loading or when unconfigured, in which case the promo/summary hide the
+    // free-shipping story and the delivery line falls back to "at checkout".
+    final freeShipThreshold = ref
+        .watch(freeShippingThresholdProvider)
+        .valueOrNull;
     return ListView(
       padding: EdgeInsets.zero,
       children: [
@@ -170,8 +178,11 @@ class _CartScreenState extends ConsumerState<CartScreen> {
             ],
           ),
         ),
-        if (cart.totals.subtotal != null)
-          _FreeDeliveryBanner(subtotal: cart.totals.subtotal!),
+        if (cart.totals.subtotal != null && freeShipThreshold != null)
+          _FreeDeliveryBanner(
+            subtotal: cart.totals.subtotal!,
+            threshold: freeShipThreshold,
+          ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
           child: Column(
@@ -212,7 +223,7 @@ class _CartScreenState extends ConsumerState<CartScreen> {
         // Thick grey band (Figma 39:26) — closes the promo section.
         const _SectionBand(),
         // Order Summary (Figma 39:27).
-        _OrderSummary(cart: cart),
+        _OrderSummary(cart: cart, freeDeliveryThreshold: freeShipThreshold),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
           child: Column(
@@ -554,17 +565,17 @@ class _CouponSection extends StatelessWidget {
   }
 }
 
-/// Free shipping threshold (AED) — matches the storefront announcement and
-/// gates both the progress banner and the summary's free-delivery line.
-const double _kFreeDeliveryThreshold = 200;
-
 /// Order Summary block (Figma 39:27): subtotal, optional promo line, the
 /// delivery line (FREE past the threshold, otherwise "calculated at
 /// checkout"), a divider, then the total in burgundy.
 class _OrderSummary extends StatelessWidget {
-  const _OrderSummary({required this.cart});
+  const _OrderSummary({required this.cart, this.freeDeliveryThreshold});
 
   final Cart cart;
+
+  /// Free-shipping threshold (AED) from store config; null when unconfigured/
+  /// still loading, in which case delivery falls back to "calculated at checkout".
+  final double? freeDeliveryThreshold;
 
   @override
   Widget build(BuildContext context) {
@@ -572,8 +583,9 @@ class _OrderSummary extends StatelessWidget {
     final totals = cart.totals;
     final itemCount = cart.items.fold<int>(0, (sum, i) => sum + i.quantity);
     final subtotal = totals.subtotal;
+    final threshold = freeDeliveryThreshold;
     final freeDelivery =
-        subtotal != null && subtotal.amount >= _kFreeDeliveryThreshold;
+        subtotal != null && threshold != null && subtotal.amount >= threshold;
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -692,21 +704,21 @@ class _SummaryRow extends StatelessWidget {
 /// Blush progress banner toward the free 3-hour delivery threshold (Figma).
 /// Shows remaining-to-go with a partial bar, or an unlocked state once met.
 class _FreeDeliveryBanner extends StatelessWidget {
-  const _FreeDeliveryBanner({required this.subtotal});
+  const _FreeDeliveryBanner({required this.subtotal, required this.threshold});
 
   final Money subtotal;
+
+  /// Free-shipping threshold (AED) from store config (never hardcoded).
+  final double threshold;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final amount = subtotal.amount;
-    final unlocked = amount >= _kFreeDeliveryThreshold;
-    final progress = (amount / _kFreeDeliveryThreshold).clamp(0.0, 1.0);
+    final unlocked = amount >= threshold;
+    final progress = (amount / threshold).clamp(0.0, 1.0);
     final remaining = Money(
-      amount: (_kFreeDeliveryThreshold - amount).clamp(
-        0.0,
-        _kFreeDeliveryThreshold,
-      ),
+      amount: (threshold - amount).clamp(0.0, threshold),
       currency: subtotal.currency,
     );
 
