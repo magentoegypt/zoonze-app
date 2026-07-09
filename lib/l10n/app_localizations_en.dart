@@ -1098,6 +1098,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addressDefaultShipping => 'Set as default address';
 
   @override
+  String get addressSaveAs => 'Save as';
+
+  @override
   String get addressDefaultBadge => 'Default';
 
   @override

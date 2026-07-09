@@ -13,6 +13,8 @@ class CustomerAddress {
     this.countryCode = 'AE',
     this.defaultShipping = false,
     this.defaultBilling = false,
+    this.labelOptionId,
+    this.labelText,
   });
 
   final int? id;
@@ -38,6 +40,14 @@ class CustomerAddress {
   final String countryCode;
   final bool defaultShipping;
   final bool defaultBilling;
+
+  /// Selected `address_label` option id (e.g. "123") — written as
+  /// `custom_attributesV2`. Null when no label is chosen.
+  final String? labelOptionId;
+
+  /// Display label of the selected `address_label` option (e.g. "Home"), read
+  /// from `selected_options` (store-scoped, so the AR store returns AR labels).
+  final String? labelText;
 
   String get fullName => '$firstName $lastName'.trim();
 
@@ -65,5 +75,10 @@ class CustomerAddress {
       'region': <String, dynamic>{'region': region},
     'default_shipping': defaultShipping,
     'default_billing': defaultBilling,
+    // `address_label` is a select attribute — the value is the option id.
+    if (labelOptionId != null && labelOptionId!.isNotEmpty)
+      'custom_attributesV2': <Map<String, dynamic>>[
+        {'attribute_code': 'address_label', 'value': labelOptionId},
+      ],
   };
 }

@@ -73,6 +73,12 @@ query CustomerAddresses {
       country_code
       default_shipping
       default_billing
+      custom_attributesV2(attributeCodes: ["address_label"]) {
+        code
+        ... on AttributeSelectedOptions {
+          selected_options { label value }
+        }
+      }
     }
   }
 }
@@ -139,6 +145,22 @@ mutation UploadAvatar($file: String!) {
   static const String deleteAvatar = r'''
 mutation DeleteAvatar {
   deleteCustomerAvatar { url }
+}
+''';
+
+  /// Discovers the `address_label` select options (Home/Office/Other → their
+  /// option ids) so the "Save as" chips map to ids without hardcoding. Labels
+  /// are store-scoped.
+  static const String addressLabelMetadata = r'''
+query AddressLabelMeta {
+  customAttributeMetadataV2(
+    attributes: [{ attribute_code: "address_label", entity_type: "customer_address" }]
+  ) {
+    items {
+      code
+      options { label value }
+    }
+  }
 }
 ''';
 }

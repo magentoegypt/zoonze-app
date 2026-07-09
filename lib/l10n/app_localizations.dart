@@ -2000,6 +2000,12 @@ abstract class AppLocalizations {
   /// **'Set as default address'**
   String get addressDefaultShipping;
 
+  /// No description provided for @addressSaveAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as'**
+  String get addressSaveAs;
+
   /// No description provided for @addressDefaultBadge.
   ///
   /// In en, this message translates to:

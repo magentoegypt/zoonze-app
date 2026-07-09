@@ -354,6 +354,7 @@
   "fieldApartment": "شقة / طابق (اختياري)",
   "checkoutUseNewAddress": "استخدام عنوان جديد",
   "addressDefaultShipping": "تعيين كعنوان افتراضي",
+  "addressSaveAs": "احفظ باسم",
   "addressDefaultBadge": "الرئيسية",
   "addressAddNew": "إضافة عنوان جديد",
   "addressSave": "حفظ العنوان",

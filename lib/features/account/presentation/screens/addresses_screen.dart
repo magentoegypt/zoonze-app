@@ -137,6 +137,28 @@ class _AddressCard extends StatelessWidget {
                         ),
                       ),
                     ],
+                    // "Save as" label (Home / Office / Other), backend-scoped.
+                    if ((address.labelText ?? '').isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.brandPrimary,
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Text(
+                          address.labelText!,
+                          style: const TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

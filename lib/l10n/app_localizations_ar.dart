@@ -1066,6 +1066,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get addressDefaultShipping => 'تعيين كعنوان افتراضي';
 
   @override
+  String get addressSaveAs => 'احفظ باسم';
+
+  @override
   String get addressDefaultBadge => 'الرئيسية';
 
   @override

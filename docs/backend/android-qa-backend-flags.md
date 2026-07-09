@@ -10,7 +10,7 @@ Owner: **Magento / platform team**. Endpoint: `https://zoonze.com/graphql`, per 
 | 2 | Footer social URLs (X + YouTube) missing from config | Home footer | Cosmetic | Config only |
 | 3 | Shop-by-Category source doesn't match the website | Home | Cosmetic/UX | Config or small resolver |
 | 4 | Arabic push-notification text | Notifications | UX | Send-side change |
-| 5 | Address "Save as" (Home/Office/Other) label | Addresses | Feature | Custom attribute |
+| 5 | ~~Address "Save as" (Home/Office/Other) label~~ **✅ RESOLVED** (attr live + app wired) | Addresses | Done | Custom attribute |
 | 6 | "Continue with Google" social login | Sign-in | Feature (deferred) | Extension + resolver |
 | 7 | ~~Profile-photo (avatar) upload~~ **✅ RESOLVED** (backend live + app wired) | Edit Profile | Done | Custom resolver + storage |
 | 8 | Product "size" not modelled as a configurable attribute | PDP | Cosmetic/UX | Catalog |
@@ -81,8 +81,11 @@ Owner: **Magento / platform team**. Endpoint: `https://zoonze.com/graphql`, per 
 
 ---
 
-## 5. Address "Save as" label (Home / Office / Other)
-**ClickUp:** [My Orders 86d3jefcx](https://app.clickup.com/t/86d3jefcx) #4 (Add Address) · **Priority: Low.**
+## 5. Address "Save as" label (Home / Office / Other) — ✅ RESOLVED
+**ClickUp:** [My Orders 86d3jefcx](https://app.clickup.com/t/86d3jefcx) #4 (Add Address) · **Status: Done** (attribute live; app wired 2026-07-09).
+
+**Delivered:** `address_label` is a **select** attribute (options Home/Office/Other → option ids). App writes `custom_attributesV2: [{ attribute_code: "address_label", value: "<option-id>" }]`, reads it back via `custom_attributesV2 { ... on AttributeSelectedOptions { selected_options { label value } } }`, and discovers the option ids at runtime via `customAttributeMetadataV2` (no hardcoded ids/labels — labels are store-scoped). Chips on Add/Edit Address; a badge on Saved Addresses. Original request below.
+
 
 **Symptom.** The design has "Save as: Home / Office / Other" chips; the app omits them.
 

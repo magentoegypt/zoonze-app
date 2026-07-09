@@ -384,6 +384,7 @@
   "fieldApartment": "Apartment / Floor (optional)",
   "checkoutUseNewAddress": "Use a new address",
   "addressDefaultShipping": "Set as default address",
+  "addressSaveAs": "Save as",
   "addressDefaultBadge": "Default",
   "addressAddNew": "Add New Address",
   "addressSave": "Save Address",

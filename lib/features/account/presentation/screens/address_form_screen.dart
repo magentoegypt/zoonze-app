@@ -23,6 +23,7 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
   final _formKey = GlobalKey<FormState>();
   late final AddressFormController _address;
   bool _busy = false;
+  String? _selectedLabelId;
 
   @override
   void initState() {
@@ -38,6 +39,7 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
       regionId: a?.regionId,
       isDefault: a?.defaultShipping ?? false,
     );
+    _selectedLabelId = a?.labelOptionId;
   }
 
   @override
@@ -62,6 +64,7 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
       regionId: _address.regionId.value,
       countryCode: addressCountryCode,
       defaultShipping: _address.isDefault.value,
+      labelOptionId: _selectedLabelId,
     );
     try {
       final repo = ref.read(accountRepositoryProvider);
@@ -103,6 +106,12 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
               children: [
                 AddressForm(controller: _address),
                 const SizedBox(height: 16),
+                // Save as: Home / Office / Other (the `address_label` select).
+                // Options + ids come from the backend; nothing hardcoded.
+                _SaveAsChips(
+                  selectedId: _selectedLabelId,
+                  onSelected: (id) => setState(() => _selectedLabelId = id),
+                ),
                 // Set as default address (Figma 64:92) — label + burgundy toggle.
                 ValueListenableBuilder<bool>(
                   valueListenable: _address.isDefault,
@@ -146,6 +155,48 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// "Save as: Home / Office / Other" chips — the `address_label` select. Options
+/// + their ids come from the backend metadata; hidden when none are configured.
+class _SaveAsChips extends ConsumerWidget {
+  const _SaveAsChips({required this.selectedId, required this.onSelected});
+  final String? selectedId;
+  final ValueChanged<String?> onSelected;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final options =
+        ref.watch(addressLabelOptionsProvider).valueOrNull ?? const [];
+    if (options.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          l10n.addressSaveAs,
+          style: const TextStyle(
+            fontSize: 13.5,
+            fontWeight: FontWeight.w600,
+            color: AppColors.inkHeading,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          children: [
+            for (final opt in options)
+              ChoiceChip(
+                label: Text(opt.label),
+                selected: selectedId == opt.value,
+                onSelected: (sel) => onSelected(sel ? opt.value : null),
+              ),
+          ],
+        ),
+        const SizedBox(height: 16),
+      ],
     );
   }
 }

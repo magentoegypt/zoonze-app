@@ -102,6 +102,39 @@ class AccountRepository {
   Future<void> deleteAvatar() =>
       _run(AccountQueries.deleteAvatar, const {}, mutation: true);
 
+  /// Discovers the `address_label` select options (id + store-scoped label) so
+  /// the "Save as" chips map to option ids without hardcoding. Empty on error.
+  Future<List<({String value, String label})>> fetchAddressLabelOptions() async {
+    try {
+      final data = await _run(
+        AccountQueries.addressLabelMetadata,
+        const {},
+        mutation: false,
+      );
+      final items =
+          (data['customAttributeMetadataV2'] as Map<String, dynamic>?)?['items']
+              as List<dynamic>? ??
+          const [];
+      for (final item in items) {
+        if (item is Map<String, dynamic> && item['code'] == 'address_label') {
+          return (item['options'] as List<dynamic>? ?? const [])
+              .whereType<Map<String, dynamic>>()
+              .map(
+                (o) => (
+                  value: (o['value'] as String?) ?? '',
+                  label: (o['label'] as String?) ?? '',
+                ),
+              )
+              .where((o) => o.value.isNotEmpty && o.label.isNotEmpty)
+              .toList();
+        }
+      }
+      return const [];
+    } catch (_) {
+      return const [];
+    }
+  }
+
   CustomerOrder _parseOrder(Map<String, dynamic> json) {
     final lines = (json['items'] as List<dynamic>? ?? const [])
         .whereType<Map<String, dynamic>>()
@@ -206,6 +239,7 @@ class AccountRepository {
         .whereType<String>()
         .toList();
     final region = json['region'] as Map<String, dynamic>?;
+    final label = _addressLabel(json['custom_attributesV2']);
     return CustomerAddress(
       id: (json['id'] as num?)?.toInt(),
       firstName: (json['firstname'] as String?) ?? '',
@@ -220,7 +254,30 @@ class AccountRepository {
       countryCode: (json['country_code'] as String?) ?? 'AE',
       defaultShipping: (json['default_shipping'] as bool?) ?? false,
       defaultBilling: (json['default_billing'] as bool?) ?? false,
+      labelOptionId: label?.value,
+      labelText: label?.label,
     );
+  }
+
+  /// Extracts the selected `address_label` option ({value, label}) from an
+  /// address's `custom_attributesV2`, or null when unset.
+  ({String value, String label})? _addressLabel(dynamic attrs) {
+    if (attrs is! List) return null;
+    for (final a in attrs) {
+      if (a is Map<String, dynamic> && a['code'] == 'address_label') {
+        final selected = a['selected_options'] as List<dynamic>?;
+        if (selected != null && selected.isNotEmpty) {
+          final opt = selected.first;
+          if (opt is Map<String, dynamic>) {
+            final value = opt['value'] as String?;
+            if (value != null && value.isNotEmpty) {
+              return (value: value, label: (opt['label'] as String?) ?? '');
+            }
+          }
+        }
+      }
+    }
+    return null;
   }
 
   Future<Map<String, dynamic>> _run(
@@ -368,6 +425,14 @@ final addressesProvider = FutureProvider.autoDispose<List<CustomerAddress>>((
 ) {
   return ref.watch(accountRepositoryProvider).fetchAddresses();
 });
+
+/// The `address_label` select options (Home/Office/Other → option ids),
+/// store-scoped so the AR store returns AR labels. Drives the Save-as chips.
+final addressLabelOptionsProvider =
+    FutureProvider.autoDispose<List<({String value, String label})>>((ref) {
+      ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
+      return ref.watch(accountRepositoryProvider).fetchAddressLabelOptions();
+    });
 
 /// Real order count for the drawer/account quick-stats (cheap pageSize:1 query).
 /// Isolated + error-safe so it never blocks the drawer; 0 on failure.
