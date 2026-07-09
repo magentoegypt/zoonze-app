@@ -79,17 +79,14 @@ class _LaunchSplashScreenState extends ConsumerState<LaunchSplashScreen> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 44),
-                const SizedBox(
-                  width: 26,
-                  height: 26,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.5,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                ),
               ],
             ),
+          ),
+          // Loading dots pinned near the bottom of the screen (shared PNG
+          // position) — replaces the centered round spinner.
+          const Align(
+            alignment: Alignment(0, 0.72),
+            child: _DotsLoader(),
           ),
         ],
       ),
@@ -105,4 +102,58 @@ class _LaunchSplashScreenState extends ConsumerState<LaunchSplashScreen> {
       border: Border.all(color: Colors.white10, width: 1.5),
     ),
   );
+}
+
+/// Three pulsing dots used as the splash loading indicator (shared PNG) — the
+/// highlight sweeps left→right across the dots. White on the burgundy splash.
+class _DotsLoader extends StatefulWidget {
+  const _DotsLoader();
+
+  @override
+  State<_DotsLoader> createState() => _DotsLoaderState();
+}
+
+class _DotsLoaderState extends State<_DotsLoader>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller =
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 1100))
+        ..repeat();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, _) => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = 0; i < 3; i++)
+            Padding(
+              padding: EdgeInsetsDirectional.only(start: i == 0 ? 0 : 9),
+              child: _dot(i),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _dot(int index) {
+    // Each dot leads the next by a third of the cycle so the highlight travels
+    // across them. `%` on a positive divisor stays non-negative in Dart.
+    final phase = (_controller.value - index / 3) % 1.0;
+    final t = (1 - (phase * 2 - 1).abs()).clamp(0.0, 1.0); // triangle 0→1→0
+    return Container(
+      width: 8,
+      height: 8,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: Colors.white.withValues(alpha: 0.3 + 0.7 * t),
+      ),
+    );
+  }
 }
