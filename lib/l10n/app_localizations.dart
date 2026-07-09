@@ -2294,6 +2294,24 @@ abstract class AppLocalizations {
   /// **'or pay by card in instalments'**
   String get promoTabbyCardInstalments;
 
+  /// No description provided for @tabbyInfoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay in 4 with Tabby'**
+  String get tabbyInfoTitle;
+
+  /// No description provided for @tabbyInfoBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Split your purchase into 4 equal, interest-free payments. No fees when you pay on time.'**
+  String get tabbyInfoBody;
+
+  /// No description provided for @tabbyInfoGotIt.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get tabbyInfoGotIt;
+
   /// No description provided for @paymentSessionUnavailable.
   ///
   /// In en, this message translates to:

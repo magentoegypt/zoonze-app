@@ -110,7 +110,9 @@ void main() {
   group('TabbyPromo', () {
     testWidgets('shows a line for each promo-eligible product', (tester) async {
       await _pump(tester, _config([_installments(), _payLater()]), _aed);
-      expect(find.text('tabby'), findsNWidgets(2));
+      // One brand chip for the (now bordered, tappable) card, one message line
+      // per eligible product.
+      expect(find.text('tabby'), findsOneWidget);
       expect(find.textContaining('interest-free payments of'), findsOneWidget);
       expect(find.textContaining('AED 50.00'), findsOneWidget); // 200 / 4
       expect(find.textContaining('pay later'), findsOneWidget);

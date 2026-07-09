@@ -1248,6 +1248,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get promoTabbyCardInstalments => 'or pay by card in instalments';
 
   @override
+  String get tabbyInfoTitle => 'Pay in 4 with Tabby';
+
+  @override
+  String get tabbyInfoBody =>
+      'Split your purchase into 4 equal, interest-free payments. No fees when you pay on time.';
+
+  @override
+  String get tabbyInfoGotIt => 'Got it';
+
+  @override
   String get paymentSessionUnavailable =>
       'Tabby is unavailable for this order. Please choose another payment method.';
 

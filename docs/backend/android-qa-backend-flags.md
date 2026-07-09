@@ -13,6 +13,7 @@ Owner: **Magento / platform team**. Endpoint: `https://zoonze.com/graphql`, per 
 | 5 | Address "Save as" (Home/Office/Other) label | Addresses | Feature | Custom attribute |
 | 6 | "Continue with Google" social login | Sign-in | Feature (deferred) | Extension + resolver |
 | 7 | Profile-photo (avatar) upload | Edit Profile | Feature (deferred) | Custom resolver + storage |
+| 8 | Product "size" not modelled as a configurable attribute | PDP | Cosmetic/UX | Catalog |
 
 ---
 
@@ -116,6 +117,19 @@ Owner: **Magento / platform team**. Endpoint: `https://zoonze.com/graphql`, per 
 **Backend action (decision + build).** Magento has no customer-avatar concept. Needs a **custom resolver** to upload/store an image (e.g. `uploadCustomerAvatar(file) → { url }`, or a customer custom attribute holding a media URL) + media storage, and a field to read it back on `customer`.
 
 **Acceptance.** A GraphQL mutation to set a customer avatar and a `customer` field to read its URL.
+
+---
+
+## 8. Product "size" selector (PDP) — catalog modelling
+**ClickUp:** [Product Display 86d3htxb9](https://app.clickup.com/t/86d3htxb9) #1 · **Priority: Low** (also CLAUDE.md Open Q #5).
+
+**Symptom.** The PDP shows an empty space above the quantity where a size selector should be.
+
+**App state.** The size/variant selector already renders above the quantity **for configurable products** (`configurable_options` → chips, with per-variant price/stock). Simple products expose no size attribute, so there is nothing to select — the app does not fabricate one.
+
+**Backend action.** Model size as a real **configurable attribute** (with variants) on the products that have sizes, so `products { ... configurable_options { attribute_code values { label } } variants { attributes { code value_index } product { sku price_range stock_status } } }` returns them.
+
+**Acceptance.** A sized product returns non-empty `configurable_options` (attribute_code `size`) + `variants`; the PDP then shows the size chips above quantity automatically.
 
 ---
 

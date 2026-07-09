@@ -1215,6 +1215,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get promoTabbyCardInstalments => 'أو ادفع بالبطاقة على أقساط';
 
   @override
+  String get tabbyInfoTitle => 'قسّمها على 4 دفعات مع تابي';
+
+  @override
+  String get tabbyInfoBody =>
+      'قسّم مشترياتك على 4 دفعات متساوية بدون فوائد، ولا رسوم عند السداد في الوقت المحدد.';
+
+  @override
+  String get tabbyInfoGotIt => 'حسنًا';
+
+  @override
   String get paymentSessionUnavailable =>
       'تابي غير متاح لهذا الطلب. يرجى اختيار طريقة دفع أخرى.';
 

@@ -31,8 +31,34 @@ class ProductDetailScreen extends ConsumerStatefulWidget {
 
 class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
   final Map<String, int> _selection = <String, int>{};
+  final ScrollController _scroll = ScrollController();
   int _tab = 0;
   int _quantity = 1;
+  bool _showBar = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _scroll.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scroll.removeListener(_onScroll);
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  /// Retract the sticky Add-to-Cart bar as the marketing footer scrolls into
+  /// view so it never overlaps it (QA #3). Self-stabilising: hiding the bar
+  /// grows the viewport (shrinking `remaining`), which keeps it hidden; showing
+  /// it does the reverse — so there's no oscillation at the boundary.
+  void _onScroll() {
+    if (!_scroll.hasClients) return;
+    final pos = _scroll.position;
+    final show = pos.maxScrollExtent - pos.pixels > 300;
+    if (show != _showBar) setState(() => _showBar = show);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,10 +67,10 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
 
     return ZoonzeScaffold(
       currentTab: AppTab.home,
-      // Sticky Add-to-Cart bar (Figma) pinned above the bottom nav, shown once
-      // the product has loaded.
+      // Sticky Add-to-Cart bar (Figma) pinned above the bottom nav — shown once
+      // the product has loaded, and retracted as the footer scrolls into view.
       bottomBar: detail.maybeWhen(
-        data: (product) => product == null
+        data: (product) => (product == null || !_showBar)
             ? null
             : _StickyAddToCart(
                 product: product,
@@ -62,6 +88,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
           }
           return _Content(
             product: product,
+            scrollController: _scroll,
             selection: _selection,
             tab: _tab,
             quantity: _quantity,
@@ -78,6 +105,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
 class _Content extends StatelessWidget {
   const _Content({
     required this.product,
+    required this.scrollController,
     required this.selection,
     required this.tab,
     required this.quantity,
@@ -87,6 +115,7 @@ class _Content extends StatelessWidget {
   });
 
   final ProductDetail product;
+  final ScrollController scrollController;
   final Map<String, int> selection;
   final int tab;
   final int quantity;
@@ -104,6 +133,7 @@ class _Content extends StatelessWidget {
     ];
 
     return ListView(
+      controller: scrollController,
       padding: EdgeInsets.zero,
       children: [
         _Gallery(
