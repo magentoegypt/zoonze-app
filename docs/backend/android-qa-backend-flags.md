@@ -12,7 +12,7 @@ Owner: **Magento / platform team**. Endpoint: `https://zoonze.com/graphql`, per 
 | 4 | Arabic push-notification text | Notifications | UX | Send-side change |
 | 5 | Address "Save as" (Home/Office/Other) label | Addresses | Feature | Custom attribute |
 | 6 | "Continue with Google" social login | Sign-in | Feature (deferred) | Extension + resolver |
-| 7 | Profile-photo (avatar) upload | Edit Profile | Feature (deferred) | Custom resolver + storage |
+| 7 | ~~Profile-photo (avatar) upload~~ **✅ RESOLVED** (backend live + app wired) | Edit Profile | Done | Custom resolver + storage |
 | 8 | Product "size" not modelled as a configurable attribute | PDP | Cosmetic/UX | Catalog |
 
 ---
@@ -107,8 +107,11 @@ Owner: **Magento / platform team**. Endpoint: `https://zoonze.com/graphql`, per 
 
 ---
 
-## 7. Profile-photo (avatar) upload
-**ClickUp:** [Edit Profile 86d3k12jt](https://app.clickup.com/t/86d3k12jt) · **Priority: Deferred** (product decision).
+## 7. Profile-photo (avatar) upload — ✅ RESOLVED
+**ClickUp:** [Edit Profile 86d3k12jt](https://app.clickup.com/t/86d3k12jt) · **Status: Done** (backend `MagentoEgypt_PaymentGraphQl` deployed; app wired 2026-07-09).
+
+**Delivered API** (customer token): `uploadCustomerAvatar(input: { base64_encoded_file }) { url }`, `deleteCustomerAvatar { url }`, `customer { avatar_url }`. The app now picks from the gallery → base64 → uploads, shows the photo (falling back to initials), and offers Change / Remove. Below is the original request for reference.
+
 
 **Symptom.** "Change Photo" shows "not available yet"; upload does nothing.
 
