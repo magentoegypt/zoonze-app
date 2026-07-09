@@ -15,10 +15,13 @@ import '../../../../core/widgets/button_spinner.dart';
 import '../../../../core/widgets/failure_message.dart';
 import '../../../../core/widgets/otp_code_field.dart';
 import '../../../../core/widgets/resend_countdown.dart';
+import '../../../../core/widgets/summary_row.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../account/data/account_repository.dart';
 import '../../../account/domain/customer_address.dart';
 import '../../../auth/presentation/auth_controller.dart';
+import '../../../cart/domain/cart.dart';
+import '../../../cart/presentation/cart_controller.dart';
 import '../../../catalog/domain/money.dart';
 import '../../domain/payment_session.dart';
 import '../../payments/payment_method_card.dart';
@@ -327,6 +330,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final state = ref.watch(checkoutControllerProvider);
+    final cart = ref.watch(cartControllerProvider.select((s) => s.cart));
     final isGuest = !ref.watch(authControllerProvider).isAuthenticated;
     // _placing spans the whole place-order → session → present flow; state.isBusy
     // covers the individual address/shipping/payment mutations.
@@ -440,12 +444,20 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                           RadioListTile<String>(
                             value: method.id,
                             title: Text(method.title),
-                            secondary: method.amount != null
+                            secondary:
+                                (method.amount == null ||
+                                    method.amount!.amount <= 0)
                                 ? Text(
+                                    l10n.cartDeliveryFree,
+                                    style: const TextStyle(
+                                      color: AppColors.brandPrimary,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  )
+                                : Text(
                                     method.amount!.formatted(),
                                     textDirection: TextDirection.ltr,
-                                  )
-                                : null,
+                                  ),
                           ),
                       ],
                     ),
@@ -460,28 +472,40 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       selected: state.selectedPayment?.code == method.code,
                       onTap: () => _controller.selectPayment(method),
                     ),
-                ],
-                if (state.paymentDone) ...[
-                  const SizedBox(height: 24),
-                  _StepHeader(index: 4, title: l10n.checkoutSummary),
-                  if (state.grandTotal != null)
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  // Security reassurance below the methods (Figma / QA #5).
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4, bottom: 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          l10n.cartTotal,
-                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        const Icon(
+                          Icons.lock_outline,
+                          size: 14,
+                          color: AppColors.inkMuted,
                         ),
-                        Text(
-                          state.grandTotal!.formatted(),
-                          textDirection: TextDirection.ltr,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.brandPrimary,
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            l10n.checkoutPaymentSecurityNote,
+                            style: const TextStyle(
+                              color: AppColors.inkMuted,
+                              fontSize: 12,
+                              height: 1.35,
+                            ),
                           ),
                         ),
                       ],
                     ),
+                  ),
+                ],
+                if (state.paymentDone) ...[
+                  const SizedBox(height: 24),
+                  _StepHeader(index: 4, title: l10n.checkoutSummary),
+                  _CheckoutSummary(
+                    cart: cart,
+                    deliveryFee: state.selectedShipping?.amount,
+                    grandTotal: state.grandTotal,
+                  ),
                   const SizedBox(height: 16),
                   FilledButton(
                     onPressed: (busy || needsGuestOtp) ? null : _placeOrder,
@@ -571,6 +595,81 @@ class _StepHeader extends StatelessWidget {
       ],
     ),
   );
+}
+
+/// Order Summary breakdown (QA #6): Subtotal, optional Promo discount, Delivery
+/// fee (FREE when the selected shipping is free), a divider, then the Total.
+/// Item subtotal + discount come from the cart; the delivery fee is the selected
+/// shipping method's amount and the total is the checkout grand total.
+class _CheckoutSummary extends StatelessWidget {
+  const _CheckoutSummary({
+    required this.cart,
+    this.deliveryFee,
+    this.grandTotal,
+  });
+
+  final Cart cart;
+  final Money? deliveryFee;
+  final Money? grandTotal;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final totals = cart.totals;
+    final itemCount = cart.items.fold<int>(0, (sum, i) => sum + i.quantity);
+    final freeDelivery = deliveryFee == null || deliveryFee!.amount <= 0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SummaryRow(
+          label: l10n.cartSubtotalCount(itemCount),
+          value: totals.subtotal?.formatted(),
+        ),
+        if (totals.discount != null) ...[
+          const SizedBox(height: 11),
+          SummaryRow(
+            label: totals.appliedCoupon != null
+                ? l10n.cartPromoCode(totals.appliedCoupon!)
+                : l10n.cartDiscount,
+            value: '−${totals.discount!.formatted()}',
+            valueColor: AppColors.brandPrimary,
+          ),
+        ],
+        const SizedBox(height: 11),
+        SummaryRow(
+          label: l10n.checkoutDeliveryFee,
+          value: freeDelivery ? l10n.cartDeliveryFree : deliveryFee!.formatted(),
+          valueColor: freeDelivery ? AppColors.brandPrimary : null,
+          valueWeight: freeDelivery ? FontWeight.w700 : FontWeight.w500,
+        ),
+        const SizedBox(height: 11),
+        const Divider(height: 1, thickness: 1, color: AppColors.borderDefault),
+        const SizedBox(height: 11),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              l10n.cartTotal,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: AppColors.inkHeading,
+              ),
+            ),
+            Text(
+              (grandTotal ?? totals.grandTotal)?.formatted() ?? '—',
+              textDirection: TextDirection.ltr,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: AppColors.brandPrimary,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 }
 
 /// A selectable saved-address card (Figma): radio + name (+ "Default" badge) +

@@ -1193,10 +1193,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get checkoutShippingMethod => 'Shipping Method';
 
   @override
-  String get checkoutPayment => 'Payment';
+  String get checkoutPayment => 'Payment Method';
 
   @override
   String get checkoutSummary => 'Order Summary';
+
+  @override
+  String get checkoutDeliveryFee => 'Delivery fee';
+
+  @override
+  String get checkoutPaymentSecurityNote =>
+      'Online payments are processed securely. Cash on delivery available across the UAE.';
 
   @override
   String get checkoutContinue => 'Continue';

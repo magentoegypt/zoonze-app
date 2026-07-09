@@ -157,6 +157,13 @@ class CheckoutController extends Notifier<CheckoutState> {
         guestOtpVerified: phoneChanged ? false : state.guestOtpVerified,
         isBusy: false,
       );
+      // Auto-select the default (free/standard) shipping so the payment step +
+      // order summary populate without an extra tap — QA: "Standard Shipping
+      // FREE selected by default". This cascades into the default payment.
+      final defaultShipping = _defaultShipping(methods);
+      if (defaultShipping != null) {
+        await selectShipping(defaultShipping);
+      }
       return true;
     } catch (error) {
       state = state.copyWith(isBusy: false, error: error);
@@ -174,7 +181,12 @@ class CheckoutController extends Notifier<CheckoutState> {
         method.carrierCode,
         method.methodCode,
       );
-      final payments = await _repo.setBillingSameAsShipping(cartId);
+      // Present payments in the Figma order (Check/Money order, COD, N-Genius,
+      // Tabby, …) — the checkout list still contains only what the backend
+      // returns in `available_payment_methods`.
+      final payments = _orderPayments(
+        await _repo.setBillingSameAsShipping(cartId),
+      );
       state = state.copyWith(
         selectedShipping: method,
         grandTotal: total,
@@ -182,11 +194,60 @@ class CheckoutController extends Notifier<CheckoutState> {
         selectedPayment: null,
         isBusy: false,
       );
+      // Pre-select Cash on Delivery (QA default) so the summary + Place Order
+      // are ready immediately; the shopper can still switch method.
+      final defaultPayment = _defaultPayment(payments);
+      if (defaultPayment != null) {
+        await selectPayment(defaultPayment);
+      }
       return true;
     } catch (error) {
       state = state.copyWith(isBusy: false, error: error);
       return false;
     }
+  }
+
+  /// The default shipping method to auto-select: the cheapest (a free method,
+  /// when the store offers one, sorts first).
+  ShippingMethodOption? _defaultShipping(List<ShippingMethodOption> methods) {
+    if (methods.isEmpty) return null;
+    final sorted = [...methods]
+      ..sort((a, b) => (a.amount?.amount ?? 0).compareTo(b.amount?.amount ?? 0));
+    return sorted.first;
+  }
+
+  /// Payment methods in the Figma display order, stable within a rank.
+  List<PaymentMethodOption> _orderPayments(List<PaymentMethodOption> methods) {
+    final indexed = methods.asMap().entries.toList()
+      ..sort((a, b) {
+        final r = _payRank(a.value.code).compareTo(_payRank(b.value.code));
+        return r != 0 ? r : a.key.compareTo(b.key);
+      });
+    return [for (final e in indexed) e.value];
+  }
+
+  static int _payRank(String code) {
+    final c = code.toLowerCase();
+    if (c.contains('checkmo') || c.contains('check')) return 0;
+    if (_isCod(c)) return 1;
+    if (c.contains('ngenius') || c.contains('network')) return 2;
+    if (c.contains('tabby')) return 3;
+    return 50;
+  }
+
+  static bool _isCod(String code) {
+    final c = code.toLowerCase();
+    return c.contains('cashondelivery') || c.contains('cash_on_delivery') ||
+        c == 'cod';
+  }
+
+  /// Cash on Delivery when present (QA default), else the first method.
+  PaymentMethodOption? _defaultPayment(List<PaymentMethodOption> methods) {
+    if (methods.isEmpty) return null;
+    for (final m in methods) {
+      if (_isCod(m.code)) return m;
+    }
+    return methods.first;
   }
 
   Future<bool> selectPayment(PaymentMethodOption method) async {

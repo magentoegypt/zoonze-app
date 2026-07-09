@@ -11,6 +11,7 @@ import '../../../../core/config/free_shipping.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/widgets/brand_logo.dart';
 import '../../../../core/widgets/failure_message.dart';
+import '../../../../core/widgets/summary_row.dart';
 import '../../../../core/widgets/zoonze_back_button.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../catalog/domain/money.dart';
@@ -614,13 +615,13 @@ class _OrderSummary extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 11),
-          _SummaryRow(
+          SummaryRow(
             label: l10n.cartSubtotalCount(itemCount),
             value: subtotal?.formatted(),
           ),
           if (totals.discount != null) ...[
             const SizedBox(height: 11),
-            _SummaryRow(
+            SummaryRow(
               label: totals.appliedCoupon != null
                   ? l10n.cartPromoCode(totals.appliedCoupon!)
                   : l10n.cartDiscount,
@@ -632,7 +633,7 @@ class _OrderSummary extends StatelessWidget {
           // otherwise the fee is resolved at checkout (it depends on the
           // emirate, so the cart can't know the amount yet).
           const SizedBox(height: 11),
-          _SummaryRow(
+          SummaryRow(
             label: l10n.cartDelivery,
             value: freeDelivery
                 ? l10n.cartDeliveryFree
@@ -671,45 +672,6 @@ class _OrderSummary extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-/// A single label/value line in the Order Summary (Figma rows 39:29–39:35).
-class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({
-    required this.label,
-    this.value,
-    this.valueColor,
-    this.valueWeight = FontWeight.w500,
-  });
-
-  final String label;
-  final String? value;
-  final Color? valueColor;
-  final FontWeight valueWeight;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Flexible(
-          child: Text(
-            label,
-            style: const TextStyle(fontSize: 13, color: AppColors.inkMuted),
-          ),
-        ),
-        Text(
-          value ?? '—',
-          textDirection: TextDirection.ltr,
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: valueWeight,
-            color: valueColor ?? AppColors.inkHeading,
-          ),
-        ),
-      ],
     );
   }
 }

@@ -37,7 +37,13 @@ class PaymentMethodCard extends StatelessWidget {
           selected ? Icons.radio_button_checked : Icons.radio_button_off,
           color: selected ? AppColors.brandPrimary : AppColors.inkMuted,
         ),
-        title: Text(method.title),
+        title: Row(
+          children: [
+            Icon(_methodIcon(method), size: 20, color: AppColors.inkHeading),
+            const SizedBox(width: 10),
+            Expanded(child: Text(method.title)),
+          ],
+        ),
         subtitle: _subtitle(l10n),
         trailing: method.isTabby
             ? Container(
@@ -57,6 +63,25 @@ class PaymentMethodCard extends StatelessWidget {
             : null,
       ),
     );
+  }
+
+  /// A representative icon per method (QA: "add the appropriate icons").
+  IconData _methodIcon(PaymentMethodOption m) {
+    if (m.isFree) return Icons.card_giftcard;
+    if (m.isTabby) return Icons.calendar_today_outlined;
+    final c = m.code.toLowerCase();
+    if (c.contains('checkmo') || c.contains('check')) {
+      return Icons.request_quote_outlined;
+    }
+    if (c.contains('cashondelivery') ||
+        c.contains('cash_on_delivery') ||
+        c == 'cod') {
+      return Icons.payments_outlined;
+    }
+    if (c.contains('ngenius') || c.contains('network')) {
+      return Icons.credit_card_outlined;
+    }
+    return Icons.account_balance_wallet_outlined;
   }
 
   /// Subtitle copy: the friendly "no payment needed" line for Zero Subtotal

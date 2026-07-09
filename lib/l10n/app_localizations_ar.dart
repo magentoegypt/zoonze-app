@@ -1161,10 +1161,17 @@ class AppLocalizationsAr extends AppLocalizations {
   String get checkoutShippingMethod => 'طريقة الشحن';
 
   @override
-  String get checkoutPayment => 'الدفع';
+  String get checkoutPayment => 'طريقة الدفع';
 
   @override
   String get checkoutSummary => 'ملخّص الطلب';
+
+  @override
+  String get checkoutDeliveryFee => 'رسوم التوصيل';
+
+  @override
+  String get checkoutPaymentSecurityNote =>
+      'تتم معالجة المدفوعات الإلكترونية بأمان، والدفع عند الاستلام متاح في جميع أنحاء الإمارات.';
 
   @override
   String get checkoutContinue => 'متابعة';

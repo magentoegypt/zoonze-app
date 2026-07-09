@@ -2195,7 +2195,7 @@ abstract class AppLocalizations {
   /// No description provided for @checkoutPayment.
   ///
   /// In en, this message translates to:
-  /// **'Payment'**
+  /// **'Payment Method'**
   String get checkoutPayment;
 
   /// No description provided for @checkoutSummary.
@@ -2203,6 +2203,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Order Summary'**
   String get checkoutSummary;
+
+  /// No description provided for @checkoutDeliveryFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Delivery fee'**
+  String get checkoutDeliveryFee;
+
+  /// No description provided for @checkoutPaymentSecurityNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Online payments are processed securely. Cash on delivery available across the UAE.'**
+  String get checkoutPaymentSecurityNote;
 
   /// No description provided for @checkoutContinue.
   ///
