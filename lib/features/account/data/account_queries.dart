@@ -127,4 +127,18 @@ mutation UpdateMobile($value: String!) {
   }
 }
 ''';
+
+  /// Uploads/replaces the signed-in customer's avatar (base64 jpg/png/webp).
+  /// MagentoEgypt_PaymentGraphQl; requires the customer bearer token.
+  static const String uploadAvatar = r'''
+mutation UploadAvatar($file: String!) {
+  uploadCustomerAvatar(input: { base64_encoded_file: $file }) { url }
+}
+''';
+
+  static const String deleteAvatar = r'''
+mutation DeleteAvatar {
+  deleteCustomerAvatar { url }
+}
+''';
 }

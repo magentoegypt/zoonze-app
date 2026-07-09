@@ -5,6 +5,7 @@ class Customer {
     required this.lastName,
     required this.email,
     this.mobileNumber,
+    this.avatarUrl,
   });
 
   final String firstName;
@@ -15,6 +16,10 @@ class Customer {
   /// in-app via the OTP-gated Edit Profile flow). Null when not set.
   final String? mobileNumber;
 
+  /// Customer avatar URL (`avatar_url`, MagentoEgypt_PaymentGraphQl avatar
+  /// endpoints). Null when no photo is set. May be http — upgrade before load.
+  final String? avatarUrl;
+
   String get fullName => '$firstName $lastName'.trim();
 
   factory Customer.fromJson(Map<String, dynamic> json) => Customer(
@@ -22,6 +27,9 @@ class Customer {
     lastName: (json['lastname'] as String?) ?? '',
     email: (json['email'] as String?) ?? '',
     mobileNumber: _mobileFrom(json['custom_attributes']),
+    avatarUrl: (json['avatar_url'] as String?)?.isNotEmpty ?? false
+        ? json['avatar_url'] as String?
+        : null,
   );
 
   /// Extracts `mobile_number` from the `custom_attributes` list

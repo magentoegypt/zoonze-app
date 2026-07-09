@@ -2096,6 +2096,24 @@ abstract class AppLocalizations {
   /// **'Change Photo'**
   String get profileChangePhoto;
 
+  /// No description provided for @profileRemovePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove photo'**
+  String get profileRemovePhoto;
+
+  /// No description provided for @profilePhotoUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo updated'**
+  String get profilePhotoUpdated;
+
+  /// No description provided for @profilePhotoRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo removed'**
+  String get profilePhotoRemoved;
+
   /// No description provided for @profilePhotoUnavailable.
   ///
   /// In en, this message translates to:
@@ -2579,8 +2597,14 @@ abstract class AppLocalizations {
   /// No description provided for @pdpTrustFreeLabel.
   ///
   /// In en, this message translates to:
-  /// **'over AED 150'**
+  /// **'Shipping'**
   String get pdpTrustFreeLabel;
+
+  /// No description provided for @pdpTrustFreeOver.
+  ///
+  /// In en, this message translates to:
+  /// **'over AED {amount}'**
+  String pdpTrustFreeOver(int amount);
 
   /// No description provided for @pdpTrustDeliveryValue.
   ///

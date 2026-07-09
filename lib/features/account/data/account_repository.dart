@@ -90,6 +90,18 @@ class AccountRepository {
     mutation: true,
   );
 
+  /// Uploads/replaces the customer avatar. [base64File] is the raw base64 of a
+  /// jpg/png/webp (no data: prefix). Caller refetches the customer afterwards to
+  /// pick up the new `avatar_url`.
+  Future<void> uploadAvatar(String base64File) => _run(
+    AccountQueries.uploadAvatar,
+    {'file': base64File},
+    mutation: true,
+  );
+
+  Future<void> deleteAvatar() =>
+      _run(AccountQueries.deleteAvatar, const {}, mutation: true);
+
   CustomerOrder _parseOrder(Map<String, dynamic> json) {
     final lines = (json['items'] as List<dynamic>? ?? const [])
         .whereType<Map<String, dynamic>>()

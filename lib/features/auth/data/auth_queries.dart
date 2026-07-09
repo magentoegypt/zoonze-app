@@ -54,6 +54,7 @@ query CurrentCustomer {
     firstname
     lastname
     email
+    avatar_url
     custom_attributes {
       code
       ... on AttributeValue { value }

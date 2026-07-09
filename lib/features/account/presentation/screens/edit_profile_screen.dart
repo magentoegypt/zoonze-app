@@ -1,11 +1,16 @@
+import 'dart:convert';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../app/routes.dart';
 import '../../../../app/shell/marketing_footer.dart';
 import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/store/store_controller.dart';
+import '../../../../core/util/media.dart';
 import '../../../../core/validation/validators.dart';
 import '../../../../core/widgets/zoonze_back_button.dart';
 import '../../../../l10n/l10n.dart';
@@ -31,6 +36,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   bool _savingProfile = false;
   bool _savingPassword = false;
   bool _showPassword = false;
+  bool _uploadingAvatar = false;
 
   @override
   void initState() {
@@ -95,6 +101,50 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     }
   }
 
+  /// Pick an image from the gallery, base64-encode it, upload, and refetch the
+  /// customer so the new `avatar_url` shows. Cancelling the picker is a no-op.
+  Future<void> _pickAndUploadAvatar() async {
+    final l10n = AppLocalizations.of(context);
+    final XFile? picked;
+    try {
+      picked = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+    } catch (_) {
+      _snack(l10n.errorGeneric);
+      return;
+    }
+    if (picked == null) return; // cancelled
+    setState(() => _uploadingAvatar = true);
+    try {
+      final base64File = base64Encode(await picked.readAsBytes());
+      await ref.read(accountRepositoryProvider).uploadAvatar(base64File);
+      await ref.read(authControllerProvider.notifier).refreshCustomer();
+      _snack(l10n.profilePhotoUpdated);
+    } catch (_) {
+      _snack(l10n.errorGeneric);
+    } finally {
+      if (mounted) setState(() => _uploadingAvatar = false);
+    }
+  }
+
+  Future<void> _removeAvatar() async {
+    final l10n = AppLocalizations.of(context);
+    setState(() => _uploadingAvatar = true);
+    try {
+      await ref.read(accountRepositoryProvider).deleteAvatar();
+      await ref.read(authControllerProvider.notifier).refreshCustomer();
+      _snack(l10n.profilePhotoRemoved);
+    } catch (_) {
+      _snack(l10n.errorGeneric);
+    } finally {
+      if (mounted) setState(() => _uploadingAvatar = false);
+    }
+  }
+
   void _snack(String message) {
     if (mounted) {
       ScaffoldMessenger.of(
@@ -132,19 +182,37 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         padding: EdgeInsets.zero,
         children: [
           const SizedBox(height: 24),
-          // Avatar with camera badge + Change Photo (Figma).
+          // Avatar with camera badge + Change / Remove photo (Figma).
           Center(
             child: Column(
               children: [
-                _AvatarBadge(initials: _initials(customer?.fullName ?? '')),
+                _AvatarBadge(
+                  initials: _initials(customer?.fullName ?? ''),
+                  avatarUrl: httpsMediaUrl(customer?.avatarUrl),
+                  uploading: _uploadingAvatar,
+                ),
                 const SizedBox(height: 8),
-                TextButton(
-                  onPressed: () => _snack(l10n.profilePhotoUnavailable),
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.brandPrimary,
-                    visualDensity: VisualDensity.compact,
-                  ),
-                  child: Text(l10n.profileChangePhoto),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextButton(
+                      onPressed: _uploadingAvatar ? null : _pickAndUploadAvatar,
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.brandPrimary,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      child: Text(l10n.profileChangePhoto),
+                    ),
+                    if ((customer?.avatarUrl ?? '').isNotEmpty)
+                      TextButton(
+                        onPressed: _uploadingAvatar ? null : _removeAvatar,
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.inkMuted,
+                          visualDensity: VisualDensity.compact,
+                        ),
+                        child: Text(l10n.profileRemovePhoto),
+                      ),
+                  ],
                 ),
               ],
             ),
@@ -301,11 +369,26 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
 /// Circular initials avatar with a burgundy ring and a camera badge (Figma).
 class _AvatarBadge extends StatelessWidget {
-  const _AvatarBadge({required this.initials});
+  const _AvatarBadge({
+    required this.initials,
+    this.avatarUrl,
+    this.uploading = false,
+  });
   final String initials;
+  final String? avatarUrl;
+  final bool uploading;
 
   @override
   Widget build(BuildContext context) {
+    final hasPhoto = avatarUrl != null && avatarUrl!.isNotEmpty;
+    final initialsText = Text(
+      initials,
+      style: const TextStyle(
+        color: AppColors.brandPrimary,
+        fontWeight: FontWeight.w700,
+        fontSize: 26,
+      ),
+    );
     return SizedBox(
       width: 86,
       height: 86,
@@ -314,20 +397,30 @@ class _AvatarBadge extends StatelessWidget {
           Container(
             width: 80,
             height: 80,
+            clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               color: AppColors.surfaceTint,
               shape: BoxShape.circle,
               border: Border.all(color: AppColors.brandPrimary, width: 2),
             ),
             alignment: Alignment.center,
-            child: Text(
-              initials,
-              style: const TextStyle(
-                color: AppColors.brandPrimary,
-                fontWeight: FontWeight.w700,
-                fontSize: 26,
-              ),
-            ),
+            child: uploading
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : hasPhoto
+                ? CachedNetworkImage(
+                    imageUrl: avatarUrl!,
+                    width: 80,
+                    height: 80,
+                    fit: BoxFit.cover,
+                    placeholder: (_, __) =>
+                        const ColoredBox(color: AppColors.surfaceTint),
+                    errorWidget: (_, __, ___) => initialsText,
+                  )
+                : initialsText,
           ),
           PositionedDirectional(
             bottom: 0,

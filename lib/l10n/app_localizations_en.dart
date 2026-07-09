@@ -1146,6 +1146,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileChangePhoto => 'Change Photo';
 
   @override
+  String get profileRemovePhoto => 'Remove photo';
+
+  @override
+  String get profilePhotoUpdated => 'Photo updated';
+
+  @override
+  String get profilePhotoRemoved => 'Photo removed';
+
+  @override
   String get profilePhotoUnavailable =>
       'Profile photo upload isn\'t available yet.';
 
@@ -1412,7 +1421,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pdpTrustFreeValue => 'Free';
 
   @override
-  String get pdpTrustFreeLabel => 'over AED 150';
+  String get pdpTrustFreeLabel => 'Shipping';
+
+  @override
+  String pdpTrustFreeOver(int amount) {
+    return 'over AED $amount';
+  }
 
   @override
   String get pdpTrustDeliveryValue => '3-Hour';

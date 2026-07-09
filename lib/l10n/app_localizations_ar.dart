@@ -1115,6 +1115,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get profileChangePhoto => 'تغيير الصورة';
 
   @override
+  String get profileRemovePhoto => 'إزالة الصورة';
+
+  @override
+  String get profilePhotoUpdated => 'تم تحديث الصورة';
+
+  @override
+  String get profilePhotoRemoved => 'تمت إزالة الصورة';
+
+  @override
   String get profilePhotoUnavailable => 'رفع صورة الملف الشخصي غير متاح بعد.';
 
   @override
@@ -1377,7 +1386,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get pdpTrustFreeValue => 'مجاني';
 
   @override
-  String get pdpTrustFreeLabel => 'فوق 150 د.إ';
+  String get pdpTrustFreeLabel => 'الشحن';
+
+  @override
+  String pdpTrustFreeOver(int amount) {
+    return 'فوق $amount د.إ';
+  }
 
   @override
   String get pdpTrustDeliveryValue => '3 ساعات';

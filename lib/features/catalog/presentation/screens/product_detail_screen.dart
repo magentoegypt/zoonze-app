@@ -8,6 +8,7 @@ import '../../../../app/routes.dart';
 import '../../../../app/shell/marketing_footer.dart';
 import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/config/free_shipping.dart';
 import '../../../../core/widgets/async_value_view.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../cart/presentation/cart_controller.dart';
@@ -849,12 +850,18 @@ class _StickyAddToCart extends ConsumerWidget {
 }
 
 /// Compact trust row on the PDP (Figma): authenticity, delivery, service.
-class _TrustRow extends StatelessWidget {
+class _TrustRow extends ConsumerWidget {
   const _TrustRow();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    // The free-shipping caption follows the real store threshold (never
+    // hardcoded); falls back to a neutral label while it loads / if unset.
+    final threshold = ref.watch(freeShippingThresholdProvider).valueOrNull;
+    final freeLabel = threshold != null
+        ? l10n.pdpTrustFreeOver(threshold.round())
+        : l10n.pdpTrustFreeLabel;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
@@ -871,7 +878,7 @@ class _TrustRow extends StatelessWidget {
           _TrustItem(
             icon: Icons.local_shipping_outlined,
             value: l10n.pdpTrustFreeValue,
-            label: l10n.pdpTrustFreeLabel,
+            label: freeLabel,
           ),
           _TrustItem(
             icon: Icons.schedule,

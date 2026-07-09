@@ -400,6 +400,9 @@
   "profilePersonalInfo": "Personal Information",
   "profilePreferences": "Preferences",
   "profileChangePhoto": "Change Photo",
+  "profileRemovePhoto": "Remove photo",
+  "profilePhotoUpdated": "Photo updated",
+  "profilePhotoRemoved": "Photo removed",
   "profilePhotoUnavailable": "Profile photo upload isn't available yet.",
   "profilePushNotifications": "Push Notifications",
   "profileEmailOffers": "Email Offers",
@@ -508,7 +511,11 @@
   "pdpTrustAuthenticValue": "100%",
   "pdpTrustAuthenticLabel": "Authentic",
   "pdpTrustFreeValue": "Free",
-  "pdpTrustFreeLabel": "over AED 150",
+  "pdpTrustFreeLabel": "Shipping",
+  "pdpTrustFreeOver": "over AED {amount}",
+  "@pdpTrustFreeOver": {
+    "placeholders": { "amount": { "type": "int" } }
+  },
   "pdpTrustDeliveryValue": "3-Hour",
   "pdpTrustDeliveryLabel": "Delivery",
 
