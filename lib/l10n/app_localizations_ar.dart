@@ -308,6 +308,27 @@ class AppLocalizationsAr extends AppLocalizations {
   String get searchHint => 'ابحث في المتجر كامل هنا…';
 
   @override
+  String get searchFieldHint => 'ابحث عن المنتجات والماركات…';
+
+  @override
+  String get searchRecentTitle => 'عمليات البحث الأخيرة';
+
+  @override
+  String get searchTrendingTitle => 'الأكثر رواجًا';
+
+  @override
+  String get searchClearHistory => 'مسح';
+
+  @override
+  String get searchTrendingCsv =>
+      'عطور,العناية بالبشرة,مكياج,أطقم الهدايا,الأكثر مبيعًا';
+
+  @override
+  String searchForQuery(String query) {
+    return 'ابحث عن “$query”';
+  }
+
+  @override
   String get searchHintExpanded => 'ابحث عن المنتجات والعلامات…';
 
   @override

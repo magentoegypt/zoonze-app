@@ -668,6 +668,42 @@ abstract class AppLocalizations {
   /// **'Search for products…'**
   String get searchHint;
 
+  /// No description provided for @searchFieldHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search for products, brands…'**
+  String get searchFieldHint;
+
+  /// No description provided for @searchRecentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent searches'**
+  String get searchRecentTitle;
+
+  /// No description provided for @searchTrendingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Trending'**
+  String get searchTrendingTitle;
+
+  /// No description provided for @searchClearHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get searchClearHistory;
+
+  /// No description provided for @searchTrendingCsv.
+  ///
+  /// In en, this message translates to:
+  /// **'Fragrance,Skincare,Makeup,Gift Sets,Bestsellers'**
+  String get searchTrendingCsv;
+
+  /// No description provided for @searchForQuery.
+  ///
+  /// In en, this message translates to:
+  /// **'Search “{query}”'**
+  String searchForQuery(String query);
+
   /// No description provided for @searchHintExpanded.
   ///
   /// In en, this message translates to:

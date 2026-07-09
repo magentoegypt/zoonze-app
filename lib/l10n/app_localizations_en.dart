@@ -310,6 +310,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchHint => 'Search for products…';
 
   @override
+  String get searchFieldHint => 'Search for products, brands…';
+
+  @override
+  String get searchRecentTitle => 'Recent searches';
+
+  @override
+  String get searchTrendingTitle => 'Trending';
+
+  @override
+  String get searchClearHistory => 'Clear';
+
+  @override
+  String get searchTrendingCsv =>
+      'Fragrance,Skincare,Makeup,Gift Sets,Bestsellers';
+
+  @override
+  String searchForQuery(String query) {
+    return 'Search “$query”';
+  }
+
+  @override
   String get searchHintExpanded => 'Search for products, brands…';
 
   @override

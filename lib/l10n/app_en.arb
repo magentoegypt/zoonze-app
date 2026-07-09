@@ -121,6 +121,15 @@
   },
 
   "searchHint": "Search for products…",
+  "searchFieldHint": "Search for products, brands…",
+  "searchRecentTitle": "Recent searches",
+  "searchTrendingTitle": "Trending",
+  "searchClearHistory": "Clear",
+  "searchTrendingCsv": "Fragrance,Skincare,Makeup,Gift Sets,Bestsellers",
+  "searchForQuery": "Search “{query}”",
+  "@searchForQuery": {
+    "placeholders": { "query": { "type": "String" } }
+  },
   "searchHintExpanded": "Search for products, brands…",
   "comingSoon": "Coming soon",
   "comingSoonBody": "This section arrives in a later phase.",

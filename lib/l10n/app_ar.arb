@@ -113,6 +113,12 @@
   "searchResultsFor": "نتائج البحث عن: ”{query}“",
 
   "searchHint": "ابحث في المتجر كامل هنا…",
+  "searchFieldHint": "ابحث عن المنتجات والماركات…",
+  "searchRecentTitle": "عمليات البحث الأخيرة",
+  "searchTrendingTitle": "الأكثر رواجًا",
+  "searchClearHistory": "مسح",
+  "searchTrendingCsv": "عطور,العناية بالبشرة,مكياج,أطقم الهدايا,الأكثر مبيعًا",
+  "searchForQuery": "ابحث عن “{query}”",
   "searchHintExpanded": "ابحث عن المنتجات والعلامات…",
   "comingSoon": "قريبًا",
   "comingSoonBody": "سيتوفّر هذا القسم في مرحلة لاحقة.",
