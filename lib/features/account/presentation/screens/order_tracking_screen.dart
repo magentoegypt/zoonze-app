@@ -22,24 +22,74 @@ class OrderTrackingScreen extends StatelessWidget {
 
   final CustomerOrder order;
 
-  List<_Step> _steps(AppLocalizations l10n) {
-    final steps = <_Step>[
-      (label: l10n.orderPlaced, time: orderFmtDateTime(order.date), done: true),
-    ];
-    for (final c in order.comments) {
-      if (c.message.trim().isEmpty) continue;
-      steps.add((
-        label: c.message,
-        time: orderFmtDateTime(c.timestamp),
-        done: true,
-      ));
+  /// Which of the 5 fixed stages the order has reached (0 = Placed … 4 =
+  /// Delivered), derived from the Magento status + shipment presence. Cancelled
+  /// returns -1 (handled separately). The mapping is best-effort — Magento has
+  /// no dedicated "packed" status — so it degrades gracefully to the nearest
+  /// known stage rather than inventing progress.
+  int _stageIndex() {
+    if (order.isCancelled) return -1;
+    if (order.isDelivered) return 4;
+    final s = order.status.toLowerCase();
+    var idx = 0;
+    if (s.contains('process') || s.contains('confirm')) idx = 1;
+    if (s.contains('pack') || s.contains('ready')) idx = 2;
+    if (s.contains('out_for_delivery') ||
+        s.contains('out for delivery') ||
+        s.contains('ship')) {
+      idx = 3;
     }
-    // The goal step — pending (hollow) until the order is delivered/cancelled.
-    if (!order.isDelivered && !order.isCancelled) {
-      steps.add((label: l10n.ordersFilterDelivered, time: '', done: false));
-    }
-    return steps;
+    // A shipment/tracking number exists → at least out for delivery.
+    if (order.hasTracking && idx < 3) idx = 3;
+    return idx;
   }
+
+  /// The five fixed timeline stages, filled up to (and including) the reached
+  /// stage. Only "Order Placed" carries a timestamp (the order date).
+  List<_Step> _steps(AppLocalizations l10n) {
+    final labels = <String>[
+      l10n.orderPlaced,
+      l10n.orderStageConfirmed,
+      l10n.orderStagePacked,
+      l10n.orderStageOutForDelivery,
+      l10n.ordersFilterDelivered,
+    ];
+    final reached = _stageIndex();
+    return [
+      for (var i = 0; i < labels.length; i++)
+        (
+          label: labels[i],
+          time: i == 0 ? orderFmtDateTime(order.date) : '',
+          // Cancelled (reached < 0): only Placed is done; rest stay pending.
+          done: reached >= 0 && i <= reached,
+        ),
+    ];
+  }
+
+  IconData _statusIcon() => switch (_stageIndex()) {
+    < 0 => Icons.cancel_outlined,
+    4 => Icons.check_circle_outline,
+    3 => Icons.local_shipping_outlined,
+    2 => Icons.inventory_2_outlined,
+    1 => Icons.receipt_long_outlined,
+    _ => Icons.shopping_bag_outlined,
+  };
+
+  String _statusLabel(AppLocalizations l10n) => switch (_stageIndex()) {
+    < 0 => l10n.orderStatusCancelled,
+    4 => l10n.ordersFilterDelivered,
+    3 => l10n.orderStageOutForDelivery,
+    2 => l10n.orderStagePacked,
+    1 => l10n.orderStageConfirmed,
+    _ => l10n.orderPlaced,
+  };
+
+  /// Secondary line under the status: the real delivery method when present,
+  /// otherwise the order date. No fabricated per-order ETA.
+  String _statusSub() =>
+      (order.shippingMethod != null && order.shippingMethod!.isNotEmpty)
+      ? order.shippingMethod!
+      : orderFmtDateTime(order.date);
 
   @override
   Widget build(BuildContext context) {
@@ -56,30 +106,48 @@ class OrderTrackingScreen extends StatelessWidget {
       body: ListView(
         padding: EdgeInsets.zero,
         children: [
-          // Status banner.
+          // Status card — current stage, delivery method, and order number.
           Container(
+            width: double.infinity,
             color: AppColors.surfaceTint,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+            padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
             child: Row(
               children: [
-                const Icon(
-                  Icons.local_shipping_outlined,
-                  color: AppColors.brandPrimary,
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    _statusIcon(),
+                    color: AppColors.brandPrimary,
+                    size: 24,
+                  ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        order.status,
+                        _statusLabel(l10n),
                         style: const TextStyle(
                           fontWeight: FontWeight.w700,
-                          fontSize: 15,
+                          fontSize: 17,
                           color: AppColors.inkHeading,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 3),
+                      Text(
+                        _statusSub(),
+                        style: const TextStyle(
+                          color: AppColors.inkMuted,
+                          fontSize: 12.5,
+                        ),
+                      ),
+                      const SizedBox(height: 1),
                       Text(
                         l10n.orderNumber(order.number),
                         style: const TextStyle(

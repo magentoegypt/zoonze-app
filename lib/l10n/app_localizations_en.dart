@@ -992,6 +992,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get orderPlaced => 'Order Placed';
 
   @override
+  String get orderStageConfirmed => 'Order Confirmed';
+
+  @override
+  String get orderStagePacked => 'Packed & Ready';
+
+  @override
+  String get orderStageOutForDelivery => 'Out for Delivery';
+
+  @override
+  String get orderStatusCancelled => 'Cancelled';
+
+  @override
   String get orderDeliveryAddress => 'Delivery Address';
 
   @override

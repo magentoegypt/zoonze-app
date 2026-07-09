@@ -960,6 +960,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get orderPlaced => 'تم استلام الطلب';
 
   @override
+  String get orderStageConfirmed => 'تم تأكيد الطلب';
+
+  @override
+  String get orderStagePacked => 'تم التجهيز والتعبئة';
+
+  @override
+  String get orderStageOutForDelivery => 'خرج للتوصيل';
+
+  @override
+  String get orderStatusCancelled => 'مُلغى';
+
+  @override
   String get orderDeliveryAddress => 'عنوان التوصيل';
 
   @override

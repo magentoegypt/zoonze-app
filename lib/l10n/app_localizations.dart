@@ -1802,6 +1802,30 @@ abstract class AppLocalizations {
   /// **'Order Placed'**
   String get orderPlaced;
 
+  /// No description provided for @orderStageConfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Order Confirmed'**
+  String get orderStageConfirmed;
+
+  /// No description provided for @orderStagePacked.
+  ///
+  /// In en, this message translates to:
+  /// **'Packed & Ready'**
+  String get orderStagePacked;
+
+  /// No description provided for @orderStageOutForDelivery.
+  ///
+  /// In en, this message translates to:
+  /// **'Out for Delivery'**
+  String get orderStageOutForDelivery;
+
+  /// No description provided for @orderStatusCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get orderStatusCancelled;
+
   /// No description provided for @orderDeliveryAddress.
   ///
   /// In en, this message translates to:
