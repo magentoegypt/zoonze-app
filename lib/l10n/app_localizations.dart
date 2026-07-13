@@ -512,6 +512,108 @@ abstract class AppLocalizations {
   /// **'Shop Now'**
   String get homeHeroCta;
 
+  /// No description provided for @homeLimitedOfferEyebrow.
+  ///
+  /// In en, this message translates to:
+  /// **'Limited-Time Offer'**
+  String get homeLimitedOfferEyebrow;
+
+  /// No description provided for @homeCountdownHours.
+  ///
+  /// In en, this message translates to:
+  /// **'HRS'**
+  String get homeCountdownHours;
+
+  /// No description provided for @homeCountdownMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'MINS'**
+  String get homeCountdownMinutes;
+
+  /// No description provided for @homeCountdownSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'SECS'**
+  String get homeCountdownSeconds;
+
+  /// No description provided for @homeDealBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'DEAL'**
+  String get homeDealBadge;
+
+  /// No description provided for @homeDealsOfTheDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Deals of the Day'**
+  String get homeDealsOfTheDay;
+
+  /// No description provided for @homeEditorialSkincareTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Bare Skin, Better'**
+  String get homeEditorialSkincareTitle;
+
+  /// No description provided for @homeEditorialMakeupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Every Look, Defined'**
+  String get homeEditorialMakeupTitle;
+
+  /// No description provided for @homeExclusiveOffersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Exclusive Offers'**
+  String get homeExclusiveOffersTitle;
+
+  /// No description provided for @homeExclusiveOffersSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Save More Every Order'**
+  String get homeExclusiveOffersSubtitle;
+
+  /// No description provided for @homeViewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'View All'**
+  String get homeViewAll;
+
+  /// No description provided for @homeTrustReviewsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Why Shoppers Trust Zoonze'**
+  String get homeTrustReviewsTitle;
+
+  /// No description provided for @homeTrustReviewsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Loved across the UAE'**
+  String get homeTrustReviewsSubtitle;
+
+  /// No description provided for @homeJournalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'The Zoonze Journal'**
+  String get homeJournalTitle;
+
+  /// No description provided for @homeJournalSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Beauty notes & guides'**
+  String get homeJournalSubtitle;
+
+  /// No description provided for @homeJournalTag.
+  ///
+  /// In en, this message translates to:
+  /// **'BLOGS'**
+  String get homeJournalTag;
+
+  /// No description provided for @homeReadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Read More'**
+  String get homeReadMore;
+
   /// No description provided for @categoriesSubtitle.
   ///
   /// In en, this message translates to:
@@ -2773,6 +2875,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Returns & Exchanges'**
   String get footerReturns;
+
+  /// No description provided for @webviewOpenInBrowser.
+  ///
+  /// In en, this message translates to:
+  /// **'Open in browser'**
+  String get webviewOpenInBrowser;
 }
 
 class _AppLocalizationsDelegate

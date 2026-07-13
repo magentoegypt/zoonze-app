@@ -11,6 +11,7 @@ class StoreView {
     required this.baseUrl,
     required this.secureBaseUrl,
     required this.baseMediaUrl,
+    this.baseLinkUrl = '',
   });
 
   final String storeCode;
@@ -24,6 +25,12 @@ class StoreView {
   final String baseUrl;
   final String secureBaseUrl;
   final String baseMediaUrl;
+
+  /// Storefront-linked base URL — carries the PWA language path (`…/uae-ar/`)
+  /// that CMS/content pages are served under. Unlike [secureBaseUrl] (the bare
+  /// Magento base `…zoonze.com/`), this keeps the store view's URL prefix, so a
+  /// per-locale content link lands on the right store instead of the default.
+  final String baseLinkUrl;
 
   /// App language key derived from the Magento locale (`en_US` -> `en`).
   String get languageCode => locale.split(RegExp('[_-]')).first.toLowerCase();
@@ -44,6 +51,7 @@ class StoreView {
     baseUrl: (json['base_url'] as String?) ?? '',
     secureBaseUrl: (json['secure_base_url'] as String?) ?? '',
     baseMediaUrl: (json['base_media_url'] as String?) ?? '',
+    baseLinkUrl: (json['base_link_url'] as String?) ?? '',
   );
 
   Map<String, dynamic> toJson() => <String, dynamic>{
@@ -56,5 +64,6 @@ class StoreView {
     'base_url': baseUrl,
     'secure_base_url': secureBaseUrl,
     'base_media_url': baseMediaUrl,
+    'base_link_url': baseLinkUrl,
   };
 }

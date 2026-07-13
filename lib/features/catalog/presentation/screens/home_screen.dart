@@ -16,15 +16,22 @@ import '../../../../core/util/launch.dart';
 import '../../../../core/widgets/async_value_view.dart';
 import '../../../../core/widgets/brand_logo.dart';
 import '../../../../core/widgets/shimmer.dart';
+import '../../../../core/widgets/web_view_screen.dart';
 import '../../../../l10n/l10n.dart';
+import '../../data/blog_posts_provider.dart';
 import '../../data/brands_provider.dart';
 import '../../data/catalog_repository.dart';
 import '../../data/hero_slides_provider.dart';
+import '../../data/home_config_provider.dart';
+import '../../data/home_sections_provider.dart';
 import '../../data/special_offer_provider.dart';
+import '../../domain/blog_post.dart';
 import '../../domain/brand.dart';
 import '../../domain/category.dart';
 import '../../domain/hero_slide.dart';
+import '../../domain/home_config.dart';
 import '../../domain/product.dart';
+import '../../domain/promo_split_banner.dart';
 import '../catalog_providers.dart';
 import '../widgets/product_card.dart';
 import '../widgets/product_skeletons.dart';
@@ -82,10 +89,20 @@ class HomeScreen extends ConsumerWidget {
                 return _CategoryGrid(categories: items);
               },
             ),
-            const _ExploreBrands(),
+            // New order mirrors live zoonze.com (see docs/FIGMA_DESIGN.md,
+            // 2026-07-13). Each new section is backend-driven and collapses to
+            // nothing when its source is absent — Explore Brands has moved down
+            // to sit after the reviews rail.
+            const _LimitedTimeOffer(),
+            const _DealsOfTheDaySection(),
             const _NewArrivalsSection(),
+            const _EditorialBanners(),
             const _SpecialOffer(),
+            const _ExclusiveOffers(),
             const _BestsellersSection(),
+            const _WhyShoppersTrust(),
+            const _ExploreBrands(),
+            const _ZoonzeJournal(),
             const _TrustBadges(),
             const MarketingFooter(),
           ],
@@ -697,30 +714,8 @@ class _HeroSlideCard extends ConsumerWidget {
   /// QA hit "Shop Now" landing on an empty page: the friendly category URLs
   /// (`fragrance/for-her.html`) were being mistaken for a product url_key and
   /// opened a non-existent PDP. Resolving the URL fixes the target.
-  Future<void> _onCta(BuildContext context, WidgetRef ref) async {
-    final url = slide.ctaUrl;
-    if (url.isEmpty) return;
-    final uid = categoryUidFromUrl(url);
-    if (uid != null) {
-      context.push(AppRoutes.category(uid), extra: slide.title);
-      return;
-    }
-    if (_isInternalStoreUrl(ref, url)) {
-      final resolved = await ref.read(catalogRepositoryProvider).resolveUrl(url);
-      if (!context.mounted) return;
-      if (resolved != null) {
-        if (resolved.type == 'CATEGORY' && resolved.uid.isNotEmpty) {
-          context.push(AppRoutes.category(resolved.uid), extra: slide.title);
-          return;
-        }
-        if (resolved.type == 'PRODUCT' && resolved.urlKey != null) {
-          context.push(AppRoutes.product(resolved.urlKey!));
-          return;
-        }
-      }
-    }
-    launchExternalUri(Uri.parse(url));
-  }
+  Future<void> _onCta(BuildContext context, WidgetRef ref) =>
+      openStorefrontUrl(context, ref, slide.ctaUrl, title: slide.title);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -890,6 +885,48 @@ class _HeroVideoState extends State<_HeroVideo> {
   }
 }
 
+/// Routes a storefront CTA URL inside the app wherever possible: a Magento
+/// `category/view/id/N` URL maps straight to the PLP; a store-relative or
+/// same-domain friendly URL (`clearance.html`, `fragrance/for-her.html`) is
+/// resolved via `urlResolver` so a CATEGORY opens the PLP and a PRODUCT the PDP;
+/// only genuinely external links fall out to the browser. A relative path we
+/// can't resolve is ignored rather than launched as a bare relative URI.
+///
+/// Shared by the hero carousel, the Limited-Time Offer, and the Exclusive
+/// Offers rail so every home CTA behaves identically.
+Future<void> openStorefrontUrl(
+  BuildContext context,
+  WidgetRef ref,
+  String url, {
+  String? title,
+}) async {
+  if (url.isEmpty) return;
+  final uid = categoryUidFromUrl(url);
+  if (uid != null) {
+    context.push(AppRoutes.category(uid), extra: title);
+    return;
+  }
+  final hasHost = (Uri.tryParse(url)?.host ?? '').isNotEmpty;
+  if (!hasHost || _isInternalStoreUrl(ref, url)) {
+    final resolved = await ref.read(catalogRepositoryProvider).resolveUrl(url);
+    if (!context.mounted) return;
+    if (resolved != null) {
+      if (resolved.type == 'CATEGORY' && resolved.uid.isNotEmpty) {
+        context.push(AppRoutes.category(resolved.uid), extra: title);
+        return;
+      }
+      if (resolved.type == 'PRODUCT' && resolved.urlKey != null) {
+        context.push(AppRoutes.product(resolved.urlKey!));
+        return;
+      }
+    }
+    // A store-relative path we couldn't resolve → don't launch a bare relative
+    // URI in the browser.
+    if (!hasHost) return;
+  }
+  launchExternalUri(Uri.parse(url));
+}
+
 /// True when [url]'s host is the storefront's own domain (so the link should
 /// open inside the app, not the external browser).
 bool _isInternalStoreUrl(WidgetRef ref, String url) {
@@ -991,10 +1028,12 @@ class _CategoryFallback extends StatelessWidget {
   );
 }
 
-/// Two-column product grid shared by Featured + New Arrivals.
+/// Two-column product grid shared by Featured + New Arrivals + Deals. Passing
+/// [dealBadge] adds a `DEAL` tag to each card (home "Deals of the Day").
 class _ProductGrid extends StatelessWidget {
-  const _ProductGrid({required this.products});
+  const _ProductGrid({required this.products, this.dealBadge = false});
   final List<Product> products;
+  final bool dealBadge;
 
   @override
   Widget build(BuildContext context) {
@@ -1013,6 +1052,7 @@ class _ProductGrid extends StatelessWidget {
         final product = products[index];
         return ProductCard(
           product: product,
+          dealBadge: dealBadge,
           onTap: () => context.push(AppRoutes.product(product.urlKey)),
         );
       },
@@ -1062,9 +1102,14 @@ class _BestsellersSection extends ConsumerWidget {
 }
 
 class _ProductSection extends StatelessWidget {
-  const _ProductSection({required this.title, required this.section});
+  const _ProductSection({
+    required this.title,
+    required this.section,
+    this.dealBadge = false,
+  });
   final String title;
   final HomeSection section;
+  final bool dealBadge;
 
   @override
   Widget build(BuildContext context) {
@@ -1075,7 +1120,7 @@ class _ProductSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _SectionHeader(title: title),
-        _ProductGrid(products: section.items),
+        _ProductGrid(products: section.items, dealBadge: dealBadge),
         if (category != null)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
@@ -1086,7 +1131,7 @@ class _ProductSection extends StatelessWidget {
                 ),
                 onPressed: () => context.push(
                   AppRoutes.category(category.uid),
-                  extra: category.name,
+                  extra: category.name.isNotEmpty ? category.name : title,
                 ),
                 child: Text(l10n.homeSeeMore),
               ),
@@ -1310,6 +1355,1041 @@ class _SpecialOfferCard extends StatelessWidget {
       ),
     );
   }
+}
+
+// ── New home sections (mirror live zoonze.com — docs/FIGMA_DESIGN.md) ────────
+// Each is backend-driven (magentoegypt_beauty_config / blogPosts / the live
+// category tree) and collapses to nothing when its source is disabled or empty,
+// matching the established "hide when absent — never fabricate" pattern.
+
+/// "Limited-Time Offer" — the admin `deals/countdown_*` promo. A daily
+/// countdown ticks to local midnight. Hidden when disabled or the `deals`
+/// section toggle is off.
+class _LimitedTimeOffer extends ConsumerWidget {
+  const _LimitedTimeOffer();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ref
+        .watch(homeConfigProvider)
+        .maybeWhen(
+          data: (cfg) {
+            final offer = cfg.limitedTimeOffer;
+            if (!cfg.sectionEnabled('deals') || !offer.isVisible) {
+              return const SizedBox.shrink();
+            }
+            return _LimitedTimeOfferCard(offer: offer);
+          },
+          orElse: () => const SizedBox.shrink(),
+        );
+  }
+}
+
+class _LimitedTimeOfferCard extends ConsumerStatefulWidget {
+  const _LimitedTimeOfferCard({required this.offer});
+  final LimitedTimeOffer offer;
+
+  @override
+  ConsumerState<_LimitedTimeOfferCard> createState() =>
+      _LimitedTimeOfferCardState();
+}
+
+class _LimitedTimeOfferCardState extends ConsumerState<_LimitedTimeOfferCard> {
+  Timer? _timer;
+  late Duration _remaining;
+
+  @override
+  void initState() {
+    super.initState();
+    _remaining = _computeRemaining();
+    if (widget.offer.isDaily) {
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        final next = _computeRemaining();
+        if (mounted) setState(() => _remaining = next);
+      });
+    }
+  }
+
+  /// Time left until the next local midnight (the daily countdown reset).
+  Duration _computeRemaining() {
+    final now = DateTime.now();
+    final midnight = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).add(const Duration(days: 1));
+    return midnight.difference(now);
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  String _two(int n) => n.toString().padLeft(2, '0');
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final offer = widget.offer;
+    // Figma (updated 2026-07-13): a BLUSH promo card with burgundy text and
+    // burgundy countdown boxes (white numerals) — matching live.
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 24, 16, 4),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceTint,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            l10n.homeLimitedOfferEyebrow.toUpperCase(),
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppColors.brandPrimary,
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.4,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            offer.headline,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppColors.brandPrimary,
+              fontSize: 30,
+              fontWeight: FontWeight.w800,
+              height: 1.05,
+            ),
+          ),
+          if (offer.subtext.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              offer.subtext,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.inkMuted, fontSize: 13),
+            ),
+          ],
+          if (widget.offer.isDaily) ...[
+            const SizedBox(height: 14),
+            // Digits keep LTR order (HH:MM:SS) in both languages.
+            Directionality(
+              textDirection: TextDirection.ltr,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _CountdownBox(
+                    value: _two(_remaining.inHours),
+                    label: l10n.homeCountdownHours,
+                  ),
+                  const _CountdownSeparator(),
+                  _CountdownBox(
+                    value: _two(_remaining.inMinutes % 60),
+                    label: l10n.homeCountdownMinutes,
+                  ),
+                  const _CountdownSeparator(),
+                  _CountdownBox(
+                    value: _two(_remaining.inSeconds % 60),
+                    label: l10n.homeCountdownSeconds,
+                  ),
+                ],
+              ),
+            ),
+          ],
+          if (offer.ctaLabel.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(0, 42),
+                padding: const EdgeInsets.symmetric(horizontal: 22),
+              ),
+              onPressed: () => openStorefrontUrl(context, ref, offer.ctaUrl),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    offer.ctaLabel,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.arrow_forward, size: 16),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// A single HRS/MINS/SECS box in the countdown — burgundy tile, white numerals,
+/// muted label beneath (Figma).
+class _CountdownBox extends StatelessWidget {
+  const _CountdownBox({required this.value, required this.label});
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 48,
+          height: 46,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: AppColors.brandPrimary,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label.toUpperCase(),
+          style: const TextStyle(
+            color: AppColors.inkMuted,
+            fontSize: 9,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.6,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CountdownSeparator extends StatelessWidget {
+  const _CountdownSeparator();
+
+  @override
+  Widget build(BuildContext context) => const Padding(
+    padding: EdgeInsets.symmetric(horizontal: 8),
+    child: Padding(
+      padding: EdgeInsets.only(bottom: 14),
+      child: Text(
+        ':',
+        style: TextStyle(
+          color: AppColors.brandPrimary,
+          fontSize: 22,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    ),
+  );
+}
+
+/// "Deals of the Day" — products from the live `deals-of-the-day` category with
+/// a DEAL tag + real discount badges. Gated on the backend `deals` toggle and
+/// hidden when the category returns nothing.
+class _DealsOfTheDaySection extends ConsumerWidget {
+  const _DealsOfTheDaySection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final enabled = ref
+        .watch(homeConfigProvider)
+        .maybeWhen(
+          data: (c) => c.sectionEnabled('deals'),
+          orElse: () => true,
+        );
+    if (!enabled) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
+    return ref
+        .watch(dealsOfTheDayProvider)
+        .when(
+          loading: () => _ProductSectionSkeleton(title: l10n.homeDealsOfTheDay),
+          error: (_, __) => const SizedBox.shrink(),
+          data: (section) => _ProductSection(
+            title: l10n.homeDealsOfTheDay,
+            section: section,
+            dealBadge: true,
+          ),
+        );
+  }
+}
+
+/// "Skincare / Makeup" editorial banners — two image banners bound to the real
+/// `skin-care` / `makeup` categories (image + link) with editorial taglines.
+/// Gated on the `promo_split` toggle; each banner hides if its category is
+/// absent.
+class _EditorialBanners extends ConsumerWidget {
+  const _EditorialBanners();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final enabled = ref
+        .watch(homeConfigProvider)
+        .maybeWhen(
+          data: (c) => c.sectionEnabled('promo_split'),
+          orElse: () => true,
+        );
+    if (!enabled) return const SizedBox.shrink();
+    return ref
+        .watch(promoSplitBannersProvider)
+        .maybeWhen(
+          data: (banners) => banners.isEmpty
+              ? const SizedBox.shrink()
+              : _EditorialBannersList(banners: banners),
+          orElse: () => const SizedBox.shrink(),
+        );
+  }
+}
+
+class _EditorialBannersList extends StatelessWidget {
+  const _EditorialBannersList({required this.banners});
+  final List<PromoSplitBanner> banners;
+
+  @override
+  Widget build(BuildContext context) {
+    // Figma: inset (16px) rounded banners, 12px apart.
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+      child: Column(
+        children: [
+          for (var i = 0; i < banners.length; i++) ...[
+            if (i > 0) const SizedBox(height: 12),
+            _EditorialBanner(banner: banners[i]),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _EditorialBanner extends ConsumerWidget {
+  const _EditorialBanner({required this.banner});
+  final PromoSplitBanner banner;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final ctaLabel = banner.ctaLabel.isNotEmpty
+        ? banner.ctaLabel
+        : l10n.homeHeroCta;
+    // Figma: inset rounded banner, ~230px tall.
+    return Material(
+      color: AppColors.surfaceTint,
+      clipBehavior: Clip.antiAlias,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: banner.ctaUrl.isEmpty
+            ? null
+            : () => openStorefrontUrl(context, ref, banner.ctaUrl),
+        child: SizedBox(
+          height: 230,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: banner.imageUrl.isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: banner.imageUrl,
+                        fit: BoxFit.cover,
+                        placeholder: (_, __) =>
+                            const ColoredBox(color: AppColors.surfaceTint),
+                        errorWidget: (_, __, ___) =>
+                            const ColoredBox(color: AppColors.surfaceTint),
+                      )
+                    : const ColoredBox(color: AppColors.surfaceTint),
+              ),
+              // Dark scrim on the start side for text legibility.
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: AlignmentDirectional.centerStart,
+                      end: AlignmentDirectional.centerEnd,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.55),
+                        Colors.black.withValues(alpha: 0.05),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              PositionedDirectional(
+                start: 20,
+                top: 0,
+                bottom: 0,
+                end: 20,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (banner.eyebrow.isNotEmpty) ...[
+                      Text(
+                        banner.eyebrow.toUpperCase(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.4,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                    ],
+                    Text(
+                      banner.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        height: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    // "Shop Now" pill (Figma) — the whole banner is the tap
+                    // target; this reads as a button.
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 9,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(22),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            ctaLabel,
+                            style: const TextStyle(
+                              color: AppColors.brandPrimary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Icon(
+                            Icons.arrow_forward,
+                            size: 15,
+                            color: AppColors.brandPrimary,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "Exclusive Offers" — the `homeBanners` discount rail ("Save More Every
+/// Order"). Hides when the query returns nothing; gated on the `banners` toggle.
+class _ExclusiveOffers extends ConsumerWidget {
+  const _ExclusiveOffers();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final enabled = ref
+        .watch(homeConfigProvider)
+        .maybeWhen(
+          data: (c) => c.sectionEnabled('banners'),
+          orElse: () => true,
+        );
+    if (!enabled) return const SizedBox.shrink();
+    return ref
+        .watch(homeBannersProvider)
+        .maybeWhen(
+          data: (offers) => offers.isEmpty
+              ? const SizedBox.shrink()
+              : _ExclusiveOffersRail(offers: offers),
+          orElse: () => const SizedBox.shrink(),
+        );
+  }
+}
+
+class _ExclusiveOffersRail extends StatelessWidget {
+  const _ExclusiveOffersRail({required this.offers});
+  final List<ExclusiveOffer> offers;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Figma (updated 2026-07-13): left-aligned title + subtitle with
+        // VIEW ALL on the trailing side (mirrors under RTL via the Row).
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 28, 16, 14),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.homeExclusiveOffersTitle.toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.4,
+                        color: AppColors.inkHeading,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      l10n.homeExclusiveOffersSubtitle,
+                      style: const TextStyle(
+                        color: AppColors.inkMuted,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              TextButton(
+                onPressed: () => context.go(AppRoutes.categories),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.brandPrimary,
+                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(0, 0),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      l10n.homeViewAll,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(Icons.arrow_forward, size: 14),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Figma: three stacked inset image banners.
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+          child: Column(
+            children: [
+              for (var i = 0; i < offers.length; i++) ...[
+                if (i > 0) const SizedBox(height: 12),
+                _ExclusiveOfferBanner(offer: offers[i]),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// One "Exclusive Offers" banner (Figma) — a category image with a centered
+/// discount + white category pill + terms line, over a dark scrim. Falls back
+/// to a blush background when no image is provided.
+class _ExclusiveOfferBanner extends ConsumerWidget {
+  const _ExclusiveOfferBanner({required this.offer});
+  final ExclusiveOffer offer;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Material(
+      color: AppColors.surfaceTint,
+      clipBehavior: Clip.antiAlias,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: offer.ctaUrl.isEmpty
+            ? null
+            : () => openStorefrontUrl(context, ref, offer.ctaUrl),
+        child: SizedBox(
+          height: 200,
+          child: Stack(
+            children: [
+              if (offer.imageUrl.isNotEmpty)
+                Positioned.fill(
+                  child: CachedNetworkImage(
+                    imageUrl: offer.imageUrl,
+                    fit: BoxFit.cover,
+                    placeholder: (_, __) =>
+                        const ColoredBox(color: AppColors.surfaceTint),
+                    errorWidget: (_, __, ___) =>
+                        const ColoredBox(color: AppColors.surfaceTint),
+                  ),
+                ),
+              // Scrim so the centered white text stays legible over any image.
+              Positioned.fill(
+                child: ColoredBox(color: Colors.black.withValues(alpha: 0.28)),
+              ),
+              Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (offer.badge.isNotEmpty)
+                      Text(
+                        offer.badge,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 30,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    if (offer.title.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 7,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          offer.title,
+                          style: const TextStyle(
+                            color: AppColors.brandPrimary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                    if (offer.subtitle.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        offer.subtitle,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.9),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "Why Shoppers Trust Zoonze" — the `homeReviews` testimonial rail (real
+/// reviews only). Hides when empty; gated on the `reviews` toggle.
+class _WhyShoppersTrust extends ConsumerWidget {
+  const _WhyShoppersTrust();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final enabled = ref
+        .watch(homeConfigProvider)
+        .maybeWhen(
+          data: (c) => c.sectionEnabled('reviews'),
+          orElse: () => true,
+        );
+    if (!enabled) return const SizedBox.shrink();
+    return ref
+        .watch(homeReviewsProvider)
+        .maybeWhen(
+          data: (items) => items.isEmpty
+              ? const SizedBox.shrink()
+              : _TestimonialsRail(items: items),
+          orElse: () => const SizedBox.shrink(),
+        );
+  }
+}
+
+class _TestimonialsRail extends StatelessWidget {
+  const _TestimonialsRail({required this.items});
+  final List<Testimonial> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _SectionHeaderWithSubtitle(
+          title: l10n.homeTrustReviewsTitle,
+          subtitle: l10n.homeTrustReviewsSubtitle,
+        ),
+        SizedBox(
+          height: 184,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: items.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (context, i) => _TestimonialCard(item: items[i]),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TestimonialCard extends StatelessWidget {
+  const _TestimonialCard({required this.item});
+  final Testimonial item;
+
+  String get _initials {
+    final parts = item.author.trim().split(RegExp(r'\s+'));
+    final letters = parts
+        .where((p) => p.isNotEmpty)
+        .take(2)
+        .map((p) => p[0].toUpperCase())
+        .join();
+    return letters.isEmpty ? '★' : letters;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 270,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.borderDefault),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Avatar + name + gold stars (Figma).
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: AppColors.surfaceTint,
+                child: Text(
+                  _initials,
+                  style: const TextStyle(
+                    color: AppColors.brandPrimary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (item.author.isNotEmpty) ...[
+                      Text(
+                        item.author,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color: AppColors.inkHeading,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                    ],
+                    _Stars(rating: item.rating),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Quote, then the product it's about at the bottom.
+          Expanded(
+            child: Text(
+              '“${item.quote}”',
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppColors.inkMuted,
+                fontSize: 13,
+                height: 1.4,
+              ),
+            ),
+          ),
+          if (item.product.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(
+              item.product.toUpperCase(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: AppColors.inkFaint,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.3,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// A gold 0–5 star row (filled + outlined to five). Auto-mirrors under RTL via
+/// the row's directional layout; stars themselves are symmetric.
+class _Stars extends StatelessWidget {
+  const _Stars({required this.rating});
+  final int rating;
+
+  @override
+  Widget build(BuildContext context) {
+    final full = rating.clamp(0, 5);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < 5; i++)
+          Icon(
+            i < full ? Icons.star : Icons.star_border,
+            size: 16,
+            color: AppColors.accentGold,
+          ),
+      ],
+    );
+  }
+}
+
+/// "The Zoonze Journal" — the latest blog posts (`blogPosts`). Gated on the
+/// backend `blog` toggle and hidden when the module returns no posts.
+class _ZoonzeJournal extends ConsumerWidget {
+  const _ZoonzeJournal();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final enabled = ref
+        .watch(homeConfigProvider)
+        .maybeWhen(
+          data: (c) => c.sectionEnabled('blog'),
+          orElse: () => true,
+        );
+    if (!enabled) return const SizedBox.shrink();
+    return ref
+        .watch(blogPostsProvider)
+        .maybeWhen(
+          data: (posts) =>
+              posts.isEmpty ? const SizedBox.shrink() : _JournalRail(posts: posts),
+          orElse: () => const SizedBox.shrink(),
+        );
+  }
+}
+
+class _JournalRail extends StatelessWidget {
+  const _JournalRail({required this.posts});
+  final List<BlogPost> posts;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    // Blog index for "See More" — the store-prefixed `.../blog` root derived from
+    // a post URL (`.../uae-en/blog/post/…`). Empty when it can't be derived.
+    final indexUrl = _blogIndexUrl(posts.first.url);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _SectionHeaderWithSubtitle(
+          title: l10n.homeJournalTitle,
+          subtitle: l10n.homeJournalSubtitle,
+        ),
+        SizedBox(
+          height: 250,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: posts.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (context, i) => _JournalCard(post: posts[i]),
+          ),
+        ),
+        if (indexUrl.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Center(
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.inkHeading,
+                ),
+                onPressed: () => context.push(
+                  AppRoutes.webview,
+                  extra: WebViewArgs(
+                    url: indexUrl,
+                    title: l10n.homeJournalTitle,
+                  ),
+                ),
+                child: Text(l10n.homeSeeMore),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _JournalCard extends StatelessWidget {
+  const _JournalCard({required this.post});
+  final BlogPost post;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return InkWell(
+      onTap: () => context.push(
+        AppRoutes.webview,
+        extra: WebViewArgs(url: post.url, title: post.title),
+      ),
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: 260,
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.borderDefault),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              height: 118,
+              width: double.infinity,
+              child: post.hasImage
+                  ? CachedNetworkImage(
+                      imageUrl: post.imageUrl,
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) =>
+                          const ColoredBox(color: AppColors.surfaceTint),
+                      errorWidget: (_, __, ___) => const _JournalImageFallback(),
+                    )
+                  : const _JournalImageFallback(),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Figma: the BLOGS tag sits in the body, below the image.
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.brandPrimary,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      l10n.homeJournalTag,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    post.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      height: 1.25,
+                      color: AppColors.inkHeading,
+                    ),
+                  ),
+                  if (post.excerpt.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      post.excerpt,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: AppColors.inkMuted,
+                        fontSize: 12,
+                        height: 1.35,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        l10n.homeReadMore,
+                        style: const TextStyle(
+                          color: AppColors.brandPrimary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      const Icon(
+                        Icons.arrow_forward,
+                        size: 14,
+                        color: AppColors.brandPrimary,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _JournalImageFallback extends StatelessWidget {
+  const _JournalImageFallback();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    color: AppColors.surfaceTint,
+    child: const Center(
+      child: Icon(Icons.article_outlined, color: AppColors.brandPrimary),
+    ),
+  );
+}
+
+/// The store-prefixed blog index (`.../blog`) derived from a post URL like
+/// `https://zoonze.com/uae-en/blog/post/…`. Returns '' when the URL isn't an
+/// absolute http(s) URL containing a `/blog` segment.
+String _blogIndexUrl(String postUrl) {
+  final uri = Uri.tryParse(postUrl);
+  if (uri == null || (uri.scheme != 'http' && uri.scheme != 'https')) return '';
+  const marker = '/blog';
+  final i = postUrl.indexOf(marker);
+  if (i < 0) return '';
+  return postUrl.substring(0, i + marker.length);
 }
 
 /// Trust badges (Figma) — store guarantees in a 2×2 grid.
@@ -1544,6 +2624,42 @@ class _SectionHeader extends StatelessWidget {
         letterSpacing: 1.82,
         color: AppColors.inkHeading,
       ),
+    ),
+  );
+}
+
+/// Centered section header with a muted subtitle beneath (Figma: Why Shoppers
+/// Trust + The Zoonze Journal).
+class _SectionHeaderWithSubtitle extends StatelessWidget {
+  const _SectionHeaderWithSubtitle({
+    required this.title,
+    required this.subtitle,
+  });
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(16, 28, 16, 14),
+    child: Column(
+      children: [
+        Text(
+          title.toUpperCase(),
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.82,
+            color: AppColors.inkHeading,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          subtitle,
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: AppColors.inkMuted, fontSize: 13),
+        ),
+      ],
     ),
   );
 }

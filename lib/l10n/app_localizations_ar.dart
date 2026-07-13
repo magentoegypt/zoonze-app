@@ -220,6 +220,57 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeHeroCta => 'تسوّق الآن';
 
   @override
+  String get homeLimitedOfferEyebrow => 'عرض لفترة محدودة';
+
+  @override
+  String get homeCountdownHours => 'ساعة';
+
+  @override
+  String get homeCountdownMinutes => 'دقيقة';
+
+  @override
+  String get homeCountdownSeconds => 'ثانية';
+
+  @override
+  String get homeDealBadge => 'خصم';
+
+  @override
+  String get homeDealsOfTheDay => 'صفقات اليوم';
+
+  @override
+  String get homeEditorialSkincareTitle => 'بشرة نقية، أجمل';
+
+  @override
+  String get homeEditorialMakeupTitle => 'كل إطلالة، مُتقنة';
+
+  @override
+  String get homeExclusiveOffersTitle => 'عروض حصرية';
+
+  @override
+  String get homeExclusiveOffersSubtitle => 'وفّر أكثر مع كل طلب';
+
+  @override
+  String get homeViewAll => 'عرض الكل';
+
+  @override
+  String get homeTrustReviewsTitle => 'لماذا يثق المتسوقون بزونزي';
+
+  @override
+  String get homeTrustReviewsSubtitle => 'محبوب في جميع أنحاء الإمارات';
+
+  @override
+  String get homeJournalTitle => 'مجلة زونزي';
+
+  @override
+  String get homeJournalSubtitle => 'ملاحظات وأدلة الجمال';
+
+  @override
+  String get homeJournalTag => 'مدونات';
+
+  @override
+  String get homeReadMore => 'اقرأ المزيد';
+
+  @override
   String get categoriesSubtitle => 'تسوّقي حسب ما تحبين';
 
   @override
@@ -1477,4 +1528,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get footerReturns => 'الإرجاع والاستبدال';
+
+  @override
+  String get webviewOpenInBrowser => 'فتح في المتصفح';
 }

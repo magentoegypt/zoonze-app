@@ -22,6 +22,7 @@ class ProductCard extends ConsumerStatefulWidget {
     required this.product,
     this.onTap,
     this.onAddedToCart,
+    this.dealBadge = false,
   });
 
   final Product product;
@@ -30,6 +31,10 @@ class ProductCard extends ConsumerStatefulWidget {
   /// Called after the product is successfully added to the cart (e.g. the
   /// wishlist removes the item on add).
   final VoidCallback? onAddedToCart;
+
+  /// Shows a burgundy `DEAL` tag above the merchandising/discount badges — used
+  /// by the home "Deals of the Day" grid.
+  final bool dealBadge;
 
   @override
   ConsumerState<ProductCard> createState() => _ProductCardState();
@@ -69,6 +74,14 @@ class _ProductCardState extends ConsumerState<ProductCard> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        if (widget.dealBadge) ...[
+                          _Badge(
+                            label: l10n.homeDealBadge,
+                            color: AppColors.brandPrimary,
+                          ),
+                          if (badgeLabel != null || discount != null)
+                            const SizedBox(height: 4),
+                        ],
                         if (badgeLabel != null)
                           _Badge(
                             label: badgeLabel,

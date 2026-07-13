@@ -222,6 +222,57 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeHeroCta => 'Shop Now';
 
   @override
+  String get homeLimitedOfferEyebrow => 'Limited-Time Offer';
+
+  @override
+  String get homeCountdownHours => 'HRS';
+
+  @override
+  String get homeCountdownMinutes => 'MINS';
+
+  @override
+  String get homeCountdownSeconds => 'SECS';
+
+  @override
+  String get homeDealBadge => 'DEAL';
+
+  @override
+  String get homeDealsOfTheDay => 'Deals of the Day';
+
+  @override
+  String get homeEditorialSkincareTitle => 'Bare Skin, Better';
+
+  @override
+  String get homeEditorialMakeupTitle => 'Every Look, Defined';
+
+  @override
+  String get homeExclusiveOffersTitle => 'Exclusive Offers';
+
+  @override
+  String get homeExclusiveOffersSubtitle => 'Save More Every Order';
+
+  @override
+  String get homeViewAll => 'View All';
+
+  @override
+  String get homeTrustReviewsTitle => 'Why Shoppers Trust Zoonze';
+
+  @override
+  String get homeTrustReviewsSubtitle => 'Loved across the UAE';
+
+  @override
+  String get homeJournalTitle => 'The Zoonze Journal';
+
+  @override
+  String get homeJournalSubtitle => 'Beauty notes & guides';
+
+  @override
+  String get homeJournalTag => 'BLOGS';
+
+  @override
+  String get homeReadMore => 'Read More';
+
+  @override
   String get categoriesSubtitle => 'Shop by what you love';
 
   @override
@@ -1513,4 +1564,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get footerReturns => 'Returns & Exchanges';
+
+  @override
+  String get webviewOpenInBrowser => 'Open in browser';
 }

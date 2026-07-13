@@ -8,6 +8,8 @@ import '../../core/util/launch.dart';
 import '../../core/validation/validators.dart';
 import '../../core/widgets/brand_logo.dart';
 import '../../core/widgets/social_icon.dart';
+import '../../core/widgets/web_view_screen.dart';
+import '../../features/auth/presentation/auth_controller.dart';
 import '../../l10n/l10n.dart';
 import '../routes.dart';
 import '../theme/app_colors.dart';
@@ -57,21 +59,55 @@ class _MarketingFooterState extends ConsumerState<MarketingFooter> {
     _ => '',
   };
 
-  /// Opens a store CMS page on the active store's website (correct per-locale
-  /// URL), instead of dumping the user on the homepage.
-  Future<void> _openCms(String page) async {
+  /// The active store's storefront base URL (`base_link_url`, e.g. `…/uae-ar/`),
+  /// TLS-forced. Prefer `base_link_url`: it carries the storefront language path
+  /// that content pages live under. `secure_base_url` is the bare Magento base
+  /// (`…zoonze.com/`) with no language, which sends an Arabic path to the
+  /// default English store and 404s.
+  String _storeBase() {
     final store = ref.read(storeControllerProvider);
     var base = ref.read(storeContactProvider).website;
     for (final s in store.stores) {
       if (s.storeCode == store.activeStoreCode) {
-        final b = s.secureBaseUrl.isNotEmpty ? s.secureBaseUrl : s.baseUrl;
+        final b = s.baseLinkUrl.isNotEmpty
+            ? s.baseLinkUrl
+            : (s.secureBaseUrl.isNotEmpty ? s.secureBaseUrl : s.baseUrl);
         if (b.isNotEmpty) base = b;
         break;
       }
     }
-    final slug = _cmsSlug(page, store.activeLocale == 'ar');
+    // base_link_url comes back as http://; force TLS.
+    return base.replaceFirst('http://', 'https://');
+  }
+
+  /// Opens a storefront [path] (relative to the active store's base URL) in the
+  /// in-app WebView. `?webview=1` lets the storefront detect it's rendering
+  /// inside the app and hide its own header/footer/announcement chrome.
+  void _openStorePage(String path, String title) {
+    final base = _storeBase();
     final sep = base.endsWith('/') ? '' : '/';
-    await _openUrl('$base$sep$slug/');
+    context.push(
+      AppRoutes.webview,
+      extra: WebViewArgs(url: '$base$sep$path?webview=1', title: title),
+    );
+  }
+
+  /// Opens a store CMS page (correct per-locale URL) in the in-app WebView,
+  /// instead of leaving the app or dumping the user on the homepage.
+  void _openCms(String page, String title) {
+    final isAr = ref.read(storeControllerProvider).activeLocale == 'ar';
+    _openStorePage('${_cmsSlug(page, isAr)}/', title);
+  }
+
+  /// Track Order: logged-in customers get the in-app Orders screen; guests get
+  /// the storefront's guest order-tracking form (Order ID + email/last-name
+  /// lookup) in the WebView, since they have no in-app order history.
+  void _openTrackOrder(String title) {
+    if (ref.read(authControllerProvider).isAuthenticated) {
+      context.push(AppRoutes.orders);
+    } else {
+      _openStorePage('sales/guest/form/', title);
+    }
   }
 
   Future<void> _openUrl(String url) async {
@@ -121,15 +157,21 @@ class _MarketingFooterState extends ConsumerState<MarketingFooter> {
                 child: _LinkColumn(
                   heading: l10n.footerAboutHeading,
                   links: [
-                    (label: l10n.footerAbout, onTap: () => _openCms('about')),
-                    (label: l10n.footerFaqs, onTap: () => _openCms('faqs')),
+                    (
+                      label: l10n.footerAbout,
+                      onTap: () => _openCms('about', l10n.footerAbout),
+                    ),
+                    (
+                      label: l10n.footerFaqs,
+                      onTap: () => _openCms('faqs', l10n.footerFaqs),
+                    ),
                     (
                       label: l10n.footerContact,
                       onTap: () => context.push(AppRoutes.help),
                     ),
                     (
                       label: l10n.footerTrackOrder,
-                      onTap: () => context.push(AppRoutes.orders),
+                      onTap: () => _openTrackOrder(l10n.footerTrackOrder),
                     ),
                   ],
                 ),
@@ -141,14 +183,20 @@ class _MarketingFooterState extends ConsumerState<MarketingFooter> {
                   links: [
                     (
                       label: l10n.footerShipping,
-                      onTap: () => _openCms('shipping'),
+                      onTap: () => _openCms('shipping', l10n.footerShipping),
                     ),
                     (
                       label: l10n.footerReturns,
-                      onTap: () => _openCms('returns'),
+                      onTap: () => _openCms('returns', l10n.footerReturns),
                     ),
-                    (label: l10n.footerPrivacy, onTap: () => _openCms('privacy')),
-                    (label: l10n.footerTerms, onTap: () => _openCms('terms')),
+                    (
+                      label: l10n.footerPrivacy,
+                      onTap: () => _openCms('privacy', l10n.footerPrivacy),
+                    ),
+                    (
+                      label: l10n.footerTerms,
+                      onTap: () => _openCms('terms', l10n.footerTerms),
+                    ),
                   ],
                 ),
               ),

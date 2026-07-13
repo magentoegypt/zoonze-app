@@ -524,6 +524,7 @@ const List<StoreView> kSampleStores = <StoreView>[
     baseUrl: 'https://zoonze.com/',
     secureBaseUrl: 'https://zoonze.com/',
     baseMediaUrl: 'https://zoonze.com/media/',
+    baseLinkUrl: 'https://zoonze.com/uae-en/',
   ),
   StoreView(
     storeCode: 'eg_ar',
@@ -535,6 +536,7 @@ const List<StoreView> kSampleStores = <StoreView>[
     baseUrl: 'https://zoonze.com/',
     secureBaseUrl: 'https://zoonze.com/',
     baseMediaUrl: 'https://zoonze.com/media/',
+    baseLinkUrl: 'https://zoonze.com/uae-ar/',
   ),
 ];
 

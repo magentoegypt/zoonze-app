@@ -21,6 +21,7 @@ query AvailableStores {
     base_url
     secure_base_url
     base_media_url
+    base_link_url
   }
 }
 ''';

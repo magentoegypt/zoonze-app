@@ -34,6 +34,7 @@ import '../features/wishlist/presentation/screens/wishlist_screen.dart';
 import '../features/diagnostics/presentation/health_check_screen.dart';
 import '../features/onboarding/presentation/launch_splash_screen.dart';
 import '../features/onboarding/presentation/welcome_screen.dart';
+import '../core/widgets/web_view_screen.dart';
 import 'routes.dart';
 
 /// App router. Phase 1 wires the catalogue browse flow + global chrome. Auth
@@ -195,6 +196,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.diagnostics,
         builder: (context, state) => const HealthCheckScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.webview,
+        builder: (context, state) =>
+            WebViewScreen(args: state.extra as WebViewArgs),
       ),
     ],
   );

@@ -61,6 +61,82 @@ between the Figma source of truth and the Flutter implementation in this repo.
 > guest-checkout keyed by `cartId`, all anonymous (`OtpResult` / `OtpLoginResult`).
 > **+6 screens per language.**
 
+> **Home sections expanded to mirror live zoonze.com — 2026-07-13.** The live home
+> page grew with new content sections; the Figma **Home** (EN `2:2` + AR `140:208`,
+> both vertical auto-layout) now mirrors the live order and adds **6 sections in
+> EN + AR**:
+> 1. **Limited-Time Offer** — blush countdown promo (`40% OFF`, HRS/MINS/SECS
+>    boxes, "Shop the Offer" button) with burgundy text + burgundy countdown
+>    boxes (white numerals), matching live. After Shop by Category.
+> 2. **Deals of the Day** — 2×2 product grid with `DEAL` + red discount badges,
+>    prices, SEE MORE (reuses the product-card pattern). After Limited-Time Offer.
+> 3. **Skincare / Makeup editorial banners** — two image banners ("Bare Skin,
+>    Better" / "Every Look, Defined") with eyebrow + tagline + Shop Now →. After
+>    New Arrivals.
+> 4. **Exclusive Offers** — "Save More Every Order" + a 3-card discount rail
+>    (25 % Skincare / 30 % Makeup / 40 % Fragrance) + VIEW ALL. After Special Offer.
+> 5. **Why Shoppers Trust Zoonze** — testimonial rail (avatar initials, gold
+>    5-star, quote, reviewer + product) + SEE MORE. After Bestsellers.
+> 6. **The Zoonze Journal** — blog rail (image, `BLOGS` tag, title, excerpt,
+>    READ MORE →) + SEE MORE. After Explore Our Brands.
+>
+> **New Home order (both languages):** hero → Shop by Category → **Limited-Time
+> Offer** → **Deals of the Day** → New Arrivals → **Skincare/Makeup banners** →
+> Special Offer → **Exclusive Offers** → Bestsellers → **Why Shoppers Trust** →
+> Explore Our Brands *(moved down from just-after-categories to match live)* →
+> **The Zoonze Journal** → trust badges → footer → tab bar. The **Special Offer**
+> card copy was refreshed to the live promo (`10% OFF` · `WELCOME10`). All new
+> sections bind the existing design tokens (`brand/primary`, `surface/tint`,
+> `border/default`, Inter/Cairo) and use horizontal scroll rails (peeking cards)
+> where the live layout scrolls. The Skincare/Makeup banners are **full-bleed**
+> (edge-to-edge) with "Shop Now" pill buttons, and the **Exclusive Offers** header
+> is left-aligned ("Save More Every Order.") with **VIEW ALL** on the trailing
+> side — matching the live layout. Because the Home frame ~doubled in height
+> (EN 3212 → ~5459 px, AR 3498 → ~5943 px), the canvas **02 · Home & Discovery**
+> section frames were resized to fit and groups **03 · Product…** / **04 ·
+> Orders…** were re-stacked 200 px below (EN + AR) so nothing overlaps.
+>
+> **App status — implemented in `home_screen.dart` (EN/LTR + AR/RTL), rendering
+> strictly from the backend and hiding when a source is absent.** Matched to the
+> updated Figma (verified against nodes `701/708/712/717/719/721` on 2026-07-13):
+> the Limited-Time Offer is a **centered blush** card with burgundy text +
+> burgundy countdown boxes (white numerals); the Skincare/Makeup banners are
+> **inset, rounded, ~230 px tall** with a white "Shop Now" pill; Exclusive Offers
+> is a **left-aligned header** (title/subtitle + trailing VIEW ALL) over **three
+> stacked image banners** (centered `X% OFF` + white category pill + terms);
+> Reviews & Journal carry a **centered subtitle** ("Loved across the UAE" /
+> "Beauty notes & guides") and the Journal `BLOGS` tag sits in the card body.
+> **Data sources (all dedicated backend queries, verified live 2026-07-14):**
+> Limited-Time Offer (`deals/countdown_*`), Deals of the Day (deals category via
+> `deals/category_id` — it's `include_in_menu=0`), **Skincare/Makeup banners
+> (`promoSplitBanners`)**, Special Offer (10% / `WELCOME10`), **Exclusive Offers
+> (`homeBanners`)**, **Why Shoppers Trust (`homeReviews`)**, and the Explore-Brands
+> reorder, plus **The Zoonze Journal (`blogPosts` via the `HomeBlog` field set —
+> `first_image` + `short_filtered_content`)**. Each hides when its query returns
+> `[]`. The **hero** shows only its placement-appropriate slides — the
+> `heroSlides` resolver filters server-side, so the app takes it as-is (its UI,
+> plus Shop-by-Category and Explore-Brands, are unchanged). Exact GraphQL
+> contract: [`docs/backend/home-sections-contract.md`](backend/home-sections-contract.md).
+
+> **Banner sections rebuilt to the live DOM — 2026-07-13 (later).** After comparing
+> against the live `beauty-promo-split` and `beauty-banners` markup, the two banner
+> sections were rebuilt to match exactly (the real images were pulled from
+> `zoonze.com/media/magentoegypt/beauty/hero/` into the Figma file):
+> - **Skincare/Makeup ("2-banner", `beauty-promo-split`)** — **inset** cards
+>   (16 px margin + 16 px radius, ~250 px tall) with a full-bleed background photo
+>   (`split-skincare.jpg` / `split-makeup.jpg`), a **pink eyebrow + white title**
+>   over a dark side-scrim, and a **glassy translucent-white** "Shop Now" pill.
+>   *(Supersedes the earlier full-bleed + solid-burgundy-button version.)*
+> - **Exclusive Offers ("3-banner", `beauty-banners`)** — **three stacked square
+>   image banners** (`banner-skincare/makeup/fragrance.jpg`) with a dark overlay and
+>   a **centered** caption (big white `25% OFF`, white category pill, note).
+>   *(Supersedes the earlier horizontal rail of small blush cards.)* Header stays
+>   "Save More Every Order." + VIEW ALL.
+>
+> Both EN + AR. Group-2 sections re-fit (EN ~6615 px, AR ~7090 px) and groups 03/04
+> re-stacked. **⚠ The app's `home_screen.dart` still renders the earlier
+> full-bleed/rail versions — it needs re-aligning to this live-accurate design.**
+
 The canvas holds **33 screens** organized into four labelled sections (Figma
 *Sections*), stacked top-to-bottom in app-flow order:
 

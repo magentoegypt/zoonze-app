@@ -76,6 +76,23 @@
   "homeHeroTitle": "Beauty, your way",
   "homeHeroSubtitle": "Authentic brands, curated for the UAE",
   "homeHeroCta": "Shop Now",
+  "homeLimitedOfferEyebrow": "Limited-Time Offer",
+  "homeCountdownHours": "HRS",
+  "homeCountdownMinutes": "MINS",
+  "homeCountdownSeconds": "SECS",
+  "homeDealBadge": "DEAL",
+  "homeDealsOfTheDay": "Deals of the Day",
+  "homeEditorialSkincareTitle": "Bare Skin, Better",
+  "homeEditorialMakeupTitle": "Every Look, Defined",
+  "homeExclusiveOffersTitle": "Exclusive Offers",
+  "homeExclusiveOffersSubtitle": "Save More Every Order",
+  "homeViewAll": "View All",
+  "homeTrustReviewsTitle": "Why Shoppers Trust Zoonze",
+  "homeTrustReviewsSubtitle": "Loved across the UAE",
+  "homeJournalTitle": "The Zoonze Journal",
+  "homeJournalSubtitle": "Beauty notes & guides",
+  "homeJournalTag": "BLOGS",
+  "homeReadMore": "Read More",
   "categoriesSubtitle": "Shop by what you love",
   "categoryProductCount": "{count} products",
   "@categoryProductCount": {
@@ -545,5 +562,7 @@
   "footerPrivacy": "Privacy Policy",
   "footerTerms": "Terms & Conditions",
   "footerShipping": "Shipping & Delivery",
-  "footerReturns": "Returns & Exchanges"
+  "footerReturns": "Returns & Exchanges",
+
+  "webviewOpenInBrowser": "Open in browser"
 }

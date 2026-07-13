@@ -74,6 +74,23 @@
   "homeHeroTitle": "جمالكِ بأسلوبكِ",
   "homeHeroSubtitle": "علامات أصلية مختارة لدولة الإمارات",
   "homeHeroCta": "تسوّق الآن",
+  "homeLimitedOfferEyebrow": "عرض لفترة محدودة",
+  "homeCountdownHours": "ساعة",
+  "homeCountdownMinutes": "دقيقة",
+  "homeCountdownSeconds": "ثانية",
+  "homeDealBadge": "خصم",
+  "homeDealsOfTheDay": "صفقات اليوم",
+  "homeEditorialSkincareTitle": "بشرة نقية، أجمل",
+  "homeEditorialMakeupTitle": "كل إطلالة، مُتقنة",
+  "homeExclusiveOffersTitle": "عروض حصرية",
+  "homeExclusiveOffersSubtitle": "وفّر أكثر مع كل طلب",
+  "homeViewAll": "عرض الكل",
+  "homeTrustReviewsTitle": "لماذا يثق المتسوقون بزونزي",
+  "homeTrustReviewsSubtitle": "محبوب في جميع أنحاء الإمارات",
+  "homeJournalTitle": "مجلة زونزي",
+  "homeJournalSubtitle": "ملاحظات وأدلة الجمال",
+  "homeJournalTag": "مدونات",
+  "homeReadMore": "اقرأ المزيد",
   "categoriesSubtitle": "تسوّقي حسب ما تحبين",
   "categoryProductCount": "{count} منتج",
   "@categoryProductCount": {
@@ -491,5 +508,7 @@
   "footerPrivacy": "سياسة الخصوصية",
   "footerTerms": "الشروط والأحكام",
   "footerShipping": "الشحن والتوصيل",
-  "footerReturns": "الإرجاع والاستبدال"
+  "footerReturns": "الإرجاع والاستبدال",
+
+  "webviewOpenInBrowser": "فتح في المتصفح"
 }

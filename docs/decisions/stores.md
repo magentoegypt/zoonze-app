@@ -15,6 +15,16 @@ Discovered via the **Introspect Live GraphQL** GitHub Actions workflow
 | Default view | **`eg_en`** → first launch is **English** |
 | Currency | **AED** (base + display, both views) |
 | Base URL | `https://zoonze.com/` (secure); media `https://zoonze.com/media/` |
+| Link URL (storefront) | `base_link_url` = `http://zoonze.com/uae-en/` · `http://zoonze.com/uae-ar/` |
+
+> ⚠️ **`secure_base_url` drops the language; `base_link_url` keeps it.** Both
+> store views report the same `secure_base_url` (`https://zoonze.com/`), but the
+> PWA storefront serves each view under a **path prefix** (`/uae-en/`,
+> `/uae-ar/`) exposed only via **`base_link_url`** (comes back as `http://` —
+> upgrade to `https`). Building a per-locale content URL (CMS pages) from
+> `secure_base_url` sends the Arabic slug to the default English store → the
+> storefront's client-side **404**. The footer WebView (`_openCms`) therefore
+> builds from `base_link_url`. `StoreView.baseLinkUrl` carries it.
 
 > The codes are `eg_en` / `eg_ar` (a store-group naming artifact) — **not**
 > `uae-*`. Sending an unknown code makes Magento reject the whole request
