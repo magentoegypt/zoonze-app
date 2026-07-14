@@ -2392,36 +2392,59 @@ String _blogIndexUrl(String postUrl) {
   return postUrl.substring(0, i + marker.length);
 }
 
-/// Trust seals (live zoonze.com) — the store's five guarantees on a light-grey
+/// Trust seals (live zoonze.com) — the store's four guarantees on a light-grey
 /// band. Content mirrors the website's trust strip exactly (QA: the block must
-/// match the site). The backend `trust/items` config array is currently empty,
-/// so — like the website theme — the app renders these five as localized
-/// defaults; wire them to `trust/items` if/when the backend populates it.
+/// match the site): four seals, where the delivery seal carries a muted
+/// sub-line ("Rest Zones in 48 Hours") rather than being a separate seal. The
+/// backend `trust/items` config array is currently empty, so — like the website
+/// theme — the app renders these as localized defaults; wire them to
+/// `trust/items` if/when the backend populates it.
 class _TrustBadges extends StatelessWidget {
   const _TrustBadges();
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final seals = <({IconData icon, String label})>[
-      (icon: Icons.verified_user_outlined, label: l10n.homeTrustOriginal),
-      (icon: Icons.local_shipping_outlined, label: l10n.homeTrustFreeDelivery),
-      (icon: Icons.schedule, label: l10n.homeTrustDelivery3h),
-      (icon: Icons.place_outlined, label: l10n.homeTrustRestZones),
-      (icon: Icons.headset_mic_outlined, label: l10n.homeTrustCustomerService),
+    // Icons + fills mirror the live site (filled shield/truck/headset, a
+    // circular "refresh" arrow for delivery).
+    final seals = <({IconData icon, String label, String? sub})>[
+      (icon: Icons.verified_user, label: l10n.homeTrustOriginal, sub: null),
+      (icon: Icons.local_shipping, label: l10n.homeTrustFreeDelivery, sub: null),
+      (
+        icon: Icons.refresh,
+        label: l10n.homeTrustDelivery3h,
+        sub: l10n.homeTrustRestZones,
+      ),
+      (
+        icon: Icons.headset_mic,
+        label: l10n.homeTrustCustomerService,
+        sub: null,
+      ),
     ];
-    // Five seals centered on a light-grey band; a Wrap flows them to 3-then-2 on
-    // a phone (and adapts to wider screens) instead of a fixed 2×2 grid.
+    // Four seals in a 2×2 grid (matches the live desktop row, stacked for a
+    // phone). Tops align so the delivery seal's sub-line doesn't shift its row.
     return Container(
       width: double.infinity,
       color: const Color(0xFFF3F4F6),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 28),
-      child: Wrap(
-        alignment: WrapAlignment.center,
-        spacing: 8,
-        runSpacing: 24,
+      child: Column(
         children: [
-          for (final s in seals) _TrustBadge(icon: s.icon, label: s.label),
+          for (var r = 0; r < seals.length; r += 2) ...[
+            if (r > 0) const SizedBox(height: 24),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final s in seals.skip(r).take(2))
+                  Expanded(
+                    child: _TrustBadge(
+                      icon: s.icon,
+                      label: s.label,
+                      sub: s.sub,
+                    ),
+                  ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -2429,34 +2452,47 @@ class _TrustBadges extends StatelessWidget {
 }
 
 class _TrustBadge extends StatelessWidget {
-  const _TrustBadge({required this.icon, required this.label});
+  const _TrustBadge({required this.icon, required this.label, this.sub});
   final IconData icon;
   final String label;
 
+  /// Optional muted sub-line beneath the label (live site: "Rest Zones in 48
+  /// Hours" under the delivery seal).
+  final String? sub;
+
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 104,
-      child: Column(
-        children: [
-          CircleAvatar(
-            radius: 26,
-            backgroundColor: Colors.white,
-            child: Icon(icon, color: AppColors.brandPrimary, size: 24),
+    return Column(
+      children: [
+        CircleAvatar(
+          radius: 26,
+          backgroundColor: Colors.white,
+          child: Icon(icon, color: AppColors.brandPrimary, size: 24),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 12,
+            height: 1.25,
+            color: AppColors.inkHeading,
           ),
-          const SizedBox(height: 8),
+        ),
+        if (sub != null) ...[
+          const SizedBox(height: 2),
           Text(
-            label,
+            sub!,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
-              height: 1.25,
-              color: AppColors.inkHeading,
+              color: AppColors.inkMuted,
+              fontSize: 11,
+              height: 1.2,
             ),
           ),
         ],
-      ),
+      ],
     );
   }
 }
