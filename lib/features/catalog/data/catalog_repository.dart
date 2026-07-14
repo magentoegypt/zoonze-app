@@ -95,6 +95,7 @@ class CatalogRepository {
   Future<ProductPage> fetchProducts({
     String? search,
     String? categoryUid,
+    int? manufacturerId,
     Map<String, Set<String>> attributeFilters = const {},
     double? priceFrom,
     double? priceTo,
@@ -105,13 +106,21 @@ class CatalogRepository {
     int currentPage = 1,
   }) async {
     assert(
-      (search != null && search.isNotEmpty) || categoryUid != null,
-      'products query requires a non-empty search or a categoryUid',
+      (search != null && search.isNotEmpty) ||
+          categoryUid != null ||
+          manufacturerId != null,
+      'products query requires a search, a categoryUid, or a manufacturerId',
     );
     final sortInput = _sortInput(sort);
     final filter = <String, dynamic>{};
     if (categoryUid != null) {
       filter['category_uid'] = <String, dynamic>{'eq': categoryUid};
+    }
+    // Brand landing: filter by the manufacturer attribute option id (the true
+    // "Shop by Brand" product set), NOT a text search on the brand name — a
+    // name search returns cross-brand matches. `Brand.optionId` supplies this.
+    if (manufacturerId != null) {
+      filter['manufacturer'] = <String, dynamic>{'eq': manufacturerId.toString()};
     }
     attributeFilters.forEach((code, values) {
       // 'price' uses a range input (handled below); apply equal-type filters

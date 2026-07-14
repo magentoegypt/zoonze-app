@@ -16,6 +16,7 @@ import '../../../../core/widgets/zoonze_back_button.dart';
 import '../../../../l10n/l10n.dart';
 import '../../data/catalog_repository.dart';
 import '../../domain/brand.dart';
+import '../brand_results_controller.dart';
 import '../plp_controller.dart';
 import '../search_controller.dart';
 import '../search_history.dart';
@@ -298,12 +299,55 @@ class _ResultsState extends ConsumerState<_Results> {
     super.dispose();
   }
 
-  SearchResultsController get _controller =>
-      ref.read(searchControllerProvider(widget.query).notifier);
+  /// A brand landing (brand with a linked manufacturer option) lists that
+  /// brand's products via the [BrandResultsController]; a plain query uses the
+  /// [SearchResultsController]. Both expose the same PlpState + action surface.
+  bool get _isBrand => widget.brand?.optionId != null;
+  int get _brandId => widget.brand!.optionId!;
+
+  PlpState _watchState() => _isBrand
+      ? ref.watch(brandResultsControllerProvider(_brandId))
+      : ref.watch(searchControllerProvider(widget.query));
+
+  void _loadMore() => _isBrand
+      ? ref.read(brandResultsControllerProvider(_brandId).notifier).loadMore()
+      : ref.read(searchControllerProvider(widget.query).notifier).loadMore();
+
+  Future<void> _refresh() => _isBrand
+      ? ref.read(brandResultsControllerProvider(_brandId).notifier).refresh()
+      : ref.read(searchControllerProvider(widget.query).notifier).refresh();
+
+  void _applyResult(FilterResult result) {
+    if (_isBrand) {
+      ref
+          .read(brandResultsControllerProvider(_brandId).notifier)
+          .applyFilters(
+            result.attributes,
+            priceFrom: result.priceFrom,
+            priceTo: result.priceTo,
+            minDiscount: result.minDiscount,
+            minRating: result.minRating,
+          );
+    } else {
+      ref
+          .read(searchControllerProvider(widget.query).notifier)
+          .applyFilters(
+            result.attributes,
+            priceFrom: result.priceFrom,
+            priceTo: result.priceTo,
+            minDiscount: result.minDiscount,
+            minRating: result.minRating,
+          );
+    }
+  }
+
+  void _setSort(ProductSortField sort) => _isBrand
+      ? ref.read(brandResultsControllerProvider(_brandId).notifier).setSort(sort)
+      : ref.read(searchControllerProvider(widget.query).notifier).setSort(sort);
 
   void _onScroll() {
     if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 400) {
-      _controller.loadMore();
+      _loadMore();
     }
   }
 
@@ -324,15 +368,7 @@ class _ResultsState extends ConsumerState<_Results> {
         initialMinRating: state.minRating,
       ),
     );
-    if (result != null) {
-      _controller.applyFilters(
-        result.attributes,
-        priceFrom: result.priceFrom,
-        priceTo: result.priceTo,
-        minDiscount: result.minDiscount,
-        minRating: result.minRating,
-      );
-    }
+    if (result != null) _applyResult(result);
   }
 
   /// Dedicated Sort control (QA wants filter + sort as separate lists) — the
@@ -346,13 +382,13 @@ class _ResultsState extends ConsumerState<_Results> {
       builder: (_) =>
           SortSheet(current: state.sort, relevanceLabel: l10n.sortRelevance),
     );
-    if (selected != null) _controller.setSort(selected);
+    if (selected != null) _setSort(selected);
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final state = ref.watch(searchControllerProvider(widget.query));
+    final state = _watchState();
 
     if (state.isLoading && state.products.isEmpty) {
       return ListView(
@@ -385,7 +421,7 @@ class _ResultsState extends ConsumerState<_Results> {
               ),
               const SizedBox(height: 16),
               FilledButton(
-                onPressed: _controller.refresh,
+                onPressed: _refresh,
                 child: Text(l10n.actionRetry),
               ),
             ],
