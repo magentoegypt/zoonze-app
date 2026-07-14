@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/store/store_controller.dart';
 import '../../core/widgets/brand_logo.dart';
+import '../../core/widgets/customer_avatar.dart';
 import '../../core/widgets/language_toggle.dart';
 import '../../features/account/data/account_repository.dart';
 import '../../features/auth/presentation/auth_controller.dart';
@@ -62,6 +63,7 @@ class MenuDrawer extends ConsumerWidget {
               subtitle: auth.isAuthenticated
                   ? (auth.customer?.email ?? '')
                   : l10n.accountGuestTitle,
+              avatarUrl: auth.isAuthenticated ? auth.customer?.avatarUrl : null,
               isAuthed: auth.isAuthenticated,
               onTap: auth.isAuthenticated
                   ? () {
@@ -140,7 +142,10 @@ class MenuDrawer extends ConsumerWidget {
                 children: [
                   Text(
                     l10n.languageToggleLabel,
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      // White drawer in both modes → keep the label ink.
+                      color: AppColors.inkHeading,
+                    ),
                   ),
                   const Spacer(),
                   LanguageToggle(
@@ -199,31 +204,20 @@ class _ProfileHeader extends StatelessWidget {
   const _ProfileHeader({
     required this.name,
     required this.subtitle,
+    required this.avatarUrl,
     required this.isAuthed,
     required this.onTap,
   });
 
   final String name;
   final String subtitle;
+  final String? avatarUrl;
   final bool isAuthed;
   final VoidCallback onTap;
-
-  String get _initials {
-    final parts = name
-        .trim()
-        .split(RegExp(r'\s+'))
-        .where((p) => p.isNotEmpty)
-        .toList();
-    if (parts.isEmpty) return '';
-    if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
-    return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
-        .toUpperCase();
-  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final showInitials = isAuthed && _initials.isNotEmpty;
     return InkWell(
       onTap: onTap,
       child: Container(
@@ -232,29 +226,34 @@ class _ProfileHeader extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         child: Row(
           children: [
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white,
-                border: Border.all(color: AppColors.brandPrimary, width: 1.5),
-              ),
-              alignment: Alignment.center,
-              child: showInitials
-                  ? Text(
-                      _initials,
-                      style: const TextStyle(
+            // Authed: the customer's photo (or initials). Guest: a person icon.
+            isAuthed
+                ? CustomerAvatar(
+                    name: name,
+                    avatarUrl: avatarUrl,
+                    diameter: 52,
+                    ring: true,
+                    ringWidth: 1.5,
+                    background: Colors.white,
+                    initialsFontSize: 18,
+                  )
+                : Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                      border: Border.all(
                         color: AppColors.brandPrimary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 18,
+                        width: 1.5,
                       ),
-                    )
-                  : const Icon(
+                    ),
+                    alignment: Alignment.center,
+                    child: const Icon(
                       Icons.person_outline,
                       color: AppColors.brandPrimary,
                     ),
-            ),
+                  ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -316,7 +315,9 @@ class _DrawerTile extends StatelessWidget {
       alignment: Alignment.center,
       child: Icon(icon, color: AppColors.brandPrimary, size: 20),
     ),
-    title: Text(label),
+    // The drawer panel is always white (even in dark mode), so pin the label to
+    // ink — the dark theme's default light-on-surface text was invisible here.
+    title: Text(label, style: const TextStyle(color: AppColors.inkHeading)),
     trailing: const Icon(Icons.chevron_right, color: AppColors.inkMuted),
     onTap: onTap,
   );

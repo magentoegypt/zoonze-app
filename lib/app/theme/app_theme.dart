@@ -45,7 +45,12 @@ abstract final class AppTheme {
         // Ink (near-black) titles + leading/action icons per QA — the burgundy
         // brand colour stays on the wordmark logo, prices and buttons, not the
         // page titles. Screens that render the BrandLogo image are unaffected.
-        foregroundColor: AppColors.inkHeading,
+        // In dark mode the ink title would be near-invisible on the dark surface
+        // (QA: "the page title is still not clearly visible in Dark Mode"), so
+        // flip it to white — this fixes every text AppBar title app-wide.
+        foregroundColor: brightness == Brightness.light
+            ? AppColors.inkHeading
+            : Colors.white,
         elevation: 0,
         centerTitle: true,
       ),

@@ -10,6 +10,7 @@ import '../../../../app/routes.dart';
 import '../../../../app/shell/marketing_footer.dart';
 import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/theme_x.dart';
 import '../../../../core/assets/app_images.dart';
 import '../../../../core/store/store_controller.dart';
 import '../../../../core/util/launch.dart';
@@ -1127,7 +1128,7 @@ class _ProductSection extends StatelessWidget {
             child: Center(
               child: OutlinedButton(
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.inkHeading,
+                  foregroundColor: context.scaffoldHeading,
                 ),
                 onPressed: () => context.push(
                   AppRoutes.category(category.uid),
@@ -1189,7 +1190,7 @@ class _BrandsRail extends StatelessWidget {
           child: Center(
             child: OutlinedButton(
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.inkHeading,
+                foregroundColor: context.scaffoldHeading,
               ),
               onPressed: () => context.push(AppRoutes.brands),
               child: Text(l10n.homeSeeMore),
@@ -1847,18 +1848,18 @@ class _ExclusiveOffersRail extends StatelessWidget {
                   children: [
                     Text(
                       l10n.homeExclusiveOffersTitle.toUpperCase(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.4,
-                        color: AppColors.inkHeading,
+                        color: context.scaffoldHeading,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       l10n.homeExclusiveOffersSubtitle,
-                      style: const TextStyle(
-                        color: AppColors.inkMuted,
+                      style: TextStyle(
+                        color: context.scaffoldMuted,
                         fontSize: 13,
                       ),
                     ),
@@ -2059,7 +2060,7 @@ class _TestimonialsRail extends StatelessWidget {
           child: Center(
             child: OutlinedButton(
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.inkHeading,
+                foregroundColor: context.scaffoldHeading,
               ),
               onPressed: () => context.push(AppRoutes.reviews),
               child: Text(l10n.homeSeeMore),
@@ -2254,7 +2255,7 @@ class _JournalRail extends StatelessWidget {
             child: Center(
               child: OutlinedButton(
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.inkHeading,
+                  foregroundColor: context.scaffoldHeading,
                 ),
                 onPressed: () => context.push(
                   AppRoutes.webview,
@@ -2852,11 +2853,11 @@ class _SectionHeader extends StatelessWidget {
     child: Text(
       title.toUpperCase(),
       textAlign: TextAlign.center,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 13,
         fontWeight: FontWeight.w700,
         letterSpacing: 1.82,
-        color: AppColors.inkHeading,
+        color: context.scaffoldHeading,
       ),
     ),
   );
@@ -2880,18 +2881,18 @@ class _SectionHeaderWithSubtitle extends StatelessWidget {
         Text(
           title.toUpperCase(),
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.82,
-            color: AppColors.inkHeading,
+            color: context.scaffoldHeading,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           subtitle,
           textAlign: TextAlign.center,
-          style: const TextStyle(color: AppColors.inkMuted, fontSize: 13),
+          style: TextStyle(color: context.scaffoldMuted, fontSize: 13),
         ),
       ],
     ),

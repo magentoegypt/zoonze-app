@@ -6,7 +6,9 @@ import '../../../app/routes.dart';
 import '../../../app/shell/marketing_footer.dart';
 import '../../../app/shell/zoonze_scaffold.dart';
 import '../../../app/theme/app_colors.dart';
+import '../../../app/theme/theme_x.dart';
 import '../../../core/app_info.dart';
+import '../../../core/widgets/customer_avatar.dart';
 import '../../../core/store/store_controller.dart';
 import '../../../l10n/l10n.dart';
 import '../../auth/presentation/auth_controller.dart';
@@ -27,6 +29,7 @@ class AccountScreen extends ConsumerWidget {
       body = _Authenticated(
         name: auth.customer?.fullName ?? '',
         email: auth.customer?.email ?? '',
+        avatarUrl: auth.customer?.avatarUrl,
         onSignOut: () => ref.read(authControllerProvider.notifier).logout(),
       );
     } else {
@@ -45,19 +48,14 @@ class _Authenticated extends ConsumerWidget {
   const _Authenticated({
     required this.name,
     required this.email,
+    required this.avatarUrl,
     required this.onSignOut,
   });
 
   final String name;
   final String email;
+  final String? avatarUrl;
   final VoidCallback onSignOut;
-
-  String get _initials {
-    final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty);
-    final letters = parts.take(2).map((p) => p.characters.first.toUpperCase());
-    final joined = letters.join();
-    return joined.isEmpty ? '?' : joined;
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -87,10 +85,10 @@ class _Authenticated extends ConsumerWidget {
           padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 16, 10),
           child: Text(
             l10n.accountHeading,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w700,
-              color: AppColors.inkHeading,
+              color: context.scaffoldHeading,
             ),
           ),
         ),
@@ -99,17 +97,11 @@ class _Authenticated extends ConsumerWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 32,
-                backgroundColor: AppColors.surfaceTint,
-                child: Text(
-                  _initials,
-                  style: const TextStyle(
-                    color: AppColors.brandPrimary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 22,
-                  ),
-                ),
+              CustomerAvatar(
+                name: name,
+                avatarUrl: avatarUrl,
+                diameter: 64,
+                initialsFontSize: 22,
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -118,18 +110,18 @@ class _Authenticated extends ConsumerWidget {
                   children: [
                     Text(
                       name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.inkHeading,
+                        color: context.scaffoldHeading,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       email,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12.5,
-                        color: AppColors.inkMuted,
+                        color: context.scaffoldMuted,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -168,10 +160,10 @@ class _Authenticated extends ConsumerWidget {
                   label: l10n.accountStatOrders,
                 ),
               ),
-              const VerticalDivider(
+              VerticalDivider(
                 width: 1,
                 thickness: 1,
-                color: AppColors.borderDefault,
+                color: context.hairline,
                 indent: 16,
                 endIndent: 16,
               ),
@@ -181,10 +173,10 @@ class _Authenticated extends ConsumerWidget {
                   label: l10n.accountStatWishlist,
                 ),
               ),
-              const VerticalDivider(
+              VerticalDivider(
                 width: 1,
                 thickness: 1,
-                color: AppColors.borderDefault,
+                color: context.hairline,
                 indent: 16,
                 endIndent: 16,
               ),
@@ -267,7 +259,7 @@ class _Authenticated extends ConsumerWidget {
           child: Center(
             child: Text(
               version != null ? '${l10n.appTitle} · v$version' : l10n.appTitle,
-              style: const TextStyle(color: AppColors.inkFaint, fontSize: 11),
+              style: TextStyle(color: context.scaffoldFaint, fontSize: 11),
             ),
           ),
         ),
@@ -283,7 +275,7 @@ class _AccountBand extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      Container(height: 8, color: AppColors.surfaceMuted);
+      Container(height: 8, color: context.sectionBand);
 }
 
 /// Hairline between menu tiles, inset to clear the icon chip.
@@ -291,10 +283,10 @@ class _TileDivider extends StatelessWidget {
   const _TileDivider();
 
   @override
-  Widget build(BuildContext context) => const Divider(
+  Widget build(BuildContext context) => Divider(
     height: 1,
     thickness: 1,
-    color: AppColors.borderDefault,
+    color: context.hairline,
     indent: 16,
     endIndent: 16,
   );
@@ -324,7 +316,7 @@ class _StatCell extends StatelessWidget {
         const SizedBox(height: 3),
         Text(
           label,
-          style: const TextStyle(fontSize: 11.5, color: AppColors.inkMuted),
+          style: TextStyle(fontSize: 11.5, color: context.scaffoldMuted),
         ),
       ],
     ),
@@ -368,25 +360,25 @@ class _AccountTile extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.inkHeading,
+                  color: context.scaffoldHeading,
                 ),
               ),
             ),
             if (value != null) ...[
               Text(
                 value!,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.inkFaint,
+                  color: context.scaffoldFaint,
                 ),
               ),
               const SizedBox(width: 8),
             ],
-            const Icon(Icons.chevron_right, color: AppColors.inkMuted, size: 18),
+            Icon(Icons.chevron_right, color: context.scaffoldMuted, size: 18),
           ],
         ),
       ),
@@ -424,7 +416,7 @@ class _Guest extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               l10n.accountGuestBody,
-              style: const TextStyle(color: AppColors.inkMuted),
+              style: TextStyle(color: context.scaffoldMuted),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),

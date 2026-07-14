@@ -9,6 +9,7 @@ import '../../../../app/routes.dart';
 import '../../../../app/shell/marketing_footer.dart';
 import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/theme_x.dart';
 import '../../../../core/store/store_controller.dart';
 import '../../../../core/util/media.dart';
 import '../../../../core/validation/validators.dart';
@@ -107,11 +108,16 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final l10n = AppLocalizations.of(context);
     final XFile? picked;
     try {
+      // Downscale + recompress on-device before upload. The avatar renders at
+      // ≤86px, so 512² is ample — and the smaller JPEG keeps the base64 body
+      // well under the edge (CloudFront/WAF) POST limits that were intermittently
+      // rejecting large uploads with "Something went wrong" (QA). This also
+      // normalises iOS HEIC/large originals to a modest JPEG.
       picked = await ImagePicker().pickImage(
         source: ImageSource.gallery,
-        maxWidth: 1024,
-        maxHeight: 1024,
-        imageQuality: 85,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 82,
       );
     } catch (_) {
       _snack(l10n.errorGeneric);
@@ -207,7 +213,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       TextButton(
                         onPressed: _uploadingAvatar ? null : _removeAvatar,
                         style: TextButton.styleFrom(
-                          foregroundColor: AppColors.inkMuted,
+                          foregroundColor: context.scaffoldMuted,
                           visualDensity: VisualDensity.compact,
                         ),
                         child: Text(l10n.profileRemovePhoto),
@@ -261,12 +267,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     children: [
                       Text(
                         isAr ? 'AR' : 'EN',
-                        style: const TextStyle(color: AppColors.inkMuted),
+                        style: TextStyle(color: context.scaffoldMuted),
                       ),
                       const SizedBox(width: 4),
-                      const Icon(
+                      Icon(
                         Icons.chevron_right,
-                        color: AppColors.inkMuted,
+                        color: context.scaffoldMuted,
                         size: 20,
                       ),
                     ],
@@ -293,7 +299,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   onTap: () => setState(() => _showPassword = !_showPassword),
                   trailing: Icon(
                     _showPassword ? Icons.expand_less : Icons.chevron_right,
-                    color: AppColors.inkMuted,
+                    color: context.scaffoldMuted,
                     size: 20,
                   ),
                 ),
@@ -456,11 +462,11 @@ class _SectionHeader extends StatelessWidget {
     padding: const EdgeInsetsDirectional.fromSTEB(24, 16, 24, 8),
     child: Text(
       label.toUpperCase(),
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 12,
         fontWeight: FontWeight.w700,
         letterSpacing: 0.8,
-        color: AppColors.inkMuted,
+        color: context.scaffoldMuted,
       ),
     ),
   );
@@ -498,7 +504,8 @@ class _ProfileField extends StatelessWidget {
         labelText: label,
         prefixIcon: Icon(icon, size: 20),
         filled: true,
-        fillColor: AppColors.surfaceMuted,
+        // Dark mode: a light fill hid the (light) input text (QA "Profile page").
+        fillColor: context.fieldFill,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
@@ -531,7 +538,7 @@ class _PrefRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.surfaceMuted,
+      color: context.fieldFill,
       borderRadius: BorderRadius.circular(12),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -543,10 +550,10 @@ class _PrefRow extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.inkHeading,
+                  color: context.scaffoldHeading,
                 ),
               ),
               trailing,
@@ -574,7 +581,7 @@ class _PrefToggleRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surfaceMuted,
+        color: context.fieldFill,
         borderRadius: BorderRadius.circular(12),
       ),
       padding: const EdgeInsetsDirectional.fromSTEB(16, 4, 8, 4),
@@ -584,10 +591,10 @@ class _PrefToggleRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: AppColors.inkHeading,
+                color: context.scaffoldHeading,
               ),
             ),
           ),

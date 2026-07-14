@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/routes.dart';
-import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/theme_mode_controller.dart';
+import '../../../../app/theme/theme_x.dart';
 import '../../../../core/app_info.dart';
 import '../../../../core/store/store_controller.dart';
 import '../../../../l10n/l10n.dart';
@@ -73,7 +73,7 @@ class SettingsScreen extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
             child: Text(
               l10n.notificationsOrdersNote,
-              style: const TextStyle(color: AppColors.inkMuted),
+              style: TextStyle(color: context.scaffoldMuted),
             ),
           ),
           const Divider(height: 32),
@@ -103,7 +103,7 @@ class SettingsScreen extends ConsumerWidget {
                       data: (v) => v == null ? '' : '${l10n.versionLabel} $v',
                       orElse: () => '',
                     ),
-                style: const TextStyle(color: AppColors.inkMuted, fontSize: 12),
+                style: TextStyle(color: context.scaffoldMuted, fontSize: 12),
               ),
             ),
           ),
@@ -122,8 +122,8 @@ class _SectionHeader extends StatelessWidget {
     padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 8),
     child: Text(
       label.toUpperCase(),
-      style: const TextStyle(
-        color: AppColors.inkMuted,
+      style: TextStyle(
+        color: context.scaffoldMuted,
         fontWeight: FontWeight.w700,
         fontSize: 12,
         letterSpacing: 1,

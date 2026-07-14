@@ -8,6 +8,7 @@ import '../../../../app/routes.dart';
 import '../../../../app/shell/marketing_footer.dart';
 import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/theme_x.dart';
 import '../../../../core/config/free_shipping.dart';
 import '../../../../core/widgets/async_value_view.dart';
 import '../../../../l10n/l10n.dart';
@@ -786,12 +787,15 @@ class _StickyAddToCart extends ConsumerWidget {
           children: [
             Container(
               decoration: BoxDecoration(
-                border: Border.all(
-                  color: AppColors.inkMuted.withValues(alpha: 0.3),
-                ),
+                border: Border.all(color: context.hairline),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: WishlistHeart(sku: product.sku),
+              // Dark mode: the default ink heart was invisible on the dark bar
+              // (QA "Add to Wishlist icon on the product page").
+              child: WishlistHeart(
+                sku: product.sku,
+                color: context.scaffoldHeading,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
