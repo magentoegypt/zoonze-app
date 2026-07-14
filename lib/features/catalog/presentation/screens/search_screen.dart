@@ -426,6 +426,7 @@ class _ResultsState extends ConsumerState<_Results> {
             state: state,
             onFilters: () => _openFilters(state),
             onSort: () => _openSort(state),
+            brand: widget.brand,
           ),
         ),
         if (state.products.isEmpty)
