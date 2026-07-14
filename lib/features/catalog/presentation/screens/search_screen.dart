@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../app/routes.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/theme_x.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/store/store_controller.dart';
 import '../../../../core/widgets/brand_logo.dart';
@@ -547,8 +548,8 @@ class _Header extends StatelessWidget {
             children: [
               Text(
                 l10n.resultsCount(state.totalCount),
-                style: const TextStyle(
-                  color: AppColors.inkMuted,
+                style: TextStyle(
+                  color: context.scaffoldMuted,
                   fontSize: 12.5,
                 ),
               ),
@@ -567,7 +568,7 @@ class _Header extends StatelessWidget {
             ],
           ),
         ),
-        const Divider(height: 1, thickness: 1, color: AppColors.borderDefault),
+        Divider(height: 1, thickness: 1, color: context.hairline),
       ],
     );
   }
@@ -592,17 +593,18 @@ class _PillButton extends StatelessWidget {
     child: Container(
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
       decoration: BoxDecoration(
-        border: Border.all(color: AppColors.borderDefault),
+        border: Border.all(color: context.hairline),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: AppColors.inkHeading),
+          // White in dark mode — the pill sits on the scaffold (QA).
+          Icon(icon, size: 16, color: context.scaffoldHeading),
           const SizedBox(width: 6),
           Text(
             label,
-            style: const TextStyle(fontSize: 12, color: AppColors.inkHeading),
+            style: TextStyle(fontSize: 12, color: context.scaffoldHeading),
           ),
         ],
       ),

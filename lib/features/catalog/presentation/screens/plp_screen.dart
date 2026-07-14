@@ -6,6 +6,7 @@ import '../../../../app/routes.dart';
 import '../../../../app/shell/marketing_footer.dart';
 import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../app/theme/theme_x.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/store/store_controller.dart';
 import '../../../../core/widgets/empty_state.dart';
@@ -137,7 +138,7 @@ class _PlpScreenState extends ConsumerState<PlpScreen> {
               ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
             ),
           ),
-          const Divider(height: 1, thickness: 1, color: AppColors.borderDefault),
+          Divider(height: 1, thickness: 1, color: context.hairline),
           const ProductGridSkeleton(childAspectRatio: 0.66, count: 6),
         ],
       );
@@ -254,7 +255,7 @@ class _Header extends StatelessWidget {
             ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
           ),
         ),
-        const Divider(height: 1, thickness: 1, color: AppColors.borderDefault),
+        Divider(height: 1, thickness: 1, color: context.hairline),
         if (subcats.isNotEmpty)
           _SubcategoryChips(
             subcats: subcats,
@@ -268,8 +269,8 @@ class _Header extends StatelessWidget {
               Expanded(
                 child: Text(
                   l10n.categoryProductCount(state.totalCount),
-                  style: const TextStyle(
-                    color: AppColors.inkMuted,
+                  style: TextStyle(
+                    color: context.scaffoldMuted,
                     fontSize: 12.5,
                   ),
                 ),
@@ -289,7 +290,7 @@ class _Header extends StatelessWidget {
             ],
           ),
         ),
-        const Divider(height: 1, thickness: 1, color: AppColors.borderDefault),
+        Divider(height: 1, thickness: 1, color: context.hairline),
       ],
     );
   }
@@ -382,7 +383,7 @@ class _Pill extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
     decoration: BoxDecoration(
-      border: Border.all(color: AppColors.borderDefault),
+      border: Border.all(color: context.hairline),
       borderRadius: BorderRadius.circular(999),
     ),
     child: child,
@@ -408,13 +409,15 @@ class _PillButton extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: AppColors.inkHeading),
+          // White in dark mode — these pills sit on the scaffold, so the ink
+          // colour was invisible on dark (QA: filter/sort tabs need white).
+          Icon(icon, size: 16, color: context.scaffoldHeading),
           const SizedBox(width: 6),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: AppColors.inkHeading,
+              color: context.scaffoldHeading,
             ),
           ),
         ],
