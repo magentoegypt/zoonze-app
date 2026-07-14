@@ -45,6 +45,17 @@ abstract final class Phone {
   /// True when [raw] normalizes to a valid UAE mobile number.
   static bool isValidUae(String raw) => _uaeE164.hasMatch(normalizeUae(raw));
 
+  /// The local subscriber digits (no `+971`) for a `+971`-prefixed input field,
+  /// so a stored E.164 value (`+971501234567`) prefills the [PhoneNumberField]
+  /// as `501234567` (the chip already shows `+971`). Empty stays empty.
+  static String localPart(String raw) {
+    final e164 = normalizeUae(raw);
+    if (e164.isEmpty) return '';
+    return e164.startsWith('+$uaeDial')
+        ? e164.substring(1 + uaeDial.length)
+        : e164.replaceAll('+', '');
+  }
+
   /// Masks a number for the "Code sent to …" caption, e.g.
   /// `+971501234567` → `+971 50 ••• 4567`. Falls back to the normalized form
   /// when the shape is unexpected (non-UAE numbers stay readable).

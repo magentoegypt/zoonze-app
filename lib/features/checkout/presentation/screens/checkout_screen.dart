@@ -96,7 +96,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     return <String, dynamic>{
       'firstname': name.first,
       'lastname': name.last,
-      'telephone': _address.phone.text.trim(),
+      'telephone': _address.e164Phone(),
       'street': _address.streetLines(),
       'city': _address.area.text.trim(),
       'country_code': addressCountryCode,
@@ -154,7 +154,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     if (ok) {
       setState(() => _addressSubmitted = true);
     } else {
-      _snack(AppLocalizations.of(context).errorGeneric);
+      // Surface the real backend message (e.g. a Magento address/guest-checkout
+      // validation error) instead of a blanket "Something went wrong", so a
+      // failed Continue is diagnosable rather than opaque (QA: "check api").
+      final l10n = AppLocalizations.of(context);
+      final error = ref.read(checkoutControllerProvider).error;
+      _snack(
+        error != null
+            ? serverMessageOr(context, error, l10n.errorGeneric)
+            : l10n.errorGeneric,
+      );
     }
   }
 

@@ -56,7 +56,7 @@ class _AddressFormScreenState extends ConsumerState<AddressFormScreen> {
       id: widget.initial?.id,
       firstName: name.first,
       lastName: name.last,
-      telephone: _address.phone.text.trim(),
+      telephone: _address.e164Phone(),
       street: _address.street.text.trim(),
       apartment: _address.apartment.text.trim(),
       city: _address.area.text.trim(),

@@ -54,6 +54,26 @@ void main() {
     });
   });
 
+  group('Phone.localPart', () {
+    test('strips +971 so a saved E.164 number prefills the local field', () {
+      expect(Phone.localPart('+971501234567'), '501234567');
+    });
+
+    test('strips a 971 prefix and a local trunk zero', () {
+      expect(Phone.localPart('971501234567'), '501234567');
+      expect(Phone.localPart('0501234567'), '501234567');
+    });
+
+    test('returns empty for empty input', () {
+      expect(Phone.localPart('  '), '');
+    });
+
+    test('round-trips: localPart then normalizeUae restores the E.164 value', () {
+      const e164 = '+971501234567';
+      expect(Phone.normalizeUae(Phone.localPart(e164)), e164);
+    });
+  });
+
   group('Phone.mask', () {
     test('masks the middle of a UAE number', () {
       expect(Phone.mask('+971501234567'), '+971 50 ••• 4567');

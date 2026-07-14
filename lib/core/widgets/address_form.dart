@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/theme/app_colors.dart';
 import '../../l10n/l10n.dart';
 import '../address/regions.dart';
+import '../validation/phone.dart';
 import '../validation/validators.dart';
+import 'phone_number_field.dart';
 
 /// Holds the editable address fields, created and disposed by the host screen.
 /// Mirrors the Figma "Add Address" form: a single Full Name, phone, an Emirate
@@ -22,7 +24,10 @@ class AddressFormController {
     int? regionId,
     bool isDefault = false,
   }) : fullName = TextEditingController(text: fullName),
-       phone = TextEditingController(text: phone),
+       // The phone field shows a fixed `+971` chip, so it holds only the local
+       // subscriber digits — strip the country code off any prefilled E.164
+       // value (a saved address) so it isn't doubled.
+       phone = TextEditingController(text: Phone.localPart(phone)),
        area = TextEditingController(text: area),
        street = TextEditingController(text: street),
        apartment = TextEditingController(text: apartment),
@@ -64,6 +69,10 @@ class AddressFormController {
     if (parts.length == 1) return (first: parts.first, last: parts.first);
     return (first: parts.sublist(0, parts.length - 1).join(' '), last: parts.last);
   }
+
+  /// The phone in explicit E.164 (`+971…`) for Magento / the guest-OTP flow —
+  /// the field only holds local digits, so re-add the country code on read.
+  String e164Phone() => Phone.normalizeUae(phone.text);
 
   /// Magento `street` array — drops the apartment line when empty.
   List<String> streetLines() => [
@@ -109,31 +118,26 @@ class AddressForm extends ConsumerWidget {
         const SizedBox(height: 14),
         _LabeledField(
           label: l10n.fieldPhone,
-          child: _input(
-            controller.phone,
-            l10n.addressHintPhone,
-            keyboard: TextInputType.phone,
-            validator: (v) => Validators.required(context, v),
+          // The website's phone field carries a country-code prefix — use the
+          // shared `+971` chip field (same as registration) and validate a UAE
+          // mobile so the guest-checkout OTP always has a well-formed number.
+          child: PhoneNumberField(
+            controller: controller.phone,
+            hint: l10n.authPhoneHint,
+            validator: (v) => Validators.uaePhone(context, v),
           ),
         ),
         const SizedBox(height: 14),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: _LabeledField(
-                label: l10n.fieldEmirate,
-                child: _emirateInput(context, l10n, regions),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _LabeledField(
-                label: l10n.fieldCountryLabel,
-                child: _countryField(l10n),
-              ),
-            ),
-          ],
+        // State + Country are stacked (not side-by-side) so the full country
+        // name "United Arab Emirates" shows without truncating on a phone.
+        _LabeledField(
+          label: l10n.fieldEmirate,
+          child: _emirateInput(context, l10n, regions),
+        ),
+        const SizedBox(height: 14),
+        _LabeledField(
+          label: l10n.fieldCountryLabel,
+          child: _countryField(l10n),
         ),
         const SizedBox(height: 14),
         _LabeledField(
