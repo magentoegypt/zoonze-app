@@ -88,6 +88,16 @@ jobs:
           path: build/app/outputs/flutter-apk/*-release.apk
           if-no-files-found: error
 
+      # OTA-distribute the APK to Loadly. Skips itself when LOADLY_API_KEY is
+      # unset (see tool/loadly_upload.sh), so this is inert until the secret
+      # is added — same opt-in-by-secret pattern as the keystore step above.
+      - name: Distribute APK to Loadly (when configured)
+        env:
+          LOADLY_API_KEY: ${{ secrets.LOADLY_API_KEY }}
+        run: |
+          apk="$(ls build/app/outputs/flutter-apk/*-release.apk | head -n1)"
+          bash tool/loadly_upload.sh "$apk" "main @ ${GITHUB_SHA::7}"
+
   # Runs on macOS (uses macOS minutes). Produces a signed ad-hoc IPA when
   # ios/signing/ holds a .p12 + .mobileprovision and IOS_P12_PASSWORD is set;
   # otherwise an unsigned IPA. (See ios/signing/README.md — no fastlane match.)
@@ -155,3 +165,13 @@ jobs:
           name: ipa-prod
           path: build/ios/ipa/*.ipa
           if-no-files-found: error
+
+      # OTA-distribute the IPA to Loadly (inert until LOADLY_API_KEY is set).
+      # A signed ad-hoc IPA installs OTA for registered devices; an unsigned
+      # one is still hosted (for sideload/resign) — matching the artifact above.
+      - name: Distribute IPA to Loadly (when configured)
+        env:
+          LOADLY_API_KEY: ${{ secrets.LOADLY_API_KEY }}
+        run: |
+          ipa="$(ls build/ios/ipa/*.ipa | head -n1)"
+          bash tool/loadly_upload.sh "$ipa" "main @ ${GITHUB_SHA::7}"

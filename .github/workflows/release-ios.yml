@@ -69,3 +69,14 @@ jobs:
           name: ipa-adhoc-prod
           path: build/ios/ipa/*.ipa
           if-no-files-found: error
+
+      # Ad-hoc only — OTA-distribute the signed .ipa to Loadly (skips when
+      # LOADLY_API_KEY is unset; see tool/loadly_upload.sh). TestFlight builds
+      # go to the App Store, not Loadly.
+      - name: Distribute IPA to Loadly (when configured)
+        if: ${{ inputs.distribution == 'adhoc' }}
+        env:
+          LOADLY_API_KEY: ${{ secrets.LOADLY_API_KEY }}
+        run: |
+          ipa="$(ls build/ios/ipa/*.ipa | head -n1)"
+          bash tool/loadly_upload.sh "$ipa" "adhoc release"

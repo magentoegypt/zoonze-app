@@ -77,6 +77,17 @@ jobs:
           path: build/app/outputs/flutter-apk/*-release.apk
           if-no-files-found: error
 
+      # OTA-distribute the APK to Loadly. Skips when LOADLY_API_KEY is unset
+      # (see tool/loadly_upload.sh). AAB is a Play bundle, not installable, so
+      # only the APK path uploads.
+      - name: Distribute APK to Loadly (when configured)
+        if: ${{ inputs.format == 'apk' || inputs.format == 'both' }}
+        env:
+          LOADLY_API_KEY: ${{ secrets.LOADLY_API_KEY }}
+        run: |
+          apk="$(ls build/app/outputs/flutter-apk/*-release.apk | head -n1)"
+          bash tool/loadly_upload.sh "$apk" "${{ inputs.flavor }} release"
+
       # AAB — Play Store app bundle (not installable directly / on Diawi).
       - name: Build app bundle
         if: ${{ inputs.format == 'aab' || inputs.format == 'both' }}
