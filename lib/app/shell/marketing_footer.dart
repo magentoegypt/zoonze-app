@@ -54,7 +54,12 @@ class _MarketingFooterState extends ConsumerState<MarketingFooter> {
     'faqs' => 'faqs',
     'shipping' => 'shipping-delivery',
     'returns' => 'returns-exchanges',
-    'privacy' => 'privacy-policy-cookie-restriction-mode',
+    // AR has its own privacy page under a short slug (`privacy-policy`); the long
+    // English slug (`privacy-policy-cookie-restriction-mode`) resolves under
+    // `/uae-ar/` but serves English content — so the AR footer would open the
+    // wrong (English) page. Match the live site's per-locale slugs (QA 86d3khzup
+    // #9, verified against the eg_en / eg_ar footers).
+    'privacy' => isAr ? 'privacy-policy' : 'privacy-policy-cookie-restriction-mode',
     'terms' => 'terms-conditions',
     _ => '',
   };
@@ -170,8 +175,11 @@ class _MarketingFooterState extends ConsumerState<MarketingFooter> {
                       onTap: () => _openCms('faqs', l10n.footerFaqs),
                     ),
                     (
+                      // Contact Us opens the storefront's contact page
+                      // (`/contact/`, localized per store) in-app — was pointing
+                      // at the in-app Help/FAQ screen (QA 86d3khzup #9).
                       label: l10n.footerContact,
-                      onTap: () => context.push(AppRoutes.help),
+                      onTap: () => _openStorePage('contact/', l10n.footerContact),
                     ),
                     (
                       label: l10n.footerTrackOrder,
