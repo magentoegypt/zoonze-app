@@ -324,11 +324,9 @@ class _OrderCard extends StatelessWidget {
               ),
               if (order.lines.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                _Thumbnails(lines: order.lines),
-                const SizedBox(height: 10),
-                _LineSummary(lines: order.lines),
+                for (final line in order.lines) _LineRow(line: line),
               ],
-              const SizedBox(height: 12),
+              const SizedBox(height: 2),
               const Divider(height: 1, thickness: 1, color: AppColors.borderDefault),
               const SizedBox(height: 12),
               // Total.
@@ -445,78 +443,51 @@ class _ActionButton extends StatelessWidget {
   }
 }
 
-/// Compact "Qty × Name" list under the thumbnails (QA: the summary showed only
-/// images). Shows the first couple of lines + a "+N more" overflow line.
-class _LineSummary extends StatelessWidget {
-  const _LineSummary({required this.lines});
-  final List<OrderLine> lines;
+/// One order line as a single row — thumbnail + product name + quantity —
+/// matching the website order summary (QA: image, name and qty must sit on the
+/// same line per item, not stacked as image-row-then-text-row). RTL-safe: the
+/// Row mirrors so the thumbnail leads on the right in Arabic.
+class _LineRow extends StatelessWidget {
+  const _LineRow({required this.line});
+  final OrderLine line;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    const maxShown = 2;
-    final shown = lines.take(maxShown).toList();
-    final extra = lines.length - shown.length;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        for (final line in shown)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 2),
-            child: Text(
-              '${line.quantity.toInt()} × ${line.name}',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 12.5,
-                color: AppColors.inkHeading,
-              ),
-            ),
-          ),
-        if (extra > 0)
-          Text(
-            l10n.orderMoreItems(extra),
-            style: const TextStyle(fontSize: 12, color: AppColors.inkMuted),
-          ),
-      ],
-    );
-  }
-}
-
-/// Row of up to four 52×52 product thumbnails, with a "+N" overflow tile.
-class _Thumbnails extends StatelessWidget {
-  const _Thumbnails({required this.lines});
-  final List<OrderLine> lines;
-
-  @override
-  Widget build(BuildContext context) {
-    const max = 4;
-    final shown = lines.take(max).toList();
-    final extra = lines.length - shown.length;
-    return Row(
-      children: [
-        for (final line in shown) ...[
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
           _Thumb(url: line.imageUrl),
-          const SizedBox(width: 8),
-        ],
-        if (extra > 0)
-          Container(
-            width: 52,
-            height: 52,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceTint,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              '+$extra',
-              style: const TextStyle(
-                color: AppColors.brandPrimary,
-                fontWeight: FontWeight.w700,
-              ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  line.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    height: 1.3,
+                    color: AppColors.inkHeading,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  l10n.orderQty(line.quantity.toInt()),
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    color: AppColors.inkMuted,
+                  ),
+                ),
+              ],
             ),
           ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -528,10 +499,10 @@ class _Thumb extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(8),
       child: SizedBox(
-        width: 52,
-        height: 52,
+        width: 48,
+        height: 48,
         child: (url == null || url!.isEmpty)
             ? const ColoredBox(
                 color: AppColors.surfaceTint,
