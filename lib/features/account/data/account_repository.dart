@@ -264,14 +264,16 @@ class AccountRepository {
         .join(', ');
     final city = (a['city'] as String?)?.trim() ?? '';
     final region = (a['region'] as String?)?.trim() ?? '';
-    // The app derives Magento's required `city` from the emirate, so `city`
-    // usually equals `region` — show it once (street, [city if distinct,]
-    // emirate). The country is rendered separately by the order detail, so an
-    // order never reads "…, Dubai, Dubai" with no country (QA 86d3mdefm #3).
+    // The app derives Magento's required `city` from the emirate, so `city` is a
+    // duplicate of the emirate — often in a different language than `region`
+    // (e.g. "Dubai" vs "دبي"), which a plain string compare wouldn't catch. Show
+    // the emirate once via `region` (falling back to `city` only when region is
+    // absent); the country is a separate line. Matches the website
+    // (street / emirate / country) — QA 86d3mdefm #3.
+    final emirate = region.isNotEmpty ? region : city;
     final parts = <String>[
       if (street.isNotEmpty) street,
-      if (city.isNotEmpty && city != region) city,
-      if (region.isNotEmpty) region,
+      if (emirate.isNotEmpty) emirate,
     ];
     return parts.isEmpty ? null : parts.join(', ');
   }

@@ -51,13 +51,19 @@ class CustomerAddress {
 
   String get fullName => '$firstName $lastName'.trim();
 
-  String get summary => [
-    street,
-    apartment,
-    city,
-    region,
-    countryCode,
-  ].where((p) => p.isNotEmpty).join(', ');
+  /// Compact one-line address for cards (saved addresses, checkout selection).
+  /// `city` is the app-derived emirate — a duplicate of `region`, sometimes in a
+  /// different language ("Dubai" vs "دبي") — so the emirate is shown once via
+  /// `region` (falling back to `city`). The country is always the UAE here, so
+  /// it isn't repeated on every card (previously rendered as a raw "AE").
+  String get summary {
+    final emirate = region.isNotEmpty ? region : city;
+    return [
+      street,
+      apartment,
+      emirate,
+    ].where((p) => p.isNotEmpty).join(', ');
+  }
 
   /// Magento `CustomerAddressInput`. AE has system regions, so a valid
   /// `region_id` is sent (nested under `region`) rather than free-text.
