@@ -2052,6 +2052,20 @@ class _TestimonialsRail extends StatelessWidget {
             itemBuilder: (context, i) => _TestimonialCard(item: items[i]),
           ),
         ),
+        // See More → the full customer-reviews screen (matches the live site's
+        // "SEE MORE" under this section; the other rails carry the same button).
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Center(
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.inkHeading,
+              ),
+              onPressed: () => context.push(AppRoutes.reviews),
+              child: Text(l10n.homeSeeMore),
+            ),
+          ),
+        ),
       ],
     );
   }

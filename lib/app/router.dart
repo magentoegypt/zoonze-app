@@ -24,6 +24,7 @@ import '../features/auth/presentation/screens/sign_up_screen.dart';
 import '../features/catalog/domain/brand.dart';
 import '../features/catalog/presentation/screens/brands_screen.dart';
 import '../features/catalog/presentation/screens/categories_screen.dart';
+import '../features/catalog/presentation/screens/all_reviews_screen.dart';
 import '../features/catalog/presentation/screens/home_screen.dart';
 import '../features/catalog/presentation/screens/plp_screen.dart';
 import '../features/catalog/presentation/screens/product_detail_screen.dart';
@@ -86,6 +87,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.brands,
         builder: (context, state) => const BrandsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.reviews,
+        builder: (context, state) => const AllReviewsScreen(),
       ),
       GoRoute(
         path: AppRoutes.brand,

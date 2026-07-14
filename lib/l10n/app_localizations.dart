@@ -572,6 +572,12 @@ abstract class AppLocalizations {
   /// **'Loved across the UAE'**
   String get homeTrustReviewsSubtitle;
 
+  /// No description provided for @reviewsScreenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer Reviews'**
+  String get reviewsScreenTitle;
+
   /// No description provided for @homeJournalTitle.
   ///
   /// In en, this message translates to:

@@ -250,6 +250,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get homeTrustReviewsSubtitle => 'محبوب في جميع أنحاء الإمارات';
 
   @override
+  String get reviewsScreenTitle => 'آراء العملاء';
+
+  @override
   String get homeJournalTitle => 'مجلة زونزي';
 
   @override

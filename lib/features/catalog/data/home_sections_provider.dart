@@ -124,16 +124,31 @@ query HomeReviews($pageSize: Int!, $minRating: Int!) {
 }
 ''';
 
-final homeReviewsProvider = FutureProvider.autoDispose<List<Testimonial>>((
-  ref,
-) async {
+final homeReviewsProvider = FutureProvider.autoDispose<List<Testimonial>>(
+  (ref) => _loadReviews(ref, pageSize: 3, minRating: 3),
+);
+
+/// Every review the feed carries (for the full "Customer Reviews" screen behind
+/// the home rail's See More). `homeReviews` caps at ~10 regardless of pageSize;
+/// `minRating: 1` keeps the 4-star entries the home slice (minRating 3) drops.
+final allReviewsProvider = FutureProvider.autoDispose<List<Testimonial>>(
+  (ref) => _loadReviews(ref, pageSize: 50, minRating: 1),
+);
+
+/// Shared `homeReviews` fetch → parsed [Testimonial]s for the active store view.
+/// Degrades to an empty list on any error/absence so the caller hides cleanly.
+Future<List<Testimonial>> _loadReviews(
+  Ref ref, {
+  required int pageSize,
+  required int minRating,
+}) async {
   ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
   final client = ref.watch(graphqlClientProvider);
   try {
     final result = await client.query(
       QueryOptions(
         document: gql(_homeReviewsQuery),
-        variables: const {'pageSize': 3, 'minRating': 3},
+        variables: {'pageSize': pageSize, 'minRating': minRating},
         fetchPolicy: FetchPolicy.networkOnly,
       ),
     );
@@ -155,7 +170,7 @@ final homeReviewsProvider = FutureProvider.autoDispose<List<Testimonial>>((
   } catch (_) {
     return const <Testimonial>[];
   }
-});
+}
 
 String _s(Object? v) => (v is String ? v : v?.toString() ?? '').trim();
 

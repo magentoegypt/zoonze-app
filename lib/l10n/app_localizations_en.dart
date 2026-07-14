@@ -252,6 +252,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeTrustReviewsSubtitle => 'Loved across the UAE';
 
   @override
+  String get reviewsScreenTitle => 'Customer Reviews';
+
+  @override
   String get homeJournalTitle => 'The Zoonze Journal';
 
   @override
