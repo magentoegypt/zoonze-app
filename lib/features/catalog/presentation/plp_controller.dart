@@ -14,6 +14,8 @@ class PlpState {
     this.selectedFilters = const {},
     this.priceFrom,
     this.priceTo,
+    this.minDiscount,
+    this.minRating,
     this.sort = ProductSortField.relevance,
     this.totalCount = 0,
     this.currentPage = 0,
@@ -28,6 +30,11 @@ class PlpState {
   final Map<String, Set<String>> selectedFilters;
   final double? priceFrom;
   final double? priceTo;
+
+  /// Minimum discount % ("N% or more") and minimum rating ("N★ & above").
+  /// Both are fixed-bucket threshold filters (not aggregation-driven).
+  final int? minDiscount;
+  final int? minRating;
   final ProductSortField sort;
   final int totalCount;
   final int currentPage;
@@ -42,7 +49,9 @@ class PlpState {
 
   int get activeFilterCount =>
       selectedFilters.values.fold(0, (sum, values) => sum + values.length) +
-      (hasPriceFilter ? 1 : 0);
+      (hasPriceFilter ? 1 : 0) +
+      (minDiscount != null ? 1 : 0) +
+      (minRating != null ? 1 : 0);
 
   static const Object _keep = Object();
 
@@ -52,6 +61,8 @@ class PlpState {
     Map<String, Set<String>>? selectedFilters,
     Object? priceFrom = _keep,
     Object? priceTo = _keep,
+    Object? minDiscount = _keep,
+    Object? minRating = _keep,
     ProductSortField? sort,
     int? totalCount,
     int? currentPage,
@@ -65,6 +76,8 @@ class PlpState {
     selectedFilters: selectedFilters ?? this.selectedFilters,
     priceFrom: identical(priceFrom, _keep) ? this.priceFrom : priceFrom as double?,
     priceTo: identical(priceTo, _keep) ? this.priceTo : priceTo as double?,
+    minDiscount: identical(minDiscount, _keep) ? this.minDiscount : minDiscount as int?,
+    minRating: identical(minRating, _keep) ? this.minRating : minRating as int?,
     sort: sort ?? this.sort,
     totalCount: totalCount ?? this.totalCount,
     currentPage: currentPage ?? this.currentPage,
@@ -123,6 +136,8 @@ class PlpController extends AutoDisposeFamilyNotifier<PlpState, String> {
         attributeFilters: state.selectedFilters,
         priceFrom: state.priceFrom,
         priceTo: state.priceTo,
+        minDiscount: state.minDiscount,
+        minRating: state.minRating,
         sort: state.sort,
         pageSize: _pageSize,
         currentPage: 1,
@@ -151,6 +166,8 @@ class PlpController extends AutoDisposeFamilyNotifier<PlpState, String> {
         attributeFilters: state.selectedFilters,
         priceFrom: state.priceFrom,
         priceTo: state.priceTo,
+        minDiscount: state.minDiscount,
+        minRating: state.minRating,
         sort: state.sort,
         pageSize: _pageSize,
         currentPage: state.currentPage + 1,
@@ -183,6 +200,8 @@ class PlpController extends AutoDisposeFamilyNotifier<PlpState, String> {
     Map<String, Set<String>> filters, {
     double? priceFrom,
     double? priceTo,
+    int? minDiscount,
+    int? minRating,
     ProductSortField? sort,
   }) {
     _userSortSet = true;
@@ -190,6 +209,8 @@ class PlpController extends AutoDisposeFamilyNotifier<PlpState, String> {
       selectedFilters: filters,
       priceFrom: priceFrom,
       priceTo: priceTo,
+      minDiscount: minDiscount,
+      minRating: minRating,
       sort: sort ?? state.sort,
       products: const [],
       currentPage: 0,

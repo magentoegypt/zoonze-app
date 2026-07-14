@@ -59,7 +59,9 @@ Widget _harness(String locale) {
 }
 
 void main() {
-  testWidgets('PLP renders products, filter + sort controls', (tester) async {
+  testWidgets('PLP renders products with separate Sort + Filter controls', (
+    tester,
+  ) async {
     await tester.binding.setSurfaceSize(const Size(1200, 3200));
     addTearDown(() => tester.binding.setSurfaceSize(null));
 
@@ -67,11 +69,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Fragrance'), findsWidgets);
+    // Two distinct controls in the header (QA 86d3m97au).
+    expect(find.text('Sort'), findsOneWidget);
     expect(find.text('Filters'), findsOneWidget);
     expect(find.text('Coco Mademoiselle EDP'), findsWidgets);
   });
 
-  testWidgets('filter sheet shows Sort By, brand facets, and footer actions', (
+  testWidgets('filter sheet shows facets, Discount + Rating, and footer — no Sort', (
     tester,
   ) async {
     await tester.binding.setSurfaceSize(const Size(1200, 3200));
@@ -83,16 +87,41 @@ void main() {
     await tester.tap(find.text('Filters'));
     await tester.pumpAndSettle();
 
-    // Sort By section (moved into the sheet per Figma).
-    expect(find.text('Sort By'), findsOneWidget);
-    expect(find.text('Relevance'), findsOneWidget);
+    // Sort moved OUT of the filter sheet into its own control.
+    expect(find.text('Sort By'), findsNothing);
     // Brand facet from aggregations, with selectable options.
     expect(find.text('Brand'), findsOneWidget);
     expect(find.text('Chanel'), findsOneWidget);
     expect(find.text('Dior'), findsOneWidget);
+    // Website's Discount + Rating threshold sections.
+    expect(find.text('Discount'), findsOneWidget);
+    expect(find.text('50% or more'), findsOneWidget);
+    expect(find.text('Rating'), findsOneWidget);
+    expect(find.text('& above'), findsWidgets);
     // Two-button footer + header reset.
     expect(find.text('Reset'), findsOneWidget);
     expect(find.text('Clear All'), findsOneWidget);
     expect(find.text('Apply Filters'), findsOneWidget);
+  });
+
+  testWidgets('sort sheet lists all website options; Newest First disabled', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(1200, 3200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await tester.pumpWidget(_harness('en'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Sort'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Featured'), findsOneWidget);
+    expect(find.text('Price: Low to High'), findsOneWidget);
+    expect(find.text('Price: High to Low'), findsOneWidget);
+    expect(find.text('Name: A–Z'), findsOneWidget);
+    // Newest First present but gated until the backend adds the sort field.
+    expect(find.text('Newest First'), findsOneWidget);
+    expect(find.text('Coming soon'), findsOneWidget);
   });
 }

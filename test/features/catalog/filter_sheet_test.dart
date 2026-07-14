@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:zoonze_app/features/catalog/data/catalog_repository.dart';
 import 'package:zoonze_app/features/catalog/domain/aggregation.dart';
 import 'package:zoonze_app/features/catalog/presentation/widgets/filter_sheet.dart';
 import 'package:zoonze_app/l10n/l10n.dart';
@@ -43,7 +42,6 @@ Future<FilterResult?> _open(
                 builder: (_) => FilterSheet(
                   aggregations: aggregations,
                   initial: const {},
-                  initialSort: ProductSortField.relevance,
                   currency: 'AED',
                 ),
               );
@@ -100,7 +98,6 @@ void main() {
                   builder: (_) => const FilterSheet(
                     aggregations: [_priceAgg],
                     initial: {},
-                    initialSort: ProductSortField.relevance,
                     currency: 'AED',
                   ),
                 );

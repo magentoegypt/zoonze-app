@@ -321,6 +321,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sortRelevance => 'Relevance';
 
   @override
+  String get sortFeatured => 'Featured';
+
+  @override
   String get sortPriceLowHigh => 'Price: Low to High';
 
   @override
@@ -330,7 +333,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sortNameAz => 'Name: A–Z';
 
   @override
-  String get sortNewest => 'Newest';
+  String get sortNewest => 'Newest First';
+
+  @override
+  String get sortComingSoon => 'Coming soon';
+
+  @override
+  String get filterDiscountLabel => 'Discount';
+
+  @override
+  String get filterRatingLabel => 'Rating';
+
+  @override
+  String filterDiscountOption(int percent) {
+    return '$percent% or more';
+  }
+
+  @override
+  String get filterRatingAndAbove => '& above';
 
   @override
   String get applyLabel => 'Apply';

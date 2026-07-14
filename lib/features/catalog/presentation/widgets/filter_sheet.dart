@@ -2,46 +2,58 @@ import 'package:flutter/material.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../l10n/l10n.dart';
-import '../../data/catalog_repository.dart';
 import '../../domain/aggregation.dart';
 
-/// Result of the filter sheet: the chosen sort, the selected attribute facets,
-/// plus an optional price range (null bounds = unbounded on that side).
+/// Result of the filter sheet: the selected attribute facets, an optional price
+/// range (null bounds = unbounded on that side), and the Discount / Rating
+/// thresholds. Sort lives in its own sheet ([SortSheet]) — QA 86d3m97au wants
+/// Filter and Sort as two separate controls.
 class FilterResult {
   const FilterResult({
     required this.attributes,
-    required this.sort,
     this.priceFrom,
     this.priceTo,
+    this.minDiscount,
+    this.minRating,
   });
 
   final Map<String, Set<String>> attributes;
-  final ProductSortField sort;
   final double? priceFrom;
   final double? priceTo;
+  final int? minDiscount;
+  final int? minRating;
 }
 
-/// Aggregation-driven filter + sort bottom sheet (Figma "Filters (Sheet)").
-/// Flat labelled sections: Sort By (chips), Price Range (slider), then one
-/// section per attribute facet from `products.aggregations`. The `price` facet
-/// drives the slider bounds. Returns a [FilterResult] on Apply.
+/// Filter-only bottom sheet (Figma "Filters (Sheet)"). Flat labelled sections:
+/// Price Range (slider), one section per aggregation facet (Category,
+/// Manufacturer, …), then the website's fixed-bucket Discount and Rating
+/// thresholds. The `price` facet drives the slider bounds. Returns a
+/// [FilterResult] on Apply. Sorting is handled separately by [SortSheet].
 class FilterSheet extends StatefulWidget {
   const FilterSheet({
     super.key,
     required this.aggregations,
     required this.initial,
-    required this.initialSort,
     required this.currency,
     this.initialPriceFrom,
     this.initialPriceTo,
+    this.initialMinDiscount,
+    this.initialMinRating,
   });
 
   final List<Aggregation> aggregations;
   final Map<String, Set<String>> initial;
-  final ProductSortField initialSort;
   final String currency;
   final double? initialPriceFrom;
   final double? initialPriceTo;
+  final int? initialMinDiscount;
+  final int? initialMinRating;
+
+  /// Discount thresholds shown on the website ("N% or more"), high → low.
+  static const List<int> discountBuckets = [50, 40, 30, 20];
+
+  /// Rating thresholds shown on the website ("N★ & above"), high → low.
+  static const List<int> ratingBuckets = [4, 3, 2, 1];
 
   @override
   State<FilterSheet> createState() => _FilterSheetState();
@@ -52,7 +64,8 @@ class _FilterSheetState extends State<FilterSheet> {
     for (final entry in widget.initial.entries) entry.key: {...entry.value},
   };
 
-  late ProductSortField _sort = widget.initialSort;
+  late int? _minDiscount = widget.initialMinDiscount;
+  late int? _minRating = widget.initialMinRating;
 
   /// Overall price bounds parsed from the price aggregation, or null when the
   /// catalogue exposes no usable price facet.
@@ -105,7 +118,8 @@ class _FilterSheetState extends State<FilterSheet> {
   void _clear() {
     setState(() {
       _selection.clear();
-      _sort = ProductSortField.relevance;
+      _minDiscount = null;
+      _minRating = null;
       final b = _bounds;
       if (b != null) _price = RangeValues(b.$1, b.$2);
     });
@@ -117,21 +131,14 @@ class _FilterSheetState extends State<FilterSheet> {
     final narrowed = b != null && (_price.start > b.$1 || _price.end < b.$2);
     return FilterResult(
       attributes: _selection,
-      sort: _sort,
       priceFrom: narrowed ? _price.start : null,
       priceTo: narrowed ? _price.end : null,
+      minDiscount: _minDiscount,
+      minRating: _minRating,
     );
   }
 
   String _money(double v) => '${widget.currency} ${v.round()}';
-
-  String _sortLabel(AppLocalizations l10n, ProductSortField sort) =>
-      switch (sort) {
-        ProductSortField.relevance => l10n.sortRelevance,
-        ProductSortField.priceAsc => l10n.sortPriceLowHigh,
-        ProductSortField.priceDesc => l10n.sortPriceHighLow,
-        ProductSortField.nameAsc => l10n.sortNameAz,
-      };
 
   @override
   Widget build(BuildContext context) {
@@ -173,52 +180,17 @@ class _FilterSheetState extends State<FilterSheet> {
               shrinkWrap: true,
               padding: EdgeInsets.zero,
               children: [
-                // Sort By.
-                const _SectionLabel(),
-                Builder(
-                  builder: (context) => Padding(
-                    padding: const EdgeInsetsDirectional.fromSTEB(20, 0, 20, 16),
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        for (final sort in ProductSortField.values)
-                          _SortChip(
-                            label: _sortLabel(l10n, sort),
-                            selected: _sort == sort,
-                            onTap: () => setState(() => _sort = sort),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
                 // Price Range.
                 if (bounds != null) ...[
-                  Padding(
-                    padding: const EdgeInsetsDirectional.fromSTEB(20, 4, 20, 0),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            l10n.filterPriceRangeLabel,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 15,
-                              color: AppColors.inkHeading,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          '${_money(_price.start)} — ${_money(_price.end)}',
-                          textDirection: TextDirection.ltr,
-                          style: const TextStyle(
-                            color: AppColors.brandPrimary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+                  _SectionLabel(text: l10n.filterPriceRangeLabel, trailing: Text(
+                    '${_money(_price.start)} — ${_money(_price.end)}',
+                    textDirection: TextDirection.ltr,
+                    style: const TextStyle(
+                      color: AppColors.brandPrimary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13.5,
                     ),
-                  ),
+                  )),
                   Padding(
                     padding: const EdgeInsetsDirectional.fromSTEB(12, 0, 12, 4),
                     child: RangeSlider(
@@ -233,7 +205,7 @@ class _FilterSheetState extends State<FilterSheet> {
                     ),
                   ),
                 ],
-                // Attribute facets (Brand, …).
+                // Attribute facets (Category, Manufacturer, …).
                 for (final facet in facets) ...[
                   const Divider(
                     height: 1,
@@ -254,6 +226,44 @@ class _FilterSheetState extends State<FilterSheet> {
                     ),
                   const SizedBox(height: 8),
                 ],
+                // Discount — fixed "N% or more" thresholds (single-select).
+                const Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: AppColors.borderDefault,
+                ),
+                _SectionLabel(text: l10n.filterDiscountLabel),
+                for (final pct in FilterSheet.discountBuckets)
+                  _ThresholdRow(
+                    selected: _minDiscount == pct,
+                    onTap: () => setState(
+                      () => _minDiscount = _minDiscount == pct ? null : pct,
+                    ),
+                    child: Text(
+                      l10n.filterDiscountOption(pct),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: AppColors.inkHeading,
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 8),
+                // Rating — fixed "N★ & above" thresholds (single-select).
+                const Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: AppColors.borderDefault,
+                ),
+                _SectionLabel(text: l10n.filterRatingLabel),
+                for (final stars in FilterSheet.ratingBuckets)
+                  _ThresholdRow(
+                    selected: _minRating == stars,
+                    onTap: () => setState(
+                      () => _minRating = _minRating == stars ? null : stars,
+                    ),
+                    child: _RatingLabel(stars: stars),
+                  ),
+                const SizedBox(height: 8),
               ],
             ),
           ),
@@ -316,61 +326,88 @@ class _FilterSheetState extends State<FilterSheet> {
   }
 }
 
-/// A section header label. When [text] is null it renders the localized
-/// "Sort By" (the first, sort section).
+/// A section header label with an optional trailing widget (e.g. the live price
+/// range readout).
 class _SectionLabel extends StatelessWidget {
-  const _SectionLabel({this.text});
-  final String? text;
+  const _SectionLabel({required this.text, this.trailing});
+  final String text;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsetsDirectional.fromSTEB(20, 14, 20, 10),
-      child: Text(
-        text ?? l10n.filterSortByLabel,
-        style: const TextStyle(
-          fontWeight: FontWeight.w600,
-          fontSize: 15,
-          color: AppColors.inkHeading,
-        ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+                color: AppColors.inkHeading,
+              ),
+            ),
+          ),
+          if (trailing != null) trailing!,
+        ],
       ),
     );
   }
 }
 
-class _SortChip extends StatelessWidget {
-  const _SortChip({
-    required this.label,
+/// A "N★ & above" rating label: number · gold star · localized "& above".
+class _RatingLabel extends StatelessWidget {
+  const _RatingLabel({required this.stars});
+  final int stars;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          '$stars',
+          style: const TextStyle(fontSize: 15, color: AppColors.inkHeading),
+        ),
+        const SizedBox(width: 3),
+        const Icon(Icons.star, size: 16, color: Color(0xFFF5A623)),
+        const SizedBox(width: 6),
+        Text(
+          l10n.filterRatingAndAbove,
+          style: const TextStyle(fontSize: 15, color: AppColors.inkHeading),
+        ),
+      ],
+    );
+  }
+}
+
+/// A single-select threshold row (Discount / Rating): rounded-square check +
+/// arbitrary label child.
+class _ThresholdRow extends StatelessWidget {
+  const _ThresholdRow({
     required this.selected,
     required this.onTap,
+    required this.child,
   });
 
-  final String label;
   final bool selected;
   final VoidCallback onTap;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.brandPrimary : AppColors.surfaceMuted,
-          borderRadius: BorderRadius.circular(999),
-          border: selected
-              ? null
-              : Border.all(color: AppColors.borderDefault),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-            color: selected ? Colors.white : AppColors.inkMuted,
-          ),
+      child: Padding(
+        padding: const EdgeInsetsDirectional.fromSTEB(20, 9, 20, 9),
+        child: Row(
+          children: [
+            _CheckSquare(selected: selected),
+            const SizedBox(width: 12),
+            Expanded(child: child),
+          ],
         ),
       ),
     );

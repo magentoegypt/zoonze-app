@@ -33,6 +33,8 @@ class SearchResultsController
         attributeFilters: state.selectedFilters,
         priceFrom: state.priceFrom,
         priceTo: state.priceTo,
+        minDiscount: state.minDiscount,
+        minRating: state.minRating,
         sort: state.sort,
         pageSize: _pageSize,
         currentPage: 1,
@@ -61,6 +63,8 @@ class SearchResultsController
         attributeFilters: state.selectedFilters,
         priceFrom: state.priceFrom,
         priceTo: state.priceTo,
+        minDiscount: state.minDiscount,
+        minRating: state.minRating,
         sort: state.sort,
         pageSize: _pageSize,
         currentPage: state.currentPage + 1,
@@ -81,13 +85,28 @@ class SearchResultsController
     Map<String, Set<String>> filters, {
     double? priceFrom,
     double? priceTo,
+    int? minDiscount,
+    int? minRating,
     ProductSortField? sort,
   }) {
     state = state.copyWith(
       selectedFilters: filters,
       priceFrom: priceFrom,
       priceTo: priceTo,
+      minDiscount: minDiscount,
+      minRating: minRating,
       sort: sort ?? state.sort,
+      products: const [],
+      currentPage: 0,
+      totalPages: 0,
+    );
+    _loadFirst();
+  }
+
+  void setSort(ProductSortField sort) {
+    if (sort == state.sort) return;
+    state = state.copyWith(
+      sort: sort,
       products: const [],
       currentPage: 0,
       totalPages: 0,

@@ -319,6 +319,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get sortRelevance => 'الصلة';
 
   @override
+  String get sortFeatured => 'مميّز';
+
+  @override
   String get sortPriceLowHigh => 'السعر: من الأقل للأعلى';
 
   @override
@@ -328,7 +331,24 @@ class AppLocalizationsAr extends AppLocalizations {
   String get sortNameAz => 'الاسم: أ–ي';
 
   @override
-  String get sortNewest => 'الأحدث';
+  String get sortNewest => 'الأحدث أولاً';
+
+  @override
+  String get sortComingSoon => 'قريبًا';
+
+  @override
+  String get filterDiscountLabel => 'الخصم';
+
+  @override
+  String get filterRatingLabel => 'التقييم';
+
+  @override
+  String filterDiscountOption(int percent) {
+    return '$percent% أو أكثر';
+  }
+
+  @override
+  String get filterRatingAndAbove => 'فأكثر';
 
   @override
   String get applyLabel => 'تطبيق';

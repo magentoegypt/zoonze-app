@@ -20,6 +20,7 @@ import '../plp_controller.dart';
 import '../search_controller.dart';
 import '../search_history.dart';
 import '../widgets/filter_sheet.dart';
+import '../widgets/sort_sheet.dart';
 import '../widgets/product_card.dart';
 import '../widgets/product_skeletons.dart';
 
@@ -316,10 +317,11 @@ class _ResultsState extends ConsumerState<_Results> {
       builder: (_) => FilterSheet(
         aggregations: state.aggregations,
         initial: state.selectedFilters,
-        initialSort: state.sort,
         currency: currency,
         initialPriceFrom: state.priceFrom,
         initialPriceTo: state.priceTo,
+        initialMinDiscount: state.minDiscount,
+        initialMinRating: state.minRating,
       ),
     );
     if (result != null) {
@@ -327,49 +329,24 @@ class _ResultsState extends ConsumerState<_Results> {
         result.attributes,
         priceFrom: result.priceFrom,
         priceTo: result.priceTo,
-        sort: result.sort,
+        minDiscount: result.minDiscount,
+        minRating: result.minRating,
       );
     }
   }
 
-  /// Dedicated Sort control (QA #3 wants filter + sort as separate lists) — a
-  /// lightweight sheet of the sort options, applied via the same controller.
+  /// Dedicated Sort control (QA wants filter + sort as separate lists) — the
+  /// shared [SortSheet], labelled "Relevance" for search results.
   Future<void> _openSort(PlpState state) async {
     final l10n = AppLocalizations.of(context);
-    String label(ProductSortField s) => switch (s) {
-      ProductSortField.relevance => l10n.sortRelevance,
-      ProductSortField.priceAsc => l10n.sortPriceLowHigh,
-      ProductSortField.priceDesc => l10n.sortPriceHighLow,
-      ProductSortField.nameAsc => l10n.sortNameAz,
-    };
     final selected = await showModalBottomSheet<ProductSortField>(
       context: context,
       showDragHandle: true,
       backgroundColor: Colors.white,
-      builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final s in ProductSortField.values)
-              ListTile(
-                title: Text(label(s)),
-                trailing: state.sort == s
-                    ? const Icon(Icons.check, color: AppColors.brandPrimary)
-                    : null,
-                onTap: () => Navigator.of(sheetContext).pop(s),
-              ),
-          ],
-        ),
-      ),
+      builder: (_) =>
+          SortSheet(current: state.sort, relevanceLabel: l10n.sortRelevance),
     );
-    if (selected != null && selected != state.sort) {
-      _controller.applyFilters(
-        state.selectedFilters,
-        priceFrom: state.priceFrom,
-        priceTo: state.priceTo,
-        sort: selected,
-      );
-    }
+    if (selected != null) _controller.setSort(selected);
   }
 
   @override

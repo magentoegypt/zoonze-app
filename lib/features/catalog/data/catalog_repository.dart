@@ -14,10 +14,18 @@ import '../domain/product_page.dart';
 import 'catalog_queries.dart';
 import 'product_mapper.dart';
 
-// Magento's ProductAttributeSortInput on this store exposes only name /
-// position / price / relevance — there is NO created_at, so a "newest" sort
-// would error the whole query.
+// Magento's ProductAttributeSortInput on this store exposes only manufacturer /
+// name / position / price / relevance — there is NO created_at / newest_sort, so
+// the website's "Newest First" sort can't be issued via GraphQL. The Sort panel
+// shows it disabled (see kNewestSortSupported) until the backend adds the field.
 enum ProductSortField { relevance, priceAsc, priceDesc, nameAsc }
+
+/// The live GraphQL `ProductAttributeSortInput` has no newest/date sort field,
+/// so the website's "Newest First" option can't be requested yet. The Sort panel
+/// renders it disabled until the backend adds `newest_sort`; flip this to `true`
+/// (and add a `ProductSortField.newest` → `{newest_sort: DESC}` mapping) then.
+/// Tracked in ClickUp 86d3m97au.
+const bool kNewestSortSupported = false;
 
 /// Reads catalogue data via GraphQL and returns domain entities (or throws a
 /// [Failure]). Presentation never sees a raw GraphQL map.
@@ -90,6 +98,8 @@ class CatalogRepository {
     Map<String, Set<String>> attributeFilters = const {},
     double? priceFrom,
     double? priceTo,
+    int? minDiscount,
+    int? minRating,
     ProductSortField sort = ProductSortField.relevance,
     int pageSize = 20,
     int currentPage = 1,
@@ -117,6 +127,16 @@ class CatalogRepository {
         if (priceFrom != null) 'from': priceFrom.toStringAsFixed(2),
         if (priceTo != null) 'to': priceTo.toStringAsFixed(2),
       };
+    }
+    // `discount` and `rating` are custom store attributes (added by the beauty
+    // theme's layered nav) exposed as FilterRangeTypeInput — a lower-bound
+    // threshold, mirroring the website's "N% or more" / "N★ & above" buckets.
+    // They are NOT returned in `aggregations`, so the buckets are fixed app-side.
+    if (minDiscount != null) {
+      filter['discount'] = <String, dynamic>{'from': minDiscount.toString()};
+    }
+    if (minRating != null) {
+      filter['rating'] = <String, dynamic>{'from': minRating.toString()};
     }
     final variables = <String, dynamic>{
       'pageSize': pageSize,

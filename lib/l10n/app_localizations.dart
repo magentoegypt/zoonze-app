@@ -698,6 +698,12 @@ abstract class AppLocalizations {
   /// **'Relevance'**
   String get sortRelevance;
 
+  /// No description provided for @sortFeatured.
+  ///
+  /// In en, this message translates to:
+  /// **'Featured'**
+  String get sortFeatured;
+
   /// No description provided for @sortPriceLowHigh.
   ///
   /// In en, this message translates to:
@@ -719,8 +725,38 @@ abstract class AppLocalizations {
   /// No description provided for @sortNewest.
   ///
   /// In en, this message translates to:
-  /// **'Newest'**
+  /// **'Newest First'**
   String get sortNewest;
+
+  /// No description provided for @sortComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming soon'**
+  String get sortComingSoon;
+
+  /// No description provided for @filterDiscountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Discount'**
+  String get filterDiscountLabel;
+
+  /// No description provided for @filterRatingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Rating'**
+  String get filterRatingLabel;
+
+  /// No description provided for @filterDiscountOption.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% or more'**
+  String filterDiscountOption(int percent);
+
+  /// No description provided for @filterRatingAndAbove.
+  ///
+  /// In en, this message translates to:
+  /// **'& above'**
+  String get filterRatingAndAbove;
 
   /// No description provided for @applyLabel.
   ///

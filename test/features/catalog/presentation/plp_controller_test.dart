@@ -90,6 +90,8 @@ class _PagingRepo implements CatalogRepository {
     Map<String, Set<String>> attributeFilters = const {},
     double? priceFrom,
     double? priceTo,
+    int? minDiscount,
+    int? minRating,
     ProductSortField sort = ProductSortField.relevance,
     int pageSize = 20,
     int currentPage = 1,
@@ -116,7 +118,6 @@ class _PagingRepo implements CatalogRepository {
     required String nickname,
     required String summary,
     required String text,
-    required String ratingId,
-    required String valueId,
+    required List<({String id, String valueId})> ratings,
   }) async {}
 }

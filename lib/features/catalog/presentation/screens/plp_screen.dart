@@ -11,12 +11,14 @@ import '../../../../core/store/store_controller.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/failure_message.dart';
 import '../../../../l10n/l10n.dart';
+import '../../data/catalog_repository.dart';
 import '../../domain/category.dart';
 import '../catalog_providers.dart';
 import '../plp_controller.dart';
 import '../widgets/filter_sheet.dart';
 import '../widgets/product_card.dart';
 import '../widgets/product_skeletons.dart';
+import '../widgets/sort_sheet.dart';
 
 /// Product listing for a category: aggregation-driven filters, sort, and
 /// append-on-scroll pagination.
@@ -76,10 +78,11 @@ class _PlpScreenState extends ConsumerState<PlpScreen> {
       builder: (_) => FilterSheet(
         aggregations: state.aggregations,
         initial: state.selectedFilters,
-        initialSort: state.sort,
         currency: currency,
         initialPriceFrom: state.priceFrom,
         initialPriceTo: state.priceTo,
+        initialMinDiscount: state.minDiscount,
+        initialMinRating: state.minRating,
       ),
     );
     if (result != null) {
@@ -87,9 +90,20 @@ class _PlpScreenState extends ConsumerState<PlpScreen> {
         result.attributes,
         priceFrom: result.priceFrom,
         priceTo: result.priceTo,
-        sort: result.sort,
+        minDiscount: result.minDiscount,
+        minRating: result.minRating,
       );
     }
+  }
+
+  Future<void> _openSort(PlpState state) async {
+    final selected = await showModalBottomSheet<ProductSortField>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: Colors.white,
+      builder: (_) => SortSheet(current: state.sort),
+    );
+    if (selected != null) _controller.setSort(selected);
   }
 
   @override
@@ -163,6 +177,7 @@ class _PlpScreenState extends ConsumerState<PlpScreen> {
             selectedSubUid: _selectedSubUid,
             onSelectSub: _selectSub,
             onFilters: () => _openFilters(state),
+            onSort: () => _openSort(state),
           ),
         ),
         if (state.products.isEmpty)
@@ -210,6 +225,7 @@ class _Header extends StatelessWidget {
     required this.selectedSubUid,
     required this.onSelectSub,
     required this.onFilters,
+    required this.onSort,
   });
 
   final String title;
@@ -218,6 +234,7 @@ class _Header extends StatelessWidget {
   final String? selectedSubUid;
   final ValueChanged<String?> onSelectSub;
   final VoidCallback onFilters;
+  final VoidCallback onSort;
 
   @override
   Widget build(BuildContext context) {
@@ -248,14 +265,22 @@ class _Header extends StatelessWidget {
           padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 16, 12),
           child: Row(
             children: [
-              Text(
-                l10n.categoryProductCount(state.totalCount),
-                style: const TextStyle(
-                  color: AppColors.inkMuted,
-                  fontSize: 12.5,
+              Expanded(
+                child: Text(
+                  l10n.categoryProductCount(state.totalCount),
+                  style: const TextStyle(
+                    color: AppColors.inkMuted,
+                    fontSize: 12.5,
+                  ),
                 ),
               ),
-              const Spacer(),
+              // Two separate controls — Sort and Filter (QA 86d3m97au).
+              _PillButton(
+                icon: Icons.swap_vert,
+                label: l10n.sortLabel,
+                onTap: onSort,
+              ),
+              const SizedBox(width: 8),
               _PillButton(
                 icon: Icons.tune,
                 label: filtersLabel,
