@@ -125,6 +125,7 @@ class OrderDetailScreen extends ConsumerWidget {
             _AddressBlock(
               name: order.shippingName,
               address: order.shippingAddress!,
+              country: _countryName(l10n, order.shippingCountryCode),
               phone: order.shippingPhone,
             ),
           ],
@@ -136,6 +137,7 @@ class OrderDetailScreen extends ConsumerWidget {
             _AddressBlock(
               name: order.billingName,
               address: order.billingAddress!,
+              country: _countryName(l10n, order.billingCountryCode),
               phone: order.billingPhone,
             ),
           ],
@@ -242,11 +244,26 @@ class _DetailThumb extends StatelessWidget {
   );
 }
 
-/// Recipient name (bold) + a single-line address + phone number.
+/// Localized country name for an order address ISO code — `AE` →
+/// "United Arab Emirates" / "الإمارات العربية المتحدة". Null/empty when unset;
+/// an unknown code falls back to the code itself.
+String? _countryName(AppLocalizations l10n, String? code) {
+  if (code == null || code.trim().isEmpty) return null;
+  return code.trim().toUpperCase() == 'AE' ? l10n.countryUae : code.trim();
+}
+
+/// Recipient name (bold) + a single-line address, the country on its own line,
+/// then the phone number.
 class _AddressBlock extends StatelessWidget {
-  const _AddressBlock({required this.name, required this.address, this.phone});
+  const _AddressBlock({
+    required this.name,
+    required this.address,
+    this.country,
+    this.phone,
+  });
   final String? name;
   final String address;
+  final String? country;
   final String? phone;
 
   @override
@@ -259,6 +276,11 @@ class _AddressBlock extends StatelessWidget {
         address,
         style: const TextStyle(color: AppColors.inkMuted, height: 1.35),
       ),
+      if (country != null && country!.isNotEmpty)
+        Text(
+          country!,
+          style: const TextStyle(color: AppColors.inkMuted, height: 1.35),
+        ),
       if (phone != null && phone!.isNotEmpty)
         Padding(
           padding: const EdgeInsets.only(top: 3),

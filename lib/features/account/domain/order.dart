@@ -58,10 +58,12 @@ class CustomerOrder {
     this.shippingName,
     this.shippingAddress,
     this.shippingPhone,
+    this.shippingCountryCode,
     this.paymentMethodName,
     this.billingName,
     this.billingAddress,
     this.billingPhone,
+    this.billingCountryCode,
     this.lines = const <OrderLine>[],
     this.trackings = const <OrderTracking>[],
     this.comments = const <OrderComment>[],
@@ -83,9 +85,17 @@ class CustomerOrder {
   final String? carrier;
 
   /// Recipient name + single-line delivery address (shipping address) + phone.
+  /// The address line is street + emirate (city is de-duplicated when the app
+  /// derived it from the emirate); the country is carried separately in
+  /// [shippingCountryCode] and rendered on its own line (matching the website).
   final String? shippingName;
   final String? shippingAddress;
   final String? shippingPhone;
+
+  /// ISO country code of the shipping address (e.g. `AE`) — resolved to a full,
+  /// localized country name at display time so Country and Emirate never collapse
+  /// into the same value.
+  final String? shippingCountryCode;
 
   /// Payment method label (e.g. "Cash on Delivery", "Tabby").
   final String? paymentMethodName;
@@ -94,6 +104,9 @@ class CustomerOrder {
   final String? billingName;
   final String? billingAddress;
   final String? billingPhone;
+
+  /// ISO country code of the billing address (see [shippingCountryCode]).
+  final String? billingCountryCode;
 
   final List<OrderLine> lines;
   final List<OrderTracking> trackings;

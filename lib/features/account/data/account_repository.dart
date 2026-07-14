@@ -230,10 +230,12 @@ class AccountRepository {
       shippingName: _recipientName(addr),
       shippingAddress: _formatAddress(addr),
       shippingPhone: _phone(addr),
+      shippingCountryCode: addr?['country_code'] as String?,
       paymentMethodName: paymentName,
       billingName: _recipientName(billing),
       billingAddress: _formatAddress(billing),
       billingPhone: _phone(billing),
+      billingCountryCode: billing?['country_code'] as String?,
       lines: lines,
       trackings: trackings,
       comments: comments,
@@ -260,10 +262,17 @@ class AccountRepository {
         .whereType<String>()
         .where((s) => s.isNotEmpty)
         .join(', ');
-    final parts = [street, a['city'] as String?, a['region'] as String?]
-        .whereType<String>()
-        .where((s) => s.isNotEmpty)
-        .toList();
+    final city = (a['city'] as String?)?.trim() ?? '';
+    final region = (a['region'] as String?)?.trim() ?? '';
+    // The app derives Magento's required `city` from the emirate, so `city`
+    // usually equals `region` — show it once (street, [city if distinct,]
+    // emirate). The country is rendered separately by the order detail, so an
+    // order never reads "…, Dubai, Dubai" with no country (QA 86d3mdefm #3).
+    final parts = <String>[
+      if (street.isNotEmpty) street,
+      if (city.isNotEmpty && city != region) city,
+      if (region.isNotEmpty) region,
+    ];
     return parts.isEmpty ? null : parts.join(', ');
   }
 

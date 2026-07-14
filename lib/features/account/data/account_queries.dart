@@ -40,6 +40,7 @@ query CustomerOrders($pageSize: Int!, $currentPage: Int!) {
           region
           postcode
           telephone
+          country_code
         }
         billing_address {
           firstname
@@ -49,6 +50,7 @@ query CustomerOrders($pageSize: Int!, $currentPage: Int!) {
           region
           postcode
           telephone
+          country_code
         }
         shipments {
           tracking { title number carrier }

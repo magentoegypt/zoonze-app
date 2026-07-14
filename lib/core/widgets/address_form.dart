@@ -213,13 +213,23 @@ class AddressForm extends ConsumerWidget {
     ),
   );
 
-  /// Country is fixed to the UAE (the only market) — a read-only field that
-  /// matches the website's Country dropdown.
-  Widget _countryField(AppLocalizations l10n) => TextFormField(
-    enabled: false,
-    initialValue: l10n.countryUae,
-    decoration: const InputDecoration(),
-  );
+  /// Country — a dropdown (matching the website's Country control) showing the
+  /// full localized country name. The UAE is the only market, so it carries a
+  /// single fixed option; it's a dropdown rather than a static field so it reads
+  /// as dynamic and the full name is always visible (QA 86d3mdefm #1).
+  Widget _countryField(AppLocalizations l10n) =>
+      DropdownButtonFormField<String>(
+        initialValue: addressCountryCode,
+        isExpanded: true,
+        decoration: const InputDecoration(),
+        items: [
+          DropdownMenuItem<String>(
+            value: addressCountryCode,
+            child: Text(l10n.countryUae),
+          ),
+        ],
+        onChanged: (_) {},
+      );
 
   Widget _input(
     TextEditingController controller,
