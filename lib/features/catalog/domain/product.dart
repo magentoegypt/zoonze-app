@@ -42,12 +42,15 @@ class Product {
     return r != null && f != null && f.amount < r.amount;
   }
 
-  /// Discount percentage (rounded) or null when not on sale.
+  /// Discount percentage (rounded), or null when not on sale or when the
+  /// markdown rounds to 0% — a sub-0.5% difference (e.g. AED 400 → 399) must
+  /// not render a "-0%" badge.
   int? get discountPercent {
     if (!isOnSale) return null;
     final r = regularPrice!.amount;
     final f = finalPrice!.amount;
     if (r <= 0) return null;
-    return (((r - f) / r) * 100).round();
+    final pct = (((r - f) / r) * 100).round();
+    return pct > 0 ? pct : null;
   }
 }

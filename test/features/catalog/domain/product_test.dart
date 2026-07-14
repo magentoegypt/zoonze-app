@@ -40,5 +40,19 @@ void main() {
       expect(product.isOnSale, isFalse);
       expect(product.discountPercent, isNull);
     });
+
+    test('sub-0.5% markdown does not render a "-0%" badge', () {
+      // AED 400 -> 399 is a real 0.25% markdown that rounds to 0%; the badge
+      // must be hidden (discountPercent null) even though a struck price shows.
+      const product = Product(
+        sku: 's',
+        name: 'n',
+        urlKey: 'u',
+        regularPrice: Money(amount: 400, currency: 'AED'),
+        finalPrice: Money(amount: 399, currency: 'AED'),
+      );
+      expect(product.isOnSale, isTrue);
+      expect(product.discountPercent, isNull);
+    });
   });
 }

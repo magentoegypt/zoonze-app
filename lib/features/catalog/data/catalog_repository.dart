@@ -210,10 +210,36 @@ class CatalogRepository {
         })
         .toList();
 
+    // "More Information" tab — the storefront-visible additional attributes
+    // (Magento `custom_attributesV2(is_visible_on_front:true)`), mirroring the
+    // website's product-details table. Selected-option attributes carry a label
+    // (e.g. manufacturer → "Emporio Armani"); plain ones carry a value. Blank
+    // values (color/material set to a space) are dropped, matching the site.
+    final attributes = <ProductAttribute>[];
+    String? brand;
+    final customAttrs =
+        (json['custom_attributesV2'] as Map<String, dynamic>?)?['items']
+            as List<dynamic>?;
+    for (final item in customAttrs ?? const []) {
+      if (item is! Map<String, dynamic>) continue;
+      final code = (item['code'] as String?) ?? '';
+      final selected = item['selected_options'] as List<dynamic>?;
+      final value = (selected != null && selected.isNotEmpty)
+          ? ((selected.first as Map<String, dynamic>?)?['label'] as String? ??
+                '')
+          : (item['value'] as String? ?? '');
+      final trimmed = value.trim();
+      if (code.isEmpty || trimmed.isEmpty) continue;
+      if (code == 'manufacturer') brand = trimmed;
+      attributes.add(ProductAttribute(code: code, value: trimmed));
+    }
+
     return ProductDetail(
       sku: (json['sku'] as String?) ?? '',
       name: (json['name'] as String?) ?? '',
       urlKey: (json['url_key'] as String?) ?? '',
+      brand: brand,
+      attributes: attributes,
       description: _stripHtml(
         (json['description'] as Map<String, dynamic>?)?['html'] as String?,
       ),
@@ -283,7 +309,10 @@ class CatalogRepository {
                 .map(
                   (v) => ReviewRatingValue(
                     valueId: v['value_id']?.toString() ?? '',
-                    value: (v['value'] as num?)?.toInt() ?? 0,
+                    // Magento returns `value` as a String ("5"); a raw
+                    // `as num?` cast throws TypeError on a String and blanked
+                    // the whole "Write a Review" screen. Parse tolerantly.
+                    value: int.tryParse('${v['value']}') ?? 0,
                   ),
                 )
                 .toList(),
@@ -292,13 +321,15 @@ class CatalogRepository {
         .toList();
   }
 
+  /// Submits a review. Magento's form has three rating dimensions (Quality /
+  /// Value / Price); we send a value for each so the review saves with the same
+  /// shape the website produces. [ratings] is `(id, value_id)` per dimension.
   Future<void> createReview({
     required String sku,
     required String nickname,
     required String summary,
     required String text,
-    required String ratingId,
-    required String valueId,
+    required List<({String id, String valueId})> ratings,
   }) async {
     await _mutate(CatalogQueries.createReview, {
       'input': <String, dynamic>{
@@ -307,7 +338,7 @@ class CatalogRepository {
         'summary': summary,
         'text': text,
         'ratings': [
-          {'id': ratingId, 'value_id': valueId},
+          for (final r in ratings) {'id': r.id, 'value_id': r.valueId},
         ],
       },
     });

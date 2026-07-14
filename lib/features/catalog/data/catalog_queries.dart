@@ -173,6 +173,20 @@ query ProductDetail($urlKey: String!) {
       short_description {
         html
       }
+      custom_attributesV2(filters: { is_visible_on_front: true }) {
+        items {
+          code
+          ... on AttributeValue {
+            value
+          }
+          ... on AttributeSelectedOptions {
+            selected_options {
+              label
+              value
+            }
+          }
+        }
+      }
       image {
         url
       }

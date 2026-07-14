@@ -2609,7 +2609,7 @@ abstract class AppLocalizations {
   /// No description provided for @tabMoreInformation.
   ///
   /// In en, this message translates to:
-  /// **'Product Details'**
+  /// **'More Information'**
   String get tabMoreInformation;
 
   /// No description provided for @tabReviews.
@@ -2623,6 +2623,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'SKU'**
   String get specSku;
+
+  /// No description provided for @attrBrand.
+  ///
+  /// In en, this message translates to:
+  /// **'Brand'**
+  String get attrBrand;
 
   /// No description provided for @reviewsEmptyTitle.
   ///
@@ -2675,7 +2681,7 @@ abstract class AppLocalizations {
   /// No description provided for @pdpTrustAuthenticLabel.
   ///
   /// In en, this message translates to:
-  /// **'Authentic'**
+  /// **'Original'**
   String get pdpTrustAuthenticLabel;
 
   /// No description provided for @pdpTrustFreeValue.
@@ -2687,25 +2693,25 @@ abstract class AppLocalizations {
   /// No description provided for @pdpTrustFreeLabel.
   ///
   /// In en, this message translates to:
-  /// **'Shipping'**
+  /// **'Delivery'**
   String get pdpTrustFreeLabel;
 
   /// No description provided for @pdpTrustFreeOver.
   ///
   /// In en, this message translates to:
-  /// **'over AED {amount}'**
+  /// **'Delivery over AED {amount}'**
   String pdpTrustFreeOver(int amount);
 
   /// No description provided for @pdpTrustDeliveryValue.
   ///
   /// In en, this message translates to:
-  /// **'3-Hour'**
+  /// **'3 Hours'**
   String get pdpTrustDeliveryValue;
 
   /// No description provided for @pdpTrustDeliveryLabel.
   ///
   /// In en, this message translates to:
-  /// **'Delivery'**
+  /// **'in Dubai · 48h elsewhere'**
   String get pdpTrustDeliveryLabel;
 
   /// No description provided for @menuShop.

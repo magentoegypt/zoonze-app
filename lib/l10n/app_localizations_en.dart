@@ -1421,13 +1421,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tabKeyFeatures => 'Key Features';
 
   @override
-  String get tabMoreInformation => 'Product Details';
+  String get tabMoreInformation => 'More Information';
 
   @override
   String get tabReviews => 'Reviews';
 
   @override
   String get specSku => 'SKU';
+
+  @override
+  String get attrBrand => 'Brand';
 
   @override
   String get reviewsEmptyTitle => 'No reviews yet';
@@ -1460,24 +1463,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pdpTrustAuthenticValue => '100%';
 
   @override
-  String get pdpTrustAuthenticLabel => 'Authentic';
+  String get pdpTrustAuthenticLabel => 'Original';
 
   @override
   String get pdpTrustFreeValue => 'Free';
 
   @override
-  String get pdpTrustFreeLabel => 'Shipping';
+  String get pdpTrustFreeLabel => 'Delivery';
 
   @override
   String pdpTrustFreeOver(int amount) {
-    return 'over AED $amount';
+    return 'Delivery over AED $amount';
   }
 
   @override
-  String get pdpTrustDeliveryValue => '3-Hour';
+  String get pdpTrustDeliveryValue => '3 Hours';
 
   @override
-  String get pdpTrustDeliveryLabel => 'Delivery';
+  String get pdpTrustDeliveryLabel => 'in Dubai · 48h elsewhere';
 
   @override
   String get menuShop => 'Shop';

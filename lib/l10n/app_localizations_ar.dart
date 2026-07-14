@@ -1395,6 +1395,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get specSku => 'رقم المنتج';
 
   @override
+  String get attrBrand => 'العلامة التجارية';
+
+  @override
   String get reviewsEmptyTitle => 'لا توجد مراجعات بعد';
 
   @override
@@ -1425,24 +1428,24 @@ class AppLocalizationsAr extends AppLocalizations {
   String get pdpTrustAuthenticValue => '100%';
 
   @override
-  String get pdpTrustAuthenticLabel => 'أصلي';
+  String get pdpTrustAuthenticLabel => 'منتجات أصلية';
 
   @override
   String get pdpTrustFreeValue => 'مجاني';
 
   @override
-  String get pdpTrustFreeLabel => 'الشحن';
+  String get pdpTrustFreeLabel => 'توصيل';
 
   @override
   String pdpTrustFreeOver(int amount) {
-    return 'فوق $amount د.إ';
+    return 'توصيل فوق $amount د.إ';
   }
 
   @override
   String get pdpTrustDeliveryValue => '3 ساعات';
 
   @override
-  String get pdpTrustDeliveryLabel => 'توصيل';
+  String get pdpTrustDeliveryLabel => 'داخل دبي · 48 ساعة لباقي الإمارات';
 
   @override
   String get menuShop => 'تسوّق';

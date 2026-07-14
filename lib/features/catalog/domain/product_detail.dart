@@ -103,6 +103,15 @@ class ReviewRatingMetadata {
   final List<ReviewRatingValue> values;
 }
 
+/// One storefront-visible additional attribute (the PDP "More Information"
+/// table), e.g. `manufacturer` → "Emporio Armani". [code] is the Magento
+/// attribute code; [value] is the resolved label/text.
+class ProductAttribute {
+  const ProductAttribute({required this.code, required this.value});
+  final String code;
+  final String value;
+}
+
 /// Full product detail for the PDP. Reviews degrade to an empty state when the
 /// store has none (no fabricated stars).
 class ProductDetail {
@@ -113,6 +122,7 @@ class ProductDetail {
     this.brand,
     this.description,
     this.shortDescription,
+    this.attributes = const <ProductAttribute>[],
     this.gallery = const <String>[],
     this.regularPrice,
     this.finalPrice,
@@ -137,6 +147,9 @@ class ProductDetail {
 
   /// Plain-text short description / key features (HTML already stripped).
   final String? shortDescription;
+
+  /// Storefront-visible additional attributes for the "More Information" tab.
+  final List<ProductAttribute> attributes;
   final List<String> gallery;
   final Money? regularPrice;
   final Money? finalPrice;
@@ -170,13 +183,15 @@ class ProductDetail {
   }
 
   /// Discount percentage (rounded) of the final price vs the regular price, or
-  /// null when not on sale.
+  /// null when not on sale or when the markdown rounds to 0% — a sub-0.5%
+  /// difference (e.g. AED 400 → 399) must not render a "-0%" badge.
   int? get discountPercent {
     if (!isOnSale) return null;
     final r = regularPrice!.amount;
     final f = finalPrice!.amount;
     if (r <= 0) return null;
-    return (((r - f) / r) * 100).round();
+    final pct = (((r - f) / r) * 100).round();
+    return pct > 0 ? pct : null;
   }
 
   /// The variant matching a full attribute selection, or null if incomplete /

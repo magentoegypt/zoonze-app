@@ -38,19 +38,21 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
   Future<void> _submit(List<ReviewRatingMetadata> metadata) async {
     if (!_formKey.currentState!.validate()) return;
     final l10n = AppLocalizations.of(context);
-    if (metadata.isEmpty || metadata.first.values.isEmpty) {
+    // Apply the chosen star to every rating dimension (Quality / Value /
+    // Price) so the review saves with the same shape the website produces.
+    final ratings = <({String id, String valueId})>[];
+    for (final rating in metadata) {
+      if (rating.values.isEmpty) continue;
+      final value = rating.values.firstWhere(
+        (v) => v.value == _rating,
+        orElse: () => rating.values.last,
+      );
+      ratings.add((id: rating.id, valueId: value.valueId));
+    }
+    if (ratings.isEmpty) {
       _snack(l10n.errorGeneric);
       return;
     }
-    final rating = metadata.first;
-    ReviewRatingValue? value;
-    for (final v in rating.values) {
-      if (v.value == _rating) {
-        value = v;
-        break;
-      }
-    }
-    value ??= rating.values.last;
 
     setState(() => _busy = true);
     try {
@@ -61,8 +63,7 @@ class _WriteReviewScreenState extends ConsumerState<WriteReviewScreen> {
             nickname: _nickname.text.trim(),
             summary: _summary.text.trim(),
             text: _text.text.trim(),
-            ratingId: rating.id,
-            valueId: value.valueId,
+            ratings: ratings,
           );
       _snack(l10n.reviewSubmitted);
       if (mounted) context.pop();

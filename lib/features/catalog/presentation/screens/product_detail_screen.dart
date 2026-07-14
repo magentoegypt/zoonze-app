@@ -693,9 +693,15 @@ class _Tabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final labels = [l10n.tabDescription, l10n.tabDetails, l10n.tabReviews];
-    // Three tabs (Description · Details · Reviews); the active one keeps its
-    // burgundy underline. Kept scrollable so long AR labels never overflow.
+    final labels = [
+      l10n.tabDetails,
+      l10n.tabKeyFeatures,
+      l10n.tabMoreInformation,
+      l10n.tabReviews,
+    ];
+    // Four tabs matching the website (Details · Key Features · More Information ·
+    // Reviews); the active one keeps its burgundy underline. Kept scrollable so
+    // the four AR labels never overflow.
     return Container(
       decoration: const BoxDecoration(
         border: Border(
@@ -1116,29 +1122,18 @@ class _TabContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     switch (tab) {
-      // Details: short description + key specs (SKU).
+      // Key Features: the marketing short description (website "Key Features").
       case 1:
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if ((product.shortDescription ?? '').isNotEmpty) ...[
-              Text(product.shortDescription!),
-              const SizedBox(height: 12),
-            ],
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${l10n.specSku}: ',
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-                Expanded(child: Text(product.sku)),
-              ],
-            ),
-          ],
+        return Text(
+          (product.shortDescription ?? '').isNotEmpty
+              ? product.shortDescription!
+              : l10n.stateEmpty,
         );
-      // Reviews.
+      // More Information: storefront-visible attributes + SKU.
       case 2:
+        return _MoreInformation(product: product);
+      // Reviews.
+      case 3:
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1165,10 +1160,74 @@ class _TabContent extends StatelessWidget {
             ),
           ],
         );
-      // Description.
+      // Details: the full product description (website "Details").
       case 0:
       default:
-        return Text(product.description ?? l10n.stateEmpty);
+        return Text(
+          (product.description ?? '').isNotEmpty
+              ? product.description!
+              : l10n.stateEmpty,
+        );
+    }
+  }
+}
+
+/// PDP "More Information" tab — a compact key/value table of the storefront-
+/// visible product attributes (Magento `custom_attributesV2`, mirroring the
+/// website's product-details table), always including the SKU. Renders whatever
+/// the catalogue exposes; no fabricated rows.
+class _MoreInformation extends StatelessWidget {
+  const _MoreInformation({required this.product});
+  final ProductDetail product;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final rows = <(String, String)>[
+      for (final attr in product.attributes)
+        (_label(l10n, attr.code), attr.value),
+      (l10n.specSku, product.sku),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < rows.length; i++) ...[
+          if (i > 0)
+            const Divider(height: 1, color: AppColors.borderDefault),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 120,
+                  child: Text(
+                    rows[i].$1,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(child: Text(rows[i].$2)),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// Localized row label for a known attribute code; unknown codes are
+  /// prettified from snake_case so new catalogue attributes still read cleanly.
+  String _label(AppLocalizations l10n, String code) {
+    switch (code) {
+      case 'manufacturer':
+        return l10n.attrBrand;
+      default:
+        return code
+            .split('_')
+            .where((w) => w.isNotEmpty)
+            .map((w) => w[0].toUpperCase() + w.substring(1))
+            .join(' ');
     }
   }
 }

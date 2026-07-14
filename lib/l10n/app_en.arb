@@ -501,9 +501,10 @@
   "tabDescription": "Description",
   "tabDetails": "Details",
   "tabKeyFeatures": "Key Features",
-  "tabMoreInformation": "Product Details",
+  "tabMoreInformation": "More Information",
   "tabReviews": "Reviews",
   "specSku": "SKU",
+  "attrBrand": "Brand",
   "reviewsEmptyTitle": "No reviews yet",
   "reviewsEmptyBody": "Be the first to review this product.",
   "reviewsSummary": "{rating}% rating · {count} reviews",
@@ -524,15 +525,15 @@
     }
   },
   "pdpTrustAuthenticValue": "100%",
-  "pdpTrustAuthenticLabel": "Authentic",
+  "pdpTrustAuthenticLabel": "Original",
   "pdpTrustFreeValue": "Free",
-  "pdpTrustFreeLabel": "Shipping",
-  "pdpTrustFreeOver": "over AED {amount}",
+  "pdpTrustFreeLabel": "Delivery",
+  "pdpTrustFreeOver": "Delivery over AED {amount}",
   "@pdpTrustFreeOver": {
     "placeholders": { "amount": { "type": "int" } }
   },
-  "pdpTrustDeliveryValue": "3-Hour",
-  "pdpTrustDeliveryLabel": "Delivery",
+  "pdpTrustDeliveryValue": "3 Hours",
+  "pdpTrustDeliveryLabel": "in Dubai · 48h elsewhere",
 
   "menuShop": "Shop",
   "menuViewAll": "View All",
