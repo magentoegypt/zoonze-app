@@ -143,8 +143,12 @@ class _MarketingFooterState extends ConsumerState<MarketingFooter> {
               children: [
                 for (final s in socials)
                   _SocialButton(
-                    icon: socialIconFor(s.key),
                     onTap: () => _openUrl(s.url),
+                    child: socialIconWidget(
+                      s.key,
+                      size: 18,
+                      color: Colors.white,
+                    ),
                   ),
               ],
             ),
@@ -363,13 +367,12 @@ class _MastercardMark extends StatelessWidget {
   );
 }
 
-/// Circular bordered social button (icon or short label) for the footer.
+/// Circular bordered social button for the footer; [child] is the rendered
+/// glyph (see [socialIconWidget], which draws a real Instagram mark).
 class _SocialButton extends StatelessWidget {
-  const _SocialButton({this.icon, this.label, required this.onTap})
-    : assert(icon != null || label != null);
+  const _SocialButton({required this.child, required this.onTap});
 
-  final IconData? icon;
-  final String? label;
+  final Widget child;
   final VoidCallback onTap;
 
   @override
@@ -387,16 +390,7 @@ class _SocialButton extends StatelessWidget {
             border: Border.all(color: Colors.white24),
           ),
           alignment: Alignment.center,
-          child: icon != null
-              ? Icon(icon, color: Colors.white, size: 18)
-              : Text(
-                  label!,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                  ),
-                ),
+          child: child,
         ),
       ),
     );

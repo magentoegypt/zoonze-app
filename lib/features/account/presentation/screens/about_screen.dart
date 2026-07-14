@@ -138,7 +138,11 @@ class AboutScreen extends ConsumerWidget {
                 children: [
                   for (final s in c.socials)
                     _Social(
-                      socialIconFor(s.key),
+                      socialIconWidget(
+                        s.key,
+                        size: 19,
+                        color: AppColors.brandPrimary,
+                      ),
                       () => _open(context, Uri.parse(s.url)),
                     ),
                 ],
@@ -238,8 +242,8 @@ class _InfoRow extends StatelessWidget {
 
 /// Blush circular social button (light surface).
 class _Social extends StatelessWidget {
-  const _Social(this.icon, this.onTap);
-  final IconData icon;
+  const _Social(this.child, this.onTap);
+  final Widget child;
   final VoidCallback onTap;
 
   @override
@@ -251,11 +255,12 @@ class _Social extends StatelessWidget {
       child: Container(
         width: 40,
         height: 40,
+        alignment: Alignment.center,
         decoration: const BoxDecoration(
           color: AppColors.surfaceTint,
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, size: 19, color: AppColors.brandPrimary),
+        child: child,
       ),
     ),
   );
