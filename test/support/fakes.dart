@@ -480,6 +480,7 @@ class FakeCatalogRepository implements CatalogRepository {
   Future<ProductPage> fetchProducts({
     String? search,
     String? categoryUid,
+    int? manufacturerId,
     Map<String, Set<String>> attributeFilters = const {},
     double? priceFrom,
     double? priceTo,
