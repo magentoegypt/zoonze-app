@@ -1454,21 +1454,21 @@ class AppLocalizationsAr extends AppLocalizations {
   String get pdpTrustAuthenticLabel => 'منتجات أصلية';
 
   @override
-  String get pdpTrustFreeValue => 'مجاني';
+  String get pdpTrustFreeValue => 'شحن مجاني';
 
   @override
-  String get pdpTrustFreeLabel => 'توصيل';
+  String get pdpTrustFreeLabel => 'على الطلبات المؤهلة';
 
   @override
   String pdpTrustFreeOver(int amount) {
-    return 'توصيل فوق $amount د.إ';
+    return 'فوق ال $amount درهم';
   }
 
   @override
-  String get pdpTrustDeliveryValue => '3 ساعات';
+  String get pdpTrustDeliveryValue => 'توصيل خلال ٣ ساعات داخل دبي';
 
   @override
-  String get pdpTrustDeliveryLabel => 'داخل دبي · 48 ساعة لباقي الإمارات';
+  String get pdpTrustDeliveryLabel => 'بقية الإمارات خلال 48 ساعة';
 
   @override
   String get menuShop => 'تسوّق';

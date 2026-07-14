@@ -879,6 +879,9 @@ class _TrustRow extends ConsumerWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
+        // Top-align so the three seals line up at the top even when one caption
+        // (e.g. the AR delivery line) wraps to more rows than the others.
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _TrustItem(
             icon: Icons.verified_user_outlined,
