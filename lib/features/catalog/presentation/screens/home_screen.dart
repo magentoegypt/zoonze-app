@@ -1372,7 +1372,9 @@ class _LimitedTimeOffer extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return ref
         .watch(homeConfigProvider)
-        .maybeWhen(
+        .when(
+          loading: () => const _LimitedTimeOfferSkeleton(),
+          error: (_, __) => const SizedBox.shrink(),
           data: (cfg) {
             final offer = cfg.limitedTimeOffer;
             if (!cfg.sectionEnabled('deals') || !offer.isVisible) {
@@ -1380,7 +1382,6 @@ class _LimitedTimeOffer extends ConsumerWidget {
             }
             return _LimitedTimeOfferCard(offer: offer);
           },
-          orElse: () => const SizedBox.shrink(),
         );
   }
 }
@@ -1640,11 +1641,12 @@ class _EditorialBanners extends ConsumerWidget {
     if (!enabled) return const SizedBox.shrink();
     return ref
         .watch(promoSplitBannersProvider)
-        .maybeWhen(
+        .when(
+          loading: () => const _EditorialBannersSkeleton(),
+          error: (_, __) => const SizedBox.shrink(),
           data: (banners) => banners.isEmpty
               ? const SizedBox.shrink()
               : _EditorialBannersList(banners: banners),
-          orElse: () => const SizedBox.shrink(),
         );
   }
 }
@@ -1813,11 +1815,12 @@ class _ExclusiveOffers extends ConsumerWidget {
     if (!enabled) return const SizedBox.shrink();
     return ref
         .watch(homeBannersProvider)
-        .maybeWhen(
+        .when(
+          loading: () => const _ExclusiveOffersSkeleton(),
+          error: (_, __) => const SizedBox.shrink(),
           data: (offers) => offers.isEmpty
               ? const SizedBox.shrink()
               : _ExclusiveOffersRail(offers: offers),
-          orElse: () => const SizedBox.shrink(),
         );
   }
 }
@@ -2015,11 +2018,12 @@ class _WhyShoppersTrust extends ConsumerWidget {
     if (!enabled) return const SizedBox.shrink();
     return ref
         .watch(homeReviewsProvider)
-        .maybeWhen(
+        .when(
+          loading: () => const _TestimonialsSkeleton(),
+          error: (_, __) => const SizedBox.shrink(),
           data: (items) => items.isEmpty
               ? const SizedBox.shrink()
               : _TestimonialsRail(items: items),
-          orElse: () => const SizedBox.shrink(),
         );
   }
 }
@@ -2192,10 +2196,11 @@ class _ZoonzeJournal extends ConsumerWidget {
     if (!enabled) return const SizedBox.shrink();
     return ref
         .watch(blogPostsProvider)
-        .maybeWhen(
+        .when(
+          loading: () => const _JournalSkeleton(),
+          error: (_, __) => const SizedBox.shrink(),
           data: (posts) =>
               posts.isEmpty ? const SizedBox.shrink() : _JournalRail(posts: posts),
-          orElse: () => const SizedBox.shrink(),
         );
   }
 }
@@ -2218,7 +2223,9 @@ class _JournalRail extends StatelessWidget {
           subtitle: l10n.homeJournalSubtitle,
         ),
         SizedBox(
-          height: 250,
+          // Fits the tallest card (118 image + 2-line title + 2-line excerpt +
+          // tag + Read More); 250 clipped the last row and overflowed.
+          height: 280,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -2618,6 +2625,207 @@ class _SpecialOfferSkeleton extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Mirrors `_LimitedTimeOfferCard`: blush promo card with centered eyebrow /
+/// headline / subtext lines, three countdown boxes and a CTA pill. The blush
+/// surface is drawn outside the [Shimmer]; only the inner blocks sweep.
+class _LimitedTimeOfferSkeleton extends StatelessWidget {
+  const _LimitedTimeOfferSkeleton();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    margin: const EdgeInsets.fromLTRB(16, 24, 16, 4),
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      color: AppColors.surfaceTint,
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: const Shimmer(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SkeletonBox(width: 120, height: 10, borderRadius: 4),
+          SizedBox(height: 12),
+          SkeletonBox(width: 170, height: 26, borderRadius: 6),
+          SizedBox(height: 10),
+          SkeletonBox(width: 210, height: 12, borderRadius: 4),
+          SizedBox(height: 16),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SkeletonBox(width: 48, height: 46, borderRadius: 10),
+              SizedBox(width: 16),
+              SkeletonBox(width: 48, height: 46, borderRadius: 10),
+              SizedBox(width: 16),
+              SkeletonBox(width: 48, height: 46, borderRadius: 10),
+            ],
+          ),
+          SizedBox(height: 16),
+          SkeletonBox(width: 150, height: 42, borderRadius: 21),
+        ],
+      ),
+    ),
+  );
+}
+
+/// Inset rounded shimmer banners — the loading state for the editorial /
+/// exclusive-offer banner stacks. Draws [count] boxes of [height]; an optional
+/// [header] (its own shimmer) sits above them.
+class _BannerStackSkeleton extends StatelessWidget {
+  const _BannerStackSkeleton({
+    required this.count,
+    required this.height,
+    this.header,
+  });
+  final int count;
+  final double height;
+  final Widget? header;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      if (header != null) header!,
+      Padding(
+        // 20px top when there's no header; the header supplies its own spacing.
+        padding: EdgeInsets.fromLTRB(16, header == null ? 20 : 0, 16, 4),
+        child: Shimmer(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var i = 0; i < count; i++) ...[
+                if (i > 0) const SizedBox(height: 12),
+                SkeletonBox(height: height, borderRadius: 16),
+              ],
+            ],
+          ),
+        ),
+      ),
+    ],
+  );
+}
+
+/// Loading state for the Skincare / Makeup editorial banners (two banners).
+class _EditorialBannersSkeleton extends StatelessWidget {
+  const _EditorialBannersSkeleton();
+
+  @override
+  Widget build(BuildContext context) =>
+      const _BannerStackSkeleton(count: 2, height: 230);
+}
+
+/// Loading state for the Exclusive Offers rail (header + three banners).
+class _ExclusiveOffersSkeleton extends StatelessWidget {
+  const _ExclusiveOffersSkeleton();
+
+  @override
+  Widget build(BuildContext context) => const _BannerStackSkeleton(
+    count: 3,
+    height: 200,
+    header: Padding(
+      padding: EdgeInsets.fromLTRB(16, 28, 16, 14),
+      child: Shimmer(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SkeletonBox(width: 160, height: 14, borderRadius: 4),
+            SizedBox(height: 8),
+            SkeletonBox(width: 220, height: 12, borderRadius: 4),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+/// Mirrors `_TestimonialsRail`: the real header + a row of card-sized skeletons.
+class _TestimonialsSkeleton extends StatelessWidget {
+  const _TestimonialsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _SectionHeaderWithSubtitle(
+          title: l10n.homeTrustReviewsTitle,
+          subtitle: l10n.homeTrustReviewsSubtitle,
+        ),
+        SizedBox(
+          height: 184,
+          child: Shimmer(
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: 3,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (_, __) =>
+                  const SkeletonBox(width: 270, height: 184, borderRadius: 14),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Mirrors `_JournalRail`: the real header + a row of blog-card skeletons
+/// (image block + tag + title/excerpt/read-more lines).
+class _JournalSkeleton extends StatelessWidget {
+  const _JournalSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _SectionHeaderWithSubtitle(
+          title: l10n.homeJournalTitle,
+          subtitle: l10n.homeJournalSubtitle,
+        ),
+        SizedBox(
+          height: 280,
+          child: Shimmer(
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              physics: const NeverScrollableScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: 3,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (_, __) => const _JournalCardSkeleton(),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _JournalCardSkeleton extends StatelessWidget {
+  const _JournalCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) => const SizedBox(
+    width: 260,
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SkeletonBox(width: 260, height: 118, borderRadius: 14),
+        SizedBox(height: 12),
+        SkeletonBox(width: 54, height: 18, borderRadius: 4),
+        SizedBox(height: 10),
+        SkeletonBox(width: 220, height: 14, borderRadius: 4),
+        SizedBox(height: 6),
+        SkeletonBox(width: 180, height: 14, borderRadius: 4),
+        SizedBox(height: 10),
+        SkeletonBox(width: 90, height: 12, borderRadius: 4),
+      ],
+    ),
+  );
 }
 
 class _SectionHeader extends StatelessWidget {
