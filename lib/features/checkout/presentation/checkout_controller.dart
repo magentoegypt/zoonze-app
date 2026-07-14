@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/failure.dart';
+import '../../../core/storage/secure_token_store.dart';
 import '../../../core/store/store_controller.dart';
 import '../../../core/validation/phone.dart';
 import '../../cart/presentation/cart_controller.dart';
@@ -135,7 +136,18 @@ class CheckoutController extends Notifier<CheckoutState> {
     if (cartId == null) return false;
     state = state.copyWith(isBusy: true, error: null);
     try {
-      if (isGuest && email.isNotEmpty) {
+      // AuthLink sends whatever bearer is in secure storage on every request,
+      // independent of the auth *state*. If a token lingers while the app reads
+      // as a guest (the startup restore window, or a state/token skew), Magento
+      // treats the request as the logged-in customer and rejects
+      // setGuestEmailOnCart ("The request is not allowed for logged in
+      // customers") — which used to block Continue (QA 86d3mdef7 #1). Gate the
+      // guest-only email on the actual token (what AuthLink sends), and drive
+      // the rest of checkout (OTP gating, placeOrder auth) by that same flag so
+      // a real bearer runs the customer path end-to-end.
+      final hasToken = (await ref.read(secureTokenStoreProvider).read()) != null;
+      final guest = isGuest && !hasToken;
+      if (guest && email.isNotEmpty) {
         await _repo.setGuestEmail(cartId, email);
       }
       final methods = await _repo.setShippingAddress(cartId, address);
@@ -148,7 +160,7 @@ class CheckoutController extends Notifier<CheckoutState> {
       state = state.copyWith(
         email: email,
         lastname: (address['lastname'] as String?) ?? '',
-        isGuest: isGuest,
+        isGuest: guest,
         shippingMethods: methods,
         selectedShipping: null,
         paymentMethods: const [],
