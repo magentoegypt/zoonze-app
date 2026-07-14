@@ -177,28 +177,19 @@ class AppLocalizationsEn extends AppLocalizations {
       'Free shipping on qualifying orders · delivery within 3 hours';
 
   @override
-  String get homeTrustOriginalTitle => '100% Original';
+  String get homeTrustOriginal => 'Original 100%';
 
   @override
-  String get homeTrustOriginalBody => 'Guaranteed authentic';
+  String get homeTrustFreeDelivery => 'Free Delivery over 200 AED';
 
   @override
-  String get homeTrustDeliveryTitle => 'Free Shipping';
+  String get homeTrustDelivery3h => 'Delivery in 3 Hours in Dubai';
 
   @override
-  String get homeTrustDeliveryBody => 'On orders over AED 200';
+  String get homeTrustRestZones => 'Rest Zones in 48 Hours';
 
   @override
-  String get homeTrustFastTitle => 'Delivery in 3 Hours';
-
-  @override
-  String get homeTrustFastBody => 'In Dubai · rest of UAE in 48h';
-
-  @override
-  String get homeTrustServiceTitle => 'Customer Service';
-
-  @override
-  String get homeTrustServiceBody => '10 AM until 10 PM';
+  String get homeTrustCustomerService => 'Customer Service 10AM Until 10PM';
 
   @override
   String get homeSpecialOfferTitle => 'Special Offer!';
@@ -1507,7 +1498,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get footerShop => 'Shop';
 
   @override
-  String get footerSupport => 'Customer Service';
+  String get footerSupport => 'Customer Care';
 
   @override
   String get footerNewsletterTitle => 'Newsletter';
@@ -1526,7 +1517,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get footerSubscribed => 'Thanks! We\'ll keep you posted.';
 
   @override
-  String get footerRights => '© 2026 Zoonze Beauty · All rights reserved.';
+  String get footerRights => '© 2026 Zoonze · All rights reserved.';
 
   @override
   String get footerTagline =>

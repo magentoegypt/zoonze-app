@@ -422,53 +422,35 @@ abstract class AppLocalizations {
   /// **'Free shipping on qualifying orders · delivery within 3 hours'**
   String get homeAnnouncement;
 
-  /// No description provided for @homeTrustOriginalTitle.
+  /// No description provided for @homeTrustOriginal.
   ///
   /// In en, this message translates to:
-  /// **'100% Original'**
-  String get homeTrustOriginalTitle;
+  /// **'Original 100%'**
+  String get homeTrustOriginal;
 
-  /// No description provided for @homeTrustOriginalBody.
+  /// No description provided for @homeTrustFreeDelivery.
   ///
   /// In en, this message translates to:
-  /// **'Guaranteed authentic'**
-  String get homeTrustOriginalBody;
+  /// **'Free Delivery over 200 AED'**
+  String get homeTrustFreeDelivery;
 
-  /// No description provided for @homeTrustDeliveryTitle.
+  /// No description provided for @homeTrustDelivery3h.
   ///
   /// In en, this message translates to:
-  /// **'Free Shipping'**
-  String get homeTrustDeliveryTitle;
+  /// **'Delivery in 3 Hours in Dubai'**
+  String get homeTrustDelivery3h;
 
-  /// No description provided for @homeTrustDeliveryBody.
+  /// No description provided for @homeTrustRestZones.
   ///
   /// In en, this message translates to:
-  /// **'On orders over AED 200'**
-  String get homeTrustDeliveryBody;
+  /// **'Rest Zones in 48 Hours'**
+  String get homeTrustRestZones;
 
-  /// No description provided for @homeTrustFastTitle.
+  /// No description provided for @homeTrustCustomerService.
   ///
   /// In en, this message translates to:
-  /// **'Delivery in 3 Hours'**
-  String get homeTrustFastTitle;
-
-  /// No description provided for @homeTrustFastBody.
-  ///
-  /// In en, this message translates to:
-  /// **'In Dubai · rest of UAE in 48h'**
-  String get homeTrustFastBody;
-
-  /// No description provided for @homeTrustServiceTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Customer Service'**
-  String get homeTrustServiceTitle;
-
-  /// No description provided for @homeTrustServiceBody.
-  ///
-  /// In en, this message translates to:
-  /// **'10 AM until 10 PM'**
-  String get homeTrustServiceBody;
+  /// **'Customer Service 10AM Until 10PM'**
+  String get homeTrustCustomerService;
 
   /// No description provided for @homeSpecialOfferTitle.
   ///
@@ -2765,7 +2747,7 @@ abstract class AppLocalizations {
   /// No description provided for @footerSupport.
   ///
   /// In en, this message translates to:
-  /// **'Customer Service'**
+  /// **'Customer Care'**
   String get footerSupport;
 
   /// No description provided for @footerNewsletterTitle.
@@ -2801,7 +2783,7 @@ abstract class AppLocalizations {
   /// No description provided for @footerRights.
   ///
   /// In en, this message translates to:
-  /// **'© 2026 Zoonze Beauty · All rights reserved.'**
+  /// **'© 2026 Zoonze · All rights reserved.'**
   String get footerRights;
 
   /// No description provided for @footerTagline.

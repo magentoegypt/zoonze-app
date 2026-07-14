@@ -2392,51 +2392,36 @@ String _blogIndexUrl(String postUrl) {
   return postUrl.substring(0, i + marker.length);
 }
 
-/// Trust badges (Figma) — store guarantees in a 2×2 grid.
+/// Trust seals (live zoonze.com) — the store's five guarantees on a light-grey
+/// band. Content mirrors the website's trust strip exactly (QA: the block must
+/// match the site). The backend `trust/items` config array is currently empty,
+/// so — like the website theme — the app renders these five as localized
+/// defaults; wire them to `trust/items` if/when the backend populates it.
 class _TrustBadges extends StatelessWidget {
   const _TrustBadges();
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    // Figma: the trust section sits on a light-grey band (white icon circles).
+    final seals = <({IconData icon, String label})>[
+      (icon: Icons.verified_user_outlined, label: l10n.homeTrustOriginal),
+      (icon: Icons.local_shipping_outlined, label: l10n.homeTrustFreeDelivery),
+      (icon: Icons.schedule, label: l10n.homeTrustDelivery3h),
+      (icon: Icons.place_outlined, label: l10n.homeTrustRestZones),
+      (icon: Icons.headset_mic_outlined, label: l10n.homeTrustCustomerService),
+    ];
+    // Five seals centered on a light-grey band; a Wrap flows them to 3-then-2 on
+    // a phone (and adapts to wider screens) instead of a fixed 2×2 grid.
     return Container(
       width: double.infinity,
       color: const Color(0xFFF3F4F6),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 28),
-      child: Column(
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 8,
+        runSpacing: 24,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _TrustBadge(
-                icon: Icons.verified_user_outlined,
-                title: l10n.homeTrustOriginalTitle,
-                body: l10n.homeTrustOriginalBody,
-              ),
-              _TrustBadge(
-                icon: Icons.local_shipping_outlined,
-                title: l10n.homeTrustDeliveryTitle,
-                body: l10n.homeTrustDeliveryBody,
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _TrustBadge(
-                icon: Icons.schedule,
-                title: l10n.homeTrustFastTitle,
-                body: l10n.homeTrustFastBody,
-              ),
-              _TrustBadge(
-                icon: Icons.headset_mic_outlined,
-                title: l10n.homeTrustServiceTitle,
-                body: l10n.homeTrustServiceBody,
-              ),
-            ],
-          ),
+          for (final s in seals) _TrustBadge(icon: s.icon, label: s.label),
         ],
       ),
     );
@@ -2444,18 +2429,14 @@ class _TrustBadges extends StatelessWidget {
 }
 
 class _TrustBadge extends StatelessWidget {
-  const _TrustBadge({
-    required this.icon,
-    required this.title,
-    required this.body,
-  });
+  const _TrustBadge({required this.icon, required this.label});
   final IconData icon;
-  final String title;
-  final String body;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
+    return SizedBox(
+      width: 104,
       child: Column(
         children: [
           CircleAvatar(
@@ -2465,19 +2446,14 @@ class _TrustBadge extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            title,
+            label,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+              height: 1.25,
               color: AppColors.inkHeading,
             ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            body,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.inkMuted, fontSize: 11),
           ),
         ],
       ),

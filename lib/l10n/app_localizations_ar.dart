@@ -175,28 +175,19 @@ class AppLocalizationsAr extends AppLocalizations {
       'شحن مجاني للطلبات المؤهلة · التوصيل خلال 3 ساعات';
 
   @override
-  String get homeTrustOriginalTitle => 'أصلي 100%';
+  String get homeTrustOriginal => 'منتجات أصلية 100%';
 
   @override
-  String get homeTrustOriginalBody => 'منتجات أصلية مضمونة';
+  String get homeTrustFreeDelivery => 'شحن مجاني فوق ال 200 درهم';
 
   @override
-  String get homeTrustDeliveryTitle => 'شحن مجاني';
+  String get homeTrustDelivery3h => 'توصيل خلال ٣ ساعات داخل دبي';
 
   @override
-  String get homeTrustDeliveryBody => 'للطلبات فوق 200 درهم';
+  String get homeTrustRestZones => 'بقية الإمارات خلال 48 ساعة';
 
   @override
-  String get homeTrustFastTitle => 'التوصيل خلال 3 ساعات';
-
-  @override
-  String get homeTrustFastBody => 'داخل دبي · وبقية الإمارات خلال 48 ساعة';
-
-  @override
-  String get homeTrustServiceTitle => 'خدمة العملاء';
-
-  @override
-  String get homeTrustServiceBody => 'من 10 صباحًا حتى 10 مساءً';
+  String get homeTrustCustomerService => 'خدمة عملاء من 10 صباحا ل 10 مساء';
 
   @override
   String get homeSpecialOfferTitle => 'عرض خاص!';
@@ -1491,7 +1482,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get footerSubscribed => 'شكرًا! سنبقيك على اطّلاع.';
 
   @override
-  String get footerRights => '© 2026 زونزي بيوتي · جميع الحقوق محفوظة.';
+  String get footerRights => '© 2026 زونزي · جميع الحقوق محفوظة.';
 
   @override
   String get footerTagline => 'وجهتك للجمال والعطور الأصلية في الإمارات.';
