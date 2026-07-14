@@ -51,13 +51,17 @@ class CustomerOrder {
     this.total,
     this.subtotal,
     this.shippingAmount,
+    this.discount,
+    this.discountLabel,
     this.shippingMethod,
     this.carrier,
     this.shippingName,
     this.shippingAddress,
+    this.shippingPhone,
     this.paymentMethodName,
     this.billingName,
     this.billingAddress,
+    this.billingPhone,
     this.lines = const <OrderLine>[],
     this.trackings = const <OrderTracking>[],
     this.comments = const <OrderComment>[],
@@ -69,19 +73,27 @@ class CustomerOrder {
   final Money? total;
   final Money? subtotal;
   final Money? shippingAmount;
+
+  /// Total discount applied to the order (sum of all Magento discounts), and
+  /// the first discount's label (e.g. the sales-rule name), when present.
+  final Money? discount;
+  final String? discountLabel;
+
   final String? shippingMethod;
   final String? carrier;
 
-  /// Recipient name + single-line delivery address (shipping address).
+  /// Recipient name + single-line delivery address (shipping address) + phone.
   final String? shippingName;
   final String? shippingAddress;
+  final String? shippingPhone;
 
   /// Payment method label (e.g. "Cash on Delivery", "Tabby").
   final String? paymentMethodName;
 
-  /// Billing recipient name + single-line billing address.
+  /// Billing recipient name + single-line billing address + phone.
   final String? billingName;
   final String? billingAddress;
+  final String? billingPhone;
 
   final List<OrderLine> lines;
   final List<OrderTracking> trackings;

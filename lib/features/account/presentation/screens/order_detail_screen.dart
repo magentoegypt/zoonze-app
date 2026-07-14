@@ -1,23 +1,25 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../catalog/domain/money.dart';
 import '../../domain/order.dart';
+import '../order_actions.dart';
 import '../order_format.dart';
 
 /// Full detail for a single placed order, navigated to with the [CustomerOrder]
 /// via go_router `extra` (the list already holds every field, so no extra
 /// query). Shows items, totals, shipping method and shipment tracking.
-class OrderDetailScreen extends StatelessWidget {
+class OrderDetailScreen extends ConsumerWidget {
   const OrderDetailScreen({super.key, required this.order});
 
   final CustomerOrder order;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final locale = Localizations.localeOf(context).languageCode;
     return Scaffold(
@@ -34,6 +36,17 @@ class OrderDetailScreen extends StatelessWidget {
             '${orderFmtDate(order.date, locale)} · ${order.status}',
             style: const TextStyle(color: AppColors.inkMuted),
           ),
+          const SizedBox(height: 16),
+
+          // Reorder — re-adds every line to the cart (QA request for this page).
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () => reorderOrder(context, ref, order),
+              icon: const Icon(Icons.shopping_cart_outlined, size: 18),
+              label: Text(l10n.orderReorder),
+            ),
+          ),
           const SizedBox(height: 24),
 
           _SectionTitle(l10n.orderItemsSection),
@@ -41,18 +54,42 @@ class OrderDetailScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _DetailThumb(url: line.imageUrl),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text('${line.quantity.toInt()} × ${line.name}'),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(line.name),
+                        const SizedBox(height: 2),
+                        if (line.sku != null && line.sku!.isNotEmpty)
+                          Text(
+                            '${l10n.specSku}: ${line.sku}',
+                            style: const TextStyle(
+                              color: AppColors.inkMuted,
+                              fontSize: 12,
+                            ),
+                          ),
+                        Text(
+                          l10n.orderQty(line.quantity.toInt()),
+                          style: const TextStyle(
+                            color: AppColors.inkMuted,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  if (line.price != null)
+                  if (line.price != null) ...[
+                    const SizedBox(width: 8),
                     Text(
                       line.price!.formatted(),
                       textDirection: TextDirection.ltr,
                       style: const TextStyle(color: AppColors.inkMuted),
                     ),
+                  ],
                 ],
               ),
             ),
@@ -60,6 +97,15 @@ class OrderDetailScreen extends StatelessWidget {
           const Divider(height: 32),
           if (order.subtotal != null)
             _TotalRow(label: l10n.cartSubtotal, amount: order.subtotal!),
+          if (order.discount != null)
+            _TotalRow(
+              label:
+                  order.discountLabel != null && order.discountLabel!.isNotEmpty
+                  ? '${l10n.cartDiscount} (${order.discountLabel})'
+                  : l10n.cartDiscount,
+              amount: order.discount!,
+              negative: true,
+            ),
           if (order.shippingAmount != null)
             _TotalRow(label: l10n.orderShippingLabel, amount: order.shippingAmount!),
           if (order.total != null)
@@ -79,6 +125,7 @@ class OrderDetailScreen extends StatelessWidget {
             _AddressBlock(
               name: order.shippingName,
               address: order.shippingAddress!,
+              phone: order.shippingPhone,
             ),
           ],
 
@@ -89,6 +136,7 @@ class OrderDetailScreen extends StatelessWidget {
             _AddressBlock(
               name: order.billingName,
               address: order.billingAddress!,
+              phone: order.billingPhone,
             ),
           ],
 
@@ -194,11 +242,12 @@ class _DetailThumb extends StatelessWidget {
   );
 }
 
-/// Recipient name (bold) + a single-line address.
+/// Recipient name (bold) + a single-line address + phone number.
 class _AddressBlock extends StatelessWidget {
-  const _AddressBlock({required this.name, required this.address});
+  const _AddressBlock({required this.name, required this.address, this.phone});
   final String? name;
   final String address;
+  final String? phone;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -210,6 +259,25 @@ class _AddressBlock extends StatelessWidget {
         address,
         style: const TextStyle(color: AppColors.inkMuted, height: 1.35),
       ),
+      if (phone != null && phone!.isNotEmpty)
+        Padding(
+          padding: const EdgeInsets.only(top: 3),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.phone_outlined,
+                size: 13,
+                color: AppColors.inkMuted,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                phone!,
+                textDirection: TextDirection.ltr,
+                style: const TextStyle(color: AppColors.inkMuted, fontSize: 12.5),
+              ),
+            ],
+          ),
+        ),
     ],
   );
 }
@@ -261,32 +329,41 @@ class _TotalRow extends StatelessWidget {
     required this.label,
     required this.amount,
     this.emphasize = false,
+    this.negative = false,
   });
 
   final String label;
   final Money amount;
   final bool emphasize;
 
+  /// Renders the amount as a reduction: `−AED x.xx` in the brand colour (used
+  /// for the discount line, matching the cart summary).
+  final bool negative;
+
   @override
   Widget build(BuildContext context) {
     final style = emphasize
         ? const TextStyle(fontWeight: FontWeight.w700)
         : const TextStyle(color: AppColors.inkMuted);
+    final valueStyle = emphasize
+        ? const TextStyle(
+            fontWeight: FontWeight.w700,
+            color: AppColors.brandPrimary,
+          )
+        : negative
+        ? const TextStyle(color: AppColors.brandPrimary)
+        : style;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: style),
+          Expanded(child: Text(label, style: style)),
+          const SizedBox(width: 12),
           Text(
-            amount.formatted(),
+            negative ? '−${amount.formatted()}' : amount.formatted(),
             textDirection: TextDirection.ltr,
-            style: emphasize
-                ? const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.brandPrimary,
-                  )
-                : style,
+            style: valueStyle,
           ),
         ],
       ),

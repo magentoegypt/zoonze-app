@@ -11,8 +11,8 @@ import '../../../../core/error/failure.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/failure_message.dart';
 import '../../../../l10n/l10n.dart';
-import '../../../cart/presentation/cart_controller.dart';
 import '../../data/account_repository.dart';
+import '../order_actions.dart';
 import '../../../../core/widgets/zoonze_back_button.dart';
 import '../../domain/order.dart';
 import '../order_format.dart';
@@ -59,29 +59,8 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
     }
   }
 
-  Future<void> _reorder(CustomerOrder order) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final l10n = AppLocalizations.of(context);
-    final cart = ref.read(cartControllerProvider.notifier);
-    var added = false;
-    for (final line in order.lines) {
-      final sku = line.sku;
-      if (sku == null || sku.isEmpty) continue;
-      try {
-        await cart.addToCart(sku: sku, quantity: line.quantity.toInt().clamp(1, 99));
-        added = true;
-      } catch (_) {
-        // Skip items that can't be re-added (out of stock / removed).
-      }
-    }
-    if (!mounted) return;
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(added ? l10n.orderReorderAdded : l10n.orderReorderFailed),
-      ),
-    );
-    if (added) context.push(AppRoutes.cart);
-  }
+  Future<void> _reorder(CustomerOrder order) =>
+      reorderOrder(context, ref, order);
 
   @override
   Widget build(BuildContext context) {

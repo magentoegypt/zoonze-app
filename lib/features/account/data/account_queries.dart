@@ -20,6 +20,7 @@ query CustomerOrders($pageSize: Int!, $currentPage: Int!) {
           subtotal { value currency }
           total_shipping { value currency }
           grand_total { value currency }
+          discounts { amount { value currency } label }
         }
         items {
           product_name

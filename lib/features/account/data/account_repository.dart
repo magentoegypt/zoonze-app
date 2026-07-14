@@ -7,6 +7,7 @@ import '../../../core/graphql/graphql_client.dart';
 import '../../../core/store/store_controller.dart';
 import '../../../core/util/media.dart';
 import '../../catalog/data/product_mapper.dart';
+import '../../catalog/domain/money.dart';
 import '../domain/customer_address.dart';
 import '../domain/order.dart';
 import 'account_queries.dart';
@@ -155,6 +156,29 @@ class AccountRepository {
         )
         .toList();
     final totals = json['total'] as Map<String, dynamic>?;
+    // Magento returns `discounts` as a list (coupon + catalog rules can stack);
+    // sum the amounts so the totals reconcile, and keep the first label for the
+    // "Discount (<rule>)" line — matching the website order summary.
+    final discountList = totals?['discounts'] as List<dynamic>?;
+    Money? discount;
+    String? discountLabel;
+    if (discountList != null && discountList.isNotEmpty) {
+      var sum = 0.0;
+      var currency = 'AED';
+      for (final d in discountList.whereType<Map<String, dynamic>>()) {
+        final amt = d['amount'] as Map<String, dynamic>?;
+        final v = (amt?['value'] as num?)?.toDouble();
+        if (v != null) {
+          sum += v;
+          currency = (amt?['currency'] as String?) ?? currency;
+        }
+        final label = (d['label'] as String?)?.trim();
+        if (discountLabel == null && label != null && label.isNotEmpty) {
+          discountLabel = label;
+        }
+      }
+      if (sum > 0) discount = Money(amount: sum, currency: currency);
+    }
     final trackings = <OrderTracking>[];
     for (final shipment in (json['shipments'] as List<dynamic>? ?? const [])) {
       if (shipment is! Map<String, dynamic>) continue;
@@ -199,17 +223,26 @@ class AccountRepository {
       shippingAmount: moneyFromJson(
         totals?['total_shipping'] as Map<String, dynamic>?,
       ),
+      discount: discount,
+      discountLabel: discountLabel,
       shippingMethod: json['shipping_method'] as String?,
       carrier: json['carrier'] as String?,
       shippingName: _recipientName(addr),
       shippingAddress: _formatAddress(addr),
+      shippingPhone: _phone(addr),
       paymentMethodName: paymentName,
       billingName: _recipientName(billing),
       billingAddress: _formatAddress(billing),
+      billingPhone: _phone(billing),
       lines: lines,
       trackings: trackings,
       comments: comments,
     );
+  }
+
+  String? _phone(Map<String, dynamic>? a) {
+    final t = (a?['telephone'] as String?)?.trim();
+    return (t == null || t.isEmpty) ? null : t;
   }
 
   String? _recipientName(Map<String, dynamic>? a) {
