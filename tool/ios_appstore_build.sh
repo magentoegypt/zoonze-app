@@ -1,16 +1,20 @@
 #!/usr/bin/env bash
-# Build a SIGNED ad-hoc IPA from a distribution certificate (.p12) + ad-hoc
-# provisioning profile (.mobileprovision) committed under ios/signing/ — no
-# fastlane `match`, no separate signing repo. macOS only.
+# Build a SIGNED App Store IPA from the committed Apple Distribution cert (.p12)
+# + the App Store provisioning profile, both under ios/signing/ — no fastlane
+# `match`, no separate signing repo. macOS only.
+#
+# This mirrors tool/ios_sign_build.sh (the ad-hoc path). The only differences:
+#   - export `method` is `app-store` (not `ad-hoc`);
+#   - it selects the App Store profile — the .mobileprovision WITHOUT a
+#     `ProvisionedDevices` list (that key marks ad-hoc/development profiles).
 #
 # Required:
 #   - ios/signing/*.p12              Apple Distribution cert exported WITH its
 #                                    private key, protected by a password
-#   - ios/signing/*.mobileprovision  ad-hoc profile for the app id, including
-#                                    your test devices' UDIDs
+#   - ios/signing/*.mobileprovision  an App Store (STORE) profile for the app id
 #   - env IOS_P12_PASSWORD           the password that protects the .p12
 #
-# Output: build/ios/ipa/*.ipa (signed, installable OTA on the profile's devices).
+# Output: build/ios/ipa/*.ipa — ready for `fastlane beta` (upload_to_testflight).
 set -euo pipefail
 
 SIGN_DIR="ios/signing"
@@ -18,21 +22,20 @@ P12="$(ls "${SIGN_DIR}"/*.p12 2>/dev/null | head -1 || true)"
 : "${IOS_P12_PASSWORD:?IOS_P12_PASSWORD is required}"
 [ -n "${P12}" ] || { echo "::error::No .p12 found in ${SIGN_DIR}"; exit 1; }
 
-# Select the AD-HOC profile: pick the first .mobileprovision whose decoded plist
-# HAS a `ProvisionedDevices` key (ad-hoc/dev profiles list device UDIDs; the
-# App Store profile committed alongside it never does). Without this, a plain
-# `ls | head -1` would alphabetically pick the App Store profile and this ad-hoc
-# build would sign with the wrong (device-less) profile.
+# Select the App Store profile: pick the first .mobileprovision whose decoded
+# plist has NO `ProvisionedDevices` key (ad-hoc/dev profiles list device UDIDs;
+# App Store profiles never do). This is what tells the App Store profile apart
+# from the committed ad-hoc one.
 PROFILE=""
 for p in "${SIGN_DIR}"/*.mobileprovision; do
   [ -e "$p" ] || continue
-  if security cms -D -i "$p" 2>/dev/null | grep -q "ProvisionedDevices"; then
+  if ! security cms -D -i "$p" 2>/dev/null | grep -q "ProvisionedDevices"; then
     PROFILE="$p"; break
   fi
 done
-[ -n "${PROFILE}" ] || { echo "::error::No ad-hoc profile (one with ProvisionedDevices) found in ${SIGN_DIR}"; exit 1; }
+[ -n "${PROFILE}" ] || { echo "::error::No App Store profile (one without ProvisionedDevices) found in ${SIGN_DIR}"; exit 1; }
 echo "Cert: ${P12}"
-echo "Ad-hoc profile: ${PROFILE}"
+echo "App Store profile: ${PROFILE}"
 
 # 1) Create a dedicated keychain and import the distribution cert into it.
 KEYCHAIN="${RUNNER_TEMP:-/tmp}/zoonze-signing.keychain-db"
@@ -62,58 +65,39 @@ PROFILES_DIR="${HOME}/Library/MobileDevice/Provisioning Profiles"
 mkdir -p "${PROFILES_DIR}"
 cp "${PROFILE}" "${PROFILES_DIR}/${PROFILE_UUID}.mobileprovision"
 
-# 4) Generate ExportOptions for manual ad-hoc signing from the real values.
-EXPORT_PLIST="${RUNNER_TEMP:-/tmp}/ExportOptions-AdHoc.plist"
+# 4) Generate ExportOptions for manual App Store signing from the real values.
+EXPORT_PLIST="${RUNNER_TEMP:-/tmp}/ExportOptions-AppStore.plist"
 cat > "${EXPORT_PLIST}" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-  <key>method</key><string>ad-hoc</string>
+  <key>method</key><string>app-store</string>
   <key>signingStyle</key><string>manual</string>
   <key>teamID</key><string>${TEAM_ID}</string>
   <key>provisioningProfiles</key><dict>
     <key>${BUNDLE_ID}</key><string>${PROFILE_NAME}</string>
   </dict>
   <key>uploadSymbols</key><true/>
-  <key>thinning</key><string>&lt;none&gt;</string>
 </dict></plist>
 PLIST
 
 # 5) Build the signed IPA.
 #
-# We deliberately do NOT use `flutter build ipa` here. That wrapper runs the
-# `xcodebuild archive` phase using the *project's* signing settings — and the
-# committed Runner target is CODE_SIGN_STYLE=Automatic (correct for local dev
-# and the App Store / fastlane match path). On a CI runner with no Apple ID,
-# automatic signing can't provision and the archive fails with "No development
-# certificates available", regardless of the export-options plist (which only
-# governs the later export step).
-#
-# Instead: generate the Flutter build config, then archive + export with
-# xcodebuild directly, forcing MANUAL signing via command-line build settings
-# (highest precedence — overrides the project's Automatic style without editing
-# any committed file). All values come from the profile we parsed above.
+# As in the ad-hoc path, we deliberately do NOT use `flutter build ipa`: its
+# `xcodebuild archive` phase uses the project's CODE_SIGN_STYLE=Automatic, which
+# can't provision on a CI runner with no Apple ID ("No development certificates
+# available"). Instead: generate the Flutter build config, archive UNSIGNED, then
+# export + sign with the manual App Store profile.
 ARCHIVE="${RUNNER_TEMP:-/tmp}/Runner.xcarchive"
 rm -rf "${ARCHIVE}"
 
 # 5a) Prepare Generated.xcconfig (entrypoint + dart-defines) without building.
-# --no-codesign is required: even in --config-only mode, `flutter build ios`
-# runs its code-signing identity check for a device release build and aborts
-# ("No valid code signing certificates were found") before writing the config.
-# We only need the config here; signing is handled by the xcodebuild archive
-# below. --no-codesign disables that check and does NOT persist any
-# signing-disable flag into Generated.xcconfig, so the archive still signs.
 flutter build ios --release --config-only --no-codesign \
   -t lib/main_prod.dart \
   --dart-define-from-file=config/prod.json
 
-# 5b) Archive WITHOUT code signing.
-# Command-line build settings (KEY=VALUE) apply to EVERY target in the
-# workspace, so pinning a PROVISIONING_PROFILE_SPECIFIER here makes the archive
-# fail — the framework/library targets (Firebase, GoogleUtilities, plugins,
-# Pods) "do not support provisioning profiles". Instead archive unsigned and do
-# all signing at the export step below, where the export-options plist scopes
-# the profile to the app's bundle id only.
+# 5b) Archive WITHOUT code signing (framework/plugin targets can't take a
+# provisioning profile; sign only the app bundle, at the export step).
 xcodebuild archive \
   -workspace ios/Runner.xcworkspace \
   -scheme Runner \
@@ -124,9 +108,9 @@ xcodebuild archive \
   CODE_SIGNING_ALLOWED=NO \
   CODE_SIGNING_REQUIRED=NO
 
-# 5c) Export + sign the ad-hoc IPA. -exportArchive re-signs the app and its
-# embedded frameworks with the distribution identity from the dedicated
-# keychain, using the ad-hoc profile mapped to com.zoonze.shop in EXPORT_PLIST.
+# 5c) Export + sign the App Store IPA. -exportArchive re-signs the app and its
+# embedded frameworks with the distribution identity from the dedicated keychain,
+# using the App Store profile mapped to com.zoonze.shop in EXPORT_PLIST.
 mkdir -p build/ios/ipa
 xcodebuild -exportArchive \
   -archivePath "${ARCHIVE}" \
@@ -134,20 +118,15 @@ xcodebuild -exportArchive \
   -exportOptionsPlist "${EXPORT_PLIST}"
 
 # 5d) Re-sign Runner.app with the profile's FULL entitlements.
-# The archive was built UNSIGNED (CODE_SIGNING_ALLOWED=NO, step 5b), so
-# Runner.entitlements (incl. aps-environment) was never embedded — and
-# `-exportArchive` only applies the fixed entitlements (application-identifier,
-# team, get-task-allow, keychain-access-groups). It DROPS capability
-# entitlements like aps-environment, so the app ships with none and APNs
-# registration fails: "no valid 'aps-environment' entitlement". Re-signing the
-# app with the provisioning profile's own Entitlements dict (which carries
-# aps-environment=production) restores it. Only the app bundle is re-signed;
-# the export already signed the nested frameworks.
+# The archive was built UNSIGNED (step 5b), so capability entitlements like
+# aps-environment were never embedded, and -exportArchive applies only the fixed
+# ones — so the app would ship WITHOUT aps-environment and APNs registration
+# would fail. Re-sign the app bundle with the profile's own Entitlements dict
+# (which carries aps-environment=production) to restore it. Only the app bundle
+# is re-signed; the export already signed the nested frameworks.
 ENTITLEMENTS="${RUNNER_TEMP:-/tmp}/app.entitlements.plist"
 /usr/libexec/PlistBuddy -x -c "Print :Entitlements" /dev/stdin <<<"${PROFILE_PLIST}" \
   > "${ENTITLEMENTS}"
-# Absolute path — the re-zip below runs after `cd "${RESIGN}"`, so a relative
-# build/ios/ipa/… path would resolve under RESIGN and the zip would fail.
 IPA="$(ls build/ios/ipa/*.ipa | head -1)"
 IPA="$(cd "$(dirname "${IPA}")" && pwd)/$(basename "${IPA}")"
 IDENTITY="$(security find-identity -v -p codesigning "${KEYCHAIN}" \
@@ -158,7 +137,10 @@ unzip -q "${IPA}" -d "${RESIGN}"
 codesign --force --sign "${IDENTITY}" --keychain "${KEYCHAIN}" \
   --entitlements "${ENTITLEMENTS}" "${RESIGN}/Payload/Runner.app"
 rm -f "${IPA}"
-( cd "${RESIGN}" && zip -qry "${IPA}" Payload )
+# Re-zip ALL top-level entries the export produced (Payload/, and any Symbols/ or
+# SwiftSupport/) — not just Payload — so App Store validation keeps everything it
+# expects. Absolute IPA path because we cd into RESIGN first.
+( cd "${RESIGN}" && zip -qry "${IPA}" . )
 
 # Verify the entitlement is actually present now (fail the build otherwise).
 if codesign -d --entitlements :- "${RESIGN}/Payload/Runner.app" 2>/dev/null \
@@ -168,4 +150,4 @@ else
   echo "::error::aps-environment still missing after re-sign"; exit 1
 fi
 
-echo "✅ Signed ad-hoc IPA → ${IPA}"
+echo "✅ Signed App Store IPA → ${IPA}"

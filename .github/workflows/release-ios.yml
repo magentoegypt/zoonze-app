@@ -1,20 +1,22 @@
 name: Release · iOS
 
-# Builds the prod iOS app from a hosted macOS runner — no local Mac needed.
-#   - testflight → uploads to TestFlight (App Store distribution)
-#   - adhoc      → builds an ad-hoc .ipa artifact for Diawi / device install
-# Requires the Apple secrets in docs/decisions/ci.md and a one-time
-# `fastlane match appstore` (and `match adhoc` for the adhoc path) to seed
-# signing. Ad-hoc installs only on devices whose UDIDs are registered in the
-# Apple Developer portal and included in the ad-hoc profile.
+# Builds the prod iOS app on a hosted macOS runner — no local Mac needed.
+# Signs with the committed Apple Distribution cert (ios/signing/*.p12 +
+# IOS_P12_PASSWORD) — no fastlane `match`, no separate signing repo.
+#   - testflight → App Store IPA (Zoonze Shop AppStore profile) → TestFlight
+#   - adhoc      → ad-hoc IPA (device UDIDs in the ad-hoc profile) → artifact / Loadly
+#
+# testflight needs the APP_STORE_CONNECT_* secrets (see docs/decisions/ci.md) and
+# an existing App Store Connect app record for com.zoonze.shop. adhoc needs only
+# IOS_P12_PASSWORD (installs on the ad-hoc profile's registered device UDIDs).
 on:
   workflow_dispatch:
     inputs:
       distribution:
         description: "testflight (App Store) or adhoc (Diawi / device install)"
         type: choice
-        default: adhoc
-        options: [adhoc, testflight]
+        default: testflight
+        options: [testflight, adhoc]
 
 jobs:
   build:
@@ -42,27 +44,32 @@ jobs:
       - name: Generate GraphQL typed Dart (build_runner)
         run: dart run build_runner build --delete-conflicting-outputs
 
-      - name: Build (fastlane)
+      # ---- App Store / TestFlight ----
+      - name: Build signed App Store IPA
+        if: ${{ inputs.distribution == 'testflight' }}
+        env:
+          IOS_P12_PASSWORD: ${{ secrets.IOS_P12_PASSWORD }}
+        run: bash tool/ios_appstore_build.sh
+
+      - name: Upload to TestFlight (fastlane pilot)
+        if: ${{ inputs.distribution == 'testflight' }}
         working-directory: ios
         env:
           APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_KEY_CONTENT_BASE64 }}
-          MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
-          MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
-          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          # Inject the Team ID into the export options (no manual plist edit).
-          if [ -n "$APPLE_TEAM_ID" ]; then
-            sed -i '' "s/YOUR_TEAM_ID/$APPLE_TEAM_ID/g" \
-              ExportOptions-AdHoc.plist ExportOptions.plist
-          fi
           bundle install
-          bundle exec fastlane ${{ inputs.distribution == 'testflight' && 'beta' || 'adhoc' }}
+          bundle exec fastlane beta
 
-      # Ad-hoc only — publish the installable .ipa for Diawi.
-      - name: Upload IPA (ad-hoc → Diawi)
+      # ---- Ad-hoc (Diawi / device install) ----
+      - name: Build signed ad-hoc IPA
+        if: ${{ inputs.distribution == 'adhoc' }}
+        env:
+          IOS_P12_PASSWORD: ${{ secrets.IOS_P12_PASSWORD }}
+        run: bash tool/ios_sign_build.sh
+
+      - name: Upload IPA (ad-hoc) artifact
         if: ${{ inputs.distribution == 'adhoc' }}
         uses: actions/upload-artifact@v4
         with:
@@ -71,8 +78,7 @@ jobs:
           if-no-files-found: error
 
       # Ad-hoc only — OTA-distribute the signed .ipa to Loadly (skips when
-      # LOADLY_API_KEY is unset; see tool/loadly_upload.sh). TestFlight builds
-      # go to the App Store, not Loadly.
+      # LOADLY_API_KEY is unset; see tool/loadly_upload.sh).
       - name: Distribute IPA to Loadly (when configured)
         if: ${{ inputs.distribution == 'adhoc' }}
         env:
