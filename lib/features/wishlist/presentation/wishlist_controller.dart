@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/store/store_controller.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../data/wishlist_repository.dart';
 import '../domain/wishlist_entry.dart';
@@ -55,6 +56,17 @@ class WishlistController extends Notifier<WishlistState> {
         state = const WishlistState();
       }
     });
+    // A language/store switch flips the `Store` header and resets the GraphQL
+    // cache; refetch so item names/prices (and the per-store-view item set)
+    // reflect the new store, matching the cart controller's store listener.
+    ref.listen<String>(
+      storeControllerProvider.select((s) => s.activeStoreCode),
+      (prev, next) {
+        if (prev != null && prev != next && _isAuthed) {
+          Future.microtask(_load);
+        }
+      },
+    );
     if (ref.read(authControllerProvider).isAuthenticated) {
       Future.microtask(_load);
     }
