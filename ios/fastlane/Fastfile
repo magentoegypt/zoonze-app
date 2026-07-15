@@ -19,7 +19,12 @@ platform :ios do
   # already-signed IPA it produced in build/ios/ipa/.
   desc "Upload the pre-built prod App Store IPA to TestFlight"
   lane :beta do
-    ipa = Dir["../build/ios/ipa/*.ipa"].first
+    # Anchor to an absolute path: fastlane's CWD depends on where it's invoked
+    # (a relative "../build/…" glob is unreliable). On CI, GITHUB_WORKSPACE is
+    # the repo root where tool/ios_appstore_build.sh wrote the IPA; fall back to
+    # the ios/-relative path for a local `cd ios && fastlane beta`.
+    root = ENV["GITHUB_WORKSPACE"] || ".."
+    ipa = Dir["#{root}/build/ios/ipa/*.ipa"].first || Dir["../build/ios/ipa/*.ipa"].first
     UI.user_error!("No IPA in build/ios/ipa — run tool/ios_appstore_build.sh first") unless ipa
     UI.message("Uploading #{ipa} to TestFlight…")
     upload_to_testflight(
