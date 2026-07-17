@@ -39,8 +39,9 @@ class HomeConfig {
 }
 
 /// The "Limited-Time Offer" countdown banner (`deals/countdown_*`). A `daily`
-/// [mode] counts down to the next local midnight; any other value hides the
-/// live clock but keeps the promo. Hidden unless enabled with a headline.
+/// [mode] counts down to the next midnight in the **store's** timezone; any
+/// other value hides the live clock but keeps the promo. Hidden unless enabled
+/// with a headline.
 class LimitedTimeOffer {
   const LimitedTimeOffer({
     this.enabled = false,
@@ -50,6 +51,7 @@ class LimitedTimeOffer {
     this.ctaUrl = '',
     this.imageUrl = '',
     this.mode = 'daily',
+    this.timezone = '',
   });
 
   final bool enabled;
@@ -60,10 +62,17 @@ class LimitedTimeOffer {
   final String imageUrl;
   final String mode;
 
+  /// The store's IANA timezone (`storeConfig { timezone }`, e.g. `Asia/Dubai`),
+  /// which the daily countdown resets against — see [isDaily]. Empty falls back
+  /// to the device's own zone.
+  final String timezone;
+
   bool get isVisible => enabled && headline.isNotEmpty;
 
-  /// A daily countdown resets at local midnight (matches the live site's
-  /// rolling "ends tonight" clock).
+  /// A daily countdown resets at midnight **in the store's [timezone]**, not the
+  /// device's. The website does the same (its template bakes the store's UTC
+  /// offset into the countdown element), so the two clocks agree for a shopper
+  /// anywhere in the world.
   bool get isDaily => mode.toLowerCase() == 'daily';
 
   static const LimitedTimeOffer hidden = LimitedTimeOffer();

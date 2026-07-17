@@ -16,6 +16,7 @@ import '../domain/home_config.dart';
 const String _query = r'''
 query HomeBeautyConfig {
   storeConfig {
+    timezone
     magentoegypt_beauty_config {
       path
       value
@@ -49,7 +50,11 @@ final homeConfigProvider = FutureProvider.autoDispose<HomeConfig>((ref) async {
 
     return HomeConfig(
       flags: _flags(values),
-      limitedTimeOffer: _limitedTimeOffer(values, _mediaBase(store)),
+      limitedTimeOffer: _limitedTimeOffer(
+        values,
+        _mediaBase(store),
+        (cfg?['timezone'] as String?)?.trim() ?? '',
+      ),
       dealsCategoryId: values['deals/category_id'] ?? '',
     );
   } catch (_) {
@@ -70,7 +75,11 @@ Map<String, String> _flags(Map<String, String> values) {
   return flags;
 }
 
-LimitedTimeOffer _limitedTimeOffer(Map<String, String> v, String mediaBase) {
+LimitedTimeOffer _limitedTimeOffer(
+  Map<String, String> v,
+  String mediaBase,
+  String timezone,
+) {
   final headline = v['deals/countdown_headline'] ?? '';
   return LimitedTimeOffer(
     enabled: _asBool(v['deals/countdown_enabled']),
@@ -80,6 +89,7 @@ LimitedTimeOffer _limitedTimeOffer(Map<String, String> v, String mediaBase) {
     ctaUrl: v['deals/countdown_cta_url'] ?? '',
     imageUrl: resolveMediaUrl(v['deals/countdown_image'], mediaBase),
     mode: (v['deals/countdown_mode'] ?? 'daily'),
+    timezone: timezone,
   );
 }
 

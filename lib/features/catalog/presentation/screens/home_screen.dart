@@ -14,6 +14,7 @@ import '../../../../app/theme/theme_x.dart';
 import '../../../../core/assets/app_images.dart';
 import '../../../../core/store/store_controller.dart';
 import '../../../../core/util/launch.dart';
+import '../../../../core/util/store_time.dart';
 import '../../../../core/widgets/brand_logo.dart';
 import '../../../../core/widgets/shimmer.dart';
 import '../../../../core/widgets/web_view_screen.dart';
@@ -1442,16 +1443,10 @@ class _LimitedTimeOfferCardState extends ConsumerState<_LimitedTimeOfferCard> {
     }
   }
 
-  /// Time left until the next local midnight (the daily countdown reset).
-  Duration _computeRemaining() {
-    final now = DateTime.now();
-    final midnight = DateTime(
-      now.year,
-      now.month,
-      now.day,
-    ).add(const Duration(days: 1));
-    return midnight.difference(now);
-  }
+  /// Time left until the next midnight in the store's timezone (the daily
+  /// countdown reset) — the same instant the website counts to.
+  Duration _computeRemaining() =>
+      untilNextStoreMidnight(widget.offer.timezone);
 
   @override
   void dispose() {
