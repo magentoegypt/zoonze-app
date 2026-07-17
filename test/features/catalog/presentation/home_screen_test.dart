@@ -8,6 +8,7 @@ import 'package:zoonze_app/core/storage/local_cache.dart';
 import 'package:zoonze_app/core/storage/locale_prefs.dart';
 import 'package:zoonze_app/core/storage/secure_token_store.dart';
 import 'package:zoonze_app/features/catalog/data/catalog_repository.dart';
+import 'package:zoonze_app/features/catalog/data/home_sections_provider.dart';
 import 'package:zoonze_app/features/catalog/presentation/screens/home_screen.dart';
 import 'package:zoonze_app/l10n/l10n.dart';
 
@@ -33,6 +34,12 @@ Widget _harness(String locale) {
       localePrefsProvider.overrideWithValue(FakeLocalePrefs(locale)),
       secureTokenStoreProvider.overrideWithValue(FakeSecureTokenStore()),
       catalogRepositoryProvider.overrideWithValue(FakeCatalogRepository()),
+      // "Shop by Category" is its own backend feed (not the menu tree the
+      // catalog repository serves), so it needs its own override — offline it
+      // would return empty and the section would correctly hide itself.
+      shopByCategoriesProvider.overrideWith(
+        (_) async => kSampleShopByCategories,
+      ),
       // Home fires storeConfig/hero/brands/footer queries — keep them offline
       // so they degrade to fallbacks without leaving retry-backoff timers.
       graphqlClientProvider.overrideWithValue(fakeGraphQLClient()),
@@ -68,7 +75,8 @@ void main() {
     // Section headers are uppercased (Figma).
     expect(find.text('SHOP BY CATEGORY'), findsWidgets);
     // New Arrivals replaced the old "Featured" section (Figma).
-    expect(find.text('New Arrivals'), findsWidgets);
+    expect(find.text('NEW ARRIVALS'), findsWidgets);
+    // A curated "Shop by Category" tile.
     expect(find.text('Fragrance'), findsWidgets);
     expect(find.text('Coco Mademoiselle EDP'), findsWidgets);
 

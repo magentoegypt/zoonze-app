@@ -18,6 +18,7 @@ normal; the app skips it rather than erroring. All queries are **store-scoped**
 
 | Section | App source | Status |
 |---|---|---|
+| Shop by Category | **`shopByCategories`** (curated tile grid) | ✅ renders |
 | Limited-Time Offer (countdown) | `deals/countdown_*` config keys | ✅ renders |
 | Deals of the Day | deals category, resolved by `deals/category_id` (`products`) | ✅ renders |
 | Skincare / Makeup banners | **`promoSplitBanners`** (2-banner block) | ✅ renders |
@@ -31,12 +32,16 @@ normal; the app skips it rather than erroring. All queries are **store-scoped**
 Wired in `lib/features/catalog/data/home_sections_provider.dart`:
 
 ```graphql
+shopByCategories  { label category_uid url image position }       # 6 → Shop by Category
 promoSplitBanners { eyebrow title cta_label cta_url image_url }   # 2 → editorial banners
 homeBanners       { title cta_label description image_url cta_url } # 3 → Exclusive Offers
 homeReviews(pageSize: 3, minRating: 3) { author quote rating product_name product_uid }
 ```
 
 Field mapping the app uses:
+- **shopByCategories** → `label` (tile caption), `image` (the circle), ordered by
+  `position`; `category_uid` routes straight to the PLP, with `url` as the
+  fallback via `openStorefrontUrl`.
 - **promoSplitBanners** → eyebrow ("SKINCARE"), title ("Bare Skin, Better"),
   `cta_label` → the "Shop Now" pill, `cta_url`, `image_url`.
 - **homeBanners** → `title` → the big discount ("25% OFF"), `cta_label` → the
@@ -46,10 +51,26 @@ Field mapping the app uses:
   `product_uid` is base64 of the product id → `products(filter:{uid:{eq}})` / PDP
   (not currently linked; the card shows the product name as plain text per Figma).
 
-Image URLs come back absolute (`https://zoonze.com/media/magentoegypt/beauty/…`);
-`resolveMediaUrl` passes them through (and would prefix the store media base for
-a relative path). CTA URLs are full storefront links resolved in-app by
-`openStorefrontUrl` → `urlResolver` (category → PLP, product → PDP).
+Image URLs mostly come back absolute (`https://zoonze.com/media/magentoegypt/…`);
+`resolveMediaUrl` passes those through. Two relative shapes also occur and the
+leading slash decides the base:
+
+| Backend value | Resolved against | Seen in |
+|---|---|---|
+| `default/promo.png` | the store **media base** | `deals/countdown_image` |
+| `/media/catalog/a.webp` | the store **root** | `shopByCategories` (store `eg_ar`) |
+
+Joining a root-relative `/media/…` onto the media base would duplicate the
+`/media/` segment and 404, so `resolveMediaUrl` treats it as origin-relative.
+
+CTA URLs are full storefront links resolved in-app by `openStorefrontUrl` →
+`urlResolver` (category → PLP, product → PDP).
+
+> **`shopByCategories` labels are live admin config, not category names.** They
+> were re-edited mid-session on 2026-07-17 (tile 0 went "Lipsticks" → "Lips";
+> the `eg_ar` labels went English → translated, e.g. `الشفاه`, `العطور`). The
+> app renders `label` verbatim, so whatever admin sets is what ships — don't
+> hardcode or "correct" these app-side. Verified on-device in both views.
 
 > **Note:** the `homeReviews` feed currently carries ~16 **seeded test reviews**;
 > they'll be removed before launch, after which it shrinks to the genuine few.

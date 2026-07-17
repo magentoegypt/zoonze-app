@@ -14,12 +14,32 @@ String? httpsMediaUrl(String? url) {
 /// backend) against the store's [base] media URL, upgrading to HTTPS. Absolute
 /// URLs pass through; empty input (or an empty base for a relative path) yields
 /// an empty string so callers degrade gracefully.
+///
+/// The backend mixes two relative shapes, so the leading slash is significant:
+///   `default/promo.png`      → relative to the media base  → `<base>/default/promo.png`
+///   `/media/catalog/a.webp`  → relative to the store root  → `<origin>/media/catalog/a.webp`
+/// Joining a root-relative path onto the media base would duplicate the
+/// `/media/` segment and 404 (seen live on the Arabic `shopByCategories` feed).
 String resolveMediaUrl(String? raw, String base) {
   final value = raw?.trim() ?? '';
   if (value.isEmpty) return '';
   if (value.startsWith('http')) return httpsMediaUrl(value) ?? '';
   if (base.isEmpty) return '';
+  if (value.startsWith('/')) {
+    final origin = _origin(base);
+    return origin.isEmpty ? '' : httpsMediaUrl('$origin$value') ?? '';
+  }
   final b = base.endsWith('/') ? base : '$base/';
-  final path = value.startsWith('/') ? value.substring(1) : value;
-  return httpsMediaUrl('$b$path') ?? '';
+  return httpsMediaUrl('$b$value') ?? '';
+}
+
+/// Scheme + host (+ explicit port) of [base], or empty when it isn't a usable
+/// absolute URL. `Uri.origin` throws on those, so the parts are read directly.
+String _origin(String base) {
+  final uri = Uri.tryParse(base);
+  if (uri == null || uri.host.isEmpty) return '';
+  if (uri.scheme != 'http' && uri.scheme != 'https') return '';
+  return uri.hasPort
+      ? '${uri.scheme}://${uri.host}:${uri.port}'
+      : '${uri.scheme}://${uri.host}';
 }

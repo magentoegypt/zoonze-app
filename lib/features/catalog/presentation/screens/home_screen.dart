@@ -14,7 +14,6 @@ import '../../../../app/theme/theme_x.dart';
 import '../../../../core/assets/app_images.dart';
 import '../../../../core/store/store_controller.dart';
 import '../../../../core/util/launch.dart';
-import '../../../../core/widgets/async_value_view.dart';
 import '../../../../core/widgets/brand_logo.dart';
 import '../../../../core/widgets/shimmer.dart';
 import '../../../../core/widgets/web_view_screen.dart';
@@ -28,7 +27,6 @@ import '../../data/home_sections_provider.dart';
 import '../../data/special_offer_provider.dart';
 import '../../domain/blog_post.dart';
 import '../../domain/brand.dart';
-import '../../domain/category.dart';
 import '../../domain/hero_slide.dart';
 import '../../domain/home_config.dart';
 import '../../domain/product.dart';
@@ -42,8 +40,6 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = AppLocalizations.of(context);
-    final categories = ref.watch(categoryTreeProvider);
     // Only the admin-configured announcement is shown — no hardcoded fallback
     // (QA: the default "free shipping" line isn't on the site). Empty → the
     // strip is omitted entirely (the app bar shrinks to just the header).
@@ -59,15 +55,15 @@ class HomeScreen extends ConsumerWidget {
       appBar: _HomeAppBar(announcement: announcement),
       body: RefreshIndicator(
         onRefresh: () async {
-          ref.invalidate(categoryTreeProvider);
+          ref.invalidate(shopByCategoriesProvider);
           ref.invalidate(newArrivalsProvider);
           ref.invalidate(bestsellersProvider);
-          // Keep the indicator up until the real reload finishes; errors are
-          // surfaced in-body by AsyncValueView.
+          // Keep the indicator up until the real reload finishes; a failed feed
+          // just collapses its section, so nothing is surfaced here.
           try {
-            await ref.read(categoryTreeProvider.future);
+            await ref.read(shopByCategoriesProvider.future);
           } catch (_) {
-            /* ignore: handled in body */
+            /* ignore: the section hides itself */
           }
         },
         child: ListView(
@@ -75,21 +71,7 @@ class HomeScreen extends ConsumerWidget {
           children: [
             _SearchField(onTap: () => context.push(AppRoutes.search)),
             const _Hero(),
-            _SectionHeader(title: l10n.homeShopByCategory),
-            AsyncValueView(
-              value: categories,
-              onRetry: () => ref.invalidate(categoryTreeProvider),
-              loading: () => const _CategoryGridSkeleton(),
-              data: (items) {
-                if (items.isEmpty) {
-                  return Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Center(child: Text(l10n.stateEmpty)),
-                  );
-                }
-                return _CategoryGrid(categories: items);
-              },
-            ),
+            const _ShopByCategorySection(),
             // New order mirrors live zoonze.com (see docs/FIGMA_DESIGN.md,
             // 2026-07-13). Each new section is backend-driven and collapses to
             // nothing when its source is absent — Explore Brands has moved down
@@ -943,46 +925,94 @@ bool _isInternalStoreUrl(WidgetRef ref, String url) {
   return false;
 }
 
-/// Circular category images in a horizontal carousel (site "Shop by category").
-class _CategoryGrid extends StatelessWidget {
-  const _CategoryGrid({required this.categories});
-  final List<Category> categories;
+/// "Shop by Category" — the merchant-curated tile grid from the backend
+/// `shopByCategories` feed, the same source the website renders. Gated on the
+/// `categories` toggle and hidden when the feed is empty.
+class _ShopByCategorySection extends ConsumerWidget {
+  const _ShopByCategorySection();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final enabled = ref
+        .watch(homeConfigProvider)
+        .maybeWhen(
+          data: (c) => c.sectionEnabled('categories'),
+          orElse: () => true,
+        );
+    if (!enabled) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
+    return ref
+        .watch(shopByCategoriesProvider)
+        .when(
+          loading: () => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _SectionHeader(title: l10n.homeShopByCategory),
+              const _CategoryGridSkeleton(),
+            ],
+          ),
+          error: (_, __) => const SizedBox.shrink(),
+          data: (tiles) {
+            if (tiles.isEmpty) return const SizedBox.shrink();
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _SectionHeader(title: l10n.homeShopByCategory),
+                _CategoryGrid(tiles: tiles),
+              ],
+            );
+          },
+        );
+  }
+}
+
+/// Circular category images in a horizontal carousel (site "Shop by Category").
+class _CategoryGrid extends ConsumerWidget {
+  const _CategoryGrid({required this.tiles});
+  final List<ShopByCategoryTile> tiles;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     return SizedBox(
       height: 116,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: categories.length,
+        itemCount: tiles.length,
         separatorBuilder: (_, __) => const SizedBox(width: 14),
         itemBuilder: (context, index) {
-          final category = categories[index];
+          final tile = tiles[index];
           return SizedBox(
             width: 80,
             child: _CategoryCircle(
-              category: category,
-              onTap: () => context.push(
-                AppRoutes.category(category.uid),
-                extra: category.name,
-              ),
+              tile: tile,
+              onTap: () => _openTile(context, ref, tile),
             ),
           );
         },
       ),
     );
   }
+
+  /// The uid goes straight to the PLP; only if the backend omits it do we fall
+  /// back to resolving the tile's storefront URL.
+  void _openTile(BuildContext context, WidgetRef ref, ShopByCategoryTile tile) {
+    if (tile.categoryUid.isNotEmpty) {
+      context.push(AppRoutes.category(tile.categoryUid), extra: tile.label);
+      return;
+    }
+    openStorefrontUrl(context, ref, tile.url, title: tile.label);
+  }
 }
 
 class _CategoryCircle extends StatelessWidget {
-  const _CategoryCircle({required this.category, required this.onTap});
-  final Category category;
+  const _CategoryCircle({required this.tile, required this.onTap});
+  final ShopByCategoryTile tile;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final image = category.image;
+    final image = tile.imageUrl;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -993,7 +1023,7 @@ class _CategoryCircle extends StatelessWidget {
             child: SizedBox(
               width: 72,
               height: 72,
-              child: (image != null && image.isNotEmpty)
+              child: image.isNotEmpty
                   ? CachedNetworkImage(
                       imageUrl: image,
                       fit: BoxFit.cover,
@@ -1005,7 +1035,7 @@ class _CategoryCircle extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            category.name,
+            tile.label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,

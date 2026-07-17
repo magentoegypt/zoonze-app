@@ -69,6 +69,37 @@ class LimitedTimeOffer {
   static const LimitedTimeOffer hidden = LimitedTimeOffer();
 }
 
+/// One home "Shop by Category" tile, populated from the backend
+/// `shopByCategories` query — the merchant-curated grid the website renders.
+///
+/// Deliberately not the navigation menu tree (`categoryList`): the curated grid
+/// tiles sub-categories the tree's top level never reaches (Lipsticks / Eyes /
+/// Face) and omits menu-only entries the site doesn't tile (New Arrivals /
+/// Bestsellers / Hair Care).
+class ShopByCategoryTile {
+  const ShopByCategoryTile({
+    required this.label,
+    this.categoryUid = '',
+    this.url = '',
+    this.imageUrl = '',
+  });
+
+  final String label;
+
+  /// Magento category uid — routes straight to the PLP when present.
+  final String categoryUid;
+
+  /// Storefront URL; the routing fallback when [categoryUid] is absent.
+  final String url;
+
+  /// Tile image, resolved against the store media base in the provider — the
+  /// Arabic view returns some paths relative while the rest are absolute.
+  final String imageUrl;
+
+  /// A tile with no label, or with nowhere to route, can't be rendered.
+  bool get isEmpty => label.isEmpty || (categoryUid.isEmpty && url.isEmpty);
+}
+
 /// One "Exclusive Offers" banner, populated from the backend `homeBanners`
 /// query: [badge] is the big discount ("25% OFF"), [title] the white category
 /// pill ("Skincare"), [subtitle] the terms line, over [imageUrl].

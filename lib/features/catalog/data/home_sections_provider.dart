@@ -12,6 +12,62 @@ import '../domain/promo_split_banner.dart';
 // error or absence — an empty feed is normal (section toggled off / no content),
 // so the section simply hides rather than erroring.
 
+/// The home "Shop by Category" tiles (`shopByCategories`) — the merchant-curated
+/// grid the website renders, ordered by the backend `position`.
+///
+/// This is intentionally NOT `categoryList`: the menu tree's top level misses
+/// the curated sub-category tiles (Lipsticks / Eyes / Face) and carries
+/// menu-only entries the site doesn't tile (New Arrivals / Bestsellers / Hair
+/// Care), so the two feeds disagree. `shopByCategories` is the site's source.
+const String _shopByCategoriesQuery = r'''
+query ShopByCategories {
+  shopByCategories {
+    label
+    category_uid
+    url
+    image
+    position
+  }
+}
+''';
+
+final shopByCategoriesProvider =
+    FutureProvider.autoDispose<List<ShopByCategoryTile>>((ref) async {
+      final store = ref.watch(storeControllerProvider);
+      ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
+      final client = ref.watch(graphqlClientProvider);
+      final base = _mediaBase(store);
+      try {
+        final result = await client.query(
+          QueryOptions(
+            document: gql(_shopByCategoriesQuery),
+            fetchPolicy: FetchPolicy.networkOnly,
+          ),
+        );
+        if (result.hasException) return const <ShopByCategoryTile>[];
+        final list = result.data?['shopByCategories'] as List<dynamic>?;
+        if (list == null) return const <ShopByCategoryTile>[];
+        final sorted = list.whereType<Map<String, dynamic>>().toList()
+          ..sort(
+            (a, b) =>
+                _position(a['position']).compareTo(_position(b['position'])),
+          );
+        return sorted
+            .map(
+              (j) => ShopByCategoryTile(
+                label: _s(j['label']),
+                categoryUid: _s(j['category_uid']),
+                url: _s(j['url']),
+                imageUrl: resolveMediaUrl(_s(j['image']), base),
+              ),
+            )
+            .where((t) => !t.isEmpty)
+            .toList(growable: false);
+      } catch (_) {
+        return const <ShopByCategoryTile>[];
+      }
+    });
+
 /// "Skincare / Makeup" editorial banners (`promoSplitBanners`, the 2-banner
 /// block). Image-first, with an eyebrow + tagline + CTA.
 const String _promoSplitQuery = r'''
@@ -173,6 +229,15 @@ Future<List<Testimonial>> _loadReviews(
 }
 
 String _s(Object? v) => (v is String ? v : v?.toString() ?? '').trim();
+
+/// Sort key for the "Shop by Category" tiles. Magento hands some numeric
+/// scalars back as Strings, so parse rather than cast; anything unreadable
+/// sorts last instead of throwing.
+int _position(Object? v) => switch (v) {
+  final num n => n.toInt(),
+  final String s => int.tryParse(s) ?? 1 << 30,
+  _ => 1 << 30,
+};
 
 int _rating(Object? v) => switch (v) {
   final num n => n.round().clamp(0, 5),
