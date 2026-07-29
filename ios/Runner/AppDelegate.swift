@@ -12,6 +12,12 @@ import UIKit
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    // N-Genius card SDK bridge (zoonze/payments). Registered here rather than
+    // off `window` because the app is scene-based, so the root view controller
+    // does not exist yet at didFinishLaunching.
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "ZoonzePayments") {
+      PaymentChannel.register(with: registrar)
+    }
   }
 
   // Diagnostics only — surface WHY APNs registration produced no token. The FCM

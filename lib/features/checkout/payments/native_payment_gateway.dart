@@ -27,6 +27,8 @@ class NativePaymentGateway implements PaymentGateway {
             : 'ngenius',
         'methodCode': session.methodCode,
         'orderNumber': session.orderNumber,
+        // Renders the gateway SDK's own UI in the customer's language.
+        'language': Localizations.localeOf(context).languageCode,
         if (amount != null) 'amount': amount.amount,
         if (amount != null) 'currency': amount.currency,
         // N-Genius: iOS decodes the full order JSON; Android drives the href.
