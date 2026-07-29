@@ -51,7 +51,7 @@ Recommended answers. Expected result: **4+**, but see the blocker below.
 | Horror/Fear Themes | None |
 | Medical or Treatment Information | None |
 | Gambling, Contests, Loot Boxes | None |
-| Unrestricted Web Access | **See below** |
+| Unrestricted Web Access | **No** (as of 1.0.0 build 77 — see below) |
 | User-Generated Content | Yes — product reviews |
 
 Notes on the two that aren't obvious:
@@ -66,27 +66,24 @@ Notes on the two that aren't obvious:
   than appearing instantly, which is what Apple cares about under Guideline
   1.2.
 
-### Blocker: "Unrestricted Web Access" is currently **Yes**, which forces 17+
+### "Unrestricted Web Access" — resolved in build 77
 
-`WebViewScreen` (`lib/core/widgets/web_view_screen.dart`) sets
-`JavaScriptMode.unrestricted` and installs a `NavigationDelegate` with **no
-`onNavigationRequest`**. It opens a zoonze.com CMS page, but nothing stops a
-link inside that page from navigating anywhere on the web. By Apple's
-definition that is unrestricted web access.
+Builds up to **76** would have had to answer **Yes**, forcing a **17+** rating:
+`WebViewScreen` set `JavaScriptMode.unrestricted` with a `NavigationDelegate`
+that had **no `onNavigationRequest`**, so a link inside a CMS page could
+navigate anywhere on the web under our app bar.
 
-That leaves two options, and only one of them is good:
+**Build 77 confines it.** `staysInApp` (`lib/core/widgets/web_view_screen.dart`)
+allows main-frame navigation only within the store's own registrable domain;
+other sites and non-http schemes (`mailto:`, `tel:`) hand off to the platform
+browser. Sub-frames are never blocked, so embedded media in a CMS page still
+renders. Covered by `test/core/widgets/web_view_navigation_test.dart`,
+including lookalike hosts such as `zoonze.com.evil.example`.
 
-1. **Answer Yes** → the app is rated **17+**. Bad for a beauty retailer, and it
-   suppresses discovery.
-2. **Restrict the WebView, then answer No** — add an `onNavigationRequest` that
-   allows only `zoonze.com` (plus the payment gateway hosts) and sends anything
-   else to the system browser via `url_launcher`, which the app already
-   depends on.
+So **No** is now an accurate answer, and the rating stays **4+**.
 
-Option 2 is a contained change and makes "No" an accurate declaration rather
-than a convenient one. **Do not answer No while the WebView is unrestricted** —
-Apple tests this, and a false declaration is a rejection plus a credibility
-problem on re-review.
+**Attach build 77 or later.** Apple tests this, and answering No on an earlier
+build would be a false declaration.
 
 ---
 
