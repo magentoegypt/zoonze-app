@@ -58,7 +58,14 @@ the app is fully functional if permission is declined.
 
 ACCOUNT DELETION
 
-[FILL IN — see note below. Do not submit without this.]
+Signed-in users can permanently delete their account from inside the app:
+Account > Settings > Delete Account. The action asks for confirmation, states
+what is removed (saved addresses, wishlist and order history), and then deletes
+the customer record from our systems. It is not a deactivation and does not
+require contacting support.
+
+To try it with the demo account, please tell us first so we can recreate it —
+the deletion is real and permanent.
 
 CONTACT
 
@@ -67,30 +74,22 @@ CONTACT
 
 ---
 
-## Blocker: account deletion is required and is not implemented
+## Account deletion — resolved in 1.0.0 (build 76)
 
 **Guideline 5.1.1(v):** an app that lets users create an account must let them
 **delete** that account from within the app. Deactivation is not sufficient,
 and pointing the user at a website or a support email is not sufficient.
 
 Zoonze creates accounts (`createCustomerV2`, Sign Up screen), so the rule
-applies. The app currently implements `deleteCustomerAddress` and
-`deleteCustomerAvatar` but **nothing that deletes the account itself** — there
-is no such action anywhere in the account or settings screens.
+applies. Builds up to and including **75** shipped only
+`deleteCustomerAddress` and `deleteCustomerAvatar` — nothing that deleted the
+account itself — and would have failed review on this alone.
 
-This is one of the most consistently enforced rejection reasons for a first
-submission. It is worth fixing before submitting rather than absorbing a
-rejection round-trip.
+**Build 76 adds it:** a destructive "Delete Account" action in Settings, shown
+only when signed in. It confirms first, calls Magento's `deleteCustomer`, then
+clears the token and cart and returns to the signed-out state. A server-side
+failure leaves the customer signed in rather than faking success.
 
-The backend already supports it: Magento's GraphQL schema exposes
-`deleteCustomer: Boolean` (see `lib/core/graphql/schema.graphql:8328`), which
-deletes the authenticated customer. What's missing is app-side: a
-"Delete account" action in Settings, a confirmation step that makes the
-consequence clear, the mutation call, and a local wipe (token, cart id, cached
-customer state) with a return to the signed-out state.
-
-Once that ships, the ACCOUNT DELETION section above should read roughly:
-
-> Signed-in users can permanently delete their account and personal data from
-> Account > Settings > Delete Account. The action asks for confirmation and
-> then removes the customer record from our systems.
+**Do not submit build 75 or earlier.** The build attached to the App Store
+version must be 76 or later, otherwise the ACCOUNT DELETION note above
+describes something the reviewer cannot find.
