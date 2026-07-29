@@ -28,6 +28,16 @@ mutation RevokeToken {
 }
 ''';
 
+  /// Permanently deletes the authenticated customer. Required by App Store
+  /// Review Guideline 5.1.1(v) — an app that creates accounts must let the
+  /// customer delete one from inside the app. Scoped by the bearer token, so
+  /// it takes no arguments.
+  static const String deleteCustomer = r'''
+mutation DeleteCustomer {
+  deleteCustomer
+}
+''';
+
   static const String requestPasswordReset = r'''
 mutation RequestPasswordReset($email: String!) {
   requestPasswordResetEmail(email: $email)

@@ -8,6 +8,8 @@ import '../../../../app/theme/theme_x.dart';
 import '../../../../core/app_info.dart';
 import '../../../../core/store/store_controller.dart';
 import '../../../../l10n/l10n.dart';
+import '../../../auth/presentation/auth_controller.dart';
+import '../../../cart/presentation/cart_controller.dart';
 import '../../../notifications/presentation/notification_settings_controller.dart';
 
 /// App settings: language toggle (EN/AR) + notification preferences, plus a
@@ -22,6 +24,9 @@ class SettingsScreen extends ConsumerWidget {
     final store = ref.watch(storeControllerProvider);
     final promoEnabled = ref.watch(notificationSettingsProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final isAuthenticated = ref.watch(
+      authControllerProvider.select((s) => s.isAuthenticated),
+    );
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.settingsTitle)),
@@ -94,6 +99,13 @@ class SettingsScreen extends ConsumerWidget {
             trailing: const Icon(Icons.chevron_right),
             onTap: () => context.push(AppRoutes.diagnostics),
           ),
+          // Account deletion must be reachable from inside the app whenever an
+          // account exists (App Store Review Guideline 5.1.1(v)) — hidden for
+          // guests, who have nothing to delete.
+          if (isAuthenticated) ...[
+            const Divider(height: 32),
+            const _DeleteAccountTile(),
+          ],
           const Divider(height: 32),
           Center(
             child: Padding(
@@ -109,6 +121,84 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Destructive account deletion. Confirms first, spelling out exactly what is
+/// lost, and only clears local state after Magento confirms the delete — a
+/// failure leaves the customer signed in rather than pretending it worked.
+class _DeleteAccountTile extends ConsumerStatefulWidget {
+  const _DeleteAccountTile();
+
+  @override
+  ConsumerState<_DeleteAccountTile> createState() => _DeleteAccountTileState();
+}
+
+class _DeleteAccountTileState extends ConsumerState<_DeleteAccountTile> {
+  bool _busy = false;
+
+  Future<void> _confirmAndDelete() async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.deleteAccountConfirmTitle),
+        content: Text(l10n.deleteAccountConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l10n.actionCancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: Text(l10n.deleteAccountConfirmAction),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _busy = true);
+    try {
+      await ref.read(authControllerProvider.notifier).deleteAccount();
+      // The account is gone, so the server-side cart went with it.
+      await ref.read(cartControllerProvider.notifier).clearAfterOrder();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.deleteAccountDone)),
+      );
+      context.go(AppRoutes.home);
+    } on Object {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.deleteAccountFailed)),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final error = Theme.of(context).colorScheme.error;
+
+    return ListTile(
+      enabled: !_busy,
+      leading: Icon(Icons.delete_forever_outlined, color: error),
+      title: Text(l10n.deleteAccountTitle, style: TextStyle(color: error)),
+      subtitle: Text(l10n.deleteAccountSubtitle),
+      trailing: _busy
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : null,
+      onTap: _busy ? null : _confirmAndDelete,
     );
   }
 }

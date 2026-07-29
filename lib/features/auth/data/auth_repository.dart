@@ -115,6 +115,14 @@ class AuthRepository {
     }
   }
 
+  /// Permanently deletes the signed-in customer server-side. Unlike
+  /// [revokeToken] this must NOT swallow failures: the caller wipes local state
+  /// on success, and silently signing someone out while their account still
+  /// exists would look like deletion without being it.
+  Future<void> deleteAccount() async {
+    await _mutate(AuthQueries.deleteCustomer, const {});
+  }
+
   Future<void> requestPasswordReset(String email) async {
     await _mutate(AuthQueries.requestPasswordReset, {'email': email});
   }

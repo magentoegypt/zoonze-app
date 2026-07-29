@@ -19,6 +19,19 @@ ProviderContainer _container({String? token, bool loginFails = false}) {
   return container;
 }
 
+/// Same wiring, but with a caller-supplied repository so a test can inspect
+/// what the controller asked it to do.
+ProviderContainer _containerWith(FakeAuthRepository repo) {
+  final container = ProviderContainer(
+    overrides: [
+      secureTokenStoreProvider.overrideWithValue(FakeSecureTokenStore(null)),
+      authRepositoryProvider.overrideWithValue(repo),
+    ],
+  );
+  addTearDown(container.dispose);
+  return container;
+}
+
 void main() {
   group('AuthController', () {
     test('restores as guest when no token is stored', () async {
@@ -85,6 +98,29 @@ void main() {
 
       await notifier.logout();
       expect(container.read(authControllerProvider).status, AuthStatus.guest);
+    });
+
+    test('deleteAccount deletes server-side then returns to guest', () async {
+      final repo = FakeAuthRepository();
+      final container = _containerWith(repo);
+      final notifier = container.read(authControllerProvider.notifier);
+      await notifier.login('layla@example.com', 'password1');
+
+      await notifier.deleteAccount();
+      expect(repo.deleteAccountCalled, isTrue);
+      expect(container.read(authControllerProvider).status, AuthStatus.guest);
+    });
+
+    // The customer must stay signed in when the server refuses, otherwise the
+    // app looks like it deleted an account that still exists.
+    test('deleteAccount keeps the session when the server refuses', () async {
+      final repo = FakeAuthRepository()..deleteAccountFails = true;
+      final container = _containerWith(repo);
+      final notifier = container.read(authControllerProvider.notifier);
+      await notifier.login('layla@example.com', 'password1');
+
+      await expectLater(notifier.deleteAccount(), throwsA(isA<Object>()));
+      expect(container.read(authControllerProvider).isAuthenticated, isTrue);
     });
   });
 }

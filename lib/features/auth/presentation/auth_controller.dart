@@ -140,6 +140,20 @@ class AuthController extends Notifier<AuthState> {
     state = const AuthState(status: AuthStatus.guest);
   }
 
+  /// Permanently deletes the customer account, then drops to guest.
+  ///
+  /// Required by App Store Review Guideline 5.1.1(v). Deliberately lets a
+  /// server-side failure propagate so the UI can say deletion did not happen —
+  /// local state is only wiped once Magento confirms. The device is unbound
+  /// first, while the bearer is still valid.
+  Future<void> deleteAccount() async {
+    await ref.read(deviceTokenSyncProvider).unregister();
+    await _repo.deleteAccount();
+    await _tokens.clear();
+    ref.invalidate(graphqlClientProvider);
+    state = const AuthState(status: AuthStatus.guest);
+  }
+
   Future<void> requestPasswordReset(String email) =>
       _repo.requestPasswordReset(email);
 

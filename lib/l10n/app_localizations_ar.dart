@@ -77,6 +77,28 @@ class AppLocalizationsAr extends AppLocalizations {
       'تحقّق من الاتصال المباشر بالمتجر';
 
   @override
+  String get deleteAccountTitle => 'حذف الحساب';
+
+  @override
+  String get deleteAccountSubtitle => 'إزالة حسابك وبياناتك الشخصية نهائياً';
+
+  @override
+  String get deleteAccountConfirmTitle => 'هل تريد حذف حسابك؟';
+
+  @override
+  String get deleteAccountConfirmBody =>
+      'سيؤدي هذا إلى حذف حسابك في Zoonze نهائياً، مع عناوينك المحفوظة وقائمة المفضّلة وسجل الطلبات. لا يمكن التراجع عن هذا الإجراء.';
+
+  @override
+  String get deleteAccountConfirmAction => 'حذف الحساب';
+
+  @override
+  String get deleteAccountDone => 'تم حذف حسابك.';
+
+  @override
+  String get deleteAccountFailed => 'تعذّر حذف حسابك. يرجى المحاولة مرة أخرى.';
+
+  @override
   String get fieldStoreCode => 'رمز المتجر';
 
   @override

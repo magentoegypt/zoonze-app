@@ -401,6 +401,17 @@ class FakeAuthRepository implements AuthRepository {
   @override
   Future<void> revokeToken() async {}
 
+  /// Set to make [deleteAccount] throw, so tests can cover the path where the
+  /// server refuses and the customer must stay signed in.
+  bool deleteAccountFails = false;
+  bool deleteAccountCalled = false;
+
+  @override
+  Future<void> deleteAccount() async {
+    deleteAccountCalled = true;
+    if (deleteAccountFails) throw const Failure(FailureKind.unknown);
+  }
+
   @override
   Future<void> requestPasswordReset(String email) async {}
 

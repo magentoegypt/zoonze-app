@@ -79,6 +79,30 @@ class AppLocalizationsEn extends AppLocalizations {
       'Check the live connection to the store';
 
   @override
+  String get deleteAccountTitle => 'Delete account';
+
+  @override
+  String get deleteAccountSubtitle =>
+      'Permanently remove your account and personal data';
+
+  @override
+  String get deleteAccountConfirmTitle => 'Delete your account?';
+
+  @override
+  String get deleteAccountConfirmBody =>
+      'This permanently deletes your Zoonze account, along with your saved addresses, wishlist and order history. It cannot be undone.';
+
+  @override
+  String get deleteAccountConfirmAction => 'Delete account';
+
+  @override
+  String get deleteAccountDone => 'Your account has been deleted.';
+
+  @override
+  String get deleteAccountFailed =>
+      'We couldn\'t delete your account. Please try again.';
+
+  @override
   String get fieldStoreCode => 'Store code';
 
   @override
