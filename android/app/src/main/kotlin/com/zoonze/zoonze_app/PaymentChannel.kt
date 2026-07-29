@@ -60,13 +60,19 @@ class PaymentChannel {
         val orderNumber = call.argument<String>("orderNumber").orEmpty()
         val orderJson = call.argument<String>("orderResponse")
 
-        // Android drives the SDK from the two order links. The authorization
-        // href is sent explicitly; the pay-page URL only exists inside the
-        // order JSON, so parse that for both and let the explicit arg win.
+        // Android needs two DIFFERENT order links: _links.payment-authorization
+        // (the API the SDK authorizes against) and _links.payment (the hosted
+        // pay page, which carries the ?code=). The order JSON is authoritative
+        // for both.
+        //
+        // The `paymentAuthorizationHref` argument is only a fallback and is
+        // deliberately NOT preferred: the backend fills it from
+        // _links.payment.href — the pay-page link, despite its name — so
+        // trusting it put the same URL in both fields and the SDK authorized
+        // against the pay page, which answered with an HTML error page.
         val links = parseLinks(orderJson)
-        val authorizationUrl =
-            call.argument<String>("paymentAuthorizationHref")
-                ?: links[LINK_AUTHORIZATION]
+        val authorizationUrl = links[LINK_AUTHORIZATION]
+            ?: call.argument<String>("paymentAuthorizationHref")
         val payPageUrl = links[LINK_PAY_PAGE]
 
         if (authorizationUrl.isNullOrEmpty() || payPageUrl.isNullOrEmpty()) {
