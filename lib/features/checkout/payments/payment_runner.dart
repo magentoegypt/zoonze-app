@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -34,42 +32,39 @@ Future<PaymentRunResult> runPaymentSession({
   if (session == null) {
     // Already traced by fetchPaymentSession, but record the consequence so the
     // trail shows why the customer saw "awaiting payment".
-    await PaymentTrace.record('run: no session → awaiting payment');
+    PaymentTrace.record('run: no session → awaiting payment');
     return const PaymentRunResult(PaymentStep.unavailable);
   }
   switch (session.status) {
     case PaymentSessionStatus.ready:
       final gateway = ref.read(paymentGatewayResolverProvider).resolve(session);
       if (gateway == null) {
-        await PaymentTrace.record(
+        PaymentTrace.record(
           'run: no gateway for ${session.gateway.name} → awaiting payment',
         );
         return const PaymentRunResult(PaymentStep.unavailable);
       }
       try {
-        // Not awaited: this must not introduce an async gap before `context` is
-        // handed to the gateway, and a trace line is never worth delaying the
-        // payment sheet for.
-        unawaited(PaymentTrace.record('run: presenting ${session.gateway.name}'));
+        PaymentTrace.record('run: presenting ${session.gateway.name}');
         final outcome = await gateway.present(context, session, amount: amount);
-        await PaymentTrace.record('run: outcome ${outcome.name}');
+        PaymentTrace.record('run: outcome ${outcome.name}');
         return PaymentRunResult(PaymentStep.presented, outcome);
       } on PaymentGatewayUnavailable {
         // The native module is missing or unregistered — distinct from a bad
         // session, and previously indistinguishable from it.
-        await PaymentTrace.record(
+        PaymentTrace.record(
           'run: NATIVE MODULE MISSING for ${session.gateway.name}',
         );
         return const PaymentRunResult(PaymentStep.unavailable);
       }
     case PaymentSessionStatus.pending:
-      await PaymentTrace.record('run: session PENDING after retries');
+      PaymentTrace.record('run: session PENDING after retries');
       return const PaymentRunResult(PaymentStep.pending);
     case PaymentSessionStatus.rejected:
-      await PaymentTrace.record('run: session REJECTED by gateway');
+      PaymentTrace.record('run: session REJECTED by gateway');
       return const PaymentRunResult(PaymentStep.rejected);
     case PaymentSessionStatus.failed:
-      await PaymentTrace.record('run: session FAILED');
+      PaymentTrace.record('run: session FAILED');
       return const PaymentRunResult(PaymentStep.failed);
   }
 }

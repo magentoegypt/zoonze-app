@@ -24,9 +24,22 @@ class PaymentTrace {
   /// times over, without letting the list grow unbounded.
   static const int _maxEntries = 24;
 
-  static Future<void> record(String line) async {
-    // Always mirror to the console — useful in debug, harmless in release.
+  /// Serialises writes. Each entry is a read-modify-write of one list, so
+  /// concurrent records would drop lines; chaining keeps them ordered without
+  /// making callers wait.
+  static Future<void> _queue = Future<void>.value();
+
+  /// Records a line. Deliberately returns void rather than a Future: callers
+  /// must never await diagnostics. Awaiting this once stalled the payment flow
+  /// in widget tests, where SharedPreferences never resolves — a trace line is
+  /// never worth blocking a payment, or a test, for.
+  static void record(String line) {
+    // Mirror to the console too — useful in debug, harmless in release.
     debugPrint('PaymentTrace: $line');
+    _queue = _queue.then((_) => _write(line)).catchError((Object _) {});
+  }
+
+  static Future<void> _write(String line) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final now = DateTime.now().toIso8601String();

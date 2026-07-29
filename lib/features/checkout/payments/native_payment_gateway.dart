@@ -46,7 +46,7 @@ class NativePaymentGateway implements PaymentGateway {
       // The native module's own status/reason, which the PaymentOutcome enum
       // cannot carry. Without it a gateway decline, an expired session and an
       // SDK error all arrive as plain "failed".
-      await PaymentTrace.record(
+      PaymentTrace.record(
         'native: status=${result?['status']} '
         'reference=${result?['reference']} raw=${result?['raw'] ?? "none"}',
       );
@@ -54,7 +54,7 @@ class NativePaymentGateway implements PaymentGateway {
     } on MissingPluginException {
       throw const PaymentGatewayUnavailable();
     } on PlatformException catch (error) {
-      await PaymentTrace.record(
+      PaymentTrace.record(
         'native: PlatformException ${error.code} — ${error.message}',
       );
       return PaymentOutcome.failed;

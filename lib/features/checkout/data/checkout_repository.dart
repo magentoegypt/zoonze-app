@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
 import '../../../core/diagnostics/payment_trace.dart';
-
 import '../../../core/error/failure.dart';
 import '../../../core/error/graphql_failure_mapper.dart';
 import '../../../core/graphql/graphql_client.dart';
@@ -161,7 +160,7 @@ class CheckoutRepository {
           ? 'guest/token'
           : (email != null ? 'guest/email' : 'customer/bearer');
       if (session == null) {
-        await PaymentTrace.record(
+        PaymentTrace.record(
           'session: NONE for $orderNumber (auth=$auth) — resolver found no order',
         );
       } else {
@@ -171,7 +170,7 @@ class CheckoutRepository {
         // means the row exists and the live order fetch failed. They look
         // identical from the app otherwise.
         final keys = session.additionalData.keys.toList()..sort();
-        await PaymentTrace.record(
+        PaymentTrace.record(
           'session: $orderNumber ${session.gateway.name}/${session.methodCode} '
           'status=${session.status.name} webUrl=${session.webUrl != null} '
           '(auth=$auth) data=${keys.isEmpty ? "EMPTY" : keys.join(",")}',
@@ -179,7 +178,7 @@ class CheckoutRepository {
       }
       return session;
     } on Failure catch (failure) {
-      await PaymentTrace.record(
+      PaymentTrace.record(
         'session: FAILED for $orderNumber — ${failure.kind.name}: '
         '${failure.detail ?? "no detail"}',
       );
@@ -187,7 +186,7 @@ class CheckoutRepository {
     } catch (error) {
       // A malformed-but-200 response (unexpected JSON shape) must degrade to
       // "awaiting payment", not crash the checkout flow with a cast error.
-      await PaymentTrace.record(
+      PaymentTrace.record(
         'session: unparseable response for $orderNumber — $error',
       );
       return null;
@@ -216,7 +215,7 @@ class CheckoutRepository {
         data['setOrderPaymentMethod'] as Map<String, dynamic>?,
         orderNumber,
       );
-      await PaymentTrace.record(
+      PaymentTrace.record(
         'switch: $orderNumber → $methodCode '
         '${session == null ? "no session returned" : "status=${session.status.name}"}',
       );
@@ -224,13 +223,13 @@ class CheckoutRepository {
     } on Failure catch (failure) {
       // The resolver rejects non-gateway methods outright, so this is the line
       // that explains a "payment session unavailable" on the retry screen.
-      await PaymentTrace.record(
+      PaymentTrace.record(
         'switch: $orderNumber → $methodCode FAILED — ${failure.kind.name}: '
         '${failure.detail ?? "no detail"}',
       );
       return null;
     } catch (error) {
-      await PaymentTrace.record(
+      PaymentTrace.record(
         'switch: $orderNumber → $methodCode unparseable — $error',
       );
       return null;
