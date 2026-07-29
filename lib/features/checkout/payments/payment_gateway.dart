@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../catalog/domain/money.dart';
 import '../domain/payment_session.dart';
 import 'native_payment_gateway.dart';
+import 'tabby_payment_gateway.dart';
 
 /// Thrown when the native payment module isn't installed yet. The caller treats
 /// this as "couldn't present" → the order stays awaiting payment (not a failure
@@ -21,19 +22,32 @@ abstract interface class PaymentGateway {
   });
 }
 
-/// Both gateways (N-Genius + Tabby) are driven through the native module, so a
-/// ready session always resolves to it; a non-ready session resolves to null and
-/// the caller routes by status (pending → awaiting payment; rejected/failed →
-/// back to method selection).
+/// Routes a ready session to the gateway that owns it. A non-ready session
+/// resolves to null and the caller routes by status (pending → awaiting
+/// payment; rejected/failed → back to method selection).
+///
+/// The two gateways are integrated differently and deliberately so: N-Genius
+/// has no Flutter package, so it goes through the native `zoonze/payments`
+/// module; Tabby publishes an official Flutter package, so it stays in Dart
+/// and needs no native code on either platform.
 class PaymentGatewayResolver {
-  const PaymentGatewayResolver({required this.native});
+  const PaymentGatewayResolver({required this.native, required this.tabby});
 
   final PaymentGateway native;
+  final PaymentGateway tabby;
 
-  PaymentGateway? resolve(PaymentSession session) =>
-      session.isReady ? native : null;
+  PaymentGateway? resolve(PaymentSession session) {
+    if (!session.isReady) return null;
+    return switch (session.gateway) {
+      PaymentProvider.tabby => tabby,
+      PaymentProvider.ngenius => native,
+    };
+  }
 }
 
 final paymentGatewayResolverProvider = Provider<PaymentGatewayResolver>(
-  (ref) => const PaymentGatewayResolver(native: NativePaymentGateway()),
+  (ref) => const PaymentGatewayResolver(
+    native: NativePaymentGateway(),
+    tabby: TabbyPaymentGateway(),
+  ),
 );

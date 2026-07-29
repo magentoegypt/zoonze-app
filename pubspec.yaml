@@ -43,6 +43,10 @@ dependencies:
   video_player: ^2.11.1
   image_picker: ^1.2.3
   webview_flutter: ^4.14.1
+  # Tabby BNPL checkout (official package, publisher tabby.ai). Renders Tabby's
+  # hosted session in an embedded WebView, so Tabby needs no native module —
+  # only N-Genius does. See lib/features/checkout/payments/tabby_payment_gateway.dart
+  tabby_flutter_inapp_sdk: ^2.1.0
   timezone: ^0.11.1
 
 dev_dependencies:

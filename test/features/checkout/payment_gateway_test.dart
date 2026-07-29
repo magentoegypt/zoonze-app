@@ -28,11 +28,24 @@ PaymentSession _session({
 );
 
 void main() {
-  const resolver = PaymentGatewayResolver(native: _StubGateway('native'));
+  const resolver = PaymentGatewayResolver(
+    native: _StubGateway('native'),
+    tabby: _StubGateway('tabby'),
+  );
 
   group('PaymentGatewayResolver', () {
-    test('routes a READY session to the native gateway', () {
+    // The two gateways are integrated differently — N-Genius through the
+    // native module, Tabby through its Flutter package — so a session must
+    // reach the one that actually owns it.
+    test('routes a READY Tabby session to the Tabby gateway', () {
       final gateway = resolver.resolve(_session());
+      expect((gateway as _StubGateway?)?.label, 'tabby');
+    });
+
+    test('routes a READY N-Genius session to the native gateway', () {
+      final gateway = resolver.resolve(
+        _session(gateway: PaymentProvider.ngenius, method: 'ngeniusonline'),
+      );
       expect((gateway as _StubGateway?)?.label, 'native');
     });
 
