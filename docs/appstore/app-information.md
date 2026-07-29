@@ -105,17 +105,32 @@ way or the other.**
 Zoonze sells physical goods for profit, which makes it a trader under the DSA.
 Apple **removes non-trader apps from all EU storefronts**.
 
-Two valid resolutions:
+**Decision: declare trader status** (owner, 2026-07-29), keeping the app
+visible on EU storefronts for UAE expatriates and travellers browsing from EU
+accounts. The rejected alternative was staying non-trader and restricting
+availability to the UAE/GCC.
 
-- **Declare trader status** and complete the verification (business address,
-  phone, email — published on the product page), if the app should be visible
-  in the EU. Reasonable for UAE expatriates and visitors who browse from EU
-  accounts.
-- **Leave it as non-trader and restrict availability** to the UAE/GCC under
-  Pricing and Availability, accepting no EU presence.
+Completed by the owner in App Store Connect — it needs business identity
+details and is a legal declaration, so it can't be scripted. Via the *Get
+Started* link under Digital Services Act:
 
-Either is defensible; leaving it non-trader *and* available in the EU is not,
-because the listing will simply disappear there.
+| Needed | Note |
+|---|---|
+| Legal entity name | Must match the D-U-N-S record on the developer account, not a trading name |
+| Registered business address | Published publicly (see below) |
+| Phone + email | Both receive a verification code |
+
+Two things that catch people out:
+
+- **The details are published** on the EU product page — that is the point of
+  the requirement, so EU buyers can identify and contact the trader. Not a
+  personal address or mobile.
+- **Verification is not instant.** Apple checks against the D-U-N-S record; a
+  mismatch (renamed entity, moved address) bounces it and the app stays off EU
+  storefronts until it clears. Fix a stale D-U-N-S record first.
+
+What is not acceptable is remaining non-trader *while* available in the EU —
+the listing silently disappears there.
 
 ---
 
