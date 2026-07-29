@@ -107,6 +107,14 @@
 			</array>
 		</dict>
 	</array>
+	<!-- Routes incoming zoonze://app/... URLs through Flutter's Router (go_router)
+	     instead of just foregrounding the app. Android gets this from its
+	     intent-filter; iOS needs the key, without which a password-reset link
+	     opened the app on Home. No effect on https:// links — iOS universal
+	     links would additionally need an Associated Domains entitlement, which
+	     the app does not request. Verified by tool/ios_verify_deeplinks.sh. -->
+	<key>FlutterDeepLinkingEnabled</key>
+	<true/>
 	<!-- url_launcher: schemes the app may open (footer links, Help contact). -->
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
