@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
+import '../../../core/diagnostics/payment_trace.dart';
 import '../../catalog/domain/money.dart';
 import '../domain/payment_session.dart';
 import 'payment_gateway.dart';
@@ -42,10 +43,20 @@ class NativePaymentGateway implements PaymentGateway {
         'publishableKey': session.publishableKey,
         'paymentId': session.paymentId,
       });
+      // The native module's own status/reason, which the PaymentOutcome enum
+      // cannot carry. Without it a gateway decline, an expired session and an
+      // SDK error all arrive as plain "failed".
+      await PaymentTrace.record(
+        'native: status=${result?['status']} '
+        'reference=${result?['reference']} raw=${result?['raw'] ?? "none"}',
+      );
       return _mapStatus(result?['status'] as String?);
     } on MissingPluginException {
       throw const PaymentGatewayUnavailable();
-    } on PlatformException {
+    } on PlatformException catch (error) {
+      await PaymentTrace.record(
+        'native: PlatformException ${error.code} — ${error.message}',
+      );
       return PaymentOutcome.failed;
     }
   }

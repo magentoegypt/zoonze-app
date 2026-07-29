@@ -57,6 +57,17 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
 
   CompletePaymentArgs get _args => widget.args;
 
+  /// Only gateway methods can be switched to on an already-placed order.
+  ///
+  /// `setOrderPaymentMethod` accepts N-Genius and Tabby products and rejects
+  /// everything else outright ("Payment method X is not supported for mobile
+  /// payment sessions"), because a non-gateway method has no session to build.
+  /// Offering cash on delivery here therefore guaranteed a failure: the switch
+  /// threw, the session came back null, and the customer got a generic
+  /// "payment session unavailable" for picking a method that was shown to them.
+  List<PaymentMethodOption> get _switchableMethods =>
+      _args.methods.where((m) => m.isRedirect).toList();
+
   Future<void> _pay() async {
     final code = _selectedCode;
     if (code == null || _busy) return;
@@ -155,14 +166,14 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
-                for (final method in _args.methods)
+                for (final method in _switchableMethods)
                   PaymentMethodCard(
                     method: method,
                     selected: _selectedCode == method.code,
                     onTap: () => setState(() => _selectedCode = method.code),
                   ),
                 const SizedBox(height: 8),
-                if (_args.methods.isNotEmpty)
+                if (_switchableMethods.isNotEmpty)
                   FilledButton(
                     onPressed: (_selectedCode == null || _busy) ? null : _pay,
                     child: Text(l10n.completePaymentPayNow),

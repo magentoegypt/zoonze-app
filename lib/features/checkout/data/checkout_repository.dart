@@ -165,10 +165,16 @@ class CheckoutRepository {
           'session: NONE for $orderNumber (auth=$auth) — resolver found no order',
         );
       } else {
+        // additional_data separates the two FAILED paths in the N-Genius
+        // builder: empty means no gateway row was ever stored for the order
+        // (place-order never linked one), whereas order_reference/state present
+        // means the row exists and the live order fetch failed. They look
+        // identical from the app otherwise.
+        final keys = session.additionalData.keys.toList()..sort();
         await PaymentTrace.record(
           'session: $orderNumber ${session.gateway.name}/${session.methodCode} '
           'status=${session.status.name} webUrl=${session.webUrl != null} '
-          '(auth=$auth)',
+          '(auth=$auth) data=${keys.isEmpty ? "EMPTY" : keys.join(",")}',
         );
       }
       return session;
@@ -206,13 +212,27 @@ class CheckoutRepository {
         'lastname': lastname,
         'token': token,
       });
-      return _parseSession(
+      final session = _parseSession(
         data['setOrderPaymentMethod'] as Map<String, dynamic>?,
         orderNumber,
       );
-    } on Failure {
+      await PaymentTrace.record(
+        'switch: $orderNumber → $methodCode '
+        '${session == null ? "no session returned" : "status=${session.status.name}"}',
+      );
+      return session;
+    } on Failure catch (failure) {
+      // The resolver rejects non-gateway methods outright, so this is the line
+      // that explains a "payment session unavailable" on the retry screen.
+      await PaymentTrace.record(
+        'switch: $orderNumber → $methodCode FAILED — ${failure.kind.name}: '
+        '${failure.detail ?? "no detail"}',
+      );
       return null;
-    } catch (_) {
+    } catch (error) {
+      await PaymentTrace.record(
+        'switch: $orderNumber → $methodCode unparseable — $error',
+      );
       return null;
     }
   }
