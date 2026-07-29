@@ -48,6 +48,10 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  # Drives the App Store screenshot capture (integration_test/screenshots_test.dart
+  # + test_driver/screenshot_driver.dart, run by tool/ios_screenshots.sh).
+  integration_test:
+    sdk: flutter
   flutter_lints: ^5.0.0
   flutter_launcher_icons: ^0.14.4
   # GraphQL codegen (Phase 1): typed Dart from .graphql operation files against

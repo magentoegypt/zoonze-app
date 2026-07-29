@@ -36,16 +36,6 @@ jobs:
       - name: Generate GraphQL typed Dart (build_runner)
         run: dart run build_runner build --delete-conflicting-outputs
 
-      # The shipped app deliberately does NOT set FlutterDeepLinkingEnabled —
-      # adding it would change release routing behaviour. The screenshot script
-      # drives the app by deep link, so enable it for THIS simulator build only.
-      # This edit lives in the runner's checkout and is never committed.
-      - name: Enable Flutter deep linking (simulator build only)
-        run: |
-          /usr/libexec/PlistBuddy -c \
-            "Add :FlutterDeepLinkingEnabled bool true" ios/Runner/Info.plist
-          /usr/libexec/PlistBuddy -c "Print :FlutterDeepLinkingEnabled" ios/Runner/Info.plist
-
       - name: Capture screenshots
         env:
           SHOT_LOCALE: ${{ inputs.locale }}
