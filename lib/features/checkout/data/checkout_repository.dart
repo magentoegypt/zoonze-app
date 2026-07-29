@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphql_flutter/graphql_flutter.dart';
 
+import '../../../core/diagnostics/payment_trace.dart';
+
 import '../../../core/error/failure.dart';
 import '../../../core/error/graphql_failure_mapper.dart';
 import '../../../core/graphql/graphql_client.dart';
@@ -148,15 +150,40 @@ class CheckoutRepository {
         'lastname': lastname,
         'token': token,
       });
-      return _parseSession(
+      final session = _parseSession(
         data['paymentSession'] as Map<String, dynamic>?,
         orderNumber,
       );
-    } on Failure {
+      // Which credential set went out matters: a customer order authorises by
+      // bearer, a guest order by token or email+lastname, and picking the wrong
+      // one is itself a failure mode.
+      final auth = token != null
+          ? 'guest/token'
+          : (email != null ? 'guest/email' : 'customer/bearer');
+      if (session == null) {
+        await PaymentTrace.record(
+          'session: NONE for $orderNumber (auth=$auth) — resolver found no order',
+        );
+      } else {
+        await PaymentTrace.record(
+          'session: $orderNumber ${session.gateway.name}/${session.methodCode} '
+          'status=${session.status.name} webUrl=${session.webUrl != null} '
+          '(auth=$auth)',
+        );
+      }
+      return session;
+    } on Failure catch (failure) {
+      await PaymentTrace.record(
+        'session: FAILED for $orderNumber — ${failure.kind.name}: '
+        '${failure.detail ?? "no detail"}',
+      );
       return null;
-    } catch (_) {
+    } catch (error) {
       // A malformed-but-200 response (unexpected JSON shape) must degrade to
       // "awaiting payment", not crash the checkout flow with a cast error.
+      await PaymentTrace.record(
+        'session: unparseable response for $orderNumber — $error',
+      );
       return null;
     }
   }
