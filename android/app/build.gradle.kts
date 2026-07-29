@@ -90,6 +90,11 @@ if (file("google-services.json").exists()) {
 dependencies {
     // Backports java.time etc. for flutter_local_notifications on older API levels.
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+
+    // N-Genius card payments (zoonze/payments channel). Latest stable at
+    // integration time; docs/decisions/payments.md pinned 5.0.1 before the
+    // SDK deprecated CardPaymentRequest in favour of PaymentsRequest.
+    implementation("com.github.network-international.payment-sdk-android:payment-sdk:5.2.3")
 }
 
 kotlin {
