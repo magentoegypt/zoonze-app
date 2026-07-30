@@ -32,9 +32,18 @@ class NativePaymentGateway implements PaymentGateway {
         'language': Localizations.localeOf(context).languageCode,
         if (amount != null) 'amount': amount.amount,
         if (amount != null) 'currency': amount.currency,
-        // N-Genius: iOS decodes the full order JSON; Android drives the href.
+        // N-Genius: iOS decodes the full order JSON; Android drives the links.
         'orderResponse': session.additionalData['order_response'],
-        'paymentAuthorizationHref':
+        // Two different links, and swapping them makes the SDK authorize
+        // against the pay page and get back an HTML error page.
+        //   authorization_href → _links.payment-authorization (authorize here)
+        //   pay_page_href      → _links.payment (hosted page, carries ?code=)
+        // `payment_authorization_href` is the old, misnamed key: it carried the
+        // pay-page href. Read only as a last resort, and never as the
+        // authorization link.
+        'authorizationHref': session.additionalData['authorization_href'],
+        'payPageHref':
+            session.additionalData['pay_page_href'] ??
             session.additionalData['payment_authorization_href'] ??
             session.webUrl,
         'outletRef': session.additionalData['outlet_ref'],

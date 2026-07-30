@@ -126,7 +126,9 @@ if the stored row is stale):
   | key                          | value                                                              |
   |------------------------------|--------------------------------------------------------------------|
   | `order_reference`            | `reference`                                                        |
-  | `payment_authorization_href` | `_links.payment.href`                                              |
+  | `pay_page_href`              | `_links.payment.href` — the hosted pay page (carries `?code=`)      |
+  | `authorization_href`         | `_links.payment-authorization.href` — what the SDK authorizes against |
+  | `payment_authorization_href` | **DEPRECATED**, misnamed: carries `_links.payment.href`. Kept for app builds ≤ 1.0.0+80 |
   | `outlet_ref`                 | resolved outlet (`outlet_ref` / `outlet_ref_2` per currency)       |
   | `action`                     | `SALE` \| `AUTH` (`ngenius_payment_action`)                        |
   | `state`                      | `PENDING_AUTHORIZATION`                                            |
@@ -275,7 +277,8 @@ Flutter ⇄ native bridge that launches the gateway SDK once `paymentSession` is
 
   // ---- N-Genius ----
   "orderResponse":             "<full order JSON string from additional_data.order_response>",  // iOS consumes
-  "paymentAuthorizationHref":  "https://.../payment-authorization",                              // Android consumes
+  "authorizationHref":         "https://.../payment-authorization",   // Android: authorize against this
+  "payPageHref":               "https://paypage.../?code=...",        // Android: hosted pay page
   "outletRef":                 "<outlet ref>",
 
   // ---- Tabby ----
@@ -289,7 +292,7 @@ Flutter ⇄ native bridge that launches the gateway SDK once `paymentSession` is
 
 | Platform | SDK entry point                                                                                     | Field consumed                       |
 |----------|-----------------------------------------------------------------------------------------------------|--------------------------------------|
-| Android  | `PaymentClient.launchCardPayment(cardPaymentRequest, requestCode)` — `CardPaymentRequest.builder().gatewayUrl(href).code(authCode).build()` derived from the `payment-authorization` href | **`paymentAuthorizationHref`**       |
+| Android  | `PaymentsLauncher.launch(PaymentsRequest.builder().gatewayAuthorizationUrl(auth).payPageUrl(payPage).build())` — `CardPaymentRequest` is deprecated in payment-sdk 5.2.3 | **`orderResponse`** links, falling back to `authorizationHref` + `payPageHref` |
 | iOS      | `NISdk.sharedInstance.showCardPaymentViewWith(cardPaymentDelegate:, overParent:, for: order)` where `order: OrderResponse` is decoded from the full order JSON | **`orderResponse`** (full order JSON) |
 
 > Both fields are always sent; each platform ignores the other's. Tabby uses `webUrl` + `publishableKey` +
