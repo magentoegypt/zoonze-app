@@ -3,21 +3,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/config/store_contact.dart';
+import '../../core/error/failure.dart';
 import '../../core/store/store_controller.dart';
 import '../../core/util/launch.dart';
 import '../../core/validation/validators.dart';
 import '../../core/widgets/brand_logo.dart';
+import '../../core/widgets/failure_message.dart';
 import '../../core/widgets/social_icon.dart';
 import '../../core/widgets/web_view_screen.dart';
 import '../../features/auth/presentation/auth_controller.dart';
+import '../../features/newsletter/data/newsletter_repository.dart';
 import '../../l10n/l10n.dart';
 import '../routes.dart';
 import '../theme/app_colors.dart';
 
 /// Marketing footer shown on content screens (home, PLP, PDP, cart, …) in both
 /// EN and AR. Social links + website come from admin config
-/// ([storeContactProvider]); other links navigate in-app; the newsletter
-/// validates the email and confirms locally.
+/// ([storeContactProvider]); other links navigate in-app; the newsletter posts
+/// to Magento via [NewsletterRepository], scoped to the active store view.
 class MarketingFooter extends ConsumerStatefulWidget {
   const MarketingFooter({super.key});
 
@@ -27,6 +30,7 @@ class MarketingFooter extends ConsumerStatefulWidget {
 
 class _MarketingFooterState extends ConsumerState<MarketingFooter> {
   final TextEditingController _newsletter = TextEditingController();
+  bool _subscribing = false;
 
   @override
   void dispose() {
@@ -34,16 +38,42 @@ class _MarketingFooterState extends ConsumerState<MarketingFooter> {
     super.dispose();
   }
 
-  void _subscribe() {
+  Future<void> _subscribe() async {
+    if (_subscribing) return;
     final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
-    if (Validators.email(context, _newsletter.text) != null) {
+    final email = _newsletter.text.trim();
+    if (Validators.email(context, email) != null) {
       messenger.showSnackBar(SnackBar(content: Text(l10n.validationEmail)));
       return;
     }
-    _newsletter.clear();
     FocusScope.of(context).unfocus();
-    messenger.showSnackBar(SnackBar(content: Text(l10n.footerSubscribed)));
+    setState(() => _subscribing = true);
+    try {
+      final result = await ref
+          .read(newsletterRepositoryProvider)
+          .subscribe(email);
+      if (!mounted) return;
+      // Only clear the field once the address is actually on the list —
+      // otherwise a failed sign-up loses what the user typed.
+      _newsletter.clear();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            result == NewsletterSubscription.subscribed
+                ? l10n.footerSubscribed
+                : l10n.footerSubscribeConfirm,
+          ),
+        ),
+      );
+    } on Failure catch (failure) {
+      if (!mounted) return;
+      messenger.showSnackBar(
+        SnackBar(content: Text(failureMessage(context, failure))),
+      );
+    } finally {
+      if (mounted) setState(() => _subscribing = false);
+    }
   }
 
   /// Slug for a store CMS page, relative to the active store's base URL. "About
@@ -235,6 +265,7 @@ class _MarketingFooterState extends ConsumerState<MarketingFooter> {
               Expanded(
                 child: TextField(
                   controller: _newsletter,
+                  enabled: !_subscribing,
                   keyboardType: TextInputType.emailAddress,
                   onSubmitted: (_) => _subscribe(),
                   decoration: InputDecoration(
@@ -254,11 +285,17 @@ class _MarketingFooterState extends ConsumerState<MarketingFooter> {
               ),
               const SizedBox(width: 8),
               FilledButton(
-                onPressed: _subscribe,
+                onPressed: _subscribing ? null : _subscribe,
                 style: FilledButton.styleFrom(
                   minimumSize: const Size(0, 48),
                 ),
-                child: Text(l10n.footerSubscribe),
+                child: _subscribing
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(l10n.footerSubscribe),
               ),
             ],
           ),

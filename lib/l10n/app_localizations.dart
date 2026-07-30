@@ -2870,6 +2870,12 @@ abstract class AppLocalizations {
   /// **'Thanks! We\'ll keep you posted.'**
   String get footerSubscribed;
 
+  /// No description provided for @footerSubscribeConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Almost there — check your inbox to confirm your subscription.'**
+  String get footerSubscribeConfirm;
+
   /// No description provided for @footerRights.
   ///
   /// In en, this message translates to:

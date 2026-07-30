@@ -4,7 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zoonze_app/app/shell/marketing_footer.dart';
 import 'package:zoonze_app/core/config/store_contact.dart';
+import 'package:zoonze_app/core/error/failure.dart';
+import 'package:zoonze_app/features/newsletter/data/newsletter_repository.dart';
 import 'package:zoonze_app/l10n/l10n.dart';
+
+import '../support/fakes.dart';
 
 const _testContact = StoreContact(
   company: 'Zoonze Perfume & Cosmetics Trading LLC',
@@ -19,10 +23,33 @@ const _testContact = StoreContact(
   instagram: 'https://instagram.com/zoonze',
 );
 
-Future<void> _pump(WidgetTester tester) async {
+/// Stands in for the live mutation so the footer's success / double-opt-in /
+/// failure branches can each be driven. Extends the real repository so a
+/// signature change breaks this fake at compile time.
+class _FakeNewsletterRepository extends NewsletterRepository {
+  _FakeNewsletterRepository(this._outcome) : super(fakeGraphQLClient());
+
+  /// A [NewsletterSubscription] to return, or a [Failure] to throw.
+  final Object _outcome;
+  String? lastEmail;
+
+  @override
+  Future<NewsletterSubscription> subscribe(String email) async {
+    lastEmail = email;
+    final outcome = _outcome;
+    if (outcome is Failure) throw outcome;
+    return outcome as NewsletterSubscription;
+  }
+}
+
+Future<void> _pump(WidgetTester tester, {NewsletterRepository? newsletter}) async {
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [storeContactProvider.overrideWithValue(_testContact)],
+      overrides: [
+        storeContactProvider.overrideWithValue(_testContact),
+        if (newsletter != null)
+          newsletterRepositoryProvider.overrideWithValue(newsletter),
+      ],
       child: MaterialApp(
         localizationsDelegates: const [
           AppLocalizations.delegate,
@@ -49,12 +76,57 @@ void main() {
     expect(find.text('Enter a valid email'), findsOneWidget);
   });
 
-  testWidgets('newsletter confirms a valid email', (tester) async {
-    await _pump(tester);
+  testWidgets('newsletter confirms only after the backend subscribes', (
+    tester,
+  ) async {
+    final repo = _FakeNewsletterRepository(NewsletterSubscription.subscribed);
+    await _pump(tester, newsletter: repo);
+    await tester.enterText(find.byType(TextField), ' shopper@example.com ');
+    await tester.tap(find.widgetWithText(FilledButton, 'Subscribe'));
+    await tester.pumpAndSettle();
+
+    // Trimmed before it reaches Magento — a stray space would be rejected.
+    expect(repo.lastEmail, 'shopper@example.com');
+    expect(find.text("Thanks! We'll keep you posted."), findsOneWidget);
+  });
+
+  testWidgets('double opt-in asks the user to confirm, not "subscribed"', (
+    tester,
+  ) async {
+    await _pump(
+      tester,
+      newsletter: _FakeNewsletterRepository(
+        NewsletterSubscription.pendingConfirmation,
+      ),
+    );
     await tester.enterText(find.byType(TextField), 'shopper@example.com');
     await tester.tap(find.widgetWithText(FilledButton, 'Subscribe'));
-    await tester.pump();
-    expect(find.text("Thanks! We'll keep you posted."), findsOneWidget);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.text('Almost there — check your inbox to confirm your subscription.'),
+      findsOneWidget,
+    );
+    expect(find.text("Thanks! We'll keep you posted."), findsNothing);
+  });
+
+  testWidgets('a failed sign-up reports the error and keeps the email', (
+    tester,
+  ) async {
+    // The regression this guards: the footer used to confirm unconditionally.
+    await _pump(
+      tester,
+      newsletter: _FakeNewsletterRepository(
+        const Failure(FailureKind.network),
+      ),
+    );
+    await tester.enterText(find.byType(TextField), 'shopper@example.com');
+    await tester.tap(find.widgetWithText(FilledButton, 'Subscribe'));
+    await tester.pumpAndSettle();
+
+    expect(find.text("Thanks! We'll keep you posted."), findsNothing);
+    // Text survives so the user can retry without retyping.
+    expect(find.text('shopper@example.com'), findsOneWidget);
   });
 
   testWidgets('footer links are tappable widgets', (tester) async {

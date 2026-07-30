@@ -1530,6 +1530,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get footerSubscribed => 'شكرًا! سنبقيك على اطّلاع.';
 
   @override
+  String get footerSubscribeConfirm =>
+      'بقيت خطوة واحدة — تحقّق من بريدك الإلكتروني لتأكيد اشتراكك.';
+
+  @override
   String get footerRights => '© 2026 زونزي · جميع الحقوق محفوظة.';
 
   @override

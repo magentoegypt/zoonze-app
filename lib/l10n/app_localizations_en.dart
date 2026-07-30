@@ -1567,6 +1567,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get footerSubscribed => 'Thanks! We\'ll keep you posted.';
 
   @override
+  String get footerSubscribeConfirm =>
+      'Almost there — check your inbox to confirm your subscription.';
+
+  @override
   String get footerRights => '© 2026 Zoonze · All rights reserved.';
 
   @override
