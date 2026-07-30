@@ -1,7 +1,7 @@
 name: zoonze_app
 description: "ZoonZE Beauty — Flutter storefront client for Magento Open Source (zoonze.com), UAE, bilingual EN/AR, AED."
 publish_to: "none"
-version: 1.0.0+80
+version: 1.0.0+81
 
 environment:
   sdk: ^3.12.0
