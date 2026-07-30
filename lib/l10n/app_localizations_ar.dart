@@ -87,7 +87,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get deleteAccountConfirmBody =>
-      'سيؤدي هذا إلى حذف حسابك في Zoonze نهائياً، مع عناوينك المحفوظة وقائمة المفضّلة وسجل الطلبات. لا يمكن التراجع عن هذا الإجراء.';
+      'سيؤدي هذا إلى حذف حسابك في Zoonze نهائياً، مع عناوينك المحفوظة وقائمة المفضّلة. أما سجلات الطلبات والفواتير فنحتفظ بها للمدة التي يفرضها القانون في دولة الإمارات. لا يمكن التراجع عن هذا الإجراء.';
 
   @override
   String get deleteAccountConfirmAction => 'حذف الحساب';

@@ -29,7 +29,7 @@
   "deleteAccountTitle": "Delete account",
   "deleteAccountSubtitle": "Permanently remove your account and personal data",
   "deleteAccountConfirmTitle": "Delete your account?",
-  "deleteAccountConfirmBody": "This permanently deletes your Zoonze account, along with your saved addresses, wishlist and order history. It cannot be undone.",
+  "deleteAccountConfirmBody": "This permanently deletes your Zoonze account, along with your saved addresses and wishlist. Order and invoice records are kept for the period required by UAE law. It cannot be undone.",
   "deleteAccountConfirmAction": "Delete account",
   "deleteAccountDone": "Your account has been deleted.",
   "deleteAccountFailed": "We couldn't delete your account. Please try again.",

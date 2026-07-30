@@ -90,7 +90,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteAccountConfirmBody =>
-      'This permanently deletes your Zoonze account, along with your saved addresses, wishlist and order history. It cannot be undone.';
+      'This permanently deletes your Zoonze account, along with your saved addresses and wishlist. Order and invoice records are kept for the period required by UAE law. It cannot be undone.';
 
   @override
   String get deleteAccountConfirmAction => 'Delete account';

@@ -251,7 +251,7 @@ abstract class AppLocalizations {
   /// No description provided for @deleteAccountConfirmBody.
   ///
   /// In en, this message translates to:
-  /// **'This permanently deletes your Zoonze account, along with your saved addresses, wishlist and order history. It cannot be undone.'**
+  /// **'This permanently deletes your Zoonze account, along with your saved addresses and wishlist. Order and invoice records are kept for the period required by UAE law. It cannot be undone.'**
   String get deleteAccountConfirmBody;
 
   /// No description provided for @deleteAccountConfirmAction.

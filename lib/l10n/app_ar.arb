@@ -27,7 +27,7 @@
   "deleteAccountTitle": "حذف الحساب",
   "deleteAccountSubtitle": "إزالة حسابك وبياناتك الشخصية نهائياً",
   "deleteAccountConfirmTitle": "هل تريد حذف حسابك؟",
-  "deleteAccountConfirmBody": "سيؤدي هذا إلى حذف حسابك في Zoonze نهائياً، مع عناوينك المحفوظة وقائمة المفضّلة وسجل الطلبات. لا يمكن التراجع عن هذا الإجراء.",
+  "deleteAccountConfirmBody": "سيؤدي هذا إلى حذف حسابك في Zoonze نهائياً، مع عناوينك المحفوظة وقائمة المفضّلة. أما سجلات الطلبات والفواتير فنحتفظ بها للمدة التي يفرضها القانون في دولة الإمارات. لا يمكن التراجع عن هذا الإجراء.",
   "deleteAccountConfirmAction": "حذف الحساب",
   "deleteAccountDone": "تم حذف حسابك.",
   "deleteAccountFailed": "تعذّر حذف حسابك. يرجى المحاولة مرة أخرى.",
