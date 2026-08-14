@@ -14,6 +14,7 @@ import '../../../l10n/l10n.dart';
 import '../../auth/presentation/auth_controller.dart';
 import '../../wishlist/presentation/wishlist_controller.dart';
 import '../data/account_repository.dart';
+import 'delete_account_action.dart';
 
 class AccountScreen extends ConsumerWidget {
   const AccountScreen({super.key});
@@ -230,6 +231,17 @@ class _Authenticated extends ConsumerWidget {
           icon: Icons.info_outline,
           label: l10n.accountAbout,
           onTap: () => context.push(AppRoutes.about),
+        ),
+        const _TileDivider(),
+        // Account deletion has to be findable, not merely present: 1.0.0 (80)
+        // was rejected under Guideline 5.1.1(v) as having no option to delete
+        // an account, while the option existed in Settings — reachable only by
+        // tapping a row labelled "Language". It stays in Settings too; this is
+        // the copy a customer (or a reviewer) actually finds.
+        _AccountTile(
+          icon: Icons.delete_forever_outlined,
+          label: l10n.deleteAccountTitle,
+          onTap: () => confirmAndDeleteAccount(context, ref),
         ),
         const _AccountBand(),
         // Log out (Figma 43:34) — red, centered.

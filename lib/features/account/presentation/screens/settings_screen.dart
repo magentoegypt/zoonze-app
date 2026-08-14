@@ -9,8 +9,8 @@ import '../../../../core/app_info.dart';
 import '../../../../core/store/store_controller.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../auth/presentation/auth_controller.dart';
-import '../../../cart/presentation/cart_controller.dart';
 import '../../../notifications/presentation/notification_settings_controller.dart';
+import '../delete_account_action.dart';
 
 /// App settings: language toggle (EN/AR) + notification preferences, plus a
 /// shortcut to Help. The same language switch lives in the menu drawer; this
@@ -139,46 +139,10 @@ class _DeleteAccountTileState extends ConsumerState<_DeleteAccountTile> {
   bool _busy = false;
 
   Future<void> _confirmAndDelete() async {
-    final l10n = AppLocalizations.of(context);
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.deleteAccountConfirmTitle),
-        content: Text(l10n.deleteAccountConfirmBody),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(l10n.actionCancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            style: TextButton.styleFrom(
-              foregroundColor: Theme.of(context).colorScheme.error,
-            ),
-            child: Text(l10n.deleteAccountConfirmAction),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !mounted) return;
-
     setState(() => _busy = true);
-    try {
-      await ref.read(authControllerProvider.notifier).deleteAccount();
-      // The account is gone, so the server-side cart went with it.
-      await ref.read(cartControllerProvider.notifier).clearAfterOrder();
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.deleteAccountDone)),
-      );
-      context.go(AppRoutes.home);
-    } on Object {
-      if (!mounted) return;
-      setState(() => _busy = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.deleteAccountFailed)),
-      );
-    }
+    // Shared with the Account screen's tile so both routes behave identically.
+    await confirmAndDeleteAccount(context, ref);
+    if (mounted) setState(() => _busy = false);
   }
 
   @override
