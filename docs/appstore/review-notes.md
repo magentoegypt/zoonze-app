@@ -16,6 +16,31 @@ Zoonze is the shopping app for zoonze.com, a beauty and fragrance retailer in
 the United Arab Emirates. The app is a client of our existing storefront —
 catalog, pricing, cart and orders all come from our live backend.
 
+ACCOUNT DELETION (Guideline 5.1.1(v))
+
+Build 1.0.0 (80) was rejected for this. The option existed but was reachable
+only through a row labelled "Language", so it could not reasonably be found. In
+this build it is on the main Account screen.
+
+To reach it:
+
+1. Sign in with the demo account in the Sign-In Information fields above.
+2. Tap the Account tab (bottom right).
+3. Scroll down. "Delete account" sits between "About Zoonze" and "Log Out".
+4. Tap it. A dialog states what is removed; confirm with "Delete account".
+
+The account is then permanently deleted from our systems and the app returns to
+a signed-out state. It is a deletion, not a deactivation, and needs no website
+visit, phone call or email. A screen recording of this flow, captured on a
+physical device, is attached to our reply.
+
+Saved addresses and wishlist are erased. Order and invoice records are retained
+for the period UAE tax and consumer law requires — the confirmation dialog says
+so rather than overstating what is removed.
+
+The deletion is real. If you delete the demo account while testing, tell us and
+we will recreate it.
+
 PHYSICAL GOODS ONLY — NOT IN-APP PURCHASE
 
 Every item sold is a physical product (fragrance, skincare, makeup, hair care)
@@ -41,9 +66,9 @@ and order tracking all work from this path.
 LANGUAGES — ENGLISH AND ARABIC
 
 Both are fully supported. Switch using the EN / AR toggle at the top of the
-welcome screen, or later under Account > Settings > Language. Arabic renders
-the entire interface right-to-left, and product and category names are served
-in Arabic from our backend.
+welcome screen, or later under Account > Language. Arabic renders the entire
+interface right-to-left, and product and category names are served in Arabic
+from our backend.
 
 REGION
 
@@ -55,17 +80,6 @@ PUSH NOTIFICATIONS
 
 Used only for order status updates. iOS asks for permission on first launch;
 the app is fully functional if permission is declined.
-
-ACCOUNT DELETION
-
-Signed-in users can permanently delete their account from inside the app:
-Account > Delete Account. The action asks for confirmation, states
-what is removed (saved addresses, wishlist and order history), and then deletes
-the customer record from our systems. It is not a deactivation and does not
-require contacting support.
-
-To try it with the demo account, please tell us first so we can recreate it —
-the deletion is real and permanent.
 
 CONTACT
 
