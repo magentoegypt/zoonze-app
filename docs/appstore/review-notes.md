@@ -59,7 +59,7 @@ the app is fully functional if permission is declined.
 ACCOUNT DELETION
 
 Signed-in users can permanently delete their account from inside the app:
-Account > Settings > Delete Account. The action asks for confirmation, states
+Account > Delete Account. The action asks for confirmation, states
 what is removed (saved addresses, wishlist and order history), and then deletes
 the customer record from our systems. It is not a deactivation and does not
 require contacting support.
@@ -85,11 +85,12 @@ applies. Builds up to and including **75** shipped only
 `deleteCustomerAddress` and `deleteCustomerAvatar` — nothing that deleted the
 account itself — and would have failed review on this alone.
 
-**Build 76 adds it:** a destructive "Delete Account" action in Settings, shown
+**Build 82:** a destructive "Delete Account" action on the Account screen, shown
 only when signed in. It confirms first, calls Magento's `deleteCustomer`, then
 clears the token and cart and returns to the signed-out state. A server-side
 failure leaves the customer signed in rather than faking success.
 
-**Do not submit build 75 or earlier.** The build attached to the App Store
-version must be 76 or later, otherwise the ACCOUNT DELETION note above
-describes something the reviewer cannot find.
+**Do not submit build 81 or earlier.** The build attached to the App Store
+version must be 82 or later. 1.0.0 (80) was rejected under this guideline
+because the action existed only behind a row labelled "Language" — see
+rejection-5.1.1v-account-deletion.md.
