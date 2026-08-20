@@ -304,10 +304,10 @@ card/COD/Tabby checkout is unchanged. None of the external setup below blocks th
    (`SamsungPayCardMapper` maps only VISA / MASTERCARD / AMEX / DISCOVER, and the Apple Pay network
    list is a config value — `PKPaymentNetwork.mada` is the *Saudi* scheme, not a UAE default).
 8. **Magento:** register the two wallet method codes, dispatch them in `SessionDispatcher`, accept
-   them in `setOrderPaymentMethod`. The DEV27 title rename is **already done on
-   `eg_en`** — device checkout on 2026-08-20 rendered the row as "Visa &
-   MasterCard", and the app prints `method.title` verbatim. Only the `eg_ar`
-   title is unverified.
+   them in `setOrderPaymentMethod`. The DEV27 title rename needs **no Magento
+   work at all**: device checkout on 2026-08-20 rendered "Visa & MasterCard" on
+   `eg_en` and "بطاقات فيزا وماستركارد" on `eg_ar`, and the app prints
+   `method.title` verbatim, so both store views are already renamed.
 9. **Verify the NISdk Apple Pay API on the Mac build.** `initiateApplePayWith(applePayDelegate:
    cardPaymentDelegate:for:with:)` and the `ApplePayDelegate` shape could not be checked from the
    Windows dev box (no Pods). A mismatch is contained to `ios/Runner/ApplePaySession.swift` plus
