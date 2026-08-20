@@ -5,9 +5,9 @@ import 'package:zoonze_app/features/checkout/domain/payment_wallet.dart';
 import 'package:zoonze_app/features/checkout/payments/native_payment_gateway.dart';
 import 'package:zoonze_app/features/checkout/payments/wallet_availability.dart';
 
-const _apple = PaymentMethodOption(code: 'ngenius_applepay', title: 'Apple Pay');
+const _apple = PaymentMethodOption(code: 'ngeniusonline_applepay', title: 'Apple Pay');
 const _samsung = PaymentMethodOption(
-  code: 'ngenius_samsungpay',
+  code: 'ngeniusonline_samsungpay',
   title: 'Samsung Pay',
 );
 const _card = PaymentMethodOption(

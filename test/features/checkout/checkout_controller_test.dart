@@ -112,9 +112,9 @@ void main() {
           PaymentMethodOption(code: 'checkmo', title: 'Check / Money order'),
           PaymentMethodOption(code: 'cashondelivery', title: 'Cash on Delivery'),
           PaymentMethodOption(code: 'tabby_installments', title: 'Tabby'),
-          PaymentMethodOption(code: 'ngenius_samsungpay', title: 'Samsung Pay'),
+          PaymentMethodOption(code: 'ngeniusonline_samsungpay', title: 'Samsung Pay'),
           PaymentMethodOption(code: 'ngeniusonline', title: 'Visa & MasterCard'),
-          PaymentMethodOption(code: 'ngenius_applepay', title: 'Apple Pay'),
+          PaymentMethodOption(code: 'ngeniusonline_applepay', title: 'Apple Pay'),
         ],
       );
       final container = await _seededContainer(repo);
@@ -131,7 +131,7 @@ void main() {
       final state = container.read(checkoutControllerProvider);
       expect(
         [for (final m in state.paymentMethods) m.code],
-        ['ngenius_applepay', 'ngenius_samsungpay', 'ngeniusonline',
+        ['ngeniusonline_applepay', 'ngeniusonline_samsungpay', 'ngeniusonline',
          'tabby_installments', 'cashondelivery', 'checkmo'],
       );
       // COD stays the pre-selected default even though its row moved to the
@@ -143,8 +143,8 @@ void main() {
     test('hides wallets this device cannot pay with', () async {
       final repo = FakeCheckoutRepository(
         paymentMethods: const [
-          PaymentMethodOption(code: 'ngenius_applepay', title: 'Apple Pay'),
-          PaymentMethodOption(code: 'ngenius_samsungpay', title: 'Samsung Pay'),
+          PaymentMethodOption(code: 'ngeniusonline_applepay', title: 'Apple Pay'),
+          PaymentMethodOption(code: 'ngeniusonline_samsungpay', title: 'Samsung Pay'),
           PaymentMethodOption(code: 'ngeniusonline', title: 'Visa & MasterCard'),
           PaymentMethodOption(code: 'cashondelivery', title: 'Cash on Delivery'),
         ],
@@ -166,15 +166,15 @@ void main() {
       final state = container.read(checkoutControllerProvider);
       expect(
         [for (final m in state.paymentMethods) m.code],
-        ['ngenius_applepay', 'ngeniusonline', 'cashondelivery'],
+        ['ngeniusonline_applepay', 'ngeniusonline', 'cashondelivery'],
       );
     });
 
     test('a device with no wallets still reaches the payment step', () async {
       final repo = FakeCheckoutRepository(
         paymentMethods: const [
-          PaymentMethodOption(code: 'ngenius_applepay', title: 'Apple Pay'),
-          PaymentMethodOption(code: 'ngenius_samsungpay', title: 'Samsung Pay'),
+          PaymentMethodOption(code: 'ngeniusonline_applepay', title: 'Apple Pay'),
+          PaymentMethodOption(code: 'ngeniusonline_samsungpay', title: 'Samsung Pay'),
           PaymentMethodOption(code: 'cashondelivery', title: 'Cash on Delivery'),
         ],
       );

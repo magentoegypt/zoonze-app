@@ -27,7 +27,7 @@ class PaymentSession {
 
   final String orderNumber;
 
-  /// ngeniusonline | ngenius_applepay | ngenius_samsungpay |
+  /// ngeniusonline | ngeniusonline_applepay | ngeniusonline_samsungpay |
   /// tabby_installments | tabby_cc_installments | tabby_checkout.
   final String methodCode;
   final PaymentProvider gateway;

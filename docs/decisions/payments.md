@@ -207,7 +207,7 @@ Pay decodes the same `order_response`. So:
 
 - `PaymentProvider` stays `{ ngenius, tabby }`, `PaymentGatewayResolver.resolve`'s exhaustive
   switch is untouched, and `NGeniusSessionBuilder` needs no backend change. Only `method_code`
-  differs (`ngenius_applepay` / `ngenius_samsungpay`, `gateway: NGENIUS`).
+  differs (`ngeniusonline_applepay` / `ngeniusonline_samsungpay`, `gateway: NGENIUS`).
 - The seam is a new **`wallet` argument** on the existing `pay` call (`card` | `applepay` |
   `samsungpay`), derived from the method code by `walletForMethodCode`.
 
@@ -267,7 +267,7 @@ backend-driven: DEV27's "Visa & MasterCard" is a Magento method-title rename, no
 
 `CheckoutController._payRank` now sorts Apple Pay → Samsung Pay → Visa & MasterCard → Tabby → Cash
 on Delivery → Check/Money order. The wallet tests must stay above the `ngenius` substring test or
-`ngenius_applepay` is swallowed into the card rank. COD remains the pre-selected default despite
+`ngeniusonline_applepay` is swallowed into the card rank. COD remains the pre-selected default despite
 moving to the bottom — pre-selecting the first row would arm a wallet sheet nobody asked for.
 
 ### Ships dark
@@ -276,6 +276,40 @@ With `APPLE_PAY_MERCHANT_ID` / `SAMSUNG_PAY_SERVICE_ID` blank (the default in al
 and no backend method codes, `walletAvailability` answers both-false, the rows never appear, and
 card/COD/Tabby checkout is unchanged. None of the external setup below blocks the rest of the app.
 ---
+
+## 4c. Wallet methods are live on the API (2026-08-20)
+
+`available_payment_methods` on `eg_en` now returns five methods, in this order:
+
+| code | title |
+|---|---|
+| `ngeniusonline_applepay` | Apple Pay |
+| `ngeniusonline_samsungpay` | Samsung Pay |
+| `ngeniusonline` | Visa & MasterCard |
+| `tabby_installments` | Pay later with Tabby |
+| `cashondelivery` | Cash On Delivery |
+
+`PaymentGateway` is still `{ NGENIUS, TABBY }` and `PaymentSessionOutput` is
+unchanged, which is what this design assumed — the wallets are method codes on
+the existing gateway, not new gateway values.
+
+**The codes are `ngeniusonline_*`, not the `ngenius_*` this contract originally
+assumed.** The loose, separator-normalised matcher in `payment_wallet.dart`
+absorbed that without a code change; an exact match would have failed silently,
+and the failure mode is the bad one — an unrecognised wallet code falls out of
+`isRedirect`, so checkout would skip the payment session and show order-success
+for an unpaid order. The live codes are now pinned in
+`wallet_payment_method_test.dart` so a future rename fails a test instead.
+
+`_payRank` sorts the live codes to exactly the DEV27 order, verified by
+computing the rank of each real code.
+
+**Device behaviour with the wallets live** (Xiaomi, Android 16, prod release,
+no merchant id / service id configured): the API returns all five, the app
+renders three — Visa & MasterCard, Tabby, COD — with the payment trace reading
+`wallets: applePay=false samsungPay=false`. That is the capability filter doing
+its job against real API data for the first time; before this the wallets were
+never served, so the filter was only exercised by tests.
 
 ## 5. Open items before go-live
 

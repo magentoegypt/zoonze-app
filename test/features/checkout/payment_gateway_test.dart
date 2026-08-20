@@ -53,7 +53,7 @@ void main() {
       // Apple Pay and Samsung Pay are N-Genius wallets, not gateways: they must
       // resolve to the same native gateway as the card form. If someone ever
       // adds a PaymentProvider value for them, this breaks first.
-      for (final method in ['ngenius_applepay', 'ngenius_samsungpay']) {
+      for (final method in ['ngeniusonline_applepay', 'ngeniusonline_samsungpay']) {
         final session = _session(
           gateway: PaymentProvider.ngenius,
           method: method,

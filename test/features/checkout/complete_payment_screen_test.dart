@@ -123,8 +123,8 @@ void main() {
     await _pump(
       tester,
       methods: const [
-        PaymentMethodOption(code: 'ngenius_applepay', title: 'Apple Pay'),
-        PaymentMethodOption(code: 'ngenius_samsungpay', title: 'Samsung Pay'),
+        PaymentMethodOption(code: 'ngeniusonline_applepay', title: 'Apple Pay'),
+        PaymentMethodOption(code: 'ngeniusonline_samsungpay', title: 'Samsung Pay'),
         PaymentMethodOption(code: 'ngeniusonline', title: 'Visa & MasterCard'),
       ],
       wallets: const WalletAvailability(applePay: true),

@@ -256,7 +256,7 @@ class CheckoutController extends Notifier<CheckoutState> {
   /// normally the only method when it appears) keeps the old fallback rank.
   ///
   /// The wallet tests must stay ABOVE the `ngenius` substring test: the wallet
-  /// method codes are `ngenius_applepay` / `ngenius_samsungpay`, so a substring
+  /// method codes are `ngeniusonline_applepay` / `ngeniusonline_samsungpay`, so a substring
   /// check would swallow them into the card row's rank and leave their relative
   /// order down to whatever the API happened to return.
   static int _payRank(String code) {

@@ -103,7 +103,7 @@ class PaymentMethodCard extends StatelessWidget {
     if (m.isFree) return Icons.card_giftcard;
     if (m.isTabby) return Icons.calendar_today_outlined;
     // Above the `ngenius` test below, which would otherwise swallow
-    // `ngenius_applepay` and render a plain credit card.
+    // `ngeniusonline_applepay` and render a plain credit card.
     if (m.isApplePay) return Icons.account_balance_wallet_outlined;
     if (m.isSamsungPay) return Icons.account_balance_wallet_outlined;
     final c = m.code.toLowerCase();

@@ -44,7 +44,7 @@ type Query {
 
 type PaymentSessionOutput {
     order_number: String!
-    method_code: String!                 # ngeniusonline | ngenius_applepay | ngenius_samsungpay
+    method_code: String!                 # ngeniusonline | ngeniusonline_applepay | ngeniusonline_samsungpay
                                          # | tabby_installments | tabby_cc_installments | tabby_checkout
     gateway: PaymentGateway!
     status: PaymentSessionStatus!
@@ -135,7 +135,7 @@ if the stored row is stale):
   | `state`                      | `PENDING_AUTHORIZATION`                                            |
   | `order_response`             | **full order JSON, stringified** — iOS `NISdk` decodes this whole blob |
 
-#### N-Genius wallets (`ngenius_applepay` / `ngenius_samsungpay`)
+#### N-Genius wallets (`ngeniusonline_applepay` / `ngeniusonline_samsungpay`)
 
 Apple Pay and Samsung Pay are **wallet presentations of the N-Genius card flow, not new
 gateways**. Both SDKs authorize against the very same N-Genius order the card path uses
@@ -302,7 +302,7 @@ Flutter ⇄ native bridge that launches the gateway SDK once `paymentSession` is
 {
   "gateway":      "ngenius" | "tabby",       // wallets keep "ngenius"
   "wallet":       "card" | "applepay" | "samsungpay",
-  "methodCode":   "ngeniusonline" | "ngenius_applepay" | "ngenius_samsungpay"
+  "methodCode":   "ngeniusonline" | "ngeniusonline_applepay" | "ngeniusonline_samsungpay"
                   | "tabby_installments" | "tabby_cc_installments" | "tabby_checkout",
   "orderNumber":  "2000000123",
   "amount":       199.00,
@@ -425,4 +425,4 @@ finalises the order server-side) before showing the success screen.
 | status strings | `NativePaymentGateway._mapStatus` (POST_AUTH_REVIEW → success) |
 | `wallet` (`pay` arg) | `PaymentSession.wallet` / `walletForMethodCode` (`domain/payment_wallet.dart`) |
 | `walletAvailability` | `WalletProbe` / `walletAvailabilityProvider` / `filterUnavailableWallets` (`payments/wallet_availability.dart`) |
-| `ngenius_applepay` / `ngenius_samsungpay` | `PaymentMethodOption.isApplePay` / `isSamsungPay`; ordering in `CheckoutController._payRank` |
+| `ngeniusonline_applepay` / `ngeniusonline_samsungpay` | `PaymentMethodOption.isApplePay` / `isSamsungPay`; ordering in `CheckoutController._payRank` |

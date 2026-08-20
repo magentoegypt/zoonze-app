@@ -23,13 +23,14 @@ enum PaymentWallet {
 
 /// Maps a Magento payment method code to its wallet.
 ///
-/// Matching is loose *on purpose*. The backend method codes are provisional
-/// (`ngenius_applepay` / `ngenius_samsungpay` per the contract, but not yet
-/// deployed), and the cost of a miss is severe: a wallet code that isn't
-/// recognised falls out of `PaymentMethodOption.isRedirect` and checkout would
-/// show a success screen for an order nobody paid for. So the separators are
-/// stripped first and the rest is a substring test, which absorbs
-/// `ngenius_applepay`, `ngenius_apple_pay`, `apple-pay`, `applepay`,
+/// Matching is loose *on purpose*, and it already earned its keep: the contract
+/// was written against an assumed `ngenius_applepay`, and the backend shipped
+/// `ngeniusonline_applepay` (live-confirmed 2026-08-20). An exact match would
+/// have failed silently, and the cost of a miss is severe — a wallet code that
+/// isn't recognised falls out of `PaymentMethodOption.isRedirect`, and checkout
+/// would show a success screen for an order nobody paid for. So the separators
+/// are stripped first and the rest is a substring test, which absorbs
+/// `ngeniusonline_applepay`, `ngenius_apple_pay`, `apple-pay`, `applepay`,
 /// `ngeniusApplePay` and the Samsung equivalents alike.
 ///
 /// Note this normalisation is NOT reused by `tabbyProduct`, which matches

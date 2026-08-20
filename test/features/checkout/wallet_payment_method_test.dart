@@ -41,6 +41,9 @@ void main() {
   group('walletForMethodCode', () {
     test('recognises Apple Pay however the backend spells the code', () {
       for (final code in [
+        // The live code, confirmed against available_payment_methods on
+        // 2026-08-20. The rest are spellings the matcher tolerates.
+        'ngeniusonline_applepay',
         'ngenius_applepay',
         'ngenius_apple_pay',
         'NGENIUS_APPLEPAY',
@@ -59,6 +62,8 @@ void main() {
 
     test('recognises Samsung Pay however the backend spells the code', () {
       for (final code in [
+        // The live code, confirmed 2026-08-20.
+        'ngeniusonline_samsungpay',
         'ngenius_samsungpay',
         'ngenius_samsung_pay',
         'SAMSUNG-PAY',
@@ -100,11 +105,11 @@ void main() {
   group('PaymentMethodOption — wallets', () {
     test('exposes the wallet flags', () {
       const apple = PaymentMethodOption(
-        code: 'ngenius_applepay',
+        code: 'ngeniusonline_applepay',
         title: 'Apple Pay',
       );
       const samsung = PaymentMethodOption(
-        code: 'ngenius_samsungpay',
+        code: 'ngeniusonline_samsungpay',
         title: 'Samsung Pay',
       );
       const card = PaymentMethodOption(
@@ -140,7 +145,7 @@ void main() {
 
     test('wallets do not disturb the existing method flags', () {
       const apple = PaymentMethodOption(
-        code: 'ngenius_applepay',
+        code: 'ngeniusonline_applepay',
         title: 'Apple Pay',
       );
       expect(apple.isFree, isFalse);
@@ -165,12 +170,12 @@ void main() {
 
   group('PaymentSession.wallet', () {
     test('derives from the method code, gateway stays N-Genius', () {
-      expect(_session('ngenius_applepay').wallet, PaymentWallet.applePay);
-      expect(_session('ngenius_samsungpay').wallet, PaymentWallet.samsungPay);
+      expect(_session('ngeniusonline_applepay').wallet, PaymentWallet.applePay);
+      expect(_session('ngeniusonline_samsungpay').wallet, PaymentWallet.samsungPay);
       expect(_session('ngeniusonline').wallet, PaymentWallet.card);
       // A wallet must never become a new gateway — the resolver switch depends
       // on that staying true.
-      expect(_session('ngenius_applepay').gateway, PaymentProvider.ngenius);
+      expect(_session('ngeniusonline_applepay').gateway, PaymentProvider.ngenius);
     });
   });
 
@@ -179,7 +184,7 @@ void main() {
       await _pumpCard(
         tester,
         const PaymentMethodOption(
-          code: 'ngenius_applepay',
+          code: 'ngeniusonline_applepay',
           title: 'Apple Pay',
         ),
       );
@@ -191,7 +196,7 @@ void main() {
       await _pumpCard(
         tester,
         const PaymentMethodOption(
-          code: 'ngenius_samsungpay',
+          code: 'ngeniusonline_samsungpay',
           title: 'Samsung Pay',
         ),
         locale: 'ar',
@@ -205,7 +210,7 @@ void main() {
       await _pumpCard(
         tester,
         const PaymentMethodOption(
-          code: 'ngenius_applepay',
+          code: 'ngeniusonline_applepay',
           title: 'Apple Pay',
         ),
       );
