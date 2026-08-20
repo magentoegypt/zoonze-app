@@ -194,6 +194,14 @@ final class PaymentChannel: NSObject {
         return
       }
 
+      // NISdk presents the PassKit sheet itself, but still wants the presenting
+      // controller — same as the card path.
+      guard let parent = Self.topViewController() else {
+        result(Self.payload(status: "FAILED", orderNumber: orderNumber,
+                            raw: "no view controller to present over"))
+        return
+      }
+
       let session = ApplePaySession(orderNumber: orderNumber) { [weak self] payload in
         self?.activeApplePaySession = nil
         result(payload)
@@ -205,7 +213,7 @@ final class PaymentChannel: NSObject {
       DispatchQueue.main.async {
         NISdk.sharedInstance.initiateApplePayWith(
           applePayDelegate: session, cardPaymentDelegate: session,
-          for: order, with: request)
+          overParent: parent, for: order, with: request)
       }
     }
   #endif
