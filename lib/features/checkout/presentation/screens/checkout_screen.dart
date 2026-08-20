@@ -24,6 +24,7 @@ import '../../../cart/domain/cart.dart';
 import '../../../cart/presentation/cart_controller.dart';
 import '../../../catalog/domain/money.dart';
 import '../../domain/payment_session.dart';
+import '../../domain/shipping_address_input.dart';
 import '../../payments/payment_method_card.dart';
 import '../../payments/payment_runner.dart';
 import '../../payments/wallet_availability.dart';
@@ -121,20 +122,6 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     return list.isEmpty ? null : list.first.id;
   }
 
-  /// Magento `CartAddressInput` from a saved [CustomerAddress].
-  Map<String, dynamic> _savedAddressInput(CustomerAddress a) => <String, dynamic>{
-    'firstname': a.firstName,
-    'lastname': a.lastName,
-    'telephone': a.telephone,
-    'street': [a.street, if (a.apartment.isNotEmpty) a.apartment],
-    'city': a.city,
-    'country_code': a.countryCode,
-    if (a.regionId != null)
-      'region_id': a.regionId
-    else if (a.region.isNotEmpty)
-      'region': a.region,
-  };
-
   Future<void> _submitAddress() async {
     // Only the email (and, when shown, the new-address form) is validated — a
     // selected saved address needs no form validation.
@@ -143,17 +130,31 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final saved =
         ref.read(addressesProvider).valueOrNull ?? const <CustomerAddress>[];
     final useSaved = !isGuest && !_useNewAddress && saved.isNotEmpty;
-    final Map<String, dynamic> address;
+    final Map<String, dynamic> shippingAddress;
+    final String lastname;
+    final String telephone;
     if (useSaved) {
       final id = _selectedAddressId ?? _defaultId(saved);
       final a = saved.firstWhere((x) => x.id == id, orElse: () => saved.first);
-      address = _savedAddressInput(a);
+      shippingAddress = ShippingAddressInput.saved(a);
+      // The saved-address branch sends only an id, so these come from the
+      // address record rather than being read back out of the input map.
+      lastname = a.lastName;
+      telephone = a.telephone;
     } else {
-      address = _addressInput();
+      // A newly typed address is still saved to the address book, which is the
+      // behaviour a shopper expects when they enter one at checkout. Only the
+      // already-saved path had to stop re-saving.
+      final input = _addressInput();
+      shippingAddress = ShippingAddressInput.fresh(input);
+      lastname = (input['lastname'] as String?) ?? '';
+      telephone = (input['telephone'] as String?) ?? '';
     }
     final ok = await _controller.submitAddress(
       email: _email.text.trim(),
-      address: address,
+      shippingAddress: shippingAddress,
+      lastname: lastname,
+      telephone: telephone,
       isGuest: isGuest,
     );
     if (!mounted) return;

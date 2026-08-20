@@ -129,9 +129,17 @@ class CheckoutController extends Notifier<CheckoutState> {
     return id.isEmpty ? null : id;
   }
 
+  /// Submits the checkout shipping address.
+  ///
+  /// [shippingAddress] is a Magento `ShippingAddressInput` — `{'address': {...}}`
+  /// for a newly entered address, or `{'customer_address_id': id}` for a saved
+  /// one. [lastname] and [telephone] are passed alongside rather than read back
+  /// out of the map, because the saved-address form carries neither.
   Future<bool> submitAddress({
     required String email,
-    required Map<String, dynamic> address,
+    required Map<String, dynamic> shippingAddress,
+    required String lastname,
+    required String telephone,
     required bool isGuest,
   }) async {
     final cartId = _cartId;
@@ -152,8 +160,8 @@ class CheckoutController extends Notifier<CheckoutState> {
       if (guest && email.isNotEmpty) {
         await _repo.setGuestEmail(cartId, email);
       }
-      final methods = await _repo.setShippingAddress(cartId, address);
-      final phone = Phone.normalizeUae((address['telephone'] as String?) ?? '');
+      final methods = await _repo.setShippingAddress(cartId, shippingAddress);
+      final phone = Phone.normalizeUae(telephone);
       // Keep a prior guest-OTP verification only when the phone is unchanged —
       // the challenge is bound to the cart's number, so editing an unrelated
       // address field (same phone) shouldn't force re-verification, but a new
@@ -161,7 +169,7 @@ class CheckoutController extends Notifier<CheckoutState> {
       final phoneChanged = phone != state.submittedPhone;
       state = state.copyWith(
         email: email,
-        lastname: (address['lastname'] as String?) ?? '',
+        lastname: lastname,
         isGuest: guest,
         shippingMethods: methods,
         selectedShipping: null,

@@ -61,8 +61,42 @@ const _address = <String, dynamic>{
   'country_code': 'AE',
 };
 
+/// A newly entered address: the literal, which Magento may save to the book.
+const _newAddress = <String, dynamic>{'address': _address};
+
+/// A saved address referenced by id — never a literal, so Magento's
+/// save_in_address_book default cannot duplicate it.
+const _savedAddress = <String, dynamic>{'customer_address_id': 42};
+
 void main() {
   group('CheckoutController', () {
+    test('a saved address reaches the repo by id, with no address literal', () async {
+      // The address-book duplication guard at the plumbing level: whatever the
+      // screen builds must arrive at setShippingAddressesOnCart untouched. An
+      // `address` key here means Magento would save a copy of an address the
+      // customer already has.
+      final repo = FakeCheckoutRepository();
+      final container = await _seededContainer(repo);
+      final checkout = container.read(checkoutControllerProvider.notifier);
+
+      final ok = await checkout.submitAddress(
+        email: '',
+        shippingAddress: _savedAddress,
+        lastname: 'Hassan',
+        telephone: '0500000000',
+        isGuest: false,
+      );
+
+      expect(ok, isTrue);
+      expect(repo.lastAddress, _savedAddress);
+      expect(repo.lastAddress!.containsKey('address'), isFalse);
+      // The phone still tracks, even though the input map no longer carries it.
+      expect(
+        container.read(checkoutControllerProvider).submittedPhone,
+        isNotEmpty,
+      );
+    });
+
     test('walks address → shipping → payment → place order', () async {
       final repo = FakeCheckoutRepository();
       final container = await _seededContainer(repo);
@@ -70,7 +104,9 @@ void main() {
 
       final addressOk = await checkout.submitAddress(
         email: 'guest@example.com',
-        address: _address,
+        shippingAddress: _newAddress,
+        lastname: 'Hassan',
+        telephone: '0500000000',
         isGuest: true,
       );
       expect(addressOk, isTrue);
@@ -121,7 +157,9 @@ void main() {
       final checkout = container.read(checkoutControllerProvider.notifier);
       await checkout.submitAddress(
         email: 'guest@example.com',
-        address: _address,
+        shippingAddress: _newAddress,
+        lastname: 'Hassan',
+        telephone: '0500000000',
         isGuest: true,
       );
       await checkout.selectShipping(
@@ -156,7 +194,9 @@ void main() {
       final checkout = container.read(checkoutControllerProvider.notifier);
       await checkout.submitAddress(
         email: 'guest@example.com',
-        address: _address,
+        shippingAddress: _newAddress,
+        lastname: 'Hassan',
+        telephone: '0500000000',
         isGuest: true,
       );
       await checkout.selectShipping(
@@ -185,7 +225,9 @@ void main() {
       final checkout = container.read(checkoutControllerProvider.notifier);
       await checkout.submitAddress(
         email: 'guest@example.com',
-        address: _address,
+        shippingAddress: _newAddress,
+        lastname: 'Hassan',
+        telephone: '0500000000',
         isGuest: true,
       );
       await checkout.selectShipping(
@@ -207,12 +249,14 @@ void main() {
 
         await checkout.submitAddress(
           email: 'layla@example.com',
-          address: _address,
+          shippingAddress: _newAddress,
+        lastname: 'Hassan',
+        telephone: '0500000000',
           isGuest: false,
         );
 
         expect(repo.guestEmail, isNull);
-        expect(repo.lastAddress, _address);
+        expect(repo.lastAddress, _newAddress);
       },
     );
 
@@ -223,7 +267,9 @@ void main() {
 
       final ok = await checkout.submitAddress(
         email: 'guest@example.com',
-        address: _address,
+        shippingAddress: _newAddress,
+        lastname: 'Hassan',
+        telephone: '0500000000',
         isGuest: true,
       );
 
@@ -243,7 +289,9 @@ void main() {
 
         await checkout.submitAddress(
           email: 'guest@example.com',
-          address: _address,
+          shippingAddress: _newAddress,
+        lastname: 'Hassan',
+        telephone: '0500000000',
           isGuest: true,
         );
         await checkout.loadPaymentSession('000000123');
@@ -262,7 +310,9 @@ void main() {
 
         await checkout.submitAddress(
           email: 'layla@example.com',
-          address: _address,
+          shippingAddress: _newAddress,
+        lastname: 'Hassan',
+        telephone: '0500000000',
           isGuest: false,
         );
         await checkout.loadPaymentSession('000000123');
@@ -284,7 +334,9 @@ void main() {
 
       await checkout.submitAddress(
         email: 'guest@example.com',
-        address: _address,
+        shippingAddress: _newAddress,
+        lastname: 'Hassan',
+        telephone: '0500000000',
         isGuest: true,
       );
       var state = container.read(checkoutControllerProvider);
@@ -319,7 +371,9 @@ void main() {
 
       final ok = await checkout.submitAddress(
         email: 'guest@example.com',
-        address: _address,
+        shippingAddress: _newAddress,
+        lastname: 'Hassan',
+        telephone: '0500000000',
         isGuest: true,
       );
 
@@ -336,7 +390,9 @@ void main() {
 
       await checkout.submitAddress(
         email: 'guest@example.com',
-        address: _address, // telephone '0500000000'
+        shippingAddress: _newAddress,
+        lastname: 'Hassan',
+        telephone: '0500000000', // telephone '0500000000'
         isGuest: true,
       );
 
@@ -353,7 +409,9 @@ void main() {
 
       await checkout.submitAddress(
         email: 'guest@example.com',
-        address: _address,
+        shippingAddress: _newAddress,
+        lastname: 'Hassan',
+        telephone: '0500000000',
         isGuest: true,
       );
       await checkout.requestGuestOtp();
@@ -374,7 +432,9 @@ void main() {
 
       await checkout.submitAddress(
         email: 'guest@example.com',
-        address: _address,
+        shippingAddress: _newAddress,
+        lastname: 'Hassan',
+        telephone: '0500000000',
         isGuest: true,
       );
       await expectLater(
@@ -395,7 +455,9 @@ void main() {
 
       await checkout.submitAddress(
         email: 'guest@example.com',
-        address: _address,
+        shippingAddress: _newAddress,
+        lastname: 'Hassan',
+        telephone: '0500000000',
         isGuest: true,
       );
       await checkout.verifyGuestOtp('123456');
@@ -407,7 +469,11 @@ void main() {
       // Same phone, edited street → verification is kept.
       await checkout.submitAddress(
         email: 'guest@example.com',
-        address: {..._address, 'street': ['2 New Street']},
+        shippingAddress: <String, dynamic>{
+          'address': {..._address, 'street': ['2 New Street']},
+        },
+        lastname: 'Hassan',
+        telephone: '0500000000',
         isGuest: true,
       );
       expect(
@@ -418,7 +484,11 @@ void main() {
       // Different phone → verification is reset.
       await checkout.submitAddress(
         email: 'guest@example.com',
-        address: {..._address, 'telephone': '0521111111'},
+        shippingAddress: <String, dynamic>{
+          'address': {..._address, 'telephone': '0521111111'},
+        },
+        lastname: 'Hassan',
+        telephone: '0521111111',
         isGuest: true,
       );
       expect(

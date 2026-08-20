@@ -26,10 +26,19 @@ mutation VerifyGuestCheckoutOtp($cartId: String!, $code: String!) {
 }
 ''';
 
+  /// Takes a whole `ShippingAddressInput` rather than a bare `CartAddressInput`,
+  /// so the caller can send EITHER `{ address: {...} }` for a newly typed
+  /// address OR `{ customer_address_id: N }` for one already in the customer's
+  /// address book.
+  ///
+  /// That distinction matters: Magento's SetShippingAddressesOnCart forces
+  /// `save_in_address_book = true` whenever an `address` is supplied without
+  /// `customer_address_id` and without the flag, so re-sending a saved address
+  /// as a literal wrote a duplicate address-book row on every checkout.
   static const String setShippingAddress = r'''
-mutation SetShippingAddress($cartId: String!, $address: CartAddressInput!) {
+mutation SetShippingAddress($cartId: String!, $shippingAddress: ShippingAddressInput!) {
   setShippingAddressesOnCart(
-    input: { cart_id: $cartId, shipping_addresses: [{ address: $address }] }
+    input: { cart_id: $cartId, shipping_addresses: [$shippingAddress] }
   ) {
     cart {
       shipping_addresses {

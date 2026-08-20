@@ -23,13 +23,19 @@ class CheckoutRepository {
   );
 
   /// Sets the shipping address and returns the available shipping methods.
+  ///
+  /// [shippingAddress] is a Magento `ShippingAddressInput`: either
+  /// `{'address': {...}}` for a newly entered address, or
+  /// `{'customer_address_id': id}` to reuse one from the address book. Passing
+  /// a saved address as a literal makes Magento save a *copy* of it — see the
+  /// note on [CheckoutQueries.setShippingAddress].
   Future<List<ShippingMethodOption>> setShippingAddress(
     String cartId,
-    Map<String, dynamic> address,
+    Map<String, dynamic> shippingAddress,
   ) async {
     final data = await _mutate(CheckoutQueries.setShippingAddress, {
       'cartId': cartId,
-      'address': address,
+      'shippingAddress': shippingAddress,
     });
     final addresses =
         ((data['setShippingAddressesOnCart'] as Map<String, dynamic>?)?['cart']
