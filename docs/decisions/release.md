@@ -55,6 +55,40 @@
 - Bundle store screenshots (EN + AR) and copy; privacy policy URL; Play Console /
   App Store Connect accounts + data-safety / app-privacy forms (Open Q §9).
 
+## Version trains (App Store Connect)
+
+TestFlight uploads are rejected once a **marketing version** is closed:
+
+```
+Validation failed (409) Invalid Pre-Release Train.
+The train version '1.0.0' is closed for new build submissions
+```
+
+Hit on 2026-08-20 uploading 1.0.0+85. App Store Connect closes a train once that
+version has been through review/release, and no further builds may go up under
+it — **bumping only the build number (+N) cannot fix this**, the `x.y.z` has to
+move too. 1.0.0 is closed; releases continue from 1.0.1.
+
+So there are two independent rules, and both apply:
+
+- **build number (+N)** must increase for every upload within a train — and Play
+  applies the same rule to `versionCode` on a track;
+- **marketing version (x.y.z)** must move to a new train once the previous one
+  is closed.
+
+## Play publishing
+
+`Release · Android` can publish the .aab itself — set `play_track` to
+`internal` (the TestFlight analogue), `alpha` or `beta`. Default `none` builds
+the artifact only. Needs the `PLAY_SERVICE_ACCOUNT_JSON` repo secret (a Play
+"Release manager" service account), and the app must already have one bundle
+uploaded by hand — Play refuses API uploads for a package that has never been
+published. Only `flavor=prod` may publish; dev/staging carry
+`applicationIdSuffix`, so they are a different package to Play.
+
+Unlike iOS, this is **not** automatic on push: both platforms publish only from a
+manually dispatched release workflow.
+
 ## Pre-release QA checklist
 - EN/LTR + AR/RTL sweep of every screen (the design specifies a full 52-frame
   mirror); confirm directional layout, Cairo for AR, Western numerals.

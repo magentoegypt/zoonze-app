@@ -3,6 +3,13 @@ name: Release · Android
 # Builds an Android APK and/or Play app bundle. Run from the Actions tab.
 #   - apk → a single installable .apk (for Diawi / direct install / testing)
 #   - aab → the Play Store app bundle (.aab; NOT installable directly / on Diawi)
+#
+# Publishing: set play_track (internal/alpha/beta) to push the .aab to Play, the
+# Android counterpart to the iOS lane's fastlane-pilot upload to TestFlight.
+# Default is `none` — build the artifact and stop — so existing runs are
+# unchanged. Requires the PLAY_SERVICE_ACCOUNT_JSON secret, and the app must
+# already have one bundle published manually: Play refuses API uploads for a
+# package that has never been released.
 on:
   workflow_dispatch:
     inputs:
@@ -16,6 +23,11 @@ on:
         type: choice
         default: apk
         options: [apk, aab, both]
+      play_track:
+        description: "Publish the .aab to Play? (none = build the artifact only)"
+        type: choice
+        default: none
+        options: [none, internal, alpha, beta]
 
 jobs:
   build:
@@ -106,3 +118,41 @@ jobs:
           name: appbundle-${{ inputs.flavor }}
           path: build/app/outputs/bundle/${{ inputs.flavor }}Release/*.aab
           if-no-files-found: error
+
+      # ---- Play Store publish (opt-in) --------------------------------------
+      # Off by default: play_track=none still just produces the artifact, which
+      # is what every existing run does. This is the Android counterpart to the
+      # iOS lane's `fastlane pilot` upload to TestFlight; `internal` is the
+      # closest analogue to a TestFlight build.
+      #
+      # Only prod may publish. dev/staging carry applicationIdSuffix .dev/.staging,
+      # so their package name is not the listed app and Play would reject them —
+      # better to fail loudly here than to get a confusing 404 from the API.
+      - name: Refuse to publish a non-prod flavor
+        if: ${{ inputs.play_track != 'none' && inputs.flavor != 'prod' }}
+        run: |
+          echo "::error::play_track=${{ inputs.play_track }} requires flavor=prod —           ${{ inputs.flavor }} builds com.zoonze.shop.${{ inputs.flavor }}, which is not the listed app."
+          exit 1
+
+      - name: Require an .aab to publish
+        if: ${{ inputs.play_track != 'none' && inputs.format == 'apk' }}
+        run: |
+          echo "::error::play_track=${{ inputs.play_track }} needs format=aab or both — Play does not accept an APK for this app."
+          exit 1
+
+      - name: Publish to Play (${{ inputs.play_track }})
+        if: ${{ inputs.play_track != 'none' && inputs.flavor == 'prod' && inputs.format != 'apk' }}
+        uses: r0adkll/upload-google-play@v1
+        with:
+          # Play "Release manager" service-account JSON. Set it in repo secrets;
+          # never commit it. Absent → this step fails with an auth error rather
+          # than silently skipping, which is the behaviour we want.
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.zoonze.shop
+          releaseFiles: build/app/outputs/bundle/prodRelease/*.aab
+          track: ${{ inputs.play_track }}
+          status: completed
+          # Play rejects an upload whose versionCode is not higher than the
+          # highest already on the track, so bump pubspec's +N before dispatching
+          # (same rule as the iOS build number).
+          changesNotSentForReview: false
