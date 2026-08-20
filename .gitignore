@@ -71,3 +71,10 @@ android/key.properties
 lib/core/graphql/schema.introspection.json
 **/*.graphql.dart
 *.g.dart
+
+# gen-l10n output. The ARB files (lib/l10n/*.arb) ARE the source and stay
+# committed; AppLocalizations is build output. `flutter pub get` regenerates it,
+# so every workflow gets it for free — nothing needs an explicit `gen-l10n`
+# step. Tracking it only produced diff noise on every build.
+lib/l10n/app_localizations.dart
+lib/l10n/app_localizations_*.dart
