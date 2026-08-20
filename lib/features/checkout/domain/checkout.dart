@@ -1,4 +1,5 @@
 import '../../catalog/domain/money.dart';
+import 'payment_wallet.dart';
 import 'tabby_config.dart';
 
 class ShippingMethodOption {
@@ -23,10 +24,27 @@ class PaymentMethodOption {
   final String code;
   final String title;
 
+  /// Which native wallet sheet this method opens — Apple Pay / Samsung Pay ride
+  /// the same N-Genius session as the card form, so they are a wallet, not a
+  /// gateway. See [walletForMethodCode].
+  PaymentWallet get wallet => walletForMethodCode(code);
+
+  bool get isApplePay => wallet == PaymentWallet.applePay;
+  bool get isSamsungPay => wallet == PaymentWallet.samsungPay;
+  bool get isWallet => wallet != PaymentWallet.card;
+
   /// Redirect (off-site) gateways need the native payment SDK / session flow.
   /// Detected by well-known method codes; the redirect URL itself comes from the
   /// gateway extension (Open Q §2).
+  ///
+  /// The wallet short-circuit is load-bearing, not a convenience: the backend
+  /// wallet codes are provisional, and if one of them ever lacked an `ngenius`
+  /// substring this would return false and `_placeOrder` would route the shopper
+  /// to order-success with no session and no payment taken. `free`, COD and
+  /// checkmo cannot normalise to contain `applepay`/`samsungpay`, so the
+  /// non-gateway path is unaffected.
   bool get isRedirect {
+    if (isWallet) return true;
     final c = code.toLowerCase();
     return c.contains('ngenius') ||
         c.contains('network_international') ||

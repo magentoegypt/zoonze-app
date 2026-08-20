@@ -1,3 +1,5 @@
+import 'payment_wallet.dart';
+
 /// Normalized payment outcome the checkout flow reasons about, mapped from the
 /// native module's canonical status strings (see NativePaymentGateway).
 enum PaymentOutcome { success, cancelled, rejected, failed, expired }
@@ -25,7 +27,8 @@ class PaymentSession {
 
   final String orderNumber;
 
-  /// ngeniusonline | tabby_installments | tabby_cc_installments | tabby_checkout.
+  /// ngeniusonline | ngenius_applepay | ngenius_samsungpay |
+  /// tabby_installments | tabby_cc_installments | tabby_checkout.
   final String methodCode;
   final PaymentProvider gateway;
   final PaymentSessionStatus status;
@@ -45,4 +48,9 @@ class PaymentSession {
   /// Exactly `status == READY` per the contract — only a ready session may be
   /// handed to the native SDK.
   bool get isReady => status == PaymentSessionStatus.ready;
+
+  /// Which native wallet sheet to open. Derived from [methodCode] by the same
+  /// function `PaymentMethodOption.wallet` uses, so the checkout row and the
+  /// channel argument can never disagree.
+  PaymentWallet get wallet => walletForMethodCode(methodCode);
 }

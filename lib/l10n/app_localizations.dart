@@ -2504,6 +2504,18 @@ abstract class AppLocalizations {
   /// **'No payment needed — your order total is free'**
   String get checkoutFreeOrder;
 
+  /// No description provided for @checkoutApplePaySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay quickly with Apple Pay'**
+  String get checkoutApplePaySubtitle;
+
+  /// No description provided for @checkoutSamsungPaySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay quickly with Samsung Pay'**
+  String get checkoutSamsungPaySubtitle;
+
   /// No description provided for @promoTabbyPayIn4.
   ///
   /// In en, this message translates to:
@@ -2543,7 +2555,7 @@ abstract class AppLocalizations {
   /// No description provided for @paymentSessionUnavailable.
   ///
   /// In en, this message translates to:
-  /// **'Tabby is unavailable for this order. Please choose another payment method.'**
+  /// **'This payment method is unavailable for this order. Please choose another payment method.'**
   String get paymentSessionUnavailable;
 
   /// No description provided for @countryUae.

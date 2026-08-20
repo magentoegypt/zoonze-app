@@ -142,12 +142,29 @@ rm -f "${IPA}"
 # expects. Absolute IPA path because we cd into RESIGN first.
 ( cd "${RESIGN}" && zip -qry "${IPA}" . )
 
-# Verify the entitlement is actually present now (fail the build otherwise).
-if codesign -d --entitlements :- "${RESIGN}/Payload/Runner.app" 2>/dev/null \
-    | grep -q "aps-environment"; then
+# Verify the entitlements are actually present now (fail the build otherwise).
+EMBEDDED="$(codesign -d --entitlements :- "${RESIGN}/Payload/Runner.app" 2>/dev/null || true)"
+if grep -q "aps-environment" <<<"${EMBEDDED}"; then
   echo "✅ aps-environment entitlement embedded"
 else
   echo "::error::aps-environment still missing after re-sign"; exit 1
+fi
+
+# Apple Pay. Conditional on purpose: the entitlements we sign with come from the
+# PROVISIONING PROFILE, not from ios/Runner/Runner.entitlements, so declaring the
+# merchant id in that file does nothing on its own — the profile has to be
+# regenerated in the Apple Developer portal with the Apple Pay capability. This
+# catches exactly that drift, and stays silent until someone enables Apple Pay.
+# PlistBuddy (not grep) so the commented-out instructions in Runner.entitlements
+# cannot trigger it — only a real, parsed key counts.
+ENT_FILE="ios/Runner/Runner.entitlements"
+if /usr/libexec/PlistBuddy -c "Print :com.apple.developer.in-app-payments" "${ENT_FILE}" >/dev/null 2>&1; then
+  if grep -q "in-app-payments" <<<"${EMBEDDED}"; then
+    echo "✅ Apple Pay merchant entitlement embedded"
+  else
+    echo "::error::Runner.entitlements declares com.apple.developer.in-app-payments but the signed app does not carry it — regenerate ios/signing/*.mobileprovision with the Apple Pay merchant id enabled on the App ID"
+    exit 1
+  fi
 fi
 
 echo "✅ Signed App Store IPA → ${IPA}"

@@ -1324,6 +1324,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get checkoutFreeOrder => 'لا حاجة للدفع — إجمالي طلبك مجاني';
 
   @override
+  String get checkoutApplePaySubtitle => 'ادفع بسرعة عبر Apple Pay';
+
+  @override
+  String get checkoutSamsungPaySubtitle => 'ادفع بسرعة عبر Samsung Pay';
+
+  @override
   String promoTabbyPayIn4(int count, String amount) {
     return 'أو $count دفعات بدون فوائد بقيمة $amount';
   }
@@ -1346,7 +1352,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get paymentSessionUnavailable =>
-      'تابي غير متاح لهذا الطلب. يرجى اختيار طريقة دفع أخرى.';
+      'طريقة الدفع هذه غير متاحة لهذا الطلب. يرجى اختيار طريقة دفع أخرى.';
 
   @override
   String get countryUae => 'الإمارات العربية المتحدة';

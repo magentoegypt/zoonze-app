@@ -26,6 +26,7 @@ import '../../../catalog/domain/money.dart';
 import '../../domain/payment_session.dart';
 import '../../payments/payment_method_card.dart';
 import '../../payments/payment_runner.dart';
+import '../../payments/wallet_availability.dart';
 import '../checkout_controller.dart';
 import 'complete_payment_screen.dart';
 
@@ -74,7 +75,12 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     // during the widget-tree build that mounts this screen; the stale sections
     // only render below the address form, so the one-frame pre-reset is unseen.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) ref.read(checkoutControllerProvider.notifier).reset();
+      if (!mounted) return;
+      ref.read(checkoutControllerProvider.notifier).reset();
+      // Re-probe the device wallets once per checkout entry: a shopper can add
+      // a card to Samsung Wallet (or remove their last Apple Pay card) while
+      // the app is still running, and the answer is cached for the session.
+      ref.invalidate(walletAvailabilityProvider);
     });
   }
 

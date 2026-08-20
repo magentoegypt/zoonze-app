@@ -473,6 +473,8 @@
   "checkoutPayLater": "Pay later, interest-free",
   "checkoutCardInstalments": "Pay by card in instalments",
   "checkoutFreeOrder": "No payment needed — your order total is free",
+  "checkoutApplePaySubtitle": "Pay quickly with Apple Pay",
+  "checkoutSamsungPaySubtitle": "Pay quickly with Samsung Pay",
   "promoTabbyPayIn4": "or {count} interest-free payments of {amount}",
   "@promoTabbyPayIn4": {
     "placeholders": {
@@ -485,7 +487,7 @@
   "tabbyInfoTitle": "Pay in 4 with Tabby",
   "tabbyInfoBody": "Split your purchase into 4 equal, interest-free payments. No fees when you pay on time.",
   "tabbyInfoGotIt": "Got it",
-  "paymentSessionUnavailable": "Tabby is unavailable for this order. Please choose another payment method.",
+  "paymentSessionUnavailable": "This payment method is unavailable for this order. Please choose another payment method.",
   "fieldCountryLabel": "Country",
   "countryUae": "United Arab Emirates",
   "paymentDeclined": "Payment was declined. Please choose another payment method.",

@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/config/app_config.dart';
 import '../../catalog/domain/money.dart';
 import '../domain/payment_session.dart';
 import 'native_payment_gateway.dart';
@@ -30,6 +31,11 @@ abstract interface class PaymentGateway {
 /// has no Flutter package, so it goes through the native `zoonze/payments`
 /// module; Tabby publishes an official Flutter package, so it stays in Dart
 /// and needs no native code on either platform.
+///
+/// Apple Pay and Samsung Pay do **not** appear here. They are N-Genius wallet
+/// flows on the same session, selected by `PaymentSession.wallet` inside the
+/// native gateway — so this switch stays two-valued and every other exhaustive
+/// switch over [PaymentProvider] is untouched.
 class PaymentGatewayResolver {
   const PaymentGatewayResolver({required this.native, required this.tabby});
 
@@ -46,8 +52,8 @@ class PaymentGatewayResolver {
 }
 
 final paymentGatewayResolverProvider = Provider<PaymentGatewayResolver>(
-  (ref) => const PaymentGatewayResolver(
-    native: NativePaymentGateway(),
-    tabby: TabbyPaymentGateway(),
+  (ref) => PaymentGatewayResolver(
+    native: NativePaymentGateway(config: ref.watch(appConfigProvider)),
+    tabby: const TabbyPaymentGateway(),
   ),
 );

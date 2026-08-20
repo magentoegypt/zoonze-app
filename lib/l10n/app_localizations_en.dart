@@ -1359,6 +1359,12 @@ class AppLocalizationsEn extends AppLocalizations {
       'No payment needed — your order total is free';
 
   @override
+  String get checkoutApplePaySubtitle => 'Pay quickly with Apple Pay';
+
+  @override
+  String get checkoutSamsungPaySubtitle => 'Pay quickly with Samsung Pay';
+
+  @override
   String promoTabbyPayIn4(int count, String amount) {
     return 'or $count interest-free payments of $amount';
   }
@@ -1381,7 +1387,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get paymentSessionUnavailable =>
-      'Tabby is unavailable for this order. Please choose another payment method.';
+      'This payment method is unavailable for this order. Please choose another payment method.';
 
   @override
   String get countryUae => 'United Arab Emirates';

@@ -11,6 +11,7 @@ import '../../domain/checkout.dart';
 import '../../domain/payment_session.dart';
 import '../../payments/payment_method_card.dart';
 import '../../payments/payment_runner.dart';
+import '../../payments/wallet_availability.dart';
 
 /// Arguments for the post-order complete-payment screen, passed via go_router
 /// `extra`. The order is already placed (awaiting payment); the cart is gone, so
@@ -65,8 +66,14 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
   /// Offering cash on delivery here therefore guaranteed a failure: the switch
   /// threw, the session came back null, and the customer got a generic
   /// "payment session unavailable" for picking a method that was shown to them.
-  List<PaymentMethodOption> get _switchableMethods =>
-      _args.methods.where((m) => m.isRedirect).toList();
+  ///
+  /// Wallets are filtered again here, not just at checkout. The caller does pass
+  /// an already-filtered list, but this route takes its args from `extra`, so it
+  /// must not depend on the caller having done it.
+  List<PaymentMethodOption> _switchableMethods(WalletAvailability availability) =>
+      _args.methods
+          .where((m) => m.isRedirect && availability.allows(m.wallet))
+          .toList();
 
   Future<void> _pay() async {
     final code = _selectedCode;
@@ -146,6 +153,12 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    // Unknown availability hides the wallets — the fail-safe direction. In
+    // practice the provider is already resolved from the checkout that got here.
+    final availability =
+        ref.watch(walletAvailabilityProvider).valueOrNull ??
+        WalletAvailability.none;
+    final methods = _switchableMethods(availability);
     return Scaffold(
       appBar: AppBar(title: Text(l10n.completePaymentTitle)),
       body: Stack(
@@ -166,14 +179,14 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
-                for (final method in _switchableMethods)
+                for (final method in methods)
                   PaymentMethodCard(
                     method: method,
                     selected: _selectedCode == method.code,
                     onTap: () => setState(() => _selectedCode = method.code),
                   ),
                 const SizedBox(height: 8),
-                if (_switchableMethods.isNotEmpty)
+                if (methods.isNotEmpty)
                   FilledButton(
                     onPressed: (_selectedCode == null || _busy) ? null : _pay,
                     child: Text(l10n.completePaymentPayNow),

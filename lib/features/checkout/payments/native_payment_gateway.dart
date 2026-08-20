@@ -1,6 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
+import '../../../core/config/app_config.dart';
 import '../../../core/diagnostics/payment_trace.dart';
 import '../../catalog/domain/money.dart';
 import '../domain/payment_session.dart';
@@ -11,7 +12,12 @@ import 'payment_gateway.dart';
 /// native module launches the SDK, waits for its delegate/callback, and returns
 /// a result map with a canonical `status` string (docs/backend/payment-contract.md).
 class NativePaymentGateway implements PaymentGateway {
-  const NativePaymentGateway();
+  /// [AppConfig.current] is a `static const`, so this stays a valid `const`
+  /// default and every existing `const NativePaymentGateway()` keeps compiling.
+  const NativePaymentGateway({this.config = AppConfig.current});
+
+  /// Supplies the wallet merchant identifiers (see [AppConfig.walletIdentifierArgs]).
+  final AppConfig config;
 
   static const MethodChannel channel = MethodChannel('zoonze/payments');
 
@@ -26,12 +32,23 @@ class NativePaymentGateway implements PaymentGateway {
         'gateway': session.gateway == PaymentProvider.tabby
             ? 'tabby'
             : 'ngenius',
+        // Apple Pay / Samsung Pay are N-Genius *wallets*, not gateways: the
+        // gateway stays `ngenius` so the native module's existing gateway guard
+        // (which lets Tabby fall through to Dart) is untouched, and only this
+        // key selects the SDK entry point.
+        'wallet': session.wallet.wire,
         'methodCode': session.methodCode,
         'orderNumber': session.orderNumber,
         // Renders the gateway SDK's own UI in the customer's language.
         'language': Localizations.localeOf(context).languageCode,
         if (amount != null) 'amount': amount.amount,
+        // Apple Pay charges what it is given. `amount` crosses the channel as a
+        // double, and 199.00 round-trips through binary floating point as
+        // 199.00000000000003 — which PassKit would display AND charge. The
+        // decimal string is authoritative; `amount` stays for the card path.
+        if (amount != null) 'amountString': amount.amount.toStringAsFixed(2),
         if (amount != null) 'currency': amount.currency,
+        ...config.walletIdentifierArgs,
         // N-Genius: iOS decodes the full order JSON; Android drives the links.
         'orderResponse': session.additionalData['order_response'],
         // Two different links, and swapping them makes the SDK authorize
@@ -56,7 +73,7 @@ class NativePaymentGateway implements PaymentGateway {
       // cannot carry. Without it a gateway decline, an expired session and an
       // SDK error all arrive as plain "failed".
       PaymentTrace.record(
-        'native: status=${result?['status']} '
+        'native: wallet=${session.wallet.wire} status=${result?['status']} '
         'reference=${result?['reference']} raw=${result?['raw'] ?? "none"}',
       );
       return _mapStatus(result?['status'] as String?);

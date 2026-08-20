@@ -9,6 +9,8 @@ import '../../catalog/domain/money.dart';
 import '../data/checkout_repository.dart';
 import '../domain/checkout.dart';
 import '../domain/payment_session.dart';
+import '../domain/payment_wallet.dart';
+import '../payments/wallet_availability.dart';
 
 class CheckoutState {
   const CheckoutState({
@@ -193,11 +195,21 @@ class CheckoutController extends Notifier<CheckoutState> {
         method.carrierCode,
         method.methodCode,
       );
-      // Present payments in the Figma order (Check/Money order, COD, N-Genius,
-      // Tabby, …) — the checkout list still contains only what the backend
-      // returns in `available_payment_methods`.
+      // Present payments in the client's requested order (CL042-DEV27: Apple
+      // Pay, Samsung Pay, Visa & MasterCard, Tabby, Cash on Delivery) — the
+      // checkout list still contains only what the backend returns in
+      // `available_payment_methods`.
+      //
+      // The only thing the app *removes* is a wallet this device cannot pay
+      // with: the API offers Apple Pay to Android phones too, because
+      // availability is a device concern the backend cannot see. This single
+      // filter point feeds `state.paymentMethods`, the default selection, and
+      // the method list forwarded to the complete-payment screen.
       final payments = _orderPayments(
-        await _repo.setBillingSameAsShipping(cartId),
+        filterUnavailableWallets(
+          await _repo.setBillingSameAsShipping(cartId),
+          await ref.read(walletAvailabilityProvider.future),
+        ),
       );
       state = state.copyWith(
         selectedShipping: method,
@@ -238,12 +250,29 @@ class CheckoutController extends Notifier<CheckoutState> {
     return [for (final e in indexed) e.value];
   }
 
+  /// CL042-DEV27 order: Apple Pay, Samsung Pay, Visa & MasterCard, Tabby, Cash
+  /// on Delivery. Check/Money order is not in the client's list, so it sorts
+  /// below it; anything unknown (including Zero Subtotal `free`, which is
+  /// normally the only method when it appears) keeps the old fallback rank.
+  ///
+  /// The wallet tests must stay ABOVE the `ngenius` substring test: the wallet
+  /// method codes are `ngenius_applepay` / `ngenius_samsungpay`, so a substring
+  /// check would swallow them into the card row's rank and leave their relative
+  /// order down to whatever the API happened to return.
   static int _payRank(String code) {
     final c = code.toLowerCase();
-    if (c.contains('checkmo') || c.contains('check')) return 0;
-    if (_isCod(c)) return 1;
+    switch (walletForMethodCode(code)) {
+      case PaymentWallet.applePay:
+        return 0;
+      case PaymentWallet.samsungPay:
+        return 1;
+      case PaymentWallet.card:
+        break;
+    }
     if (c.contains('ngenius') || c.contains('network')) return 2;
     if (c.contains('tabby')) return 3;
+    if (_isCod(c)) return 4;
+    if (c.contains('checkmo') || c.contains('check')) return 5;
     return 50;
   }
 
@@ -254,6 +283,10 @@ class CheckoutController extends Notifier<CheckoutState> {
   }
 
   /// Cash on Delivery when present (QA default), else the first method.
+  ///
+  /// Deliberately still COD even though DEV27 moves its row to the bottom:
+  /// Place Order stays armed on open as it does today, and pre-selecting the
+  /// first row would arm a wallet payment sheet the shopper never asked for.
   PaymentMethodOption? _defaultPayment(List<PaymentMethodOption> methods) {
     if (methods.isEmpty) return null;
     for (final m in methods) {

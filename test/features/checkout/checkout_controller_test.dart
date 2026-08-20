@@ -7,11 +7,21 @@ import 'package:zoonze_app/features/auth/presentation/auth_controller.dart';
 import 'package:zoonze_app/features/cart/data/cart_repository.dart';
 import 'package:zoonze_app/features/cart/presentation/cart_controller.dart';
 import 'package:zoonze_app/features/checkout/data/checkout_repository.dart';
+import 'package:zoonze_app/features/checkout/domain/checkout.dart';
+import 'package:zoonze_app/features/checkout/payments/wallet_availability.dart';
 import 'package:zoonze_app/features/checkout/presentation/checkout_controller.dart';
 
 import '../../support/fakes.dart';
 
-ProviderContainer _container(FakeCheckoutRepository repo) {
+ProviderContainer _container(
+  FakeCheckoutRepository repo, {
+  // Device wallet support. Overridden in every test so the checkout list never
+  // depends on a platform channel that has no handler under `flutter test`.
+  WalletAvailability wallets = const WalletAvailability(
+    applePay: true,
+    samsungPay: true,
+  ),
+}) {
   final container = ProviderContainer(
     overrides: [
       localCacheProvider.overrideWithValue(FakeLocalCache()),
@@ -19,6 +29,7 @@ ProviderContainer _container(FakeCheckoutRepository repo) {
       authRepositoryProvider.overrideWithValue(FakeAuthRepository()),
       cartRepositoryProvider.overrideWithValue(FakeCartRepository()),
       checkoutRepositoryProvider.overrideWithValue(repo),
+      walletAvailabilityProvider.overrideWith((ref) async => wallets),
     ],
   );
   addTearDown(container.dispose);
@@ -29,8 +40,14 @@ ProviderContainer _container(FakeCheckoutRepository repo) {
 }
 
 /// Seeds a guest cart so the checkout controller has a non-empty cart id.
-Future<ProviderContainer> _seededContainer(FakeCheckoutRepository repo) async {
-  final container = _container(repo);
+Future<ProviderContainer> _seededContainer(
+  FakeCheckoutRepository repo, {
+  WalletAvailability wallets = const WalletAvailability(
+    applePay: true,
+    samsungPay: true,
+  ),
+}) async {
+  final container = _container(repo, wallets: wallets);
   await container.read(cartControllerProvider.notifier).addToCart(sku: 'SKU1');
   return container;
 }
@@ -72,7 +89,9 @@ void main() {
       expect(state.paymentMethods, hasLength(2));
       expect(repo.selectedShippingMethod, 'flatrate|flatrate');
 
-      final paymentOk = await checkout.selectPayment(state.paymentMethods.last);
+      final paymentOk = await checkout.selectPayment(
+        state.paymentMethods.firstWhere((m) => m.code == 'tabby'),
+      );
       expect(paymentOk, isTrue);
       state = container.read(checkoutControllerProvider);
       expect(state.paymentDone, isTrue);
@@ -82,6 +101,101 @@ void main() {
       expect(result, isNotNull);
       expect(result!.orderNumber, '000000123');
       expect(container.read(checkoutControllerProvider).isBusy, isFalse);
+    });
+
+    test('orders the payment methods per CL042-DEV27', () async {
+      // Client-requested order: Apple Pay, Samsung Pay, Visa & MasterCard,
+      // Tabby, Cash on Delivery. Check/Money order is not in that list, so it
+      // sorts below it. Fed in deliberately shuffled API order.
+      final repo = FakeCheckoutRepository(
+        paymentMethods: const [
+          PaymentMethodOption(code: 'checkmo', title: 'Check / Money order'),
+          PaymentMethodOption(code: 'cashondelivery', title: 'Cash on Delivery'),
+          PaymentMethodOption(code: 'tabby_installments', title: 'Tabby'),
+          PaymentMethodOption(code: 'ngenius_samsungpay', title: 'Samsung Pay'),
+          PaymentMethodOption(code: 'ngeniusonline', title: 'Visa & MasterCard'),
+          PaymentMethodOption(code: 'ngenius_applepay', title: 'Apple Pay'),
+        ],
+      );
+      final container = await _seededContainer(repo);
+      final checkout = container.read(checkoutControllerProvider.notifier);
+      await checkout.submitAddress(
+        email: 'guest@example.com',
+        address: _address,
+        isGuest: true,
+      );
+      await checkout.selectShipping(
+        container.read(checkoutControllerProvider).shippingMethods.first,
+      );
+
+      final state = container.read(checkoutControllerProvider);
+      expect(
+        [for (final m in state.paymentMethods) m.code],
+        ['ngenius_applepay', 'ngenius_samsungpay', 'ngeniusonline',
+         'tabby_installments', 'cashondelivery', 'checkmo'],
+      );
+      // COD stays the pre-selected default even though its row moved to the
+      // bottom — pre-selecting the first row would arm a wallet payment sheet
+      // the shopper never asked for.
+      expect(state.selectedPayment?.code, 'cashondelivery');
+    });
+
+    test('hides wallets this device cannot pay with', () async {
+      final repo = FakeCheckoutRepository(
+        paymentMethods: const [
+          PaymentMethodOption(code: 'ngenius_applepay', title: 'Apple Pay'),
+          PaymentMethodOption(code: 'ngenius_samsungpay', title: 'Samsung Pay'),
+          PaymentMethodOption(code: 'ngeniusonline', title: 'Visa & MasterCard'),
+          PaymentMethodOption(code: 'cashondelivery', title: 'Cash on Delivery'),
+        ],
+      );
+      final container = await _seededContainer(
+        repo,
+        wallets: const WalletAvailability(applePay: true),
+      );
+      final checkout = container.read(checkoutControllerProvider.notifier);
+      await checkout.submitAddress(
+        email: 'guest@example.com',
+        address: _address,
+        isGuest: true,
+      );
+      await checkout.selectShipping(
+        container.read(checkoutControllerProvider).shippingMethods.first,
+      );
+
+      final state = container.read(checkoutControllerProvider);
+      expect(
+        [for (final m in state.paymentMethods) m.code],
+        ['ngenius_applepay', 'ngeniusonline', 'cashondelivery'],
+      );
+    });
+
+    test('a device with no wallets still reaches the payment step', () async {
+      final repo = FakeCheckoutRepository(
+        paymentMethods: const [
+          PaymentMethodOption(code: 'ngenius_applepay', title: 'Apple Pay'),
+          PaymentMethodOption(code: 'ngenius_samsungpay', title: 'Samsung Pay'),
+          PaymentMethodOption(code: 'cashondelivery', title: 'Cash on Delivery'),
+        ],
+      );
+      final container = await _seededContainer(
+        repo,
+        wallets: WalletAvailability.none,
+      );
+      final checkout = container.read(checkoutControllerProvider.notifier);
+      await checkout.submitAddress(
+        email: 'guest@example.com',
+        address: _address,
+        isGuest: true,
+      );
+      await checkout.selectShipping(
+        container.read(checkoutControllerProvider).shippingMethods.first,
+      );
+
+      final state = container.read(checkoutControllerProvider);
+      expect([for (final m in state.paymentMethods) m.code], ['cashondelivery']);
+      expect(state.shippingDone, isTrue);
+      expect(state.selectedPayment?.code, 'cashondelivery');
     });
 
     test(

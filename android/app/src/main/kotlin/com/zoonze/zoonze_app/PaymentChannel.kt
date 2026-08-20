@@ -1,5 +1,6 @@
 package com.zoonze.zoonze_app
 
+import android.app.Activity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -10,7 +11,12 @@ import payment.sdk.android.payments.PaymentsResult
 
 /**
  * Android half of the `zoonze/payments` MethodChannel — the N-Genius (Network
- * International) card SDK. Contract: docs/backend/payment-contract.md §③.
+ * International) card SDK and its Samsung Pay wallet. Contract:
+ * docs/backend/payment-contract.md §③.
+ *
+ * Apple Pay and Samsung Pay are N-Genius *wallets*, not gateways: the `gateway`
+ * argument stays `ngenius` for all three and the `wallet` argument selects the
+ * SDK entry point. Both ride the same order JSON.
  *
  * Tabby is deliberately not handled here: its SDK ships as a Flutter package
  * (`tabby_flutter_inapp_sdk`), so it lives in Dart and needs no native code on
@@ -27,9 +33,14 @@ class PaymentChannel {
         /** Order JSON link names — see the SDK's Order model (`_links`). */
         private const val LINK_AUTHORIZATION = "payment-authorization"
         private const val LINK_PAY_PAGE = "payment"
+
+        private const val WALLET_CARD = "card"
+        private const val WALLET_APPLE_PAY = "applepay"
+        private const val WALLET_SAMSUNG_PAY = "samsungpay"
     }
 
     private var launcher: PaymentsLauncher? = null
+    private var samsung: SamsungPaySession? = null
 
     /**
      * The in-flight Flutter result. Held because the SDK answers on an activity
@@ -39,17 +50,32 @@ class PaymentChannel {
     private var pending: MethodChannel.Result? = null
     private var pendingOrderNumber: String = ""
 
-    fun attach(engine: FlutterEngine, launcher: PaymentsLauncher) {
+    /**
+     * Ownership token for [pending]. A wallet callback can arrive late — after the
+     * customer already backed out and started a card payment — and resolving the
+     * wrong (or an already-resolved) result throws. Only the holder of the current
+     * token may resolve.
+     */
+    private var pendingToken: Long = 0
+    private var tokenSeq: Long = 0
+    private var cardToken: Long = 0
+
+    fun attach(engine: FlutterEngine, launcher: PaymentsLauncher, activity: Activity) {
         this.launcher = launcher
+        this.samsung = SamsungPaySession(activity)
         MethodChannel(engine.dartExecutor.binaryMessenger, CHANNEL)
             .setMethodCallHandler { call, result -> handle(call, result) }
     }
 
     private fun handle(call: MethodCall, result: MethodChannel.Result) {
-        if (call.method != "pay") {
-            result.notImplemented()
-            return
+        when (call.method) {
+            "pay" -> handlePay(call, result)
+            "walletAvailability" -> handleWalletAvailability(call, result)
+            else -> result.notImplemented()
         }
+    }
+
+    private fun handlePay(call: MethodCall, result: MethodChannel.Result) {
         // Anything that isn't N-Genius is handled in Dart. Reporting "not
         // implemented" lets the Dart layer fall back rather than fail hard.
         if (call.argument<String>("gateway") != "ngenius") {
@@ -58,6 +84,28 @@ class PaymentChannel {
         }
 
         val orderNumber = call.argument<String>("orderNumber").orEmpty()
+        when (call.argument<String>("wallet") ?: WALLET_CARD) {
+            WALLET_CARD -> startCard(call, result, orderNumber)
+            WALLET_SAMSUNG_PAY -> startSamsungPay(call, result, orderNumber)
+            // FAILED rather than notImplemented(): "not implemented" means "the
+            // native module is missing", which Dart turns into "order awaiting
+            // payment". That would be a lie here — this can only be a Dart bug,
+            // since walletAvailability already answers applePay=false on Android,
+            // and FAILED surfaces it in the payment trace.
+            WALLET_APPLE_PAY -> result.success(
+                payload("FAILED", orderNumber, raw = "applepay is iOS-only"),
+            )
+            else -> result.success(
+                payload("FAILED", orderNumber, raw = "unsupported wallet"),
+            )
+        }
+    }
+
+    private fun startCard(
+        call: MethodCall,
+        result: MethodChannel.Result,
+        orderNumber: String,
+    ) {
         val orderJson = call.argument<String>("orderResponse")
 
         // Two DIFFERENT order links are required: _links.payment-authorization
@@ -95,11 +143,7 @@ class PaymentChannel {
             return
         }
 
-        // Only one payment can be in flight; resolving a MethodChannel.Result
-        // twice throws, so retire any earlier one as cancelled first.
-        pending?.success(payload("CANCELLED", pendingOrderNumber, raw = "superseded"))
-        pending = result
-        pendingOrderNumber = orderNumber
+        cardToken = claimPending(result, orderNumber)
 
         activeLauncher.launch(
             PaymentsRequest.builder()
@@ -109,13 +153,79 @@ class PaymentChannel {
         )
     }
 
-    /** Invoked by [MainActivity] when the SDK's activity returns. */
-    fun onPaymentResult(result: PaymentsResult) {
+    private fun startSamsungPay(
+        call: MethodCall,
+        result: MethodChannel.Result,
+        orderNumber: String,
+    ) {
+        val serviceId = call.argument<String>("samsungPayServiceId").orEmpty()
+        if (serviceId.isBlank()) {
+            result.success(
+                payload("FAILED", orderNumber, raw = "samsungpay: no service id configured"),
+            )
+            return
+        }
+        val session = samsung
+        if (session == null) {
+            result.success(
+                payload("FAILED", orderNumber, raw = "samsungpay: session unavailable"),
+            )
+            return
+        }
+
+        val token = claimPending(result, orderNumber)
+        session.start(
+            serviceId = serviceId,
+            merchantName = call.argument<String>("merchantName").orEmpty().ifEmpty { "Zoonze" },
+            orderJson = call.argument<String>("orderResponse"),
+        ) { status, raw -> resolvePending(token, status, raw) }
+    }
+
+    /**
+     * Which wallets this device can pay with. Deliberately independent of
+     * [pending]: the checkout list asks this while a payment may be in flight,
+     * and answering must never retire someone else's result.
+     */
+    private fun handleWalletAvailability(call: MethodCall, result: MethodChannel.Result) {
+        val serviceId = call.argument<String>("samsungPayServiceId").orEmpty()
+        val session = samsung
+        if (serviceId.isBlank() || session == null) {
+            result.success(mapOf("applePay" to false, "samsungPay" to false))
+            return
+        }
+        session.checkAvailability(serviceId) { available ->
+            // applePay is always false on Android — the row is hidden even if the
+            // backend offers the method to every device.
+            result.success(mapOf("applePay" to false, "samsungPay" to available))
+        }
+    }
+
+    /**
+     * Retires any in-flight payment as cancelled and installs this one. Only one
+     * payment can be presented at a time, and resolving a MethodChannel.Result
+     * twice throws.
+     */
+    private fun claimPending(result: MethodChannel.Result, orderNumber: String): Long {
+        pending?.success(payload("CANCELLED", pendingOrderNumber, raw = "superseded"))
+        pending = result
+        pendingOrderNumber = orderNumber
+        pendingToken = ++tokenSeq
+        return pendingToken
+    }
+
+    /** No-ops unless [token] still owns the pending result. */
+    private fun resolvePending(token: Long, status: String, raw: String? = null) {
+        if (token != pendingToken) return
         val target = pending ?: return
         pending = null
+        pendingToken = 0
         val orderNumber = pendingOrderNumber
         pendingOrderNumber = ""
+        target.success(payload(status, orderNumber, raw = raw))
+    }
 
+    /** Invoked by [MainActivity] when the SDK's activity returns. */
+    fun onPaymentResult(result: PaymentsResult) {
         val (status, raw) = when (result) {
             // Authorised now, captured later — the contract treats both as
             // success and the app re-queries Magento for the real state.
@@ -136,7 +246,7 @@ class PaymentChannel {
             is PaymentsResult.Cancelled -> "CANCELLED" to null
             is PaymentsResult.Failed -> "FAILED" to result.error
         }
-        target.success(payload(status, orderNumber, raw = raw))
+        resolvePending(cardToken, status, raw)
     }
 
     /** Reads `_links` out of the raw order JSON, tolerating a malformed body. */

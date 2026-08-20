@@ -49,6 +49,20 @@ void main() {
       expect((gateway as _StubGateway?)?.label, 'native');
     });
 
+    test('routes a READY wallet session to the native gateway too', () {
+      // Apple Pay and Samsung Pay are N-Genius wallets, not gateways: they must
+      // resolve to the same native gateway as the card form. If someone ever
+      // adds a PaymentProvider value for them, this breaks first.
+      for (final method in ['ngenius_applepay', 'ngenius_samsungpay']) {
+        final session = _session(
+          gateway: PaymentProvider.ngenius,
+          method: method,
+        );
+        expect((resolver.resolve(session) as _StubGateway?)?.label, 'native',
+            reason: method);
+      }
+    });
+
     test('returns null for any non-ready session', () {
       for (final status in [
         PaymentSessionStatus.pending,

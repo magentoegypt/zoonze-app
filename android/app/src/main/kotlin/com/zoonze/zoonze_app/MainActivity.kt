@@ -5,7 +5,7 @@ import io.flutter.embedding.engine.FlutterEngine
 import payment.sdk.android.payments.PaymentsLauncher
 
 /**
- * Hosts the Flutter engine and the N-Genius payment bridge.
+ * Hosts the Flutter engine and the N-Genius payment bridge (card + Samsung Pay).
  *
  * Extends [FlutterFragmentActivity] rather than `FlutterActivity` because the
  * N-Genius SDK's [PaymentsLauncher] needs `registerForActivityResult`, which
@@ -26,6 +26,8 @@ class MainActivity : FlutterFragmentActivity() {
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        payments.attach(flutterEngine, paymentLauncher)
+        // `this` is for the Samsung Pay client, which needs an Activity to
+        // present its custom sheet over.
+        payments.attach(flutterEngine, paymentLauncher, this)
     }
 }

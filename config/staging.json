@@ -6,5 +6,10 @@
   "STORE_CODE_EN": "eg_en",
   "STORE_CODE_AR": "eg_ar",
   "CURRENCY": "AED",
-  "USER_AGENT": "ZoonzeApp-staging/0.1.0 (Flutter)"
+  "USER_AGENT": "ZoonzeApp-staging/0.1.0 (Flutter)",
+  "MERCHANT_NAME": "Zoonze",
+  "APPLE_PAY_MERCHANT_ID": "",
+  "APPLE_PAY_COUNTRY_CODE": "AE",
+  "APPLE_PAY_NETWORKS": "visa,mastercard",
+  "SAMSUNG_PAY_SERVICE_ID": ""
 }

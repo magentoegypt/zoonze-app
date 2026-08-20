@@ -71,6 +71,10 @@ flutter:
   assets:
     - assets/branding/
     - assets/images/
+    # Official Apple Pay / Samsung Pay marks. See assets/payments/README.md —
+    # the licensed artwork is dropped in by hand; the checkout row falls back to
+    # a Material icon while the directory holds only the README.
+    - assets/payments/
   fonts:
     # Variable fonts (all weights in a single file). Inter + Playfair Display for
     # Latin/EN; Cairo for Arabic/AR. See docs/FIGMA_DESIGN.md.

@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../l10n/l10n.dart';
 import '../domain/checkout.dart';
+import '../domain/payment_wallet.dart';
 import '../domain/tabby_config.dart';
 
-/// Selectable payment-method card with the Tabby product subtitle + brand chip.
+/// Selectable payment-method card with the brand mark, product subtitle and
+/// Tabby chip.
 /// Shared by the checkout payment step and the post-order complete-payment screen.
 class PaymentMethodCard extends StatelessWidget {
   const PaymentMethodCard({
@@ -39,7 +41,7 @@ class PaymentMethodCard extends StatelessWidget {
         ),
         title: Row(
           children: [
-            Icon(_methodIcon(method), size: 20, color: AppColors.inkHeading),
+            _methodMark(context, method),
             const SizedBox(width: 10),
             Expanded(child: Text(method.title)),
           ],
@@ -65,10 +67,45 @@ class PaymentMethodCard extends StatelessWidget {
     );
   }
 
+  /// The brand mark for Apple Pay / Samsung Pay, or the Material icon for
+  /// everything else.
+  ///
+  /// Apple's marketing guidelines require the *official* Apple Pay mark: it may
+  /// not be recreated, recoloured, or replaced with a logo glyph — so
+  /// `Icons.apple` is not an acceptable stand-in on a payment screen. Samsung's
+  /// Wallet guidelines are the same in spirit. Until the licensed artwork is
+  /// dropped into `assets/payments/`, `errorBuilder` falls back to the Material
+  /// icon so the row still renders rather than showing a broken image.
+  Widget _methodMark(BuildContext context, PaymentMethodOption m) {
+    final asset = switch (m.wallet) {
+      PaymentWallet.applePay => 'apple_pay',
+      PaymentWallet.samsungPay => 'samsung_pay',
+      PaymentWallet.card => null,
+    };
+    if (asset == null) {
+      return Icon(_methodIcon(m), size: 20, color: AppColors.inkHeading);
+    }
+    // The marks ship dark-on-light and white-on-dark; the row sits on the card
+    // surface, so follow the theme rather than the scaffold.
+    final variant = Theme.of(context).brightness == Brightness.dark
+        ? '_white'
+        : '';
+    return Image.asset(
+      'assets/payments/$asset$variant.png',
+      height: 20,
+      errorBuilder: (context, error, stack) =>
+          Icon(_methodIcon(m), size: 20, color: AppColors.inkHeading),
+    );
+  }
+
   /// A representative icon per method (QA: "add the appropriate icons").
   IconData _methodIcon(PaymentMethodOption m) {
     if (m.isFree) return Icons.card_giftcard;
     if (m.isTabby) return Icons.calendar_today_outlined;
+    // Above the `ngenius` test below, which would otherwise swallow
+    // `ngenius_applepay` and render a plain credit card.
+    if (m.isApplePay) return Icons.account_balance_wallet_outlined;
+    if (m.isSamsungPay) return Icons.account_balance_wallet_outlined;
     final c = m.code.toLowerCase();
     if (c.contains('checkmo') || c.contains('check')) {
       return Icons.request_quote_outlined;
@@ -88,6 +125,8 @@ class PaymentMethodCard extends StatelessWidget {
   /// Checkout (`free`), otherwise the Tabby product line, otherwise none.
   Widget? _subtitle(AppLocalizations l10n) {
     if (method.isFree) return Text(l10n.checkoutFreeOrder);
+    if (method.isApplePay) return Text(l10n.checkoutApplePaySubtitle);
+    if (method.isSamsungPay) return Text(l10n.checkoutSamsungPaySubtitle);
     return switch (method.tabbyProduct) {
       TabbyProductType.installments => Text(l10n.checkoutPayIn4),
       TabbyProductType.payLater => Text(l10n.checkoutPayLater),

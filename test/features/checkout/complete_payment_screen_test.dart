@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:zoonze_app/features/checkout/data/checkout_repository.dart';
 import 'package:zoonze_app/features/checkout/domain/checkout.dart';
 import 'package:zoonze_app/features/checkout/domain/payment_session.dart';
+import 'package:zoonze_app/features/checkout/payments/wallet_availability.dart';
 import 'package:zoonze_app/features/checkout/presentation/screens/complete_payment_screen.dart';
 import 'package:zoonze_app/l10n/l10n.dart';
 
@@ -20,11 +21,22 @@ Future<FakeCheckoutRepository> _pump(
   PaymentSession? session,
   String? currentMethod = 'ngeniusonline',
   String locale = 'en',
+  List<PaymentMethodOption> methods = _methods,
+  // Overridden in every test: the real provider calls the `zoonze/payments`
+  // channel, which has no handler under `flutter test` and would leave the
+  // probe's timeout pending through pumpAndSettle.
+  WalletAvailability wallets = const WalletAvailability(
+    applePay: true,
+    samsungPay: true,
+  ),
 }) async {
   final repo = FakeCheckoutRepository(paymentSession: session);
   await tester.pumpWidget(
     ProviderScope(
-      overrides: [checkoutRepositoryProvider.overrideWithValue(repo)],
+      overrides: [
+        checkoutRepositoryProvider.overrideWithValue(repo),
+        walletAvailabilityProvider.overrideWith((ref) async => wallets),
+      ],
       child: MaterialApp(
         locale: Locale(locale),
         localizationsDelegates: const [
@@ -37,7 +49,7 @@ Future<FakeCheckoutRepository> _pump(
         home: CompletePaymentScreen(
           args: CompletePaymentArgs(
             orderNumber: '000000123',
-            methods: _methods,
+            methods: methods,
             currentMethodCode: currentMethod,
           ),
         ),
@@ -102,5 +114,23 @@ void main() {
       Directionality.of(tester.element(find.text('سأدفع لاحقًا'))),
       TextDirection.rtl,
     );
+  });
+
+  testWidgets('hides a wallet the device cannot pay with', (tester) async {
+    // A method hidden at checkout must stay hidden on the retry screen. The
+    // caller already filters, but this route takes its args from `extra`, so it
+    // must not rely on that.
+    await _pump(
+      tester,
+      methods: const [
+        PaymentMethodOption(code: 'ngenius_applepay', title: 'Apple Pay'),
+        PaymentMethodOption(code: 'ngenius_samsungpay', title: 'Samsung Pay'),
+        PaymentMethodOption(code: 'ngeniusonline', title: 'Visa & MasterCard'),
+      ],
+      wallets: const WalletAvailability(applePay: true),
+    );
+    expect(find.text('Apple Pay'), findsOneWidget);
+    expect(find.text('Samsung Pay'), findsNothing);
+    expect(find.text('Visa & MasterCard'), findsOneWidget);
   });
 }
