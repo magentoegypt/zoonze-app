@@ -196,6 +196,87 @@ App side (`domain/tabby_config.dart`, `payments/tabby_promo.dart`):
 
 ---
 
+## 4b. Apple Pay + Samsung Pay (CL042-DEV24 / DEV27, 2026-08-20)
+
+### They are wallets, not gateways
+
+Both authorize the **same N-Genius order** the card path already fetches — Samsung's
+`startSamsungPay` reads `_links.payment-authorization` and `_links.payment` off the order exactly
+as `PaymentsLauncher` does (verified by decompiling `payment-sdk-samsungpay:5.2.3`), and iOS Apple
+Pay decodes the same `order_response`. So:
+
+- `PaymentProvider` stays `{ ngenius, tabby }`, `PaymentGatewayResolver.resolve`'s exhaustive
+  switch is untouched, and `NGeniusSessionBuilder` needs no backend change. Only `method_code`
+  differs (`ngenius_applepay` / `ngenius_samsungpay`, `gateway: NGENIUS`).
+- The seam is a new **`wallet` argument** on the existing `pay` call (`card` | `applepay` |
+  `samsungpay`), derived from the method code by `walletForMethodCode`.
+
+The one new enum, `PaymentWallet`, is switched on exhaustively in `WalletAvailability.allows`, so a
+future wallet is a compile error rather than a silent "unavailable".
+
+### Loose code matching, on purpose
+
+`walletForMethodCode` strips separators and substring-matches. The backend codes are provisional
+(nothing is deployed yet), and the failure mode of a miss is severe: an unrecognised wallet code
+falls out of `PaymentMethodOption.isRedirect`, and `_placeOrder` then shows **order-success for an
+order nobody paid for**. `wallet_payment_method_test.dart` guards that specific case with a code
+that contains no `ngenius` substring.
+
+### Availability is a device question the API cannot answer
+
+`available_payment_methods` is a store/cart concern — it will offer Apple Pay to an Android phone.
+So the app probes the platform (`walletAvailability`) and *filters* the returned list; it never
+adds a method. Two filter points, because `CompletePaymentScreen` is reachable by route with
+caller-supplied `extra` and must not trust it. The filter **never empties the list**:
+`CheckoutState.shippingDone` requires a non-empty method list, so filtering to nothing would hide
+the whole payment step. Failures (module missing, platform error, 3s timeout) all resolve to
+"neither available" — hiding a row always beats offering one that dead-ends at the sheet.
+
+### Android is Samsung Pay only
+
+Google Pay was declined by the owner even though `PaymentsRequest.Builder.setGooglePayConfig`
+exists on the SDK we already ship. Samsung Pay is a **separate artifact** with a legacy client, and
+`payment-sdk-core` had to be declared explicitly because the SDK publishes it in `runtimeElements`
+only — without that line `payment.sdk.android.core.Order` is on the runtime classpath but invisible
+to the compiler.
+
+Samsung reports only success-xor-failure, but its failure string embeds the numeric SpaySdk code,
+so `-7` (user cancelled) is recovered. Nothing maps to `DECLINED`: guessing which opaque codes mean
+"declined" would put wrong copy in front of the customer, and both statuses route to the retry
+screen anyway. `onSuccess()` reports `AUTHORISED`, not `SUCCESS` — capture state is unknown.
+
+### iOS signing is the real constraint
+
+`tool/ios_*_build.sh` archive **unsigned** and re-sign with the entitlements read out of the
+**provisioning profile**, so `ios/Runner/Runner.entitlements` never ships in a CI build. Declaring
+the Apple Pay merchant id there does nothing on its own: both committed profiles must be
+regenerated with the capability first. `Runner.entitlements` therefore carries the key
+**commented out** with the ordered enabling steps, and both build scripts gained a *conditional*
+assertion (via PlistBuddy, so the comment cannot trigger it) that fails the build the moment the
+file declares the entitlement but the signed app does not carry it.
+
+### Brand marks, not glyphs
+
+Apple's guidelines require the official Apple Pay mark — it may not be recreated, recoloured, or
+replaced with a logo glyph, and `Icons.apple` on a payment screen is a plausible App Review flag.
+`assets/payments/` holds the drop-in location and a README; until the licensed artwork is added,
+`PaymentMethodCard._methodMark` falls back to a neutral Material wallet icon. Row *labels* stay
+backend-driven: DEV27's "Visa & MasterCard" is a Magento method-title rename, not app copy.
+
+### Checkout order (DEV27)
+
+`CheckoutController._payRank` now sorts Apple Pay → Samsung Pay → Visa & MasterCard → Tabby → Cash
+on Delivery → Check/Money order. The wallet tests must stay above the `ngenius` substring test or
+`ngenius_applepay` is swallowed into the card rank. COD remains the pre-selected default despite
+moving to the bottom — pre-selecting the first row would arm a wallet sheet nobody asked for.
+
+### Ships dark
+
+With `APPLE_PAY_MERCHANT_ID` / `SAMSUNG_PAY_SERVICE_ID` blank (the default in all three flavours)
+and no backend method codes, `walletAvailability` answers both-false, the rows never appear, and
+card/COD/Tabby checkout is unchanged. None of the external setup below blocks the rest of the app.
+---
+
 ## 5. Open items before go-live
 
 1. **Build module `MagentoEgypt_PaymentGraphQl`** with the `paymentSession` + `tabbyConfig`
@@ -207,6 +288,28 @@ App side (`domain/tabby_config.dart`, `payments/tabby_promo.dart`):
    treat mid-flow **reject as a normal return**.
 4. Verify exact SDK versions + the live `paymentSession`/`tabbyConfig` shapes against the
    deployed store (`tool/introspect.sh` + a device build).
+5. **Apple Pay:** create merchant id `merchant.com.zoonze.shop` (confirm the exact string with
+   N-Genius first); get the payment-processing CSR **from N-Genius**, upload it against the
+   merchant id and return the certificate to them; enable Apple Pay Payment Processing on the App
+   ID; **regenerate both `ios/signing/*.mobileprovision`**; then uncomment the entitlement and set
+   `APPLE_PAY_MERCHANT_ID`. Cross-vendor, with real lead time — start it first.
+6. **Samsung Pay:** register an *In-App Payment* service (yields the Service ID); register the
+   package name — note the flavours produce **three** (`com.zoonze.shop`, `.dev`, `.staging`), so
+   register all three or accept prod-only testing; register the **release** signing certificate
+   SHA (a debug-signed build gets `-303` and the row simply hides, so Samsung Pay **cannot be
+   tested from `flutter run`**); allowlist tester Samsung accounts; get the service approved for
+   release; confirm UAE availability. Also confirm the `spay_sdk_api_level` value (2.18 declared)
+   on a real Galaxy — a wrong value yields `-10`, which degrades to "unavailable".
+7. **N-Genius outlet:** enable Apple Pay and Samsung Pay; confirm the enabled card schemes
+   (`SamsungPayCardMapper` maps only VISA / MASTERCARD / AMEX / DISCOVER, and the Apple Pay network
+   list is a config value — `PKPaymentNetwork.mada` is the *Saudi* scheme, not a UAE default).
+8. **Magento:** register the two wallet method codes, dispatch them in `SessionDispatcher`, accept
+   them in `setOrderPaymentMethod`, and rename the `ngeniusonline` title to
+   "Visa & MasterCard" / the Arabic equivalent per store view (DEV27).
+9. **Verify the NISdk Apple Pay API on the Mac build.** `initiateApplePayWith(applePayDelegate:
+   cardPaymentDelegate:for:with:)` and the `ApplePayDelegate` shape could not be checked from the
+   Windows dev box (no Pods). A mismatch is contained to `ios/Runner/ApplePaySession.swift` plus
+   one call site.
 
 ---
 
@@ -214,6 +317,7 @@ App side (`domain/tabby_config.dart`, `payments/tabby_promo.dart`):
 
 - Tabby Flutter SDK: pub.dev `tabby_flutter_inapp_sdk` v2.0.0; `github.com/tabby-ai/tabby_flutter_inapp_sdk`; `docs.tabby.ai/api-reference/checkout/create-a-session`.
 - Tabby Magento: `github.com/tabby-ai/m2-checkout` (`etc/webapi.xml`, `Model/SessionData.php`), `github.com/tabby-ai/m2-payments`.
-- N-Genius SDKs: `github.com/network-international/payment-sdk-android` (v5.0.1), `github.com/network-international/payment-sdk-ios` (`NISdk` v6.0.1), `docs.ngenius-payments.com`.
+- N-Genius SDKs: `github.com/network-international/payment-sdk-android` (v5.0.1; **5.2.3 shipped**, plus `payment-sdk-samsungpay` + `payment-sdk-core` at the same version), `github.com/network-international/payment-sdk-ios` (`NISdk` v6.0.1), `docs.ngenius-payments.com`.
+- Samsung Pay: `developer.samsung.com/pay`; SDK 2.22.00 is bundled inside the N-Genius samsungpay AAR. The `SamsungPayClient` / `Order` / `SpaySdk` signatures cited above were read off the AAR bytecode with `javap`, not from documentation.
 - N-Genius Magento: `github.com/network-international/ngenius-magento-plugin` (HPP only).
 - Magento GraphQL: `developer.adobe.com/commerce/webapi/graphql` (placeOrder/orderV2); community redirect-field pattern (MultiSafepay/Buckaroo/Mollie GraphQL modules, graphcommerce.org, scandipwa docs).

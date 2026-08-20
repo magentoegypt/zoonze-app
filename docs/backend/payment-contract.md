@@ -44,7 +44,8 @@ type Query {
 
 type PaymentSessionOutput {
     order_number: String!
-    method_code: String!                 # ngeniusonline | tabby_installments | tabby_cc_installments | tabby_checkout
+    method_code: String!                 # ngeniusonline | ngenius_applepay | ngenius_samsungpay
+                                         # | tabby_installments | tabby_cc_installments | tabby_checkout
     gateway: PaymentGateway!
     status: PaymentSessionStatus!
     payment_id: String                   # Tabby payment.id | N-Genius order reference
@@ -133,6 +134,36 @@ if the stored row is stale):
   | `action`                     | `SALE` \| `AUTH` (`ngenius_payment_action`)                        |
   | `state`                      | `PENDING_AUTHORIZATION`                                            |
   | `order_response`             | **full order JSON, stringified** — iOS `NISdk` decodes this whole blob |
+
+#### N-Genius wallets (`ngenius_applepay` / `ngenius_samsungpay`)
+
+Apple Pay and Samsung Pay are **wallet presentations of the N-Genius card flow, not new
+gateways**. Both SDKs authorize against the very same N-Genius order the card path uses
+(`_links.payment-authorization` + `_links.payment`), so:
+
+- `gateway` stays **`NGENIUS`** — the `PaymentGateway` enum gains **no** value, and the app's
+  gateway switch stays two-valued.
+- the session payload is **identical to the card one**: same `order_reference`, `pay_page_href`,
+  `authorization_href`, `outlet_ref`, `order_response`. `NGeniusSessionBuilder` needs no change.
+- only `method_code` differs, and it is what the app maps to `PaymentWallet`.
+
+What the backend must do:
+
+1. **Register the two method codes** so they arrive in `Cart.available_payment_methods` like any
+   other method — the app hardcodes nothing and will never inject them. Advertise a wallet code
+   only when that wallet is actually enabled on the N-Genius outlet for the store.
+2. **Dispatch them in `SessionDispatcher`** alongside `ngeniusonline` (today an unknown method
+   throws *"has no mobile payment session"*).
+3. **Accept them in `setOrderPaymentMethod.payment_method`.** Without this, switching from card
+   to Apple Pay on the complete-payment screen fails after the order is already placed.
+4. **Do not gate on device capability.** Whether a handset can actually pay is a device
+   question the backend cannot see; the app answers it with `walletAvailability` (§③) and hides
+   the rows it cannot honour. The backend advertising a wallet the device lacks is expected and
+   harmless.
+
+Outlet enablement is verifiable without a device: call `paymentSession` and look for
+`_embedded.payment[0]._links["payment:samsung_pay"]` in `order_response`. If it is absent the
+Samsung SDK answers `"Samsung Pay is not enabled"`.
 
 #### Tabby (`tabby_installments` / `tabby_cc_installments` / `tabby_checkout`)
 
@@ -269,11 +300,21 @@ Flutter ⇄ native bridge that launches the gateway SDK once `paymentSession` is
 
 ```jsonc
 {
-  "gateway":      "ngenius" | "tabby",
-  "methodCode":   "ngeniusonline" | "tabby_installments" | "tabby_cc_installments" | "tabby_checkout",
+  "gateway":      "ngenius" | "tabby",       // wallets keep "ngenius"
+  "wallet":       "card" | "applepay" | "samsungpay",
+  "methodCode":   "ngeniusonline" | "ngenius_applepay" | "ngenius_samsungpay"
+                  | "tabby_installments" | "tabby_cc_installments" | "tabby_checkout",
   "orderNumber":  "2000000123",
   "amount":       199.00,
+  "amountString": "199.00",                  // authoritative for Apple Pay — see below
   "currency":     "AED",
+
+  // ---- wallet identifiers (AppConfig, from config/*.json; omitted when blank) ----
+  "merchantName":        "Zoonze",           // name shown on the wallet sheet
+  "applePayMerchantId":  "merchant.com.zoonze.shop",
+  "applePayCountryCode": "AE",
+  "applePayNetworks":    ["visa", "mastercard"],
+  "samsungPayServiceId": "<32-hex Samsung Pay portal service id>",
 
   // ---- N-Genius ----
   "orderResponse":             "<full order JSON string from additional_data.order_response>",  // iOS consumes
@@ -297,6 +338,44 @@ Flutter ⇄ native bridge that launches the gateway SDK once `paymentSession` is
 
 > Both fields are always sent; each platform ignores the other's. Tabby uses `webUrl` + `publishableKey` +
 > `paymentId` on both platforms.
+
+### `walletAvailability` (method 2 on the same channel)
+
+Which wallets **this device** can pay with. No arguments beyond the wallet identifiers above.
+
+```jsonc
+{ "applePay": true, "samsungPay": false }
+```
+
+- **iOS** answers `PKPaymentAuthorizationController.canMakePayments(usingNetworks:capabilities:)`
+  — the network-aware variant, because the bare `canMakePayments()` is true on any capable device
+  even with an empty Wallet. `samsungPay` is always `false`.
+- **Android** answers the Samsung Pay SDK status (`SPAY_READY`): a Samsung handset, Samsung Wallet
+  installed and current, our package + release signature registered in the Samsung Pay portal, and
+  a provisioned card. `applePay` is always `false`.
+- **Must never throw and must answer within ~1.5s.** A blank identifier short-circuits to `false`
+  without touching the SDK (constructing `SamsungPayClient` with a blank service id throws).
+- An older native binary that does not implement it yields `MissingPluginException`, which the app
+  already treats as "neither available" — so the wallet rows simply stay hidden.
+
+The app uses this only to **filter** the list the API returned; it never adds a method.
+
+### Wallet notes on the `pay` call
+
+- **Apple Pay amount.** `amount` crosses the channel as a double and 199.00 round-trips through
+  binary floating point as 199.00000000000003, which PassKit would display *and charge*. Native
+  must build its `NSDecimalNumber` from **`amountString`**, never from the double.
+- **No new canonical status strings.** A dismissed wallet sheet is `CANCELLED`; an unusable wallet
+  (outlet not enabled, Wallet missing, SDK error) is `FAILED` with the detail in `raw`. The
+  Samsung SDK reports only success-or-failure, but its failure message embeds the numeric SpaySdk
+  code, so `-7` (user cancelled) is recovered; everything else is `FAILED`. Nothing is mapped to
+  `DECLINED` — guessing which opaque codes mean "declined" would put wrong copy in front of the
+  customer, and both statuses route to the same retry screen anyway.
+- **Samsung Pay success is `AUTHORISED`, not `CAPTURED`.** It fires once N-Genius has accepted the
+  encrypted token; capture state is unknown, and the app re-queries Magento regardless.
+- The wrong-platform wallet (`applepay` on Android, `samsungpay` on iOS) returns `FAILED`, **not**
+  `notImplemented` — the latter means "module missing → order awaiting payment", which would be a
+  lie. It can only happen through a Dart bug.
 
 ### Native status strings → app result
 
@@ -344,3 +423,6 @@ finalises the order server-side) before showing the success screen.
 | type-string normalisation | `CheckoutRepository._tabbyType` |
 | `zoonze/payments` channel | `NativePaymentGateway` (args + canonical status mapping) |
 | status strings | `NativePaymentGateway._mapStatus` (POST_AUTH_REVIEW → success) |
+| `wallet` (`pay` arg) | `PaymentSession.wallet` / `walletForMethodCode` (`domain/payment_wallet.dart`) |
+| `walletAvailability` | `WalletProbe` / `walletAvailabilityProvider` / `filterUnavailableWallets` (`payments/wallet_availability.dart`) |
+| `ngenius_applepay` / `ngenius_samsungpay` | `PaymentMethodOption.isApplePay` / `isSamsungPay`; ordering in `CheckoutController._payRank` |
