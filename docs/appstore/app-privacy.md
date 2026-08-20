@@ -48,17 +48,31 @@ joined with third-party data for ads. So every category below answers **No** to
 Purpose is **App Functionality** only. Do not tick Product Personalization,
 Analytics, or Developer Advertising — nothing in the app does those with it.
 
-### Financial Info — NO
+### Financial Info — NO **(CONFIRM before the next submission)**
 
 Worth stating plainly because it looks counter-intuitive for a shopping app:
-**the app never receives payment details.** There is no payment SDK in the
-build — the `zoonze/payments` MethodChannel declared in
-`lib/features/checkout/payments/native_payment_gateway.dart` has **no native
-implementation on either platform** (no handler in `AppDelegate.swift` /
-`SceneDelegate.swift`, none in `MainActivity.kt`). Orders complete through cash
-on delivery, which involves no card data. Nothing to declare.
+**the app never receives payment details.**
 
-> See the note at the bottom — this has a consequence beyond privacy.
+The determination is unchanged, but the reasoning below it was written when the
+`zoonze/payments` MethodChannel had no native implementation. That is **no
+longer true** — as of the Apple Pay / Samsung Pay work the build contains four
+payment SDKs: `NISdk` (iOS), `payment-sdk-android` + `payment-sdk-samsungpay`
+(Android) and `tabby_flutter_inapp_sdk` (Dart).
+
+The answer stays **NO** because none of them hands card data to app code:
+
+- **Card (N-Genius):** the PAN is entered inside the SDK's own UI and posted
+  straight to the gateway. `PaymentChannel` sees only a status string.
+- **Apple Pay:** PassKit collects the card and produces an encrypted
+  `PKPaymentToken` that only N-Genius can decrypt. `ApplePaySession` never reads
+  it — it receives the same status callback as the card path.
+- **Samsung Pay:** the same shape; the encrypted token goes from Samsung Wallet
+  to N-Genius, and `SamsungPaySession` gets success-or-failure.
+- **Tabby:** identity and instalment data are captured in Tabby's own webview.
+
+Nothing to declare, but this is a legal declaration about a build whose payment
+surface just changed, so **whoever owns the submission should re-confirm it**
+rather than inherit this line.
 
 ### Location — NO
 
@@ -120,15 +134,21 @@ exists.
 
 ---
 
-## Separate finding: payments do not work on iOS
+## Separate finding: online payment depends on the backend module
 
 Surfaced while auditing for Financial Info, and it matters beyond this form.
 
-The `zoonze/payments` channel has no native implementation on either platform,
-so N-Genius card payment and Tabby cannot complete a payment in the shipped
-build. Only non-redirect methods — cash on delivery, and zero-subtotal orders —
-can finish. This matches `CLAUDE.md`, which lists the native modules as
-on-platform work still outstanding.
+**Updated 2026-08-20.** This section previously said the `zoonze/payments`
+channel had no native implementation. That is out of date: both halves now exist
+(`android/.../PaymentChannel.kt`, `ios/Runner/PaymentChannel.swift`), plus the
+Apple Pay and Samsung Pay wallets. The remaining dependency is server-side.
+
+Online payment still cannot complete until the Magento module
+`MagentoEgypt_PaymentGraphQl` is deployed: without it `paymentSession` returns
+null, the app takes its "session unavailable" path, and the order is placed but
+left awaiting payment rather than failing. Only non-redirect methods — cash on
+delivery, and zero-subtotal orders — finish end to end. Apple Pay and Samsung
+Pay additionally need their merchant setup (`docs/decisions/payments.md` §5).
 
 Consequences:
 
@@ -136,7 +156,7 @@ Consequences:
   not blocked.
 - The **listing copy already omits Tabby and card brands**, so nothing is
   claimed that a reviewer can't do.
-- But a real customer choosing a card at checkout will not be able to pay. Worth
-  confirming with the owner whether the store's `available_payment_methods` is
-  currently limited to cash on delivery in production — if card is offered,
-  customers are hitting a dead end.
+- But a real customer choosing a card at checkout still will not be able to pay.
+  Worth confirming with the owner whether the store's
+  `available_payment_methods` is currently limited to cash on delivery in
+  production — if card is offered, customers are hitting a dead end.
