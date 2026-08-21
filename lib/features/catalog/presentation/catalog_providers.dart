@@ -11,6 +11,11 @@ import '../domain/product_detail.dart';
 
 /// Top-level category tree. Refetches when the active store view changes.
 final categoryTreeProvider = FutureProvider.autoDispose<List<Category>>((ref) {
+  // Kept alive: small, slow-changing, and on the critical path of every home
+  // paint — the splash pre-fetches it, and an autoDispose provider would throw
+  // that result away the moment the splash's subscription ended. A store switch
+  // still invalidates it via the activeStoreCode watch below.
+  ref.keepAlive();
   ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
   return ref.watch(catalogRepositoryProvider).fetchCategoryTree();
 });

@@ -29,6 +29,11 @@ query HeroSlides {
 final heroSlidesProvider = FutureProvider.autoDispose<List<HeroSlide>>((
   ref,
 ) async {
+  // Kept alive: small, slow-changing, and on the critical path of every home
+  // paint — the splash pre-fetches it, and an autoDispose provider would throw
+  // that result away the moment the splash's subscription ended. A store switch
+  // still invalidates it via the activeStoreCode watch below.
+  ref.keepAlive();
   ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
   final client = ref.watch(graphqlClientProvider);
   try {

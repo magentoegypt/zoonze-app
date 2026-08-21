@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +8,13 @@ import '../../../app/routes.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../core/assets/app_images.dart';
 import '../../../core/storage/secure_token_store.dart';
+import '../../../core/util/image_prefetch.dart';
+import '../../../core/widgets/network_image.dart';
+import '../../catalog/data/hero_slides_provider.dart';
+import '../../catalog/data/home_config_provider.dart';
+import '../../catalog/domain/category.dart';
+import '../../catalog/domain/home_config.dart';
+import '../../catalog/presentation/catalog_providers.dart';
 import '../../../core/widgets/brand_lockup.dart';
 import '../../../l10n/l10n.dart';
 
@@ -23,7 +32,46 @@ class _LaunchSplashScreenState extends ConsumerState<LaunchSplashScreen> {
   @override
   void initState() {
     super.initState();
+    _warmHome();
     _routeOnboarding();
+  }
+
+  /// The splash deliberately holds for 2.6s. Spend it fetching what Home needs
+  /// first, so it paints on arrival instead of starting from nothing.
+  ///
+  /// Strictly fire-and-forget: nothing here is awaited on the routing path, and
+  /// every failure is swallowed — a cold or offline start must still leave the
+  /// splash after 2.6s. These three providers keepAlive(), so the results
+  /// survive until Home reads them.
+  void _warmHome() {
+    unawaited(
+      Future(() async {
+        try {
+          // The product rails await the category tree before they can even
+          // issue their own query, so this removes a serial round-trip.
+          unawaited(ref.read(categoryTreeProvider.future).catchError((_) {
+            return const <Category>[];
+          }));
+          unawaited(ref.read(homeConfigProvider.future).catchError((_) {
+            return HomeConfig.empty;
+          }));
+          final slides = await ref.read(heroSlidesProvider.future);
+          if (!mounted || slides.isEmpty) return;
+          // Only the first slide — the one Home paints immediately.
+          await prefetchImages(
+            context,
+            [slides.first.imageUrl],
+            decodeWidth: ZoonzeImage.decodePixels(
+              context,
+              MediaQuery.sizeOf(context).width,
+            ),
+            limit: 1,
+          );
+        } catch (_) {
+          // A warm-up failure is not a startup failure.
+        }
+      }),
+    );
   }
 
   Future<void> _routeOnboarding() async {
