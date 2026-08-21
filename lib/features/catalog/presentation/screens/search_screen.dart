@@ -175,7 +175,7 @@ class _Suggestions extends ConsumerWidget {
         for (final p in products)
           ListTile(
             leading: ZoonzeImage(
-              url: p.imageUrl,
+              url: p.thumbnail,
               width: 44,
               height: 44,
               borderRadius: BorderRadius.circular(8),

@@ -14,6 +14,7 @@ class Product {
     required this.urlKey,
     this.brand,
     this.imageUrl,
+    this.thumbUrl,
     this.regularPrice,
     this.finalPrice,
     this.inStock = true,
@@ -26,6 +27,14 @@ class Product {
   final String? brand;
   final String? imageUrl;
 
+  /// A smaller derivative for thumbnail-sized surfaces, when the catalogue has
+  /// one. Today it never does: `image`, `small_image` and `thumbnail` all
+  /// resolve to the same generated file, because the store's view.xml defines
+  /// no per-role dimensions (verified against the live endpoint 2026-08-21).
+  /// The field exists so the switch is a one-line mapper change once the
+  /// backend adds the presets — see docs/decisions/performance.md.
+  final String? thumbUrl;
+
   /// Catalogue (struck-through) price.
   final Money? regularPrice;
 
@@ -34,6 +43,10 @@ class Product {
 
   final bool inStock;
   final ProductBadge badge;
+
+  /// The best URL for a small surface (cart line, order row, search row):
+  /// the thumbnail derivative when one exists, otherwise the main image.
+  String? get thumbnail => thumbUrl ?? imageUrl;
 
   /// True when there is a genuine discount to display.
   bool get isOnSale {
