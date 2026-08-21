@@ -18,14 +18,20 @@ import '../../../wishlist/presentation/widgets/wishlist_heart.dart';
 import '../../domain/money.dart';
 import '../../domain/product.dart';
 import '../../domain/product_detail.dart';
+import '../../domain/product_preview.dart';
 import '../catalog_providers.dart';
 import '../product_navigation.dart';
 import '../widgets/product_card.dart';
+import '../widgets/product_skeletons.dart';
 
 class ProductDetailScreen extends ConsumerStatefulWidget {
-  const ProductDetailScreen({super.key, required this.urlKey});
+  const ProductDetailScreen({super.key, required this.urlKey, this.preview});
 
   final String urlKey;
+
+  /// What the listing already knew, when we arrived from one. Used solely to
+  /// paint a real loading state; never a substitute for the loaded document.
+  final ProductPreview? preview;
 
   @override
   ConsumerState<ProductDetailScreen> createState() =>
@@ -84,6 +90,7 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
       ),
       body: AsyncValueView(
         value: detail,
+        loading: () => ProductDetailSkeleton(preview: widget.preview),
         onRetry: () => ref.invalidate(productDetailProvider(widget.urlKey)),
         data: (product) {
           if (product == null) {
@@ -241,7 +248,7 @@ class _RelatedProducts extends StatelessWidget {
                 child: ProductCard(
                   product: product,
                   onTap: () =>
-                      context.push(AppRoutes.product(product.urlKey)),
+                      openProduct(context, product),
                 ),
               );
             },

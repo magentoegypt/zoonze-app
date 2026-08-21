@@ -22,6 +22,7 @@ import '../features/checkout/presentation/screens/order_success_screen.dart';
 import '../features/auth/presentation/screens/sign_in_screen.dart';
 import '../features/auth/presentation/screens/sign_up_screen.dart';
 import '../features/catalog/domain/brand.dart';
+import '../features/catalog/domain/product_preview.dart';
 import '../features/catalog/presentation/screens/brands_screen.dart';
 import '../features/catalog/presentation/screens/categories_screen.dart';
 import '../features/catalog/presentation/screens/all_reviews_screen.dart';
@@ -76,8 +77,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/product/:urlKey',
-        builder: (context, state) =>
-            ProductDetailScreen(urlKey: state.pathParameters['urlKey']!),
+        builder: (context, state) => ProductDetailScreen(
+          urlKey: state.pathParameters['urlKey']!,
+          // Present only when a listing pushed us here; a deep link, a push
+          // notification or a restored route arrives without one.
+          preview: state.extra is ProductPreview
+              ? state.extra! as ProductPreview
+              : null,
+        ),
       ),
       GoRoute(
         path: AppRoutes.search,

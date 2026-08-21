@@ -33,6 +33,7 @@ import '../../domain/home_config.dart';
 import '../../domain/product.dart';
 import '../../domain/promo_split_banner.dart';
 import '../catalog_providers.dart';
+import '../product_navigation.dart';
 import '../widgets/product_card.dart';
 import '../widgets/product_skeletons.dart';
 
@@ -1086,7 +1087,7 @@ class _ProductGrid extends StatelessWidget {
         return ProductCard(
           product: product,
           dealBadge: dealBadge,
-          onTap: () => context.push(AppRoutes.product(product.urlKey)),
+          onTap: () => openProduct(context, product),
         );
       },
     );

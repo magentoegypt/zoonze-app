@@ -2,9 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
-import '../../../../app/routes.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/theme_x.dart';
 import '../../../../core/error/failure.dart';
@@ -19,6 +17,7 @@ import '../../data/catalog_repository.dart';
 import '../../domain/brand.dart';
 import '../brand_results_controller.dart';
 import '../plp_controller.dart';
+import '../product_navigation.dart';
 import '../search_controller.dart';
 import '../search_history.dart';
 import '../widgets/filter_sheet.dart';
@@ -183,7 +182,7 @@ class _Suggestions extends ConsumerWidget {
               error: (_) => const ColoredBox(color: AppColors.surfaceTint),
             ),
             title: Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-            onTap: () => context.push(AppRoutes.product(p.urlKey)),
+            onTap: () => openProduct(context, p),
           ),
       ],
     );
@@ -454,7 +453,7 @@ class _ResultsState extends ConsumerState<_Results> {
                 final product = state.products[index];
                 return ProductCard(
                   product: product,
-                  onTap: () => context.push(AppRoutes.product(product.urlKey)),
+                  onTap: () => openProduct(context, product),
                 );
               }, childCount: state.products.length),
             ),

@@ -12,6 +12,7 @@ import '../../../../l10n/l10n.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../cart/presentation/cart_controller.dart';
 import '../../../catalog/presentation/widgets/product_card.dart';
+import '../../../catalog/presentation/product_navigation.dart';
 import '../../domain/wishlist_entry.dart';
 import '../wishlist_controller.dart';
 
@@ -105,7 +106,7 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
               final product = state.entries[index].product;
               return ProductCard(
                 product: product,
-                onTap: () => context.push(AppRoutes.product(product.urlKey)),
+                onTap: () => openProduct(context, product),
                 // Added to the bag → drop it from the wishlist (QA).
                 onAddedToCart: () => ref
                     .read(wishlistControllerProvider.notifier)

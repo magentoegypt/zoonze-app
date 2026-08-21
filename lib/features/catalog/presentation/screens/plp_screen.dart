@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../app/routes.dart';
 import '../../../../app/shell/marketing_footer.dart';
@@ -16,6 +15,7 @@ import '../../data/catalog_repository.dart';
 import '../../domain/category.dart';
 import '../catalog_providers.dart';
 import '../plp_controller.dart';
+import '../product_navigation.dart';
 import '../widgets/filter_sheet.dart';
 import '../widgets/product_card.dart';
 import '../widgets/product_skeletons.dart';
@@ -203,7 +203,7 @@ class _PlpScreenState extends ConsumerState<PlpScreen> {
                 final product = state.products[index];
                 return ProductCard(
                   product: product,
-                  onTap: () => context.push(AppRoutes.product(product.urlKey)),
+                  onTap: () => openProduct(context, product),
                 );
               }, childCount: state.products.length),
             ),
