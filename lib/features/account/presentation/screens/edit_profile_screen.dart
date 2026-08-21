@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -9,6 +8,7 @@ import '../../../../app/routes.dart';
 import '../../../../app/shell/marketing_footer.dart';
 import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/widgets/network_image.dart';
 import '../../../../app/theme/theme_x.dart';
 import '../../../../core/store/store_controller.dart';
 import '../../../../core/util/media.dart';
@@ -417,14 +417,13 @@ class _AvatarBadge extends StatelessWidget {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : hasPhoto
-                ? CachedNetworkImage(
-                    imageUrl: avatarUrl!,
+                ? ZoonzeImage(
+                    url: avatarUrl,
                     width: 80,
                     height: 80,
-                    fit: BoxFit.cover,
-                    placeholder: (_, __) =>
+                    placeholder: (_) =>
                         const ColoredBox(color: AppColors.surfaceTint),
-                    errorWidget: (_, __, ___) => initialsText,
+                    error: (_) => initialsText,
                   )
                 : initialsText,
           ),

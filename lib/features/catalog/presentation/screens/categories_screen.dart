@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +6,7 @@ import '../../../../app/routes.dart';
 import '../../../../app/shell/marketing_footer.dart';
 import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/widgets/network_image.dart';
 import '../../../../core/widgets/async_value_view.dart';
 import '../../../../l10n/l10n.dart';
 import '../../domain/category.dart';
@@ -205,15 +205,11 @@ class _CategoryCard extends StatelessWidget {
             Expanded(
               child: SizedBox(
                 width: double.infinity,
-                child: (category.image == null || category.image!.isEmpty)
-                    ? const _CategoryPlaceholder()
-                    : CachedNetworkImage(
-                        imageUrl: category.image!,
-                        fit: BoxFit.cover,
-                        placeholder: (_, __) =>
-                            const ColoredBox(color: AppColors.surfaceTint),
-                        errorWidget: (_, __, ___) => const _CategoryPlaceholder(),
-                      ),
+                child: ZoonzeImage(
+                  url: category.image,
+                  shimmer: true,
+                  error: (_) => const _CategoryPlaceholder(),
+                ),
               ),
             ),
             // White label panel — name + product count.

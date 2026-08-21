@@ -1,9 +1,9 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/widgets/network_image.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../catalog/domain/money.dart';
 import '../../domain/order.dart';
@@ -223,23 +223,19 @@ class _DetailThumb extends StatelessWidget {
     child: SizedBox(
       width: 48,
       height: 48,
-      child: (url == null || url!.isEmpty)
-          ? const ColoredBox(
-              color: AppColors.surfaceTint,
-              child: Icon(
-                Icons.image_outlined,
-                size: 16,
-                color: AppColors.inkMuted,
-              ),
-            )
-          : CachedNetworkImage(
-              imageUrl: url!,
-              fit: BoxFit.cover,
-              placeholder: (_, __) =>
-                  const ColoredBox(color: AppColors.surfaceTint),
-              errorWidget: (_, __, ___) =>
-                  const ColoredBox(color: AppColors.surfaceTint),
-            ),
+      child: ZoonzeImage(
+        url: url,
+        decodeWidth: 48,
+        placeholder: (_) => const ColoredBox(color: AppColors.surfaceTint),
+        error: (_) => const ColoredBox(
+          color: AppColors.surfaceTint,
+          child: Icon(
+            Icons.image_outlined,
+            size: 16,
+            color: AppColors.inkMuted,
+          ),
+        ),
+      ),
     ),
   );
 }

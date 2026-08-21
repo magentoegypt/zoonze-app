@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -705,7 +704,13 @@ class _HeroSlideCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ImageProvider provider = slide.imageUrl.isNotEmpty
-        ? CachedNetworkImageProvider(slide.imageUrl)
+        ? ZoonzeImage.provider(
+            slide.imageUrl,
+            decodeWidth: ZoonzeImage.decodePixels(
+              context,
+              MediaQuery.sizeOf(context).width,
+            ),
+          )
         : const AssetImage(AppImages.banner);
     return _HeroBannerView(
       eyebrow: slide.eyebrow,
@@ -1249,11 +1254,11 @@ class _BrandCard extends StatelessWidget {
         ),
         alignment: Alignment.center,
         child: brand.imageUrl.isNotEmpty
-            ? CachedNetworkImage(
-                imageUrl: brand.imageUrl,
+            ? ZoonzeImage(
+                url: brand.imageUrl,
                 fit: BoxFit.contain,
-                placeholder: (_, __) => _BrandName(title: brand.title),
-                errorWidget: (_, __, ___) => _BrandName(title: brand.title),
+                placeholder: (_) => _BrandName(title: brand.title),
+                error: (_) => _BrandName(title: brand.title),
               )
             : _BrandName(title: brand.title),
       ),
@@ -1718,16 +1723,11 @@ class _EditorialBanner extends ConsumerWidget {
           child: Stack(
             children: [
               Positioned.fill(
-                child: banner.imageUrl.isNotEmpty
-                    ? CachedNetworkImage(
-                        imageUrl: banner.imageUrl,
-                        fit: BoxFit.cover,
-                        placeholder: (_, __) =>
-                            const ColoredBox(color: AppColors.surfaceTint),
-                        errorWidget: (_, __, ___) =>
-                            const ColoredBox(color: AppColors.surfaceTint),
-                      )
-                    : const ColoredBox(color: AppColors.surfaceTint),
+                child: ZoonzeImage(
+                  url: banner.imageUrl,
+                  shimmer: true,
+                  error: (_) => const ColoredBox(color: AppColors.surfaceTint),
+                ),
               ),
               // Dark scrim on the start side for text legibility.
               Positioned.fill(
@@ -1954,14 +1954,7 @@ class _ExclusiveOfferBanner extends ConsumerWidget {
             children: [
               if (offer.imageUrl.isNotEmpty)
                 Positioned.fill(
-                  child: CachedNetworkImage(
-                    imageUrl: offer.imageUrl,
-                    fit: BoxFit.cover,
-                    placeholder: (_, __) =>
-                        const ColoredBox(color: AppColors.surfaceTint),
-                    errorWidget: (_, __, ___) =>
-                        const ColoredBox(color: AppColors.surfaceTint),
-                  ),
+                  child: ZoonzeImage(url: offer.imageUrl, shimmer: true),
                 ),
               // Scrim so the centered white text stays legible over any image.
               Positioned.fill(
@@ -2322,12 +2315,9 @@ class _JournalCard extends StatelessWidget {
               height: 118,
               width: double.infinity,
               child: post.hasImage
-                  ? CachedNetworkImage(
-                      imageUrl: post.imageUrl,
-                      fit: BoxFit.cover,
-                      placeholder: (_, __) =>
-                          const ColoredBox(color: AppColors.surfaceTint),
-                      errorWidget: (_, __, ___) => const _JournalImageFallback(),
+                  ? ZoonzeImage(
+                      url: post.imageUrl,
+                      error: (_) => const _JournalImageFallback(),
                     )
                   : const _JournalImageFallback(),
             ),

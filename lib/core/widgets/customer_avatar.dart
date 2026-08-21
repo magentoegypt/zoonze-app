@@ -1,7 +1,7 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../app/theme/app_colors.dart';
+import 'network_image.dart';
 import '../util/media.dart';
 
 /// The signed-in customer's avatar: their uploaded photo when present, falling
@@ -80,13 +80,12 @@ class CustomerAvatar extends StatelessWidget {
             : null,
       ),
       child: hasPhoto
-          ? CachedNetworkImage(
-              imageUrl: url,
+          ? ZoonzeImage(
+              url: url,
               width: diameter,
               height: diameter,
-              fit: BoxFit.cover,
-              placeholder: (_, __) => ColoredBox(color: background),
-              errorWidget: (_, __, ___) => initials,
+              placeholder: (_) => ColoredBox(color: background),
+              error: (_) => initials,
             )
           : initials,
     );

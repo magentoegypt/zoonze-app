@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +6,7 @@ import '../../../../app/routes.dart';
 import '../../../../app/shell/marketing_footer.dart';
 import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/widgets/network_image.dart';
 import '../../../../app/theme/app_theme.dart';
 import '../../../../core/widgets/brand_logo.dart';
 import '../../../../core/widgets/empty_state.dart';
@@ -327,14 +327,12 @@ class _BrandTile extends StatelessWidget {
             SizedBox(
               height: 48,
               width: double.infinity,
-              child: brand.imageUrl.isEmpty
-                  ? const SizedBox.shrink()
-                  : CachedNetworkImage(
-                      imageUrl: brand.imageUrl,
-                      fit: BoxFit.contain,
-                      placeholder: (_, __) => const SizedBox.shrink(),
-                      errorWidget: (_, __, ___) => const SizedBox.shrink(),
-                    ),
+              child: ZoonzeImage(
+                url: brand.imageUrl,
+                fit: BoxFit.contain,
+                placeholder: (_) => const SizedBox.shrink(),
+                error: (_) => const SizedBox.shrink(),
+              ),
             ),
             const SizedBox(height: 10),
             Text(
