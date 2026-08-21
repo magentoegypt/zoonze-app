@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,10 +11,13 @@ import '../../../../app/theme/theme_x.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/store/store_controller.dart';
 import '../../../../core/widgets/empty_state.dart';
+import '../../../../core/util/image_prefetch.dart';
+import '../../../../core/widgets/network_image.dart';
 import '../../../../core/widgets/failure_message.dart';
 import '../../../../l10n/l10n.dart';
 import '../../data/catalog_repository.dart';
 import '../../domain/category.dart';
+import '../../domain/product.dart';
 import '../catalog_providers.dart';
 import '../plp_controller.dart';
 import '../product_navigation.dart';
@@ -69,6 +74,25 @@ class _PlpScreenState extends ConsumerState<PlpScreen> {
     }
   }
 
+  /// A page landed — warm the first cards of it while the user is still
+  /// scrolling toward them. Bounded: the rest of the page loads as it scrolls
+  /// into view, which is what a lazy grid is for.
+  void _warmAppendedPage(int previousCount, List<Product> products) {
+    if (products.length <= previousCount) return;
+    unawaited(
+      prefetchImages(
+        context,
+        products.skip(previousCount).map((p) => p.imageUrl),
+        // Two columns with 16pt gutters — the width a card decodes at.
+        decodeWidth: ZoonzeImage.decodePixels(
+          context,
+          (MediaQuery.sizeOf(context).width - 48) / 2,
+        ),
+        limit: 6,
+      ),
+    );
+  }
+
   Future<void> _openFilters(PlpState state) async {
     final currency = ref.read(storeControllerProvider).currency;
     final result = await showModalBottomSheet<FilterResult>(
@@ -110,6 +134,11 @@ class _PlpScreenState extends ConsumerState<PlpScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    // Warm the top of each appended page as it arrives — the grid is 400px
+    // from the bottom when loadMore fires, so the images have a head start.
+    ref.listen(plpControllerProvider(_effectiveUid), (previous, next) {
+      _warmAppendedPage(previous?.products.length ?? 0, next.products);
+    });
     final state = ref.watch(plpControllerProvider(_effectiveUid));
     // Sub-category chips come from the parent category's navigable children.
     final parent = ref

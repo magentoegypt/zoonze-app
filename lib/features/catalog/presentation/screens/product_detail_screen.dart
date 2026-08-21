@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +13,7 @@ import '../../../../app/theme/theme_x.dart';
 import '../../../../core/config/free_shipping.dart';
 import '../../../../core/widgets/async_value_view.dart';
 import '../../../../core/widgets/network_image.dart';
+import '../../../../core/util/image_prefetch.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../cart/presentation/cart_controller.dart';
 import '../../../checkout/payments/tabby_promo.dart';
@@ -214,14 +217,39 @@ class _Content extends StatelessWidget {
 /// "You may also like" horizontal rail (Figma), driven by Magento
 /// `also_like_products`. Hidden entirely when the field is empty (no
 /// fabricated recommendations).
-class _RelatedProducts extends StatelessWidget {
+class _RelatedProducts extends StatefulWidget {
   const _RelatedProducts({required this.products});
   final List<Product> products;
 
   @override
+  State<_RelatedProducts> createState() => _RelatedProductsState();
+}
+
+class _RelatedProductsState extends State<_RelatedProducts> {
+  static const double _cardWidth = 150;
+
+  @override
+  void initState() {
+    super.initState();
+    // After the frame, so warming the rail never races the hero image the
+    // user is actually looking at. Only the cards in view.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(
+        prefetchImages(
+          context,
+          widget.products.map((p) => p.imageUrl),
+          decodeWidth: ZoonzeImage.decodePixels(context, _cardWidth),
+          limit: 4,
+        ),
+      );
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final related = products;
+    final related = widget.products;
     if (related.isEmpty) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -244,7 +272,7 @@ class _RelatedProducts extends StatelessWidget {
             itemBuilder: (_, i) {
               final product = related[i];
               return SizedBox(
-                width: 150,
+                width: _cardWidth,
                 child: ProductCard(
                   product: product,
                   onTap: () =>
@@ -401,6 +429,23 @@ class _GalleryState extends State<_Gallery> {
     }
   }
 
+  /// Warm the images either side of the current page so a swipe is instant.
+  /// Bounded to the neighbours — a 20-image gallery must not download itself.
+  void _warmNeighbours() {
+    if (!mounted) return;
+    final images = widget.images;
+    if (images.length < 2) return;
+    final n = images.length;
+    unawaited(
+      prefetchImages(
+        context,
+        [images[(_index + 1) % n], images[(_index - 1 + n) % n]],
+        decodeWidth: pdpImagePixels(context),
+        limit: 2,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final images = widget.images;
@@ -418,7 +463,10 @@ class _GalleryState extends State<_Gallery> {
                     PageView.builder(
                       controller: _controller,
                       itemCount: images.length,
-                      onPageChanged: (i) => setState(() => _index = i),
+                      onPageChanged: (i) {
+                        setState(() => _index = i);
+                        _warmNeighbours();
+                      },
                       itemBuilder: (_, i) => ZoonzeImage(
                         url: images[i],
                         decodeWidth: imageWidth,

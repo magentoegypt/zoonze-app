@@ -13,6 +13,7 @@ import '../../../../app/theme/theme_x.dart';
 import '../../../../core/assets/app_images.dart';
 import '../../../../core/store/store_controller.dart';
 import '../../../../core/util/launch.dart';
+import '../../../../core/util/image_prefetch.dart';
 import '../../../../core/util/store_time.dart';
 import '../../../../core/widgets/brand_logo.dart';
 import '../../../../core/widgets/network_image.dart';
@@ -561,6 +562,7 @@ class _HeroCarouselState extends State<_HeroCarousel> {
   void initState() {
     super.initState();
     _scheduleDwell();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _warmNeighbours());
   }
 
   @override
@@ -568,6 +570,29 @@ class _HeroCarouselState extends State<_HeroCarousel> {
     _timer?.cancel();
     _controller.dispose();
     super.dispose();
+  }
+
+  /// Pre-warm the slides on either side of the current one — the carousel
+  /// auto-advances every 5s, so the next image is always about to be needed.
+  /// Bounded to those two; the rest load when they come round.
+  void _warmNeighbours() {
+    if (!mounted) return;
+    final n = widget.slides.length;
+    if (n < 2) return;
+    unawaited(
+      prefetchImages(
+        context,
+        [
+          widget.slides[(_index + 1) % n].imageUrl,
+          widget.slides[(_index - 1 + n) % n].imageUrl,
+        ],
+        decodeWidth: ZoonzeImage.decodePixels(
+          context,
+          MediaQuery.sizeOf(context).width,
+        ),
+        limit: 2,
+      ),
+    );
   }
 
   /// (Re)arm the auto-advance for the current slide: a fixed timer for image
@@ -615,6 +640,7 @@ class _HeroCarouselState extends State<_HeroCarousel> {
             onPageChanged: (i) {
               setState(() => _index = i);
               _scheduleDwell();
+              _warmNeighbours();
             },
             itemCount: widget.slides.length,
             itemBuilder: (context, i) => _HeroSlideCard(
