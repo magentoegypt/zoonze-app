@@ -1,11 +1,12 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/routes.dart';
 import '../../../../app/shell/marketing_footer.dart';
 import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/widgets/network_image.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../../core/widgets/zoonze_back_button.dart';
 import '../../domain/order.dart';
@@ -14,9 +15,12 @@ import '../order_format.dart';
 /// One timeline step: a label, an optional timestamp, and whether it's done.
 typedef _Step = ({String label, String time, bool done});
 
-/// Track Order (Figma `63:2`): status banner, vertical status timeline built
-/// from the real Magento order history, delivery address, items, and a help
-/// link. Reached from the My Orders "Track" action with the [CustomerOrder].
+/// Track Order (Figma `63:2`): status banner, a five-stage timeline derived
+/// from the Magento order status (see [_stageIndex] — best-effort, never
+/// invented progress), the carrier + tracking number(s) once a shipment exists,
+/// delivery address, items, and a help link. Reached from the My Orders "Track"
+/// action — and, for a guest, straight from checkout — with the
+/// [CustomerOrder].
 class OrderTrackingScreen extends StatelessWidget {
   const OrderTrackingScreen({super.key, required this.order});
 
@@ -46,7 +50,7 @@ class OrderTrackingScreen extends StatelessWidget {
 
   /// The five fixed timeline stages, filled up to (and including) the reached
   /// stage. Only "Order Placed" carries a timestamp (the order date).
-  List<_Step> _steps(AppLocalizations l10n) {
+  List<_Step> _steps(AppLocalizations l10n, String locale) {
     final labels = <String>[
       l10n.orderPlaced,
       l10n.orderStageConfirmed,
@@ -59,7 +63,7 @@ class OrderTrackingScreen extends StatelessWidget {
       for (var i = 0; i < labels.length; i++)
         (
           label: labels[i],
-          time: i == 0 ? orderFmtDateTime(order.date) : '',
+          time: i == 0 ? orderFmtDateTime(order.date, locale) : '',
           // Cancelled (reached < 0): only Placed is done; rest stay pending.
           done: reached >= 0 && i <= reached,
         ),
@@ -86,15 +90,16 @@ class OrderTrackingScreen extends StatelessWidget {
 
   /// Secondary line under the status: the real delivery method when present,
   /// otherwise the order date. No fabricated per-order ETA.
-  String _statusSub() =>
+  String _statusSub(String locale) =>
       (order.shippingMethod != null && order.shippingMethod!.isNotEmpty)
       ? order.shippingMethod!
-      : orderFmtDateTime(order.date);
+      : orderFmtDateTime(order.date, locale);
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final steps = _steps(l10n);
+    final locale = Localizations.localeOf(context).languageCode;
+    final steps = _steps(l10n, locale);
 
     return ZoonzeScaffold(
       currentTab: AppTab.account,
@@ -141,7 +146,7 @@ class OrderTrackingScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        _statusSub(),
+                        _statusSub(locale),
                         style: const TextStyle(
                           color: AppColors.inkMuted,
                           fontSize: 12.5,
@@ -179,6 +184,31 @@ class OrderTrackingScreen extends StatelessWidget {
             padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 16),
             child: _Timeline(steps: steps),
           ),
+          const _Band(),
+
+          // Carrier + tracking number(s) — the whole point of this screen. Only
+          // rendered once Magento has a shipment; no fabricated placeholder.
+          Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 8),
+            child: Text(
+              l10n.orderTrackingSection,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                color: AppColors.inkHeading,
+              ),
+            ),
+          ),
+          if (!order.hasTracking)
+            Padding(
+              padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 16),
+              child: Text(
+                l10n.orderNoTracking,
+                style: const TextStyle(color: AppColors.inkMuted),
+              ),
+            )
+          else
+            for (final t in order.trackings) _TrackingRow(tracking: t),
           const _Band(),
 
           // Delivery address.
@@ -281,6 +311,48 @@ class _Band extends StatelessWidget {
     height: 8,
     child: ColoredBox(color: AppColors.surfaceMuted),
   );
+}
+
+/// One shipment: carrier + service label, the AWB forced LTR (an Arabic layout
+/// must not reverse a tracking number), and a copy action.
+class _TrackingRow extends StatelessWidget {
+  const _TrackingRow({required this.tracking});
+
+  final OrderTracking tracking;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final label = [
+      tracking.carrier,
+      tracking.title,
+    ].where((s) => s.isNotEmpty).join(' \u00b7 ');
+    return ListTile(
+      contentPadding: const EdgeInsetsDirectional.fromSTEB(16, 0, 8, 0),
+      leading: const Icon(
+        Icons.local_shipping_outlined,
+        color: AppColors.brandPrimary,
+      ),
+      title: Text(label.isEmpty ? l10n.orderTrackingSection : label),
+      subtitle: Text(
+        tracking.number,
+        textDirection: TextDirection.ltr,
+        style: const TextStyle(fontWeight: FontWeight.w600),
+      ),
+      trailing: IconButton(
+        icon: const Icon(Icons.copy_outlined),
+        tooltip: l10n.orderTrackingSection,
+        onPressed: () async {
+          await Clipboard.setData(ClipboardData(text: tracking.number));
+          if (context.mounted) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(l10n.orderTrackingCopied)));
+          }
+        },
+      ),
+    );
+  }
 }
 
 class _Timeline extends StatelessWidget {
@@ -443,29 +515,19 @@ class _Thumb extends StatelessWidget {
       child: SizedBox(
         width: 52,
         height: 52,
-        child: (url == null || url!.isEmpty)
-            ? const ColoredBox(
-                color: AppColors.surfaceTint,
-                child: Icon(
-                  Icons.image_outlined,
-                  size: 18,
-                  color: AppColors.inkMuted,
-                ),
-              )
-            : CachedNetworkImage(
-                imageUrl: url!,
-                fit: BoxFit.cover,
-                placeholder: (_, __) =>
-                    const ColoredBox(color: AppColors.surfaceTint),
-                errorWidget: (_, __, ___) => const ColoredBox(
-                  color: AppColors.surfaceTint,
-                  child: Icon(
-                    Icons.image_outlined,
-                    size: 18,
-                    color: AppColors.inkMuted,
-                  ),
-                ),
-              ),
+        child: ZoonzeImage(
+          url: url,
+          decodeWidth: 52,
+          placeholder: (_) => const ColoredBox(color: AppColors.surfaceTint),
+          error: (_) => const ColoredBox(
+            color: AppColors.surfaceTint,
+            child: Icon(
+              Icons.image_outlined,
+              size: 18,
+              color: AppColors.inkMuted,
+            ),
+          ),
+        ),
       ),
     );
   }

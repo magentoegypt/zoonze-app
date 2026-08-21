@@ -11,7 +11,6 @@ import '../../core/widgets/brand_logo.dart';
 import '../../core/widgets/failure_message.dart';
 import '../../core/widgets/social_icon.dart';
 import '../../core/widgets/web_view_screen.dart';
-import '../../features/auth/presentation/auth_controller.dart';
 import '../../features/newsletter/data/newsletter_repository.dart';
 import '../../l10n/l10n.dart';
 import '../routes.dart';
@@ -134,16 +133,11 @@ class _MarketingFooterState extends ConsumerState<MarketingFooter> {
     _openStorePage('${_cmsSlug(page, isAr)}/', title);
   }
 
-  /// Track Order: logged-in customers get the in-app Orders screen; guests get
-  /// the storefront's guest order-tracking form (Order ID + email/last-name
-  /// lookup) in the WebView, since they have no in-app order history.
-  void _openTrackOrder(String title) {
-    if (ref.read(authControllerProvider).isAuthenticated) {
-      context.push(AppRoutes.orders);
-    } else {
-      _openStorePage('sales/guest/form/', title);
-    }
-  }
+  /// Track Order always lands on the in-app Orders screen — it now serves
+  /// guests too (their remembered orders, resolved through Magento's guest
+  /// lookups, plus a manual order-number lookup), so the storefront
+  /// `sales/guest/form/` WebView fallback is no longer needed.
+  void _openTrackOrder() => context.push(AppRoutes.orders);
 
   Future<void> _openUrl(String url) async {
     final messenger = ScaffoldMessenger.of(context);
@@ -213,7 +207,7 @@ class _MarketingFooterState extends ConsumerState<MarketingFooter> {
                     ),
                     (
                       label: l10n.footerTrackOrder,
-                      onTap: () => _openTrackOrder(l10n.footerTrackOrder),
+                      onTap: _openTrackOrder,
                     ),
                   ],
                 ),

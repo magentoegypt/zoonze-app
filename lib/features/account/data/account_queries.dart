@@ -1,62 +1,99 @@
 /// Hand-written Magento 2.4.8 customer account operations (orders, addresses,
 /// profile).
 abstract final class AccountQueries {
+  /// The full `CustomerOrder` selection, shared by the customer order list and
+  /// the two guest lookups (`guestOrder` / `guestOrderByToken`) — all three
+  /// return the same `CustomerOrder` type, so they parse through `_parseOrder`.
+  static const String _orderFields = r'''
+    number
+    order_date
+    status
+    shipping_method
+    carrier
+    total {
+      subtotal { value currency }
+      total_shipping { value currency }
+      grand_total { value currency }
+      discounts { amount { value currency } label }
+    }
+    items {
+      product_name
+      product_sku
+      product_url_key
+      quantity_ordered
+      product_sale_price { value currency }
+      product { image { url } }
+    }
+    payment_methods { name type }
+    comments { message timestamp }
+    shipping_address {
+      firstname
+      lastname
+      street
+      city
+      region
+      postcode
+      telephone
+      country_code
+    }
+    billing_address {
+      firstname
+      lastname
+      street
+      city
+      region
+      postcode
+      telephone
+      country_code
+    }
+    shipments {
+      tracking { title number carrier }
+    }
+''';
+
   // scope: WEBSITE unifies orders across both store views (uae-en / uae-ar share
   // one website) — without it `orders` defaults to STORE and each language only
   // sees the orders placed under its own Store header.
-  static const String orders = r'''
+  static const String orders =
+      r'''
 query CustomerOrders($pageSize: Int!, $currentPage: Int!) {
   customer {
     orders(pageSize: $pageSize, currentPage: $currentPage, scope: WEBSITE) {
       total_count
       page_info { current_page total_pages }
       items {
-        number
-        order_date
-        status
-        shipping_method
-        carrier
-        total {
-          subtotal { value currency }
-          total_shipping { value currency }
-          grand_total { value currency }
-          discounts { amount { value currency } label }
-        }
-        items {
-          product_name
-          product_sku
-          product_url_key
-          quantity_ordered
-          product_sale_price { value currency }
-          product { image { url } }
-        }
-        payment_methods { name type }
-        comments { message timestamp }
-        shipping_address {
-          firstname
-          lastname
-          street
-          city
-          region
-          postcode
-          telephone
-          country_code
-        }
-        billing_address {
-          firstname
-          lastname
-          street
-          city
-          region
-          postcode
-          telephone
-          country_code
-        }
-        shipments {
-          tracking { title number carrier }
-        }
+''' +
+      _orderFields +
+      r'''
       }
     }
+  }
+}
+''';
+
+  /// Guest order lookup by the Magento order token (`placeOrder.orderV2.token`)
+  /// captured at checkout. Native Magento 2.4.8 query — no custom module.
+  static const String guestOrderByToken =
+      r'''
+query GuestOrderByToken($token: String!) {
+  guestOrderByToken(input: { token: $token }) {
+''' +
+      _orderFields +
+      r'''
+  }
+}
+''';
+
+  /// Guest order lookup by the details printed on the confirmation e-mail:
+  /// order number + the billing e-mail and last name used at checkout. Lets a
+  /// guest track an order placed on the website or on another device.
+  static const String guestOrder =
+      r'''
+query GuestOrder($number: String!, $email: String!, $lastname: String!) {
+  guestOrder(input: { number: $number, email: $email, lastname: $lastname }) {
+''' +
+      _orderFields +
+      r'''
   }
 }
 ''';

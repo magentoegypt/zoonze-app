@@ -11,6 +11,7 @@ import '../features/account/presentation/screens/about_screen.dart';
 import '../features/account/presentation/screens/help_screen.dart';
 import '../features/account/presentation/screens/order_detail_screen.dart';
 import '../features/account/presentation/screens/order_tracking_screen.dart';
+import '../features/account/presentation/screens/guest_track_order_screen.dart';
 import '../features/account/presentation/screens/orders_screen.dart';
 import '../features/account/presentation/screens/settings_screen.dart';
 import '../features/auth/presentation/screens/forgot_password_screen.dart';
@@ -145,15 +146,26 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.orders,
         builder: (context, state) => const OrdersScreen(),
       ),
+      // Both carry a fully-hydrated order in `extra`, which is in-process memory
+      // only: a cold start or an OS deep link arrives with none. Bounce to the
+      // list instead of throwing on the cast.
       GoRoute(
         path: AppRoutes.orderDetail,
+        redirect: (context, state) =>
+            state.extra is CustomerOrder ? null : AppRoutes.orders,
         builder: (context, state) =>
-            OrderDetailScreen(order: state.extra as CustomerOrder),
+            OrderDetailScreen(order: state.extra! as CustomerOrder),
       ),
       GoRoute(
         path: AppRoutes.orderTracking,
+        redirect: (context, state) =>
+            state.extra is CustomerOrder ? null : AppRoutes.orders,
         builder: (context, state) =>
-            OrderTrackingScreen(order: state.extra as CustomerOrder),
+            OrderTrackingScreen(order: state.extra! as CustomerOrder),
+      ),
+      GoRoute(
+        path: AppRoutes.guestTrackOrder,
+        builder: (context, state) => const GuestTrackOrderScreen(),
       ),
       GoRoute(
         path: AppRoutes.addresses,

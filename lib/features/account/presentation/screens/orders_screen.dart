@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,11 +6,14 @@ import '../../../../app/routes.dart';
 import '../../../../app/shell/marketing_footer.dart';
 import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/widgets/network_image.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/failure_message.dart';
 import '../../../../l10n/l10n.dart';
+import '../../../auth/presentation/auth_controller.dart';
 import '../../data/account_repository.dart';
+import '../guest_orders_controller.dart';
 import '../order_actions.dart';
 import '../../../../core/widgets/zoonze_back_button.dart';
 import '../../domain/order.dart';
@@ -65,7 +67,11 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final state = ref.watch(ordersControllerProvider);
+    // Guests have no `customer { orders }`: querying it without a bearer is a
+    // hard 403 (`graphql-authorization`), which used to render an error page
+    // whose Retry could never succeed. Resolve the orders this device
+    // remembers through Magento's guest lookups instead.
+    final isAuthenticated = ref.watch(authControllerProvider).isAuthenticated;
 
     return ZoonzeScaffold(
       currentTab: AppTab.account,
@@ -74,17 +80,14 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
         leading: const ZoonzeBackButton(),
         title: Text(l10n.accountOrders),
       ),
-      body: _body(l10n, state),
+      body: isAuthenticated
+          ? _customerBody(l10n, ref.watch(ordersControllerProvider))
+          : _guestBody(l10n, ref.watch(guestOrdersControllerProvider)),
     );
   }
 
-  Widget _body(AppLocalizations l10n, OrdersState state) {
-    if (state.isLoading && state.orders.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (state.error != null && state.orders.isEmpty) {
-      final error = state.error;
-      return Center(
+  Widget _errorBlock(AppLocalizations l10n, Object? error, VoidCallback retry) =>
+      Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
@@ -97,13 +100,28 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
-              FilledButton(
-                onPressed: ref.read(ordersControllerProvider.notifier).refresh,
-                child: Text(l10n.actionRetry),
-              ),
+              FilledButton(onPressed: retry, child: Text(l10n.actionRetry)),
             ],
           ),
         ),
+      );
+
+  Widget _card(CustomerOrder order) => _OrderCard(
+    order: order,
+    onDetails: () => context.push(AppRoutes.orderDetail, extra: order),
+    onTrack: () => context.push(AppRoutes.orderTracking, extra: order),
+    onReorder: () => _reorder(order),
+  );
+
+  Widget _customerBody(AppLocalizations l10n, OrdersState state) {
+    if (state.isLoading && state.orders.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (state.error != null && state.orders.isEmpty) {
+      return _errorBlock(
+        l10n,
+        state.error,
+        ref.read(ordersControllerProvider.notifier).refresh,
       );
     }
     if (state.orders.isEmpty) {
@@ -112,7 +130,9 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
         title: l10n.ordersEmpty,
       );
     }
-    final filtered = state.orders.where((o) => _statusMatches(_filter, o)).toList();
+    final filtered = state.orders
+        .where((o) => _statusMatches(_filter, o))
+        .toList();
     return ListView(
       controller: _scroll,
       padding: EdgeInsets.zero,
@@ -133,19 +153,7 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
         else
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-            child: Column(
-              children: [
-                for (final order in filtered)
-                  _OrderCard(
-                    order: order,
-                    onDetails: () =>
-                        context.push(AppRoutes.orderDetail, extra: order),
-                    onTrack: () =>
-                        context.push(AppRoutes.orderTracking, extra: order),
-                    onReorder: () => _reorder(order),
-                  ),
-              ],
-            ),
+            child: Column(children: [for (final o in filtered) _card(o)]),
           ),
         if (state.isLoadingMore)
           const Padding(
@@ -154,6 +162,110 @@ class _OrdersScreenState extends ConsumerState<OrdersScreen> {
           ),
         const MarketingFooter(),
       ],
+    );
+  }
+
+  Widget _guestBody(AppLocalizations l10n, GuestOrdersState state) {
+    final notifier = ref.read(guestOrdersControllerProvider.notifier);
+    if (state.isLoading && state.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    // Nothing resolved at all: a transient failure worth retrying — unlike the
+    // old guest path, this Retry can actually succeed.
+    if (state.error != null && state.orders.isEmpty) {
+      return _errorBlock(l10n, state.error, notifier.refresh);
+    }
+    return ListView(
+      padding: EdgeInsets.zero,
+      children: [
+        if (state.isEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 48, 24, 8),
+            child: EmptyState(
+              icon: Icons.local_shipping_outlined,
+              title: l10n.ordersGuestTitle,
+              body: l10n.ordersGuestBody,
+            ),
+          )
+        else ...[
+          const _Band(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Column(
+              children: [
+                for (final o in state.orders) _card(o),
+                for (final entry in state.unresolved)
+                  _UnresolvedRow(
+                    number: entry.number,
+                    onRetry: notifier.refresh,
+                    onRemove: () => notifier.forget(entry.number),
+                  ),
+              ],
+            ),
+          ),
+        ],
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: Column(
+            children: [
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => context.push(AppRoutes.guestTrackOrder),
+                  icon: const Icon(Icons.search, size: 18),
+                  label: Text(l10n.ordersTrackAnother),
+                ),
+              ),
+              TextButton(
+                onPressed: () => context.push(AppRoutes.signIn),
+                child: Text(l10n.ordersGuestSignIn),
+              ),
+            ],
+          ),
+        ),
+        const MarketingFooter(),
+      ],
+    );
+  }
+}
+
+/// A remembered guest order the backend didn't return this load. Kept visible
+/// rather than silently dropped, so a network blip can't quietly delete the
+/// only record the guest has of their order.
+class _UnresolvedRow extends StatelessWidget {
+  const _UnresolvedRow({
+    required this.number,
+    required this.onRetry,
+    required this.onRemove,
+  });
+
+  final String number;
+  final VoidCallback onRetry;
+  final VoidCallback onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsetsDirectional.fromSTEB(14, 6, 6, 6),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.borderDefault),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              l10n.ordersGuestUnresolved(number),
+              style: const TextStyle(color: AppColors.inkMuted, fontSize: 13),
+            ),
+          ),
+          TextButton(onPressed: onRetry, child: Text(l10n.actionRetry)),
+          TextButton(onPressed: onRemove, child: Text(l10n.ordersGuestRemove)),
+        ],
+      ),
     );
   }
 }
@@ -482,29 +594,19 @@ class _Thumb extends StatelessWidget {
       child: SizedBox(
         width: 48,
         height: 48,
-        child: (url == null || url!.isEmpty)
-            ? const ColoredBox(
-                color: AppColors.surfaceTint,
-                child: Icon(
-                  Icons.image_outlined,
-                  size: 18,
-                  color: AppColors.inkMuted,
-                ),
-              )
-            : CachedNetworkImage(
-                imageUrl: url!,
-                fit: BoxFit.cover,
-                placeholder: (_, __) =>
-                    const ColoredBox(color: AppColors.surfaceTint),
-                errorWidget: (_, __, ___) => const ColoredBox(
-                  color: AppColors.surfaceTint,
-                  child: Icon(
-                    Icons.image_outlined,
-                    size: 18,
-                    color: AppColors.inkMuted,
-                  ),
-                ),
-              ),
+        child: ZoonzeImage(
+          url: url,
+          decodeWidth: 48,
+          placeholder: (_) => const ColoredBox(color: AppColors.surfaceTint),
+          error: (_) => const ColoredBox(
+            color: AppColors.surfaceTint,
+            child: Icon(
+              Icons.image_outlined,
+              size: 18,
+              color: AppColors.inkMuted,
+            ),
+          ),
+        ),
       ),
     );
   }

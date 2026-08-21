@@ -39,6 +39,41 @@ class AccountRepository {
     );
   }
 
+  /// Guest order lookup by the Magento order token captured at checkout
+  /// (`placeOrder.orderV2.token`). Native Magento query — returns the same
+  /// `CustomerOrder` type as the customer list, so it parses identically.
+  Future<CustomerOrder> fetchGuestOrderByToken(String token) async {
+    final data = await _run(AccountQueries.guestOrderByToken, {
+      'token': token,
+    }, mutation: false);
+    return _parseGuestOrder(data['guestOrderByToken']);
+  }
+
+  /// Guest order lookup by the details on the confirmation e-mail: order number
+  /// + the billing e-mail and last name used at checkout.
+  Future<CustomerOrder> fetchGuestOrder({
+    required String number,
+    required String email,
+    required String lastname,
+  }) async {
+    final data = await _run(AccountQueries.guestOrder, {
+      'number': number,
+      'email': email,
+      'lastname': lastname,
+    }, mutation: false);
+    return _parseGuestOrder(data['guestOrder']);
+  }
+
+  /// A missing/unknown order comes back as a `graphql-no-such-entity` error (so
+  /// `_run` already threw); a null payload without an error is treated the same
+  /// way rather than surfacing a half-empty order.
+  CustomerOrder _parseGuestOrder(Object? payload) {
+    if (payload is! Map<String, dynamic>) {
+      throw const Failure(FailureKind.unknown);
+    }
+    return _parseOrder(payload);
+  }
+
   Future<List<CustomerAddress>> fetchAddresses() async {
     final data = await _run(
       AccountQueries.addresses,

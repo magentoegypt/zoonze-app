@@ -4,6 +4,7 @@ import '../../../core/error/failure.dart';
 import '../../../core/storage/secure_token_store.dart';
 import '../../../core/store/store_controller.dart';
 import '../../../core/validation/phone.dart';
+import '../../account/data/guest_order_store.dart';
 import '../../cart/presentation/cart_controller.dart';
 import '../../catalog/domain/money.dart';
 import '../data/checkout_repository.dart';
@@ -342,6 +343,23 @@ class CheckoutController extends Notifier<CheckoutState> {
     state = state.copyWith(isBusy: true, error: null);
     try {
       final result = await _repo.placeOrder(cartId);
+      // Guests have no `customer { orders }` history, so remember the order's
+      // lookup keys here — the one point where the token and the billing
+      // email/lastname are both still in hand. Without it "Track Order" has
+      // nothing to resolve once checkout state is reset.
+      if (state.isGuest) {
+        await ref
+            .read(guestOrderStoreProvider.notifier)
+            .remember(
+              GuestOrderRef(
+                number: result.orderNumber,
+                token: result.orderToken,
+                email: state.email,
+                lastname: state.lastname,
+                placedAt: DateTime.now().toIso8601String(),
+              ),
+            );
+      }
       // The order consumed the cart server-side — reset it (drop the stale id +
       // persisted guest id) so it reads empty and the next add-to-cart creates a
       // fresh cart, instead of failing against the consumed one.
