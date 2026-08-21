@@ -16,6 +16,7 @@ import '../../../../core/store/store_controller.dart';
 import '../../../../core/util/launch.dart';
 import '../../../../core/util/store_time.dart';
 import '../../../../core/widgets/brand_logo.dart';
+import '../../../../core/widgets/network_image.dart';
 import '../../../../core/widgets/shimmer.dart';
 import '../../../../core/widgets/web_view_screen.dart';
 import '../../../../l10n/l10n.dart';
@@ -1021,17 +1022,12 @@ class _CategoryCircle extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           ClipOval(
-            child: SizedBox(
+            child: ZoonzeImage(
+              url: image,
               width: 72,
               height: 72,
-              child: image.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: image,
-                      fit: BoxFit.cover,
-                      placeholder: (_, __) => const _CategoryFallback(),
-                      errorWidget: (_, __, ___) => const _CategoryFallback(),
-                    )
-                  : const _CategoryFallback(),
+              placeholder: (_) => const _CategoryFallback(),
+              error: (_) => const _CategoryFallback(),
             ),
           ),
           const SizedBox(height: 8),

@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -11,6 +10,7 @@ import '../../../../core/config/free_shipping.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/widgets/brand_logo.dart';
 import '../../../../core/widgets/failure_message.dart';
+import '../../../../core/widgets/network_image.dart';
 import '../../../../core/widgets/summary_row.dart';
 import '../../../../core/widgets/zoonze_back_button.dart';
 import '../../../../l10n/l10n.dart';
@@ -293,25 +293,12 @@ class _CartItemTile extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
+          ZoonzeImage(
+            url: item.imageUrl,
+            width: 72,
+            height: 72,
             borderRadius: BorderRadius.circular(8),
-            child: SizedBox(
-              width: 72,
-              height: 72,
-              child: item.imageUrl == null
-                  ? Container(color: AppColors.surfaceTint)
-                  : CachedNetworkImage(
-                      imageUrl: item.imageUrl!,
-                      fit: BoxFit.cover,
-                      // 72pt thumbnail — decode at display size, not full res.
-                      memCacheWidth:
-                          (72 * MediaQuery.devicePixelRatioOf(context)).round(),
-                      placeholder: (_, __) =>
-                          Container(color: AppColors.surfaceTint),
-                      errorWidget: (_, __, ___) =>
-                          Container(color: AppColors.surfaceTint),
-                    ),
-            ),
+            error: (_) => const ColoredBox(color: AppColors.surfaceTint),
           ),
           const SizedBox(width: 12),
           Expanded(

@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +10,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/theme_x.dart';
 import '../../../../core/config/free_shipping.dart';
 import '../../../../core/widgets/async_value_view.dart';
+import '../../../../core/widgets/network_image.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../cart/presentation/cart_controller.dart';
 import '../../../checkout/payments/tabby_promo.dart';
@@ -19,6 +19,7 @@ import '../../domain/money.dart';
 import '../../domain/product.dart';
 import '../../domain/product_detail.dart';
 import '../catalog_providers.dart';
+import '../product_navigation.dart';
 import '../widgets/product_card.dart';
 
 class ProductDetailScreen extends ConsumerStatefulWidget {
@@ -396,11 +397,9 @@ class _GalleryState extends State<_Gallery> {
   @override
   Widget build(BuildContext context) {
     final images = widget.images;
-    // The gallery spans the full screen width — decode at that size, not full res.
-    final cacheWidth =
-        (MediaQuery.sizeOf(context).width *
-                MediaQuery.devicePixelRatioOf(context))
-            .round();
+    // The gallery spans the full screen width — decode at that size, not full
+    // res. Shared with the pre-warm on tap so both hit the same cache key.
+    final imageWidth = pdpImageWidth(context);
     return Column(
       children: [
         AspectRatio(
@@ -413,14 +412,10 @@ class _GalleryState extends State<_Gallery> {
                       controller: _controller,
                       itemCount: images.length,
                       onPageChanged: (i) => setState(() => _index = i),
-                      itemBuilder: (_, i) => CachedNetworkImage(
-                        imageUrl: images[i],
-                        fit: BoxFit.cover,
-                        memCacheWidth: cacheWidth,
-                        placeholder: (_, __) =>
-                            Container(color: AppColors.surfaceTint),
-                        errorWidget: (_, __, ___) =>
-                            Container(color: AppColors.surfaceTint),
+                      itemBuilder: (_, i) => ZoonzeImage(
+                        url: images[i],
+                        decodeWidth: imageWidth,
+                        shimmer: true,
                       ),
                     ),
                     // Merchandising + discount badges (Figma) — top-start,
@@ -525,14 +520,7 @@ class _GalleryState extends State<_Gallery> {
                       width: i == _index ? 2 : 1,
                     ),
                   ),
-                  child: CachedNetworkImage(
-                    imageUrl: images[i],
-                    fit: BoxFit.cover,
-                    placeholder: (_, __) =>
-                        Container(color: AppColors.surfaceTint),
-                    errorWidget: (_, __, ___) =>
-                        Container(color: AppColors.surfaceTint),
-                  ),
+                  child: ZoonzeImage(url: images[i], decodeWidth: 56),
                 ),
               ),
             ),

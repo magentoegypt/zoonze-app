@@ -1,10 +1,10 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/store/store_controller.dart';
+import '../../../../core/widgets/network_image.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../cart/presentation/cart_controller.dart';
 import '../../../wishlist/presentation/widgets/wishlist_heart.dart';
@@ -66,7 +66,9 @@ class _ProductCardState extends ConsumerState<ProductCard> {
             Expanded(
               child: Stack(
                 children: [
-                  Positioned.fill(child: _Image(url: product.imageUrl)),
+                  Positioned.fill(
+                    child: ZoonzeImage(url: product.imageUrl),
+                  ),
                   // Merchandising badge over the discount badge (top-start).
                   PositionedDirectional(
                     top: 8,
@@ -288,44 +290,6 @@ class _CircleAction extends StatelessWidget {
       ),
     ),
     child: child,
-  );
-}
-
-class _Image extends StatelessWidget {
-  const _Image({required this.url});
-  final String? url;
-
-  @override
-  Widget build(BuildContext context) {
-    if (url == null || url!.isEmpty) return const _ImagePlaceholder();
-    final dpr = MediaQuery.devicePixelRatioOf(context);
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Decode at the on-screen size (× DPR), not the source's full
-        // resolution — a large memory/jank win across product grids.
-        final w = constraints.maxWidth;
-        final cacheWidth = (w.isFinite && w > 0) ? (w * dpr).round() : null;
-        return CachedNetworkImage(
-          imageUrl: url!,
-          fit: BoxFit.cover,
-          memCacheWidth: cacheWidth,
-          placeholder: (_, __) => const _ImagePlaceholder(),
-          errorWidget: (_, __, ___) => const _ImagePlaceholder(),
-        );
-      },
-    );
-  }
-}
-
-class _ImagePlaceholder extends StatelessWidget {
-  const _ImagePlaceholder();
-
-  @override
-  Widget build(BuildContext context) => Container(
-    color: AppColors.surfaceTint,
-    child: const Center(
-      child: Icon(Icons.image_outlined, color: AppColors.inkMuted),
-    ),
   );
 }
 

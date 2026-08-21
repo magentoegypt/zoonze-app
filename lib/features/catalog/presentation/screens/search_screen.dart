@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -13,6 +12,7 @@ import '../../../../core/store/store_controller.dart';
 import '../../../../core/widgets/brand_logo.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/failure_message.dart';
+import '../../../../core/widgets/network_image.dart';
 import '../../../../core/widgets/zoonze_back_button.dart';
 import '../../../../l10n/l10n.dart';
 import '../../data/catalog_repository.dart';
@@ -175,22 +175,12 @@ class _Suggestions extends ConsumerWidget {
           ),
         for (final p in products)
           ListTile(
-            leading: ClipRRect(
+            leading: ZoonzeImage(
+              url: p.imageUrl,
+              width: 44,
+              height: 44,
               borderRadius: BorderRadius.circular(8),
-              child: SizedBox(
-                width: 44,
-                height: 44,
-                child: (p.imageUrl == null || p.imageUrl!.isEmpty)
-                    ? const ColoredBox(color: AppColors.surfaceTint)
-                    : CachedNetworkImage(
-                        imageUrl: p.imageUrl!,
-                        fit: BoxFit.cover,
-                        placeholder: (_, __) =>
-                            const ColoredBox(color: AppColors.surfaceTint),
-                        errorWidget: (_, __, ___) =>
-                            const ColoredBox(color: AppColors.surfaceTint),
-                      ),
-              ),
+              error: (_) => const ColoredBox(color: AppColors.surfaceTint),
             ),
             title: Text(p.name, maxLines: 1, overflow: TextOverflow.ellipsis),
             onTap: () => context.push(AppRoutes.product(p.urlKey)),
@@ -511,14 +501,12 @@ class _Header extends StatelessWidget {
             child: Column(
               children: [
                 if (b.imageUrl.isNotEmpty) ...[
-                  SizedBox(
+                  ZoonzeImage(
+                    url: b.imageUrl,
                     height: 60,
-                    child: CachedNetworkImage(
-                      imageUrl: b.imageUrl,
-                      fit: BoxFit.contain,
-                      placeholder: (_, __) => const SizedBox.shrink(),
-                      errorWidget: (_, __, ___) => const SizedBox.shrink(),
-                    ),
+                    fit: BoxFit.contain,
+                    placeholder: (_) => const SizedBox.shrink(),
+                    error: (_) => const SizedBox.shrink(),
                   ),
                   const SizedBox(height: 8),
                 ],
