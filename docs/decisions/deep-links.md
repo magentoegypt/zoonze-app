@@ -62,6 +62,16 @@ domain, so that can bounce straight back in.
 It also seeds `/home` under the destination, so Back from a cold-start deep link
 returns to the app rather than exiting it.
 
+**Cold start waits for the store views.** `bootstrap.dart` fires `loadStores()`
+unawaited, and on a warm install the cached views land synchronously — but on a
+**fresh** install the list is empty for the first frames. Every step of the
+resolution above reads it: which hosts are ours, which language the path segment
+belongs to, and which `Store` header `urlResolver` runs under. A `/uae-ar/` link
+opened on first launch therefore resolved against the default English store. The
+resolver now awaits `StoreController.ensureStoresLoaded()` first, which returns
+at once when the views are present, joins the bootstrap call when one is in
+flight, and times out (5s) rather than wedging the link if the network is dead.
+
 ## 4. The intent filter is scoped
 
 The filter previously claimed **every** `https://zoonze.com/*` path — including

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zoonze_app/core/error/failure.dart';
@@ -9,6 +11,26 @@ import 'package:zoonze_app/core/store/store_repository.dart';
 import 'package:zoonze_app/core/store/store_view.dart';
 
 import '../../support/fakes.dart';
+
+/// Never answers, so a caller that awaits the load must fall back on a timeout.
+class _HangingRepository implements StoreRepository {
+  @override
+  Future<List<StoreView>> fetchAvailableStores() => Completer<List<StoreView>>()
+      .future;
+}
+
+/// Counts `availableStores` calls, to prove the load isn't started twice.
+class _CountingRepository implements StoreRepository {
+  _CountingRepository(this.stores);
+  final List<StoreView> stores;
+  int calls = 0;
+
+  @override
+  Future<List<StoreView>> fetchAvailableStores() async {
+    calls++;
+    return stores;
+  }
+}
 
 /// Fails the first `availableStores` (as a stale token would), then succeeds.
 class _AuthThenOkRepository implements StoreRepository {
@@ -102,6 +124,68 @@ void main() {
       expect(repo.calls, 2, reason: 'retried once as guest after the auth fail');
       expect(await tokenStore.read(), isNull, reason: 'stale token was wiped');
       expect(container.read(storeControllerProvider).stores, hasLength(2));
+    });
+    // The cold-start gap: `bootstrap` fires loadStores unawaited, so on a fresh
+    // install the view list is empty for the first frames and anything reading
+    // it (a deep link) saw nothing.
+    group('ensureStoresLoaded', () {
+      ProviderContainer containerWith(StoreRepository repo) {
+        final container = ProviderContainer(
+          overrides: [
+            localCacheProvider.overrideWithValue(FakeLocalCache()),
+            localePrefsProvider.overrideWithValue(FakeLocalePrefs(null)),
+            storeRepositoryProvider.overrideWithValue(repo),
+            secureTokenStoreProvider.overrideWithValue(FakeSecureTokenStore()),
+          ],
+        );
+        addTearDown(container.dispose);
+        return container;
+      }
+
+      test('loads the views when nothing has loaded them yet', () async {
+        final container = containerWith(FakeStoreRepository(kSampleStores));
+        expect(container.read(storeControllerProvider).stores, isEmpty);
+
+        await container.read(storeControllerProvider.notifier)
+            .ensureStoresLoaded();
+
+        expect(container.read(storeControllerProvider).stores, hasLength(2));
+      });
+
+      test('joins the bootstrap call instead of starting a second one',
+          () async {
+        final repo = _CountingRepository(kSampleStores);
+        final container = containerWith(repo);
+        final notifier = container.read(storeControllerProvider.notifier);
+
+        final bootstrap = notifier.loadStores();
+        await Future.wait([bootstrap, notifier.ensureStoresLoaded()]);
+
+        expect(repo.calls, 1);
+        expect(container.read(storeControllerProvider).stores, hasLength(2));
+      });
+
+      test('returns at once when the views are already there', () async {
+        final repo = _CountingRepository(kSampleStores);
+        final container = containerWith(repo);
+        final notifier = container.read(storeControllerProvider.notifier);
+        await notifier.loadStores();
+
+        await notifier.ensureStoresLoaded();
+
+        expect(repo.calls, 1, reason: 'no second fetch once loaded');
+      });
+
+      test('gives up on timeout rather than wedging the caller', () async {
+        final container = containerWith(_HangingRepository());
+
+        await container
+            .read(storeControllerProvider.notifier)
+            .ensureStoresLoaded(timeout: const Duration(milliseconds: 20));
+
+        // Falls through to the provisional mapping instead of hanging forever.
+        expect(container.read(storeControllerProvider).stores, isEmpty);
+      });
     });
   });
 }

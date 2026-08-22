@@ -52,6 +52,14 @@ class _DeepLinkResolverScreenState
 
   Future<void> _resolve() async {
     final url = widget.uri.toString();
+
+    // A cold-start app link runs before `bootstrap`'s unawaited `loadStores()`
+    // has landed on a fresh install, and every step below reads the view list:
+    // which hosts are ours, which language the path segment belongs to, and
+    // which `Store` header `urlResolver` runs under. Without this an Arabic
+    // link opened in English on first launch.
+    await ref.read(storeControllerProvider.notifier).ensureStoresLoaded();
+    if (!mounted) return;
     if (widget.uri.host.isEmpty || !isInternalStoreUrl(ref, url)) {
       if (mounted) setState(() => _failed = true);
       return;

@@ -43,6 +43,7 @@ Future<GoRouter> _pump(
   required String link,
   ({String type, String uid, String? urlKey})? resolved,
   String persistedLocale = 'en',
+  bool preloadStores = true,
 }) async {
   final router = _router();
   final container = ProviderContainer(
@@ -58,7 +59,11 @@ Future<GoRouter> _pump(
     ],
   );
   addTearDown(container.dispose);
-  await container.read(storeControllerProvider.notifier).loadStores();
+  // A cold start hasn't loaded the store views yet — `bootstrap` fires
+  // loadStores unawaited, and on a fresh install nothing is cached.
+  if (preloadStores) {
+    await container.read(storeControllerProvider.notifier).loadStores();
+  }
 
   await tester.pumpWidget(
     UncontrolledProviderScope(
@@ -145,6 +150,24 @@ void main() {
         tester,
         link: 'https://zoonze.com/uae-ar/fragrance/6085010044712.html',
         resolved: (type: 'PRODUCT', uid: '', urlKey: '6085010044712'),
+      );
+      final container = ProviderScope.containerOf(
+        tester.element(find.byType(MaterialApp)),
+      );
+
+      expect(container.read(storeControllerProvider).activeLocale, 'ar');
+      expect(router.state.uri.path, '/product/6085010044712');
+    });
+    // Fresh install: `bootstrap`'s unawaited loadStores hadn't landed, so the
+    // view list was empty, the `/uae-ar/` segment matched nothing, and the link
+    // resolved against the default (English) store.
+    testWidgets('switches to Arabic on a cold start, before the store views '
+        'have loaded', (tester) async {
+      final router = await _pump(
+        tester,
+        link: 'https://zoonze.com/uae-ar/fragrance/6085010044712.html',
+        resolved: (type: 'PRODUCT', uid: '', urlKey: '6085010044712'),
+        preloadStores: false,
       );
       final container = ProviderScope.containerOf(
         tester.element(find.byType(MaterialApp)),

@@ -81,7 +81,39 @@ class StoreController extends Notifier<StoreState> {
   /// once as guest, recovering in-session instead of failing every request.
   /// A plain network blip keeps the provisional/cached mapping (the token may
   /// be perfectly valid — the device is just offline).
-  Future<void> loadStores() async {
+  Future<void> loadStores() {
+    final pending = _load();
+    _inFlight = pending;
+    return pending;
+  }
+
+  /// The in-flight (or finished) [loadStores] call, so [ensureStoresLoaded]
+  /// can join it instead of starting a second one.
+  Future<void>? _inFlight;
+
+  /// Awaits the initial store load, so callers that need [StoreState.stores]
+  /// before the user has navigated anywhere don't race it.
+  ///
+  /// `bootstrap.dart` fires [loadStores] unawaited, and on a warm install the
+  /// cached views land synchronously — but on a **fresh** install the list is
+  /// still empty for the first frames. A deep link resolving in that window
+  /// saw no store views, so it couldn't tell which language the incoming
+  /// `/uae-ar/` path belonged to and resolved it against the default (English)
+  /// store instead.
+  ///
+  /// Returns at once when the views are already there, joins the bootstrap call
+  /// when one is in flight, and starts one otherwise. [timeout] bounds the wait
+  /// so a dead network delays a deep link rather than wedging it; on timeout —
+  /// or a failed load — the caller simply proceeds with whatever mapping the
+  /// provisional/cached config gave it, exactly as before.
+  Future<void> ensureStoresLoaded({
+    Duration timeout = const Duration(seconds: 5),
+  }) async {
+    if (state.stores.isNotEmpty) return;
+    await (_inFlight ?? loadStores()).timeout(timeout, onTimeout: () {});
+  }
+
+  Future<void> _load() async {
     final cache = ref.read(localCacheProvider);
     final cached = cache.readStores();
     if (cached != null && cached.isNotEmpty) {
