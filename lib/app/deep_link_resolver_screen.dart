@@ -75,24 +75,32 @@ class _DeepLinkResolverScreenState
     final router = GoRouter.of(context);
     final title = AppLocalizations.of(context).appTitle;
 
-    // Seed Home underneath so Back from a cold-start deep link returns to the
-    // app instead of exiting it.
-    router.go(AppRoutes.home);
-
-    if (resolved != null) {
-      if (resolved.type == 'PRODUCT' && resolved.urlKey != null) {
-        router.push(AppRoutes.product(resolved.urlKey!));
-        return;
-      }
-      if (resolved.type == 'CATEGORY' && resolved.uid.isNotEmpty) {
-        router.push(AppRoutes.category(resolved.uid));
-        return;
-      }
+    final String path;
+    Object? extra;
+    if (resolved != null &&
+        resolved.type == 'PRODUCT' &&
+        resolved.urlKey != null) {
+      path = AppRoutes.product(resolved.urlKey!);
+    } else if (resolved != null &&
+        resolved.type == 'CATEGORY' &&
+        resolved.uid.isNotEmpty) {
+      path = AppRoutes.category(resolved.uid);
+    } else {
+      // Ours, but not a catalogue entity (CMS page, shopbrand, blog) — show
+      // the real page in the in-app browser.
+      path = AppRoutes.webview;
+      extra = WebViewArgs(url: url, title: title);
     }
 
-    // Ours, but not a catalogue entity (CMS page, shopbrand, blog) — show the
-    // real page in the in-app browser.
-    router.push(AppRoutes.webview, extra: WebViewArgs(url: url, title: title));
+    // Seed Home underneath so Back from a deep link returns to the app
+    // instead of exiting it.
+    router.go(AppRoutes.home);
+    // The seed must be committed before the destination goes on top. On a
+    // COLD start the platform is still delivering the launch URI in this same
+    // frame, and a push issued alongside it loses Home — verified on device:
+    // warm links kept Home, cold ones exited to the launcher on Back.
+    await WidgetsBinding.instance.endOfFrame;
+    router.push(path, extra: extra);
   }
 
   @override
