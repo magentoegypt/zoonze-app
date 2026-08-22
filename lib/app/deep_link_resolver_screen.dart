@@ -60,6 +60,7 @@ class _DeepLinkResolverScreenState
     // link opened in English on first launch.
     await ref.read(storeControllerProvider.notifier).ensureStoresLoaded();
     if (!mounted) return;
+
     if (widget.uri.host.isEmpty || !isInternalStoreUrl(ref, url)) {
       if (mounted) setState(() => _failed = true);
       return;
@@ -73,6 +74,18 @@ class _DeepLinkResolverScreenState
         locale != ref.read(storeControllerProvider).activeLocale) {
       await ref.read(storeControllerProvider.notifier).switchLocale(locale);
       if (!mounted) return;
+    }
+
+    // The storefront root (`/`, `/uae-en`, `/uae-ar/`) is the home page, not
+    // an entity — `urlResolver` has nothing to resolve, so send it to Home
+    // rather than letting it fall through to a WebView of the home page.
+    final segments = widget.uri.pathSegments
+        .where((s) => s.isNotEmpty)
+        .toList();
+    final afterStore = locale != null ? segments.skip(1) : segments;
+    if (afterStore.isEmpty) {
+      GoRouter.of(context).go(AppRoutes.home);
+      return;
     }
 
     final resolved = await ref.read(catalogRepositoryProvider).resolveUrl(url);

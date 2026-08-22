@@ -75,9 +75,31 @@ flight, and times out (5s) rather than wedging the link if the network is dead.
 ## 4. The intent filter is scoped
 
 The filter previously claimed **every** `https://zoonze.com/*` path — including
-`/media/*`, `/static/*`, `/rest/*` and `/graphql`. It is now limited to
-`/uae-en/`, `/uae-ar/` and root-level `.html` rewrites (all three shapes exist in
-`url_rewrites`), plus `www.zoonze.com`.
+`/media/*`, `/static/*`, `/rest/*` and `/graphql`, none of which the router can
+resolve. It is now limited to the storefront root, the `/uae-en` and `/uae-ar`
+prefixes, and root-level `.html` rewrites (all three URL shapes exist in
+`url_rewrites`), across both `zoonze.com` and `www.zoonze.com`.
+
+The prefixes deliberately omit the trailing slash: `pathPrefix="/uae-en/"` does
+not match a shared `https://zoonze.com/uae-en`, which Magento serves via a
+redirect. The storefront root resolves to the app's Home screen rather than a
+WebView of the home page — `urlResolver` has no entity for it.
+
+## Installed → app, not installed → browser
+
+This is stock Android App Link behaviour and needs no app-side branch: a
+verified link opens the app when it is installed, and nothing claims the URL
+when it isn't, so the browser takes it.
+
+`assetlinks.json` **is** published, on both `zoonze.com` and `www.zoonze.com`,
+for `com.zoonze.shop` with SHA-256 `C0:0C:62:B4:…:69:6B:83` — the **Play**
+app-signing key, not the upload key in the release notes. Release builds
+therefore verify.
+
+`.dev` / `.staging` builds can never verify: different `applicationId`, and
+signed with the debug key. Force an intent at them for testing with
+`am start … -p com.zoonze.shop.dev`, or approve the domains locally with
+`pm set-app-links --package com.zoonze.shop.dev 2 zoonze.com www.zoonze.com`.
 
 ## Open owner dependency
 
