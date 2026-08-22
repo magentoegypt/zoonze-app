@@ -17,11 +17,14 @@
 - `go_router` is the deep-link target. Android `AndroidManifest.xml` declares:
   - custom scheme `zoonze://app/...`
   - https app links for `https://zoonze.com/...` (`android:autoVerify="true"`).
-- **App-links verification** needs an `assetlinks.json` served at
-  `https://zoonze.com/.well-known/assetlinks.json` with the app's signing SHA-256
-  (owner + server task).
-- iOS Universal Links need an `apple-app-site-association` file on the domain +
-  the Associated Domains capability in Xcode.
+- **App-links verification** ✅ done — `assetlinks.json` is live on `zoonze.com`
+  and `www.zoonze.com` for `com.zoonze.shop`, carrying the **Play app-signing**
+  SHA-256 (not the upload key). Verified live 2026-08-22 with
+  `bash tool/verify_applinks.sh`.
+- iOS Universal Links ⛔ still open — the AASA path currently 301s to the
+  storefront, and the entitlement is staged (commented) in
+  `ios/Runner/Runner.entitlements` pending an App ID capability + profile
+  regeneration. Runbook in `docs/decisions/deep-links.md`.
 - Payment return URLs (Phase 3) should reuse a deep-link-friendly return path so
   the N-Genius/Tabby WebView and push routing stay consistent.
 

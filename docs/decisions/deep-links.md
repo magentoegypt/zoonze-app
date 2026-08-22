@@ -101,13 +101,53 @@ signed with the debug key. Force an intent at them for testing with
 `am start … -p com.zoonze.shop.dev`, or approve the domains locally with
 `pm set-app-links --package com.zoonze.shop.dev 2 zoonze.com www.zoonze.com`.
 
+## iOS universal links
+
+iOS needs two things Android does not, and **neither is done** — today an
+`https://zoonze.com/…` link always opens Safari, installed or not.
+
+**1. The AASA file is not served.** `https://zoonze.com/.well-known/apple-app-site-association`
+**301s to `/uae-en/`** (Magento's store-code rewrite swallows the extension-less
+path). Apple does **not** follow redirects when fetching it, so this is a real
+server change, not a file copy. `assetlinks.json` escapes the same rewrite only
+because of its `.json` extension.
+
+Ready-to-publish content: [`docs/backend/apple-app-site-association`](../backend/apple-app-site-association).
+Serve it at that exact path on **both** `zoonze.com` and `www.zoonze.com`, as
+`application/json`, no extension, no redirect. Its `components` mirror the
+Android intent filter (root, `/uae-en*`, `/uae-ar*`, `/*.html`; `/media`,
+`/static`, `/pub`, `/rest`, `/graphql` excluded) so both platforms claim the
+same URL set.
+
+**2. The entitlement is staged, not active.** `com.apple.developer.associated-domains`
+sits commented out in [`ios/Runner/Runner.entitlements`](../../ios/Runner/Runner.entitlements)
+with an ordered runbook, exactly as the Apple Pay entitlement does and for the
+same reason: an existing provisioning profile never picks up a new capability,
+so declaring it early breaks local signing and — because CI re-signs from the
+**profile** — would ship a build silently without it. Neither committed profile
+carries the capability today (checked 2026-08-22).
+
+Enabling it needs the App ID capability plus a regeneration of **both**
+`ios/signing/*.mobileprovision`. `tool/ios_appstore_build.sh` then fails the
+build if the key is declared but missing from the signed app, so the silent
+failure mode is closed.
+
+Nothing in Dart changes: `FlutterDeepLinkingEnabled` is already true, and
+`DeepLinkResolverScreen` is platform-agnostic.
+
+**Checking either platform:** `bash tool/verify_applinks.sh` — curl-only, no Mac
+or device needed. As of 2026-08-22 it reports Android OK on both hosts and iOS
+failing on the 301.
+
 ## Open owner dependency
 
-Android App Links only route into the app once
-`https://zoonze.com/.well-known/assetlinks.json` is published — still open in
-[release.md](release.md). Until then Android shows a chooser; this fix is correct
-either way, but "always opens in the app" needs that file.
+**Android: none.** `assetlinks.json` is published on both hosts and matches the
+Play app-signing key. Earlier notes (including [release.md](release.md)) called
+this an open task; it is not, verified live 2026-08-22.
 
-iOS is unaffected by §3–4: without a `com.apple.developer.associated-domains`
-entitlement, `https://` links never enter the app (only `zoonze://`). §1–2 apply
-to both platforms.
+**iOS: two, both external.** Serve the AASA file (server), then enable Associated
+Domains on the App ID and regenerate both provisioning profiles (Apple Developer
+portal). See "iOS universal links" above.
+
+See "iOS universal links" above for the iOS equivalent. §1–2 (URL shape) apply to
+both platforms; §3 (in-app routing) is platform-agnostic and already done.

@@ -167,4 +167,17 @@ if /usr/libexec/PlistBuddy -c "Print :com.apple.developer.in-app-payments" "${EN
   fi
 fi
 
+# Universal links. Same drift as Apple Pay above, and the same PlistBuddy
+# guard so the commented-out runbook in Runner.entitlements cannot trigger it.
+# This one matters because the failure is INVISIBLE: without the entitlement
+# the app still installs and runs, zoonze.com links just keep opening Safari.
+if /usr/libexec/PlistBuddy -c "Print :com.apple.developer.associated-domains" "${ENT_FILE}" >/dev/null 2>&1; then
+  if grep -q "associated-domains" <<<"${EMBEDDED}"; then
+    echo "✅ Associated Domains entitlement embedded"
+  else
+    echo "::error::Runner.entitlements declares com.apple.developer.associated-domains but the signed app does not carry it — regenerate ios/signing/*.mobileprovision with Associated Domains enabled on the App ID"
+    exit 1
+  fi
+fi
+
 echo "✅ Signed App Store IPA → ${IPA}"
