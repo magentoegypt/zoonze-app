@@ -36,7 +36,7 @@ final shopByCategoriesProvider =
       final store = ref.watch(storeControllerProvider);
       ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
       final client = ref.watch(graphqlClientProvider);
-      final base = _mediaBase(store);
+      final base = storeMediaBase(store);
       try {
         final result = await client.query(
           QueryOptions(
@@ -87,7 +87,7 @@ final promoSplitBannersProvider =
       final store = ref.watch(storeControllerProvider);
       ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
       final client = ref.watch(graphqlClientProvider);
-      final base = _mediaBase(store);
+      final base = storeMediaBase(store);
       try {
         final result = await client.query(
           QueryOptions(
@@ -137,7 +137,7 @@ final homeBannersProvider = FutureProvider.autoDispose<List<ExclusiveOffer>>((
   final store = ref.watch(storeControllerProvider);
   ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
   final client = ref.watch(graphqlClientProvider);
-  final base = _mediaBase(store);
+  final base = storeMediaBase(store);
   try {
     final result = await client.query(
       QueryOptions(
@@ -246,7 +246,9 @@ int _rating(Object? v) => switch (v) {
 };
 
 /// Base media URL of the active store view, for resolving relative banner paths.
-String _mediaBase(StoreState store) {
+/// Shared with `hero_slides_provider.dart` so every banner feed resolves and
+/// TLS-upgrades its images the same way.
+String storeMediaBase(StoreState store) {
   for (final s in store.stores) {
     if (s.storeCode == store.activeStoreCode) return s.baseMediaUrl;
   }

@@ -474,11 +474,18 @@ class FakeCatalogRepository implements CatalogRepository {
     this.categories = kSampleCategories,
     this.products = kSampleProducts,
     this.aggregations = kSampleAggregations,
+    this.resolved,
   });
 
   final List<Category> categories;
   final List<Product> products;
   final List<Aggregation> aggregations;
+
+  /// Canned `urlResolver` answer for [resolveUrl]; null means unresolvable.
+  final ({String type, String uid, String? urlKey})? resolved;
+
+  /// The last URL [resolveUrl] was asked about.
+  String? resolvedUrl;
 
   @override
   Future<List<Category>> fetchCategoryTree() async => categories;
@@ -486,7 +493,10 @@ class FakeCatalogRepository implements CatalogRepository {
   @override
   Future<({String type, String uid, String? urlKey})?> resolveUrl(
     String storeUrl,
-  ) async => null;
+  ) async {
+    resolvedUrl = storeUrl;
+    return resolved;
+  }
 
   @override
   Future<ProductPage> fetchProducts({

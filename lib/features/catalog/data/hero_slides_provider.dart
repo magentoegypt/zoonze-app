@@ -5,7 +5,9 @@ import 'package:graphql_flutter/graphql_flutter.dart';
 
 import '../../../core/graphql/graphql_client.dart';
 import '../../../core/store/store_controller.dart';
+import '../../../core/util/media.dart';
 import '../domain/hero_slide.dart';
+import 'home_sections_provider.dart';
 
 const String _query = r'''
 query HeroSlides {
@@ -34,8 +36,10 @@ final heroSlidesProvider = FutureProvider.autoDispose<List<HeroSlide>>((
   // that result away the moment the splash's subscription ended. A store switch
   // still invalidates it via the activeStoreCode watch below.
   ref.keepAlive();
+  final store = ref.watch(storeControllerProvider);
   ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
   final client = ref.watch(graphqlClientProvider);
+  final base = storeMediaBase(store);
   try {
     final result = await client.query(
       QueryOptions(document: gql(_query), fetchPolicy: FetchPolicy.networkOnly),
@@ -44,7 +48,10 @@ final heroSlidesProvider = FutureProvider.autoDispose<List<HeroSlide>>((
     final list = result.data?['heroSlides'] as List<dynamic>?;
     if (list == null) return const <HeroSlide>[];
     final slides =
-        list.whereType<Map<String, dynamic>>().map(_parse).toList()
+        list
+            .whereType<Map<String, dynamic>>()
+            .map((j) => _parse(j, base))
+            .toList()
           ..sort((a, b) => a.position.compareTo(b.position));
     return slides;
   } catch (_) {
@@ -52,7 +59,7 @@ final heroSlidesProvider = FutureProvider.autoDispose<List<HeroSlide>>((
   }
 });
 
-HeroSlide _parse(Map<String, dynamic> j) => HeroSlide(
+HeroSlide _parse(Map<String, dynamic> j, String mediaBase) => HeroSlide(
   slideId: (j['slide_id'] as num?)?.toInt() ?? 0,
   position: (j['position'] as num?)?.toInt() ?? 0,
   eyebrow: (j['eyebrow'] as String?)?.trim() ?? '',
@@ -60,8 +67,11 @@ HeroSlide _parse(Map<String, dynamic> j) => HeroSlide(
   description: (j['description'] as String?)?.trim() ?? '',
   ctaLabel: (j['cta_label'] as String?)?.trim() ?? '',
   ctaUrl: (j['cta_url'] as String?)?.trim() ?? '',
-  imageUrl: (j['image_url'] as String?)?.trim() ?? '',
-  videoUrl: (j['video_url'] as String?)?.trim() ?? '',
+  // Every other banner feed resolves relative paths against the store's media
+  // base and forces TLS; the hero was the one that didn't, so an admin image
+  // saved as a relative or `http://` path silently failed to render on Android.
+  imageUrl: resolveMediaUrl(j['image_url'] as String?, mediaBase),
+  videoUrl: resolveMediaUrl(j['video_url'] as String?, mediaBase),
 );
 
 /// Maps a Magento category `cta_url` to the in-app category route's UID, or null

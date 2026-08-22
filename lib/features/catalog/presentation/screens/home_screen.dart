@@ -11,8 +11,6 @@ import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/theme_x.dart';
 import '../../../../core/assets/app_images.dart';
-import '../../../../core/store/store_controller.dart';
-import '../../../../core/util/launch.dart';
 import '../../../../core/util/image_prefetch.dart';
 import '../../../../core/util/store_time.dart';
 import '../../../../core/widgets/brand_logo.dart';
@@ -22,7 +20,6 @@ import '../../../../core/widgets/web_view_screen.dart';
 import '../../../../l10n/l10n.dart';
 import '../../data/blog_posts_provider.dart';
 import '../../data/brands_provider.dart';
-import '../../data/catalog_repository.dart';
 import '../../data/hero_slides_provider.dart';
 import '../../data/home_config_provider.dart';
 import '../../data/home_sections_provider.dart';
@@ -35,6 +32,7 @@ import '../../domain/product.dart';
 import '../../domain/promo_split_banner.dart';
 import '../catalog_providers.dart';
 import '../product_navigation.dart';
+import '../storefront_links.dart';
 import '../widgets/product_card.dart';
 import '../widgets/product_skeletons.dart';
 
@@ -327,6 +325,7 @@ class _HeroBannerView extends StatelessWidget {
     required this.ctaLabel,
     required this.onCta,
     required this.imageProvider,
+    this.hasTarget = true,
     this.videoUrl,
     this.isActive = true,
     this.onVideoCompleted,
@@ -338,6 +337,10 @@ class _HeroBannerView extends StatelessWidget {
   final String ctaLabel;
   final VoidCallback onCta;
   final ImageProvider imageProvider;
+
+  /// Whether [onCta] leads anywhere. False for a slide the merchant published
+  /// with no CTA URL — the card then renders inert instead of eating taps.
+  final bool hasTarget;
 
   /// When set, the video fills the whole banner (poster = [imageProvider])
   /// instead of showing a static play badge in the circle.
@@ -353,7 +356,7 @@ class _HeroBannerView extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasVideo = videoUrl != null && videoUrl!.isNotEmpty;
     final rtl = Directionality.of(context) == TextDirection.rtl;
-    return Container(
+    final banner = Container(
       color: _kHeroBg,
       child: Stack(
         clipBehavior: Clip.hardEdge,
@@ -470,6 +473,19 @@ class _HeroBannerView extends StatelessWidget {
           ),
         ],
       ),
+    );
+    // The whole banner is the tap target, not just the CTA button: a slide
+    // published without a `cta_label` renders no button at all and so was
+    // completely dead to touch (CL042-DEV19). The editorial and exclusive-offer
+    // banners are already card-wide. A GestureDetector rather than an InkWell
+    // so the CTA button beneath keeps its own press feedback and wins taps on
+    // itself; the carousel's prev/next arrows sit above this in _HeroCarousel's
+    // Stack, and PageView drag still beats the tap recogniser.
+    if (!hasTarget) return banner;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onCta,
+      child: banner,
     );
   }
 }
@@ -730,6 +746,8 @@ class _HeroSlideCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final hasTarget = slide.ctaUrl.isNotEmpty;
     final ImageProvider provider = slide.imageUrl.isNotEmpty
         ? ZoonzeImage.provider(
             slide.imageUrl,
@@ -743,9 +761,15 @@ class _HeroSlideCard extends ConsumerWidget {
       eyebrow: slide.eyebrow,
       title: slide.title,
       subtitle: slide.description,
-      ctaLabel: slide.ctaLabel,
+      // A slide can carry a CTA URL with no label; fall back to the shared
+      // "Shop Now" rather than rendering no button, as the editorial banners
+      // already do.
+      ctaLabel: slide.ctaLabel.isNotEmpty
+          ? slide.ctaLabel
+          : (hasTarget ? l10n.homeHeroCta : ''),
       onCta: () => _onCta(context, ref),
       imageProvider: provider,
+      hasTarget: hasTarget,
       videoUrl: slide.hasVideo ? slide.videoUrl : null,
       isActive: isActive,
       onVideoCompleted: onVideoCompleted,
@@ -900,63 +924,6 @@ class _HeroVideoState extends State<_HeroVideo> {
       ),
     );
   }
-}
-
-/// Routes a storefront CTA URL inside the app wherever possible: a Magento
-/// `category/view/id/N` URL maps straight to the PLP; a store-relative or
-/// same-domain friendly URL (`clearance.html`, `fragrance/for-her.html`) is
-/// resolved via `urlResolver` so a CATEGORY opens the PLP and a PRODUCT the PDP;
-/// only genuinely external links fall out to the browser. A relative path we
-/// can't resolve is ignored rather than launched as a bare relative URI.
-///
-/// Shared by the hero carousel, the Limited-Time Offer, and the Exclusive
-/// Offers rail so every home CTA behaves identically.
-Future<void> openStorefrontUrl(
-  BuildContext context,
-  WidgetRef ref,
-  String url, {
-  String? title,
-}) async {
-  if (url.isEmpty) return;
-  final uid = categoryUidFromUrl(url);
-  if (uid != null) {
-    context.push(AppRoutes.category(uid), extra: title);
-    return;
-  }
-  final hasHost = (Uri.tryParse(url)?.host ?? '').isNotEmpty;
-  if (!hasHost || _isInternalStoreUrl(ref, url)) {
-    final resolved = await ref.read(catalogRepositoryProvider).resolveUrl(url);
-    if (!context.mounted) return;
-    if (resolved != null) {
-      if (resolved.type == 'CATEGORY' && resolved.uid.isNotEmpty) {
-        context.push(AppRoutes.category(resolved.uid), extra: title);
-        return;
-      }
-      if (resolved.type == 'PRODUCT' && resolved.urlKey != null) {
-        context.push(AppRoutes.product(resolved.urlKey!));
-        return;
-      }
-    }
-    // A store-relative path we couldn't resolve → don't launch a bare relative
-    // URI in the browser.
-    if (!hasHost) return;
-  }
-  launchExternalUri(Uri.parse(url));
-}
-
-/// True when [url]'s host is the storefront's own domain (so the link should
-/// open inside the app, not the external browser).
-bool _isInternalStoreUrl(WidgetRef ref, String url) {
-  final host = Uri.tryParse(url)?.host.toLowerCase() ?? '';
-  if (host.isEmpty) return false;
-  if (host == 'zoonze.com' || host.endsWith('.zoonze.com')) return true;
-  for (final s in ref.read(storeControllerProvider).stores) {
-    for (final base in [s.secureBaseUrl, s.baseUrl]) {
-      final h = Uri.tryParse(base)?.host.toLowerCase();
-      if (h != null && h.isNotEmpty && h == host) return true;
-    }
-  }
-  return false;
 }
 
 /// "Shop by Category" — the merchant-curated tile grid from the backend
