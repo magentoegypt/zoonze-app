@@ -4,6 +4,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/store/store_controller.dart';
+import '../../../../core/store/store_urls.dart';
 import '../../../../core/widgets/network_image.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../cart/presentation/cart_controller.dart';
@@ -213,18 +214,8 @@ class _ProductCardState extends ConsumerState<ProductCard> {
   /// Shares the product via the OS share sheet, using the active store's
   /// canonical web URL when available (falls back to a name-only message).
   Future<void> _share(AppLocalizations l10n) async {
-    final store = ref.read(storeControllerProvider);
-    var base = '';
-    for (final s in store.stores) {
-      if (s.storeCode == store.activeStoreCode) {
-        base = s.secureBaseUrl.isNotEmpty ? s.secureBaseUrl : s.baseUrl;
-        break;
-      }
-    }
     final message = l10n.shareProduct(product.name);
-    final url = (base.isNotEmpty && product.urlKey.isNotEmpty)
-        ? '$base${product.urlKey}.html'
-        : null;
+    final url = productUrl(ref.read(storeControllerProvider), product.urlKey);
     await SharePlus.instance.share(
       ShareParams(text: url == null ? message : '$message\n$url'),
     );

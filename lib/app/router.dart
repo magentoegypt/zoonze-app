@@ -38,6 +38,7 @@ import '../features/diagnostics/presentation/health_check_screen.dart';
 import '../features/onboarding/presentation/launch_splash_screen.dart';
 import '../features/onboarding/presentation/welcome_screen.dart';
 import '../core/widgets/web_view_screen.dart';
+import 'deep_link_resolver_screen.dart';
 import 'routes.dart';
 
 /// App router. Phase 1 wires the catalogue browse flow + global chrome. Auth
@@ -45,6 +46,11 @@ import 'routes.dart';
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: AppRoutes.splash,
+    // Anything the table can't match — in practice an incoming Android App
+    // Link like https://zoonze.com/uae-en/<slug>.html — is handed to the
+    // resolver instead of go_router's raw GoException page (CL042-DEV10).
+    errorBuilder: (context, state) =>
+        DeepLinkResolverScreen(uri: state.uri),
     routes: <RouteBase>[
       GoRoute(
         path: AppRoutes.splash,

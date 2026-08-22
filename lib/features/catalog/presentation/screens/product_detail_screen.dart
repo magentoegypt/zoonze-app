@@ -11,7 +11,10 @@ import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/theme_x.dart';
 import '../../../../core/config/free_shipping.dart';
+import '../../../../core/store/store_controller.dart';
+import '../../../../core/store/store_urls.dart';
 import '../../../../core/widgets/async_value_view.dart';
+import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/network_image.dart';
 import '../../../../core/util/image_prefetch.dart';
 import '../../../../l10n/l10n.dart';
@@ -97,7 +100,17 @@ class _ProductDetailScreenState extends ConsumerState<ProductDetailScreen> {
         onRetry: () => ref.invalidate(productDetailProvider(widget.urlKey)),
         data: (product) {
           if (product == null) {
-            return Center(child: Text(l10n.stateEmpty));
+            // A stale or rewritten link lands here — give it a way out
+            // rather than a bare string in the middle of the page.
+            return EmptyState(
+              icon: Icons.link_off,
+              title: l10n.linkNotFoundTitle,
+              body: l10n.linkNotFoundBody,
+              action: FilledButton(
+                onPressed: () => context.go(AppRoutes.home),
+                child: Text(l10n.navHome),
+              ),
+            );
           }
           return _Content(
             product: product,
@@ -380,7 +393,7 @@ class _QuantityStepper extends StatelessWidget {
   }
 }
 
-class _Gallery extends StatefulWidget {
+class _Gallery extends ConsumerStatefulWidget {
   const _Gallery({
     required this.images,
     required this.sku,
@@ -395,10 +408,10 @@ class _Gallery extends StatefulWidget {
   final int? discountPercent;
 
   @override
-  State<_Gallery> createState() => _GalleryState();
+  ConsumerState<_Gallery> createState() => _GalleryState();
 }
 
-class _GalleryState extends State<_Gallery> {
+class _GalleryState extends ConsumerState<_Gallery> {
   final PageController _controller = PageController();
   int _index = 0;
 
@@ -417,11 +430,20 @@ class _GalleryState extends State<_Gallery> {
     };
   }
 
+  /// Copies the product's canonical storefront URL. It must come from
+  /// [productUrl] — a hand-built `zoonze.com/<url_key>` link has no `.html`
+  /// suffix and no store path, so it 404s on the web and can't be resolved
+  /// back into the app (CL042-DEV10).
   Future<void> _share(BuildContext context) async {
     final l10n = AppLocalizations.of(context);
-    await Clipboard.setData(
-      ClipboardData(text: 'https://zoonze.com/${widget.urlKey}'),
-    );
+    final url = productUrl(ref.read(storeControllerProvider), widget.urlKey);
+    if (url == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.errorGeneric)));
+      return;
+    }
+    await Clipboard.setData(ClipboardData(text: url));
     if (context.mounted) {
       ScaffoldMessenger.of(
         context,
