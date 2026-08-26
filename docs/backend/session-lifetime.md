@@ -2,7 +2,9 @@
 
 > **Ticket:** [CL042-DEV20 `86d433b6p`](https://app.clickup.com/t/86d433b6p) — client request [`86d433a6g`](https://app.clickup.com/t/86d433a6g): *"The login time is way too short, we need the customer to stay logged in for a longer period."*
 >
-> **Status:** §2 is a **one-line config change** and is what actually closes the ticket. §5 is an optional follow-up. The app-side hardening in §4 is already shipped.
+> **Status:** **§2 applied 2026-08-26** — Customer Token Lifetime is set to `720` (30 days) in admin, with
+> *Use system value* unchecked. The app-side hardening in §4 shipped in the same ticket. §5 remains an
+> optional follow-up.
 >
 > Owner: **Magento / platform team**. Endpoint: `https://zoonze.com/graphql`.
 
@@ -22,7 +24,12 @@ back as a `graphql-authorization` error / *"Consumer key has expired"*, and the 
 
 ---
 
-## 2. The change
+## 2. The change — ✅ applied 2026-08-26
+
+Set via *Stores → Configuration → Services → OAuth → Access Token Expiration* →
+**Customer Token Lifetime (hours) = `720`**, *Use system value* unchecked. Admin Token Lifetime left on
+the system value (`4`). Commands below are the CLI equivalent, kept for reproducing this on another
+environment.
 
 Confirm the current value first, so we know the 1-hour default is what customers are hitting:
 
@@ -45,14 +52,16 @@ Notes:
 - **Housekeeping:** the `outdated_authentication_tokens` cron (`Magento\Integration\Cron\CleanExpiredTokens`)
   prunes `oauth_token` rows once they pass the TTL. At 30 days the table holds ~30× more live customer rows than
   at 1 hour. That is small, but confirm the cron group is running.
-- A value of `0` / empty is sometimes read as "never expires". **Do not rely on it** — set the explicit `720`,
-  which behaves the same on every 2.4.x point release.
+- **Empty = no expiry at all** on this instance — the admin field states *"We will disable this feature if the
+  value is empty."* We deliberately did **not** use that: an explicit `720` keeps a finite, auditable window, so
+  an abandoned or stolen device eventually loses its session.
 
 ### Acceptance
 
-1. `bin/magento config:show oauth/access_token_lifetime/customer` returns `720`.
-2. Sign in on the app, leave it overnight, reopen: **still signed in**, and Account → My Orders loads.
-3. A token issued *before* the change is still accepted after more than an hour (proves the retroactive behaviour).
+1. ✅ `bin/magento config:show oauth/access_token_lifetime/customer` returns `720` (confirmed in admin 2026-08-26).
+2. ⏳ Sign in on the app, leave it overnight, reopen: **still signed in**, and Account → My Orders loads.
+   *This is the check that closes the ticket* — it needs real elapsed time, so it cannot be shortcut.
+3. ⏳ A token issued *before* the change is still accepted after more than an hour (proves the retroactive behaviour).
 
 ---
 

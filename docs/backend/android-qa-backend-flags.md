@@ -14,7 +14,7 @@ Owner: **Magento / platform team**. Endpoint: `https://zoonze.com/graphql`, per 
 | 6 | "Continue with Google" social login | Sign-in | Feature (deferred) | Extension + resolver |
 | 7 | ~~Profile-photo (avatar) upload~~ **✅ RESOLVED** (backend live + app wired) | Edit Profile | Done | Custom resolver + storage |
 | 8 | Product "size" not modelled as a configurable attribute | PDP | Cosmetic/UX | Catalog |
-| 9 | Customer token lifetime still at Magento's 1-hour default | Sign-in | **Yes — customers signed out hourly** | Config only |
+| 9 | ~~Customer token lifetime at Magento's 1-hour default~~ **✅ RESOLVED** (set to 720h) | Sign-in | Done | Config only |
 
 ---
 
@@ -140,8 +140,10 @@ Owner: **Magento / platform team**. Endpoint: `https://zoonze.com/graphql`, per 
 
 ---
 
-## 9. Customer token lifetime — customers signed out after an hour
-**ClickUp:** [CL042-DEV20 86d433b6p](https://app.clickup.com/t/86d433b6p) · **Priority: High** (every customer, every hour).
+## 9. Customer token lifetime — customers signed out after an hour — ✅ RESOLVED
+**ClickUp:** [CL042-DEV20 86d433b6p](https://app.clickup.com/t/86d433b6p) · **Status: Config applied 2026-08-26**
+(`Customer Token Lifetime (hours) = 720`, *Use system value* unchecked). Awaiting the overnight on-device
+confirmation. Original request below.
 
 **Symptom.** *"The login time is way too short, we need the customer to stay logged in for a longer period."*
 
