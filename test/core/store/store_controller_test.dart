@@ -46,6 +46,37 @@ class _AuthThenOkRepository implements StoreRepository {
   }
 }
 
+/// Always fails with the `service` kind — the non-JSON bucket, which holds both
+/// "the edge served a WAF/CloudFront HTML page" and "the bearer is malformed".
+/// On its own it says nothing about whether the token is any good.
+class _ServiceFailureRepository implements StoreRepository {
+  int calls = 0;
+
+  @override
+  Future<List<StoreView>> fetchAvailableStores() async {
+    calls++;
+    throw const Failure(FailureKind.service);
+  }
+}
+
+ProviderContainer _serviceFailureContainer({
+  required StoreRepository guest,
+  required SecureTokenStore tokenStore,
+  required StoreRepository authed,
+}) {
+  final container = ProviderContainer(
+    overrides: [
+      localCacheProvider.overrideWithValue(FakeLocalCache()),
+      localePrefsProvider.overrideWithValue(FakeLocalePrefs(null)),
+      storeRepositoryProvider.overrideWithValue(authed),
+      guestStoreRepositoryProvider.overrideWithValue(guest),
+      secureTokenStoreProvider.overrideWithValue(tokenStore),
+    ],
+  );
+  addTearDown(container.dispose);
+  return container;
+}
+
 ProviderContainer _container({String? persistedLocale}) {
   final container = ProviderContainer(
     overrides: [
@@ -125,6 +156,70 @@ void main() {
       expect(await tokenStore.read(), isNull, reason: 'stale token was wiped');
       expect(container.read(storeControllerProvider).stores, hasLength(2));
     });
+
+    // CL042-DEV20. `_load` runs on every cold start, and a `service` failure is
+    // usually the edge misbehaving — not a bad token. Wiping the token on sight
+    // signed customers out for no reason, which read to them as "the login
+    // expires way too fast". Only a guest retry can tell the two apart.
+    group('service failure at bootstrap', () {
+      test('keeps the token when the guest retry fails too', () async {
+        final tokenStore = FakeSecureTokenStore('good-token');
+        final guest = _ServiceFailureRepository();
+        final container = _serviceFailureContainer(
+          guest: guest,
+          tokenStore: tokenStore,
+          authed: _ServiceFailureRepository(),
+        );
+
+        await container.read(storeControllerProvider.notifier).loadStores();
+
+        expect(guest.calls, 1, reason: 'probed before touching the token');
+        expect(
+          await tokenStore.read(),
+          'good-token',
+          reason: 'the edge was down, not the session',
+        );
+        expect(container.read(storeControllerProvider).stores, isEmpty);
+      });
+
+      test('clears the token when the guest retry succeeds', () async {
+        final tokenStore = FakeSecureTokenStore('malformed-token');
+        final guest = _CountingRepository(kSampleStores);
+        final container = _serviceFailureContainer(
+          guest: guest,
+          tokenStore: tokenStore,
+          authed: _ServiceFailureRepository(),
+        );
+
+        await container.read(storeControllerProvider.notifier).loadStores();
+
+        expect(guest.calls, 1);
+        expect(
+          await tokenStore.read(),
+          isNull,
+          reason: 'guest worked where the bearer did not — the token is at fault',
+        );
+        expect(
+          container.read(storeControllerProvider).stores,
+          hasLength(2),
+          reason: 'the guest response still bootstraps the store views',
+        );
+      });
+
+      test('never probes when there is no token to blame', () async {
+        final guest = _CountingRepository(kSampleStores);
+        final container = _serviceFailureContainer(
+          guest: guest,
+          tokenStore: FakeSecureTokenStore(),
+          authed: _ServiceFailureRepository(),
+        );
+
+        await container.read(storeControllerProvider.notifier).loadStores();
+
+        expect(guest.calls, 0);
+      });
+    });
+
     // The cold-start gap: `bootstrap` fires loadStores unawaited, so on a fresh
     // install the view list is empty for the first frames and anything reading
     // it (a deep link) saw nothing.

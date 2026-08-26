@@ -29,6 +29,10 @@ class _ZoonzeAppState extends ConsumerState<ZoonzeApp>
     with WidgetsBindingObserver {
   StreamSubscription<Map<String, dynamic>>? _openedSub;
 
+  /// Lets the session-expiry notice reach the customer from wherever they are —
+  /// an expired token surfaces on whatever screen happens to be querying.
+  final _messengerKey = GlobalKey<ScaffoldMessengerState>();
+
   @override
   void initState() {
     super.initState();
@@ -55,6 +59,23 @@ class _ZoonzeAppState extends ConsumerState<ZoonzeApp>
     }
   }
 
+  void _showSessionExpired() {
+    // Read the string off the messenger's own context: it sits below
+    // MaterialApp's Localizations, while this widget sits above it.
+    final messengerContext = _messengerKey.currentContext;
+    final messenger = _messengerKey.currentState;
+    if (messengerContext == null || messenger == null) return;
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            AppLocalizations.of(messengerContext).sessionExpiredMessage,
+          ),
+        ),
+      );
+  }
+
   void _handleNotification(Map<String, dynamic> data) {
     final route = notificationRoute(data);
     if (route != null) ref.read(routerProvider).go(route);
@@ -69,11 +90,22 @@ class _ZoonzeAppState extends ConsumerState<ZoonzeApp>
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<int>(sessionExpiredSignalProvider, (previous, next) {
+      if (previous == null || next <= previous) return;
+      // Deferred to the next frame for two reasons: a launch-time expiry can
+      // land before MaterialApp has mounted its ScaffoldMessenger, and showing
+      // a SnackBar mid-build would throw.
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _showSessionExpired(),
+      );
+    });
+
     final store = ref.watch(storeControllerProvider);
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
+      scaffoldMessengerKey: _messengerKey,
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       debugShowCheckedModeBanner: false,
       routerConfig: router,

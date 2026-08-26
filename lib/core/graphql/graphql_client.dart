@@ -94,10 +94,14 @@ rawTransportProbe(AppConfig config, String storeCode) async {
 ///   → ResilienceLink (retry transient queries + mid-session logout)
 ///   → HttpLink (terminating).
 ///
+/// [withAuth] false drops the [AuthLink] (and the mid-session logout hook),
+/// producing an otherwise byte-identical **guest** client — see
+/// [guestGraphqlClientProvider].
+///
 /// Exception → [Failure] mapping happens at the repository layer
-/// (see `graphql_failure_mapper.dart`). Invalidate this provider on a
+/// (see `graphql_failure_mapper.dart`). Invalidate the provider on a
 /// language/store switch to reset the cache and refetch with the new header.
-final graphqlClientProvider = Provider<GraphQLClient>((ref) {
+GraphQLClient _buildClient(Ref ref, {required bool withAuth}) {
   final config = ref.watch(appConfigProvider);
   final tokenStore = ref.watch(secureTokenStoreProvider);
 
@@ -132,12 +136,22 @@ final graphqlClientProvider = Provider<GraphQLClient>((ref) {
   final resilienceLink = ResilienceLink(
     // Defer to a microtask so logout (which invalidates this very provider)
     // runs after the current response stream settles, never mid-emit.
-    onAuthError: () => Future.microtask(
-      () => ref.read(authControllerProvider.notifier).handleSessionExpired(),
-    ),
+    //
+    // The guest client sends no bearer, so an auth error there says nothing
+    // about the customer's session — it must never drop them to guest.
+    onAuthError: withAuth
+        ? () => Future.microtask(
+            () => ref.read(authControllerProvider.notifier).handleSessionExpired(),
+          )
+        : () {},
   );
 
-  final link = Link.from(<Link>[authLink, storeLink, resilienceLink, httpLink]);
+  final link = Link.from(<Link>[
+    if (withAuth) authLink,
+    storeLink,
+    resilienceLink,
+    httpLink,
+  ]);
 
   return GraphQLClient(
     link: link,
@@ -152,4 +166,19 @@ final graphqlClientProvider = Provider<GraphQLClient>((ref) {
       query: Policies(fetch: FetchPolicy.networkOnly),
     ),
   );
-});
+}
+
+final graphqlClientProvider = Provider<GraphQLClient>(
+  (ref) => _buildClient(ref, withAuth: true),
+);
+
+/// A **token-less** twin of [graphqlClientProvider]: same endpoint, transport,
+/// `Store` header and retry behaviour, but no `Authorization` header.
+///
+/// Exists so the app can answer *"is the stored bearer the reason this request
+/// failed?"* **without destroying the token to find out**. Browsing GraphQL
+/// needs no token, so a guest retry that succeeds where the authenticated one
+/// failed is proof the token is at fault — see `StoreController._load()`.
+final guestGraphqlClientProvider = Provider<GraphQLClient>(
+  (ref) => _buildClient(ref, withAuth: false),
+);

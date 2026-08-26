@@ -20,6 +20,24 @@ class AuthState {
   bool get isAuthenticated => status == AuthStatus.authenticated;
 }
 
+/// Bumped every time a session ends **against the customer's will** — Magento
+/// rejects the bearer mid-flight (`graphql-authorization` / "Consumer key has
+/// expired") or the persisted token is already dead at launch.
+///
+/// The app chrome listens and says so, because silently dropping to guest left
+/// people with a bare "Something went wrong" and no idea they had been signed
+/// out (CL042-DEV20). Deliberately **not** raised by [AuthController.logout] or
+/// [AuthController.deleteAccount]: those are the customer's own doing.
+class SessionExpiredSignal extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void raise() => state = state + 1;
+}
+
+final sessionExpiredSignalProvider =
+    NotifierProvider<SessionExpiredSignal, int>(SessionExpiredSignal.new);
+
 /// Owns the customer session: restores a persisted token on startup, and drives
 /// login / register / logout / password-reset. The token lives in secure
 /// storage; [AuthLink] reads it per request.
@@ -44,9 +62,11 @@ class AuthController extends Notifier<AuthState> {
       state = AuthState(customer: customer, status: AuthStatus.authenticated);
     } on Failure catch (failure) {
       if (failure.kind == FailureKind.auth) {
-        // Token actually rejected -> drop it and continue as guest.
+        // Token actually rejected -> drop it and continue as guest. Tell the
+        // customer: from their side the app just "forgot" them.
         await _tokens.clear();
         state = const AuthState(status: AuthStatus.guest);
+        _signalSessionExpired();
       } else {
         // Transient failure at launch (network / WAF-HTML / timeout) — do NOT
         // log the customer out. Keep the token and stay signed in; the profile
@@ -182,12 +202,19 @@ class AuthController extends Notifier<AuthState> {
     // whatever token is stored on every request, so Magento then rejects every
     // call with "Consumer key has expired". Wiping it lets requests proceed as
     // guest and recover, instead of failing forever.
+    final wasSignedIn = state.status == AuthStatus.authenticated;
     await _tokens.clear();
     ref.invalidate(graphqlClientProvider);
     if (state.status != AuthStatus.guest) {
       state = const AuthState(status: AuthStatus.guest);
     }
+    // Only when they *were* signed in — a lingering token wiped while the state
+    // already reads guest is housekeeping, not a session the customer lost.
+    if (wasSignedIn) _signalSessionExpired();
   }
+
+  void _signalSessionExpired() =>
+      ref.read(sessionExpiredSignalProvider.notifier).raise();
 
   /// Re-fetches the customer profile (e.g. after an Edit Profile save).
   Future<void> refreshCustomer() async {

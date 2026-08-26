@@ -14,6 +14,7 @@ Owner: **Magento / platform team**. Endpoint: `https://zoonze.com/graphql`, per 
 | 6 | "Continue with Google" social login | Sign-in | Feature (deferred) | Extension + resolver |
 | 7 | ~~Profile-photo (avatar) upload~~ **✅ RESOLVED** (backend live + app wired) | Edit Profile | Done | Custom resolver + storage |
 | 8 | Product "size" not modelled as a configurable attribute | PDP | Cosmetic/UX | Catalog |
+| 9 | Customer token lifetime still at Magento's 1-hour default | Sign-in | **Yes — customers signed out hourly** | Config only |
 
 ---
 
@@ -139,7 +140,30 @@ Owner: **Magento / platform team**. Endpoint: `https://zoonze.com/graphql`, per 
 
 ---
 
+## 9. Customer token lifetime — customers signed out after an hour
+**ClickUp:** [CL042-DEV20 86d433b6p](https://app.clickup.com/t/86d433b6p) · **Priority: High** (every customer, every hour).
+
+**Symptom.** *"The login time is way too short, we need the customer to stay logged in for a longer period."*
+
+**App state.** Correct. `generateCustomerToken` is stored in secure storage and sent on every request; the app only
+drops to guest when Magento actually rejects the bearer. Magento GraphQL exposes no refresh token, so the app has
+no way to extend a session — the TTL is entirely a server-side setting.
+
+**Root cause.** `oauth/access_token_lifetime/customer` is at Magento's **1-hour** default.
+
+**Backend action.** `bin/magento config:set oauth/access_token_lifetime/customer 720` (30 days) + `cache:flush`.
+Full detail, the non-bug sign-out causes, and an optional sliding-session mutation:
+[`docs/backend/session-lifetime.md`](session-lifetime.md).
+
+**Acceptance.** A customer signed in on the app is still signed in the next day.
+
+---
+
 ### Not a backend flag (app-side, already handled)
 For reference — these looked backend-ish but were resolved in-app during the QA passes, no backend action needed:
 - **Checkout / My Orders stale on language switch** — fixed app-side (store-switch listeners on the checkout & orders controllers).
+- **Customers randomly signed out at app launch** — separate from flag #9's hourly expiry. `StoreController._load()`
+  wiped the customer token whenever the bootstrap `availableStores` call returned a non-JSON body, which is usually a
+  transient WAF/CloudFront page rather than a bad token. Fixed app-side: the token is only cleared once a token-less
+  retry proves the bearer was at fault.
 - **Stale free-shipping offer at checkout after removing an item** — already handled by the checkout state `reset()` on entry (the quote is re-evaluated). The *only* remaining free-shipping item is flag **#1** above.

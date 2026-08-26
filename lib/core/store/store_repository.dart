@@ -61,3 +61,11 @@ class StoreRepository {
 final storeRepositoryProvider = Provider<StoreRepository>(
   (ref) => StoreRepository(ref.watch(graphqlClientProvider)),
 );
+
+/// The same repository over the **token-less** client. `StoreController` uses it
+/// to re-run `availableStores` as a guest when the authenticated call failed, so
+/// it can tell "the stored token is bad" from "the edge is having a moment"
+/// before deciding whether to wipe the customer's session.
+final guestStoreRepositoryProvider = Provider<StoreRepository>(
+  (ref) => StoreRepository(ref.watch(guestGraphqlClientProvider)),
+);

@@ -19,6 +19,8 @@
   "stateLoading": "Loading…",
   "stateEmpty": "Nothing here yet",
   "errorGeneric": "Something went wrong. Please try again.",
+  "sessionExpiredMessage": "Your session has ended. Please sign in again.",
+  "@sessionExpiredMessage": { "description": "Shown when the customer token is rejected and the app drops to guest." },
   "linkNotFoundTitle": "Link not found",
   "linkNotFoundBody": "We couldn't open that link. It may have moved or is no longer available.",
   "errorNetwork": "We couldn't reach the store. Check your connection and try again.",

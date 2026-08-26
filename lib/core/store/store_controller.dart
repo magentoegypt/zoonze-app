@@ -79,8 +79,10 @@ class StoreController extends Notifier<StoreState> {
   /// malformed token, an edge `service` 403). Browsing needs no token (guest
   /// GraphQL returns 200), so on those failures we drop the token and retry
   /// once as guest, recovering in-session instead of failing every request.
-  /// A plain network blip keeps the provisional/cached mapping (the token may
-  /// be perfectly valid — the device is just offline).
+  /// The `service` bucket also holds plain WAF/CloudFront error pages, which say
+  /// nothing about the token — see [_healOrKeepToken] for how the two are told
+  /// apart. A plain network blip keeps the provisional/cached mapping (the token
+  /// may be perfectly valid — the device is just offline).
   Future<void> loadStores() {
     final pending = _load();
     _inFlight = pending;
@@ -122,32 +124,74 @@ class StoreController extends Notifier<StoreState> {
     try {
       await _fetchAndApplyStores(cache);
     } on Failure catch (failure) {
-      final tokenRelated =
-          failure.kind == FailureKind.auth ||
-          failure.kind == FailureKind.service;
-      if (!tokenRelated) return;
-      await ref.read(secureTokenStoreProvider).clear();
-      ref.invalidate(graphqlClientProvider);
+      await _healOrKeepToken(cache, failure);
+    } on Object {
+      // Non-fatal: provisional/cached mapping remains in effect.
+    }
+  }
+
+  /// Decides what a failed bootstrap fetch means for the **stored customer
+  /// token**. Getting this wrong signs people out, so each branch needs proof.
+  ///
+  /// `auth` — Magento explicitly rejected the bearer ("Consumer key has
+  /// expired"). That *is* the proof: drop the token and retry as guest.
+  ///
+  /// `service` — a non-JSON body, which covers three very different things: an
+  /// AWS WAF / CloudFront error page, a response the transport couldn't decode,
+  /// or an edge 403 provoked by a malformed bearer (CLAUDE.md §7). Only the last
+  /// is the token's fault, so **prove it** — re-run the query on the token-less
+  /// client and clear the token only if that guest call succeeds where the
+  /// authenticated one didn't. Clearing on every `service` failure (as this did)
+  /// signed customers out on any transient edge hiccup at launch, and `_load`
+  /// runs on every cold start — the CL042-DEV20 "logged out too soon" report.
+  ///
+  /// Anything else (network / offline) leaves both the token and the cached
+  /// mapping alone: the device is down, the session is fine.
+  Future<void> _healOrKeepToken(LocalCache cache, Failure failure) async {
+    if (failure.kind == FailureKind.auth) {
+      await _dropToken();
       try {
         await _fetchAndApplyStores(cache);
       } on Object {
         // Still down — provisional/cached mapping remains in effect.
       }
-    } on Object {
-      // Non-fatal: provisional/cached mapping remains in effect.
+      return;
     }
+    if (failure.kind != FailureKind.service) return;
+    if (await ref.read(secureTokenStoreProvider).read() == null) return;
+
+    final List<StoreView> stores;
+    try {
+      stores = await ref
+          .read(guestStoreRepositoryProvider)
+          .fetchAvailableStores();
+    } on Object {
+      // Guest failed too, so the bearer was never the problem. Keep the
+      // customer signed in and fall back to the provisional/cached mapping.
+      return;
+    }
+    await _dropToken();
+    await _applyAndCache(stores, cache);
+  }
+
+  Future<void> _dropToken() async {
+    await ref.read(secureTokenStoreProvider).clear();
+    ref.invalidate(graphqlClientProvider);
   }
 
   Future<void> _fetchAndApplyStores(LocalCache cache) async {
     final stores = await ref
         .read(storeRepositoryProvider)
         .fetchAvailableStores();
-    if (stores.isNotEmpty) {
-      _applyStores(stores);
-      await cache.writeStores(
-        stores.map((s) => s.toJson()).toList(growable: false),
-      );
-    }
+    await _applyAndCache(stores, cache);
+  }
+
+  Future<void> _applyAndCache(List<StoreView> stores, LocalCache cache) async {
+    if (stores.isEmpty) return;
+    _applyStores(stores);
+    await cache.writeStores(
+      stores.map((s) => s.toJson()).toList(growable: false),
+    );
   }
 
   void _applyStores(List<StoreView> stores) {

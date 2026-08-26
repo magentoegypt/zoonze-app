@@ -100,6 +100,43 @@ void main() {
       expect(container.read(authControllerProvider).status, AuthStatus.guest);
     });
 
+    // CL042-DEV20: an expiry the customer didn't ask for has to be explained,
+    // but a logout they tapped themselves must stay quiet.
+    group('session-expired signal', () {
+      test('rises when a live session is rejected', () async {
+        final container = _container();
+        final notifier = container.read(authControllerProvider.notifier);
+        await notifier.login('layla@example.com', 'password1');
+        final before = container.read(sessionExpiredSignalProvider);
+
+        await notifier.handleSessionExpired();
+
+        expect(container.read(sessionExpiredSignalProvider), before + 1);
+      });
+
+      test('stays quiet on a deliberate logout', () async {
+        final container = _container();
+        final notifier = container.read(authControllerProvider.notifier);
+        await notifier.login('layla@example.com', 'password1');
+        final before = container.read(sessionExpiredSignalProvider);
+
+        await notifier.logout();
+
+        expect(container.read(sessionExpiredSignalProvider), before);
+      });
+
+      test('stays quiet when there was no session to lose', () async {
+        final container = _container();
+        final notifier = container.read(authControllerProvider.notifier);
+        await pumpEventQueue(); // settles to guest
+        final before = container.read(sessionExpiredSignalProvider);
+
+        await notifier.handleSessionExpired();
+
+        expect(container.read(sessionExpiredSignalProvider), before);
+      });
+    });
+
     test('deleteAccount deletes server-side then returns to guest', () async {
       final repo = FakeAuthRepository();
       final container = _containerWith(repo);
