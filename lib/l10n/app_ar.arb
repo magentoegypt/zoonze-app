@@ -317,6 +317,7 @@
   "cartCheckout": "إتمام الشراء",
   "cartCouponHint": "رمز هدية أو خصم",
   "cartApply": "تطبيق",
+  "cartCouponCopied": "تم نسخ رمز الخصم",
   "cartCouponApplied": "تم تطبيق {code}",
   "@cartCouponApplied": { "placeholders": { "code": { "type": "String" } } },
   "cartAdded": "تمت الإضافة إلى السلة",

@@ -343,6 +343,7 @@
   "cartCheckout": "Checkout",
   "cartCouponHint": "Gift or promo code",
   "cartApply": "Apply",
+  "cartCouponCopied": "Promo code copied",
   "cartCouponApplied": "{code} applied",
   "@cartCouponApplied": { "placeholders": { "code": { "type": "String" } } },
   "cartAdded": "Added to cart",

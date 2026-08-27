@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -406,6 +407,56 @@ class _SectionBand extends StatelessWidget {
       Container(height: 8, color: AppColors.surfaceMuted);
 }
 
+/// Copy-to-clipboard affordance at the trailing edge of the promo-code field
+/// (CL042-DEV13). Copies whatever code is in play — what the shopper has typed,
+/// or the live coupon once one is applied — so a code seen in the announcement
+/// bar or on an offer card can be carried out of the app.
+///
+/// It listens to the field's own [TextEditingController] so it appears the
+/// moment there is something to copy, and takes no space when there isn't.
+class _CopyCodeButton extends StatelessWidget {
+  const _CopyCodeButton({required this.controller, required this.appliedCoupon});
+
+  final TextEditingController controller;
+  final String? appliedCoupon;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return ValueListenableBuilder<TextEditingValue>(
+      valueListenable: controller,
+      builder: (context, value, _) {
+        final code = value.text.trim().isNotEmpty
+            ? value.text.trim()
+            : (appliedCoupon ?? '');
+        if (code.isEmpty) return const SizedBox.shrink();
+        return InkWell(
+          onTap: () async {
+            final messenger = ScaffoldMessenger.of(context);
+            await Clipboard.setData(ClipboardData(text: code));
+            messenger.showSnackBar(
+              SnackBar(content: Text(l10n.cartCouponCopied)),
+            );
+          },
+          borderRadius: BorderRadius.circular(6),
+          child: Padding(
+            // Keeps the 48px tap target without growing the field's height.
+            padding: const EdgeInsetsDirectional.fromSTEB(8, 4, 0, 4),
+            child: Tooltip(
+              message: l10n.actionCopy,
+              child: const Icon(
+                Icons.copy_outlined,
+                size: 17,
+                color: AppColors.brandPrimary,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
 /// Promo / gift-code entry (Figma "promo" 39:3): a filled grey field with a
 /// tag icon + muted placeholder, a burgundy outlined "Apply" pill, and — when a
 /// coupon is live — a blush chip showing the code, the saving, and a remove ×.
@@ -475,6 +526,10 @@ class _CouponSection extends StatelessWidget {
                           ),
                           onSubmitted: (_) => busy ? null : onApply(),
                         ),
+                      ),
+                      _CopyCodeButton(
+                        controller: controller,
+                        appliedCoupon: appliedCoupon,
                       ),
                     ],
                   ),
