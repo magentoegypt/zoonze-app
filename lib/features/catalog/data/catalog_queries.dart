@@ -22,6 +22,33 @@ query ResolveUrl($url: String!) {
 }
 ''';
 
+  /// Stand-in thumbnails for categories that carry no `image` of their own.
+  ///
+  /// Only top-level categories have an image assigned on this store — every
+  /// second- and third-level one comes back `null` (verified live, 2026-08-27).
+  /// The storefront papers over that by showing the first product inside the
+  /// category instead (`beauty-subcats__media`), and this reproduces it: one
+  /// aliased query so N categories cost one round trip, not N.
+  ///
+  /// A category with no products resolves to an empty `items` list — the caller
+  /// renders the neutral placeholder, exactly as the website does.
+  static String categoryThumbnails(int count) {
+    // A bare `$` so the GraphQL variable sigil survives Dart interpolation.
+    const v = r'$';
+    final args = List.generate(count, (i) => '${v}u$i: String!').join(', ');
+    final buffer = StringBuffer('query CategoryThumbnails($args) {');
+    for (var i = 0; i < count; i++) {
+      buffer.writeln();
+      buffer.write(
+        '  c$i: products(filter: {category_uid: {eq: ${v}u$i}}, pageSize: 1) '
+        '{ items { image { url } } }',
+      );
+    }
+    buffer.writeln();
+    buffer.write('}');
+    return buffer.toString();
+  }
+
   /// Top-level category tree (menu / home "shop by category").
   static const String categoryTree = r'''
 query CategoryTree {

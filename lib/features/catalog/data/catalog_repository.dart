@@ -48,6 +48,51 @@ class CatalogRepository {
     return source.where((c) => c.includeInMenu).toList(growable: false);
   }
 
+  /// Stand-in thumbnails for categories with no `image` of their own: the first
+  /// product inside each, in a single aliased round trip. Mirrors what the
+  /// storefront does for its sub-category rail.
+  ///
+  /// Keyed by category uid, and **sparse** — a uid whose category holds no
+  /// products is simply absent, so the caller can tell "nothing to show" from
+  /// "not fetched yet" and fall back to the neutral placeholder rather than
+  /// inventing an image.
+  Future<Map<String, String>> fetchCategoryThumbnails(
+    List<String> categoryUids,
+  ) async {
+    // Distinct + capped: this is one query whose size grows with the list, and
+    // no surface shows more categories at once than this.
+    final uids = categoryUids
+        .where((u) => u.isNotEmpty)
+        .toSet()
+        .take(_thumbnailBatchLimit)
+        .toList(growable: false);
+    if (uids.isEmpty) return const <String, String>{};
+
+    final data = await _query(
+      CatalogQueries.categoryThumbnails(uids.length),
+      <String, dynamic>{
+        for (var i = 0; i < uids.length; i++) 'u$i': uids[i],
+      },
+    );
+
+    final thumbnails = <String, String>{};
+    for (var i = 0; i < uids.length; i++) {
+      final items = (data['c$i'] as Map<String, dynamic>?)?['items'];
+      final first = (items as List<dynamic>? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .firstOrNull;
+      final url = httpsMediaUrl(
+        (first?['image'] as Map<String, dynamic>?)?['url'] as String?,
+      );
+      if (url != null && url.isNotEmpty) thumbnails[uids[i]] = url;
+    }
+    return thumbnails;
+  }
+
+  /// Ceiling on one [fetchCategoryThumbnails] batch — the deepest category
+  /// level on this store has fewer children than this.
+  static const int _thumbnailBatchLimit = 40;
+
   /// Resolves a storefront URL (e.g. a hero CTA's friendly `.html` category or
   /// product URL) to its entity via Magento's `urlResolver`, so the app opens
   /// the right in-app screen instead of guessing from the path. `uid` is the

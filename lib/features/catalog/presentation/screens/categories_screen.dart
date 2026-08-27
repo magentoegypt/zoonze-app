@@ -151,14 +151,24 @@ void _openCategory(BuildContext context, Category category) {
 
 /// Two-column grid of category cards, shared by the top-level Categories tab
 /// and the sub-category drill-down.
-class _CategoryGrid extends StatelessWidget {
+///
+/// Sub-categories carry no `image` on this store, which left the whole
+/// drill-down as a wall of placeholders (CL042-DEV22). Resolve a stand-in from
+/// the first product in each — the substitution the storefront makes — in a
+/// single batched query for the whole grid.
+class _CategoryGrid extends ConsumerWidget {
   const _CategoryGrid({required this.items});
 
   final List<Category> items;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    final thumbnails =
+        ref
+            .watch(categoryThumbnailsProvider(categoryThumbnailKey(items)))
+            .valueOrNull ??
+        const <String, String>{};
     if (items.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(24),
@@ -177,14 +187,28 @@ class _CategoryGrid extends StatelessWidget {
         mainAxisSpacing: 16,
       ),
       itemCount: items.length,
-      itemBuilder: (context, index) => _CategoryCard(category: items[index]),
+      itemBuilder: (context, index) {
+        final category = items[index];
+        return _CategoryCard(
+          category: category,
+          imageUrl: (category.image ?? '').isNotEmpty
+              ? category.image
+              : thumbnails[category.uid],
+        );
+      },
     );
   }
 }
 
 class _CategoryCard extends StatelessWidget {
-  const _CategoryCard({required this.category});
+  const _CategoryCard({required this.category, this.imageUrl});
+
   final Category category;
+
+  /// The category's own photo, or the product stand-in resolved by the grid.
+  /// Null when neither exists — the card then shows the neutral placeholder
+  /// rather than borrowing an unrelated image.
+  final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -206,7 +230,7 @@ class _CategoryCard extends StatelessWidget {
               child: SizedBox(
                 width: double.infinity,
                 child: ZoonzeImage(
-                  url: category.image,
+                  url: imageUrl,
                   shimmer: true,
                   error: (_) => const _CategoryPlaceholder(),
                 ),

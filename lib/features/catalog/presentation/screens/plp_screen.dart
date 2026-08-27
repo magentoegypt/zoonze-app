@@ -21,6 +21,7 @@ import '../../domain/product.dart';
 import '../catalog_providers.dart';
 import '../plp_controller.dart';
 import '../product_navigation.dart';
+import '../widgets/category_circle.dart';
 import '../widgets/filter_sheet.dart';
 import '../widgets/product_card.dart';
 import '../widgets/product_skeletons.dart';
@@ -266,6 +267,23 @@ class _Header extends StatelessWidget {
   final VoidCallback onFilters;
   final VoidCallback onSort;
 
+  /// The chip-row entry the current selection belongs to: the selection itself
+  /// when a sub-category is picked, its parent when the pick is one level
+  /// deeper. Keeps the chip row highlighted while browsing the third level.
+  Category? get _branch {
+    final uid = selectedSubUid;
+    if (uid == null) return null;
+    for (final c in subcats) {
+      if (c.uid == uid || c.children.any((g) => g.uid == uid)) return c;
+    }
+    return null;
+  }
+
+  /// Navigable children of the selected sub-category — the third level.
+  List<Category> get _grandchildren => (_branch?.children ?? const <Category>[])
+      .where((c) => c.includeInMenu)
+      .toList(growable: false);
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -288,9 +306,24 @@ class _Header extends StatelessWidget {
         if (subcats.isNotEmpty)
           _SubcategoryChips(
             subcats: subcats,
-            selectedUid: selectedSubUid,
+            // The branch, not the raw selection: a third-level pick keeps its
+            // parent chip lit rather than clearing the row.
+            selectedUid: _branch?.uid,
             onSelect: onSelectSub,
           ),
+        // Third level, shown once a sub-category with children of its own is
+        // picked (CL042-DEV14). The storefront reaches the same place by
+        // navigating — its category page carries a `beauty-subcats` rail of the
+        // children — so the app opens the level in place instead, keeping the
+        // chip row above as the "where am I" trail.
+        if (_grandchildren.isNotEmpty) ...[
+          const SizedBox(height: 4),
+          CategoryCircleRail(
+            categories: _grandchildren,
+            selectedUid: selectedSubUid,
+            onTap: (category) => onSelectSub(category.uid),
+          ),
+        ],
         Padding(
           padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 16, 12),
           child: Row(

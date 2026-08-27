@@ -37,6 +37,34 @@ final categoryByUidProvider = FutureProvider.autoDispose
       return find(cats);
     });
 
+/// Product-image stand-ins for a set of categories, keyed by uid.
+///
+/// Only top-level categories carry an `image` on this store; sub- and
+/// sub-sub-categories come back `null`, which left every tile below the top
+/// level showing a placeholder (CL042-DEV22). The storefront fills that gap
+/// with the first product inside the category, and so does this.
+///
+/// The family key is a comma-joined uid list rather than a `List` because
+/// Riverpod identifies a family instance by `==`, and two equal lists are not
+/// the same object. Kept alive: the result is a handful of URLs per level and
+/// re-fetching it on every rebuild would flicker the rail.
+final categoryThumbnailsProvider = FutureProvider.autoDispose
+    .family<Map<String, String>, String>((ref, uidKey) async {
+      ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
+      final uids = uidKey.split(',').where((u) => u.isNotEmpty).toList();
+      if (uids.isEmpty) return const <String, String>{};
+      ref.keepAlive();
+      return ref.watch(catalogRepositoryProvider).fetchCategoryThumbnails(uids);
+    });
+
+/// Builds the [categoryThumbnailsProvider] key for the categories in [items]
+/// that need a stand-in — those with no `image` of their own. Returns an empty
+/// string when every one already has an image, so no query is issued.
+String categoryThumbnailKey(Iterable<Category> items) => items
+    .where((c) => (c.image ?? '').isEmpty)
+    .map((c) => c.uid)
+    .join(',');
+
 /// Featured products for the home screen — first page of the first category.
 final featuredProductsProvider = FutureProvider.autoDispose<List<Product>>((
   ref,
