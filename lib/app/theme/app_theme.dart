@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
@@ -35,6 +36,20 @@ abstract final class AppTheme {
     );
 
     return base.copyWith(
+      // Edge-swipe back on every platform (CL042-DEV11). Android's default
+      // Zoom transition has no back gesture at all, so a pushed screen could
+      // only be left through the app-bar arrow. The Cupertino builder brings
+      // the drag-from-the-edge dismissal with it, and its detector sits on the
+      // *directional* start edge: swipe in from the left in English, from the
+      // right in Arabic, no manual flipping (see [[rtl-arrow-double-flip]] for
+      // why manual mirroring is a trap here).
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: <TargetPlatform, PageTransitionsBuilder>{
+          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+        },
+      ),
       scaffoldBackgroundColor: brightness == Brightness.light
           ? Colors.white
           : AppColors.surfaceDark,
