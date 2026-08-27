@@ -53,6 +53,11 @@ final featuredProductsProvider = FutureProvider.autoDispose<List<Product>>((
 /// A home product section: the source category (for "See all") + its products.
 typedef HomeSection = ({Category? category, List<Product> items});
 
+/// How many products a home product rail shows before "See More" — 8 (four
+/// rows of the two-column grid), per CL042-DEV09. "Deals of the Day" keeps its
+/// own shorter count.
+const int _homeSectionSize = 8;
+
 /// Searches the category tree recursively (top-level + nested children) so a
 /// target like `new-arrivals`/`bestsellers` is found wherever it sits.
 Category? _findCategory(
@@ -67,7 +72,7 @@ Category? _findCategory(
   return null;
 }
 
-/// "New Arrivals": the latest 4 products from the `new-arrivals` category.
+/// "New Arrivals": the latest 8 products from the `new-arrivals` category.
 /// Hidden when that category is absent (no fabricated content).
 final newArrivalsProvider = FutureProvider.autoDispose<HomeSection>((ref) async {
   ref.watch(storeControllerProvider.select((s) => s.activeStoreCode));
@@ -75,10 +80,10 @@ final newArrivalsProvider = FutureProvider.autoDispose<HomeSection>((ref) async 
   final match = _findCategory(categories, (k, n) => k == 'new-arrivals');
   if (match == null) return (category: null, items: const <Product>[]);
   // The category already holds the newest products in order; created_at sort
-  // is unsupported on this store, so take the first 4.
+  // is unsupported on this store, so take the first page.
   final page = await ref
       .watch(catalogRepositoryProvider)
-      .fetchProducts(categoryUid: match.uid, pageSize: 4);
+      .fetchProducts(categoryUid: match.uid, pageSize: _homeSectionSize);
   return (category: match, items: page.items);
 });
 
@@ -90,7 +95,7 @@ final bestsellersProvider = FutureProvider.autoDispose<HomeSection>((ref) async 
   if (match == null) return (category: null, items: const <Product>[]);
   final page = await ref
       .watch(catalogRepositoryProvider)
-      .fetchProducts(categoryUid: match.uid, pageSize: 4);
+      .fetchProducts(categoryUid: match.uid, pageSize: _homeSectionSize);
   return (category: match, items: page.items);
 });
 
