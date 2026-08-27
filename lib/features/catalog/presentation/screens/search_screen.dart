@@ -110,7 +110,8 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     if (brand != null) {
       return Scaffold(
         appBar: AppBar(
-          centerTitle: true,
+          centerTitle: false,
+          titleSpacing: 4,
           toolbarHeight: 60,
           title: const BrandLogo(height: 44),
         ),

@@ -55,7 +55,8 @@ class _BrandsScreenState extends ConsumerState<BrandsScreen> {
       // Figma appbar: back chevron + centered ZOONZE lockup (no search/bell).
       appBar: AppBar(
         toolbarHeight: 60,
-        centerTitle: true,
+        centerTitle: false,
+        titleSpacing: 4,
         leading: const ZoonzeBackButton(),
         title: const BrandLogo(height: 44),
       ),

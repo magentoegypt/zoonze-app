@@ -53,7 +53,8 @@ class OrderSuccessScreen extends ConsumerWidget {
       appBar: AppBar(
         toolbarHeight: 60,
         automaticallyImplyLeading: false,
-        centerTitle: true,
+        centerTitle: false,
+        titleSpacing: 4,
         title: const BrandLogo(height: 44),
         actions: [
           IconButton(

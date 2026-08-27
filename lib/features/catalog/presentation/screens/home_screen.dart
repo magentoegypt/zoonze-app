@@ -128,21 +128,17 @@ class _HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
             if (announcement.isNotEmpty) _AnnouncementBar(message: announcement),
             SizedBox(
               height: _headerHeight,
-              child: Stack(
+              // Hamburger then logo, both against the leading edge — the
+              // storefront header (CL042-DEV16). A Row rather than a centred
+              // Stack, so the pair reads as one unit and mirrors together in
+              // Arabic: hamburger on the right, logo just inside it.
+              child: Row(
                 children: [
-                  PositionedDirectional(
-                    start: 4,
-                    top: 0,
-                    bottom: 0,
-                    child: IconButton(
-                      icon: const Icon(
-                        Icons.menu,
-                        color: AppColors.brandPrimary,
-                      ),
-                      onPressed: () => Scaffold.of(context).openDrawer(),
-                    ),
+                  IconButton(
+                    icon: const Icon(Icons.menu, color: AppColors.brandPrimary),
+                    onPressed: () => Scaffold.of(context).openDrawer(),
                   ),
-                  const Center(child: BrandLogo(height: 40)),
+                  const BrandLogo(height: 40),
                 ],
               ),
             ),

@@ -6,11 +6,16 @@ import '../../core/widgets/zoonze_back_button.dart';
 import '../../features/notifications/presentation/notification_bell.dart';
 import '../routes.dart';
 
-/// Decluttered app bar per the design review: centered Z-mark + `ZOONZE` logo
-/// lockup, no cart icon. Because [ZoonzeScaffold] always attaches a drawer, the
+/// Decluttered app bar per the design review: Z-mark + `ZOONZE` logo lockup,
+/// no cart icon. Because [ZoonzeScaffold] always attaches a drawer, the
 /// AppBar's auto-leading would show the hamburger even on pushed routes — so the
 /// leading is chosen explicitly: a back button on a pushed route, and the drawer
 /// hamburger (leading: null → auto) on a tab root.
+///
+/// The lockup sits against the leading edge rather than centred (CL042-DEV16),
+/// matching the storefront header. `centerTitle: false` resolves through
+/// [Directionality], so it lands beside the hamburger in both directions: to
+/// its right in English, to its left in Arabic.
 class ZoonzeAppBar extends StatelessWidget implements PreferredSizeWidget {
   const ZoonzeAppBar({super.key, this.showSearch = true});
 
@@ -27,7 +32,10 @@ class ZoonzeAppBar extends StatelessWidget implements PreferredSizeWidget {
     final canPop = ModalRoute.of(context)?.impliesAppBarDismissal ?? false;
     return AppBar(
       toolbarHeight: 60,
-      centerTitle: true,
+      centerTitle: false,
+      // The AppBar reserves a wide gap after the leading widget for text
+      // titles; the logo should sit right next to it.
+      titleSpacing: 4,
       leading: canPop ? const ZoonzeBackButton() : null,
       title: const BrandLogo(height: 44),
       actions: [

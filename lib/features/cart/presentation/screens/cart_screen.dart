@@ -60,7 +60,8 @@ class _CartScreenState extends ConsumerState<CartScreen> {
       // search/notification icons.
       appBar: AppBar(
         toolbarHeight: 60,
-        centerTitle: true,
+        centerTitle: false,
+        titleSpacing: 4,
         leading: ZoonzeBackButton(
           onPressed: () =>
               context.canPop() ? context.pop() : context.go(AppRoutes.home),

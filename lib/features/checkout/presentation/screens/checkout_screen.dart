@@ -358,7 +358,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 60,
-        centerTitle: true,
+        centerTitle: false,
+        titleSpacing: 4,
         title: const BrandLogo(height: 44),
       ),
       bottomNavigationBar: const ZoonzeBottomNav(current: AppTab.cart),
