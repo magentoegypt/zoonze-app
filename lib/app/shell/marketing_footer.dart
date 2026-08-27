@@ -155,7 +155,7 @@ class _MarketingFooterState extends ConsumerState<MarketingFooter> {
       width: double.infinity,
       margin: const EdgeInsets.only(top: 32),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-      color: AppColors.surfaceDark,
+      color: AppColors.footerSurface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

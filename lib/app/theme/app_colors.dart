@@ -41,4 +41,10 @@ abstract final class AppColors {
 
   /// Dark surfaces.
   static const Color surfaceDark = Color(0xFF1F2937);
+
+  /// Marketing-footer ground. Its own token rather than [surfaceDark] because
+  /// it has to match the storefront exactly (`.page-footer{background-color}`
+  /// on zoonze.com), while [surfaceDark] also paints dark-mode scaffolds and
+  /// app bars — moving that would repaint the whole dark theme.
+  static const Color footerSurface = Color(0xFF0F1A2E);
 }
