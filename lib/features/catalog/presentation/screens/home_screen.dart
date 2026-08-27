@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
@@ -1190,25 +1191,140 @@ class _ExploreBrands extends ConsumerWidget {
 
 /// The "Explore Our Brands" rail itself (header + horizontal logo cards + See
 /// More), shown once real brands have loaded.
-class _BrandsRail extends StatelessWidget {
+///
+/// The cards drift continuously on an endless loop (CL042-DEV08). The list is
+/// the brand set repeated many times over and the offset wraps back by exactly
+/// one lap each time it passes one, so the seam is invisible and the offset
+/// never grows unbounded. Scrolling is direction-agnostic: a horizontal
+/// [ListView] takes its lead from [Directionality], so the same increasing
+/// offset drifts left-to-right in English and right-to-left in Arabic without
+/// any manual flipping.
+class _BrandsRail extends StatefulWidget {
   const _BrandsRail({required this.brands});
   final List<Brand> brands;
 
   @override
+  State<_BrandsRail> createState() => _BrandsRailState();
+}
+
+class _BrandsRailState extends State<_BrandsRail>
+    with SingleTickerProviderStateMixin {
+  /// Card width + the gap that follows it; fixed so one lap can be measured
+  /// exactly rather than read off a laid-out viewport.
+  static const double _slotExtent = _BrandCard.width + 12;
+
+  /// Drift speed. A card every ~4.5s — present without being distracting.
+  static const double _pixelsPerSecond = 30;
+
+  /// How long after the finger lifts before the drift picks back up, so a
+  /// fling settles under its own physics instead of being cut off by a jump.
+  static const Duration _resumeDelay = Duration(milliseconds: 900);
+
+  /// Laps rendered. Enough that the far edge is never reachable between wraps,
+  /// while staying a bounded (lazily built) list.
+  static const int _laps = 200;
+
+  final ScrollController _scroll = ScrollController();
+  late final Ticker _ticker = createTicker(_onTick);
+  Duration _lastTick = Duration.zero;
+  Timer? _resume;
+  bool _held = false;
+
+  double get _lapExtent => widget.brands.length * _slotExtent;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _start();
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant _BrandsRail old) {
+    super.didUpdateWidget(old);
+    // A store switch swaps the brand set (and so the lap length) underneath us.
+    if (old.brands.length != widget.brands.length && _scroll.hasClients) {
+      _scroll.jumpTo(0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _resume?.cancel();
+    _ticker.dispose();
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  void _start() {
+    // Honour the OS "reduce motion" setting — an endless drift is exactly the
+    // kind of animation it exists to switch off.
+    if (MediaQuery.maybeDisableAnimationsOf(context) ?? false) return;
+    if (widget.brands.length < 2 || _ticker.isActive) return;
+    _lastTick = Duration.zero;
+    // No matching stop: a ticker from [SingleTickerProviderStateMixin] is muted
+    // automatically whenever its [TickerMode] goes off-stage (another tab, a
+    // pushed route), so the rail idles while it isn't on screen.
+    _ticker.start();
+  }
+
+  void _onTick(Duration elapsed) {
+    // First tick only establishes the baseline — there is no delta yet.
+    final previous = _lastTick;
+    _lastTick = elapsed;
+    if (previous == Duration.zero) return;
+    if (_held || !_scroll.hasClients || !_scroll.position.hasContentDimensions) {
+      return;
+    }
+    final seconds = (elapsed - previous).inMicroseconds / 1e6;
+    // A dropped frame shouldn't teleport the rail; cap the catch-up.
+    final delta = _pixelsPerSecond * seconds.clamp(0.0, 0.05);
+    var next = _scroll.offset + delta;
+    final lap = _lapExtent;
+    if (lap > 0 && next >= lap) next -= lap;
+    if (next > _scroll.position.maxScrollExtent) return;
+    _scroll.jumpTo(next);
+  }
+
+  void _onPointerDown(PointerDownEvent _) {
+    _resume?.cancel();
+    _held = true;
+  }
+
+  void _onPointerRelease() {
+    _resume?.cancel();
+    _resume = Timer(_resumeDelay, () {
+      if (mounted) _held = false;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final brands = widget.brands;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _SectionHeader(title: l10n.homeExploreBrands),
         SizedBox(
           height: 72,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: brands.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (context, index) => _BrandCard(brand: brands[index]),
+          child: Listener(
+            onPointerDown: _onPointerDown,
+            onPointerUp: (_) => _onPointerRelease(),
+            onPointerCancel: (_) => _onPointerRelease(),
+            child: ListView.builder(
+              controller: _scroll,
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemExtent: _slotExtent,
+              // One brand set is enough when there is nothing to loop.
+              itemCount: brands.length < 2 ? brands.length : brands.length * _laps,
+              itemBuilder: (context, index) => Padding(
+                padding: const EdgeInsetsDirectional.only(end: 12),
+                child: _BrandCard(brand: brands[index % brands.length]),
+              ),
+            ),
           ),
         ),
         Padding(
@@ -1231,6 +1347,10 @@ class _BrandsRail extends StatelessWidget {
 /// A brand logo card; falls back to the brand name if the logo can't load.
 class _BrandCard extends StatelessWidget {
   const _BrandCard({required this.brand});
+
+  /// Fixed so the rail can measure one loop of the marquee exactly.
+  static const double width = 124;
+
   final Brand brand;
 
   @override
@@ -1239,7 +1359,7 @@ class _BrandCard extends StatelessWidget {
       onTap: () => context.push(AppRoutes.brand, extra: brand),
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        width: 124,
+        width: width,
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: Colors.white,
