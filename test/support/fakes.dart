@@ -220,6 +220,13 @@ class FakeCheckoutRepository implements CheckoutRepository {
   Map<String, dynamic>? lastAddress;
   String? selectedShippingMethod;
   String? selectedPaymentCode;
+  String? selectedPublicHash;
+  bool lastSaveCard = false;
+
+  /// Whether the store accepts the save-card opt-in (§④ deployed). False makes
+  /// `setPaymentMethod` report the fallback, as a store without it would.
+  bool saveCardAccepted = true;
+  String? switchedToPublicHash;
   String? lastSessionEmail;
   String? lastSessionLastname;
   String? lastSessionToken;
@@ -261,9 +268,17 @@ class FakeCheckoutRepository implements CheckoutRepository {
   }
 
   @override
-  Future<void> setPaymentMethod(String cartId, String code) async {
+  Future<bool> setPaymentMethod(
+    String cartId,
+    String code, {
+    String? publicHash,
+    bool saveCard = false,
+  }) async {
     if (fail) throw const Failure(FailureKind.unknown);
     selectedPaymentCode = code;
+    selectedPublicHash = publicHash;
+    lastSaveCard = saveCard;
+    return !saveCard || saveCardAccepted;
   }
 
   @override
@@ -310,8 +325,10 @@ class FakeCheckoutRepository implements CheckoutRepository {
     String? email,
     String? lastname,
     String? token,
+    String? publicHash,
   }) async {
     switchedToMethod = methodCode;
+    switchedToPublicHash = publicHash;
     return paymentSession;
   }
 

@@ -3,6 +3,7 @@ package com.zoonze.zoonze_app
 import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import payment.sdk.android.payments.PaymentsLauncher
+import payment.sdk.android.savedCard.SavedCardPaymentLauncher
 
 /**
  * Hosts the Flutter engine and the N-Genius payment bridge (card + Samsung Pay).
@@ -24,10 +25,17 @@ class MainActivity : FlutterFragmentActivity() {
         payments.onPaymentResult(result)
     }
 
+    // Paying with a stored card is a different SDK activity (it recaptures the
+    // CVV instead of the whole card), so it needs its own launcher — but it
+    // reports through the same PaymentsResult, so the mapping is shared.
+    private val savedCardLauncher = SavedCardPaymentLauncher(this) { result ->
+        payments.onPaymentResult(result)
+    }
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         // `this` is for the Samsung Pay client, which needs an Activity to
         // present its custom sheet over.
-        payments.attach(flutterEngine, paymentLauncher, this)
+        payments.attach(flutterEngine, paymentLauncher, savedCardLauncher, this)
     }
 }

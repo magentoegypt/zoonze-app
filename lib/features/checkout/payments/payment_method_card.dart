@@ -15,11 +15,17 @@ class PaymentMethodCard extends StatelessWidget {
     required this.method,
     required this.selected,
     required this.onTap,
+    this.child,
   });
 
   final PaymentMethodOption method;
   final bool selected;
   final VoidCallback onTap;
+
+  /// Rendered inside the card, under the row — the saved-card picker on the
+  /// N-Genius card method. Kept in the same [Card] so a chosen saved card reads
+  /// as part of that method rather than as a sibling option.
+  final Widget? child;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +39,17 @@ class PaymentMethodCard extends StatelessWidget {
           width: 1.5,
         ),
       ),
-      child: ListTile(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _row(context, l10n),
+          if (child != null) child!,
+        ],
+      ),
+    );
+  }
+
+  Widget _row(BuildContext context, AppLocalizations l10n) => ListTile(
         onTap: onTap,
         leading: Icon(
           selected ? Icons.radio_button_checked : Icons.radio_button_off,
@@ -63,9 +79,7 @@ class PaymentMethodCard extends StatelessWidget {
                 ),
               )
             : null,
-      ),
-    );
-  }
+      );
 
   /// The brand mark for Apple Pay / Samsung Pay, or the Material icon for
   /// everything else.

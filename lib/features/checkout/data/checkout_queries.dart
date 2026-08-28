@@ -95,10 +95,17 @@ mutation SetBilling($cartId: String!) {
 }
 ''';
 
+  /// Takes the whole `PaymentMethodInput` as a variable rather than inlining
+  /// `{ code: $code }`, so the saved-card extras can ride along without a second
+  /// operation: `ngeniusonline_vault: { public_hash }` to pay with a stored
+  /// card, `ngeniusonline: { is_active_payment_token_enabler: true }` to save
+  /// the one being entered (docs/backend/payment-contract.md §④). Both sub-inputs
+  /// are backend additions; `CheckoutRepository.setPaymentMethod` retries
+  /// without the save flag if the deployed schema doesn't know it yet.
   static const String setPaymentMethod = r'''
-mutation SetPayment($cartId: String!, $code: String!) {
+mutation SetPayment($cartId: String!, $method: PaymentMethodInput!) {
   setPaymentMethodOnCart(
-    input: { cart_id: $cartId, payment_method: { code: $code } }
+    input: { cart_id: $cartId, payment_method: $method }
   ) {
     cart { selected_payment_method { code title } }
   }
@@ -159,6 +166,44 @@ mutation SetOrderPaymentMethod(
     input: {
       order_number: $orderNumber
       payment_method: $methodCode
+      email: $email
+      lastname: $lastname
+      token: $token
+    }
+  ) {
+    order_number
+    method_code
+    gateway
+    status
+    payment_id
+    web_url
+    publishable_key
+    additional_data { key value }
+  }
+}
+''';
+
+  /// Same switch, but onto a **saved card**: adds `public_hash` to the input.
+  ///
+  /// Deliberately a second document rather than an optional variable on the one
+  /// above. `SetOrderPaymentMethodInput` has no `public_hash` until the backend
+  /// ships §④, and an unknown *field* fails document validation even when the
+  /// variable is null — which would break the retry screen that works today.
+  /// This document is only ever sent when a saved card was actually picked.
+  static const String setOrderPaymentMethodWithCard = r'''
+mutation SetOrderPaymentMethodWithCard(
+  $orderNumber: String!
+  $methodCode: String!
+  $publicHash: String!
+  $email: String
+  $lastname: String
+  $token: String
+) {
+  setOrderPaymentMethod(
+    input: {
+      order_number: $orderNumber
+      payment_method: $methodCode
+      public_hash: $publicHash
       email: $email
       lastname: $lastname
       token: $token

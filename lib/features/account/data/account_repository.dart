@@ -7,9 +7,11 @@ import '../../../core/graphql/graphql_client.dart';
 import '../../../core/store/store_controller.dart';
 import '../../../core/util/media.dart';
 import '../../catalog/data/product_mapper.dart';
+import '../../auth/presentation/auth_controller.dart';
 import '../../catalog/domain/money.dart';
 import '../domain/customer_address.dart';
 import '../domain/order.dart';
+import '../domain/saved_card.dart';
 import 'account_queries.dart';
 
 class AccountRepository {
@@ -103,6 +105,43 @@ class AccountRepository {
 
   Future<void> deleteAddress(int id) =>
       _run(AccountQueries.deleteAddress, {'id': id}, mutation: true);
+
+  /// The customer's saved N-Genius cards, newest-usable-first.
+  ///
+  /// Filtered to the N-Genius method: the vault is shared by every vaulting
+  /// gateway, and a token we can't hand back to `ngeniusonline_vault` would be
+  /// a card the picker shows but cannot pay with. Rows that don't parse are
+  /// dropped rather than thrown (see [SavedCard.fromToken]).
+  Future<List<SavedCard>> fetchSavedCards() async {
+    final data = await _run(
+      AccountQueries.savedCards,
+      const {},
+      mutation: false,
+    );
+    final items =
+        (data['customerPaymentTokens'] as Map<String, dynamic>?)?['items']
+            as List<dynamic>?;
+    return (items ?? const [])
+        .whereType<Map<String, dynamic>>()
+        .where(_isNGeniusToken)
+        .map(SavedCard.fromToken)
+        .nonNulls
+        .toList();
+  }
+
+  /// `ngeniusonline` writes the token; `ngeniusonline_vault` is the code that
+  /// spends it. Accept either so a backend that labels its rows with the vault
+  /// code doesn't silently produce an empty list.
+  static bool _isNGeniusToken(Map<String, dynamic> json) {
+    final code = (json['payment_method_code'] as String?)?.toLowerCase() ?? '';
+    return code.contains('ngenius');
+  }
+
+  Future<void> deleteSavedCard(String publicHash) => _run(
+    AccountQueries.deleteSavedCard,
+    {'publicHash': publicHash},
+    mutation: true,
+  );
 
   Future<void> updateProfile({
     required String firstName,
@@ -503,6 +542,26 @@ final addressesProvider = FutureProvider.autoDispose<List<CustomerAddress>>((
   ref,
 ) {
   return ref.watch(accountRepositoryProvider).fetchAddresses();
+});
+
+/// The signed-in customer's saved cards.
+///
+/// Error-safe by design: `customerPaymentTokens` 403s for a guest and errors
+/// outright until the gateway is vault-aware, and neither is a reason to break
+/// checkout. An empty list simply hides the picker, the save opt-in and the
+/// Payment Methods rows — the same "degrade, never fabricate" policy as
+/// `fetchPaymentSession` / `fetchTabbyConfig`.
+final savedCardsProvider = FutureProvider.autoDispose<List<SavedCard>>((
+  ref,
+) async {
+  if (!ref.watch(authControllerProvider).isAuthenticated) {
+    return const <SavedCard>[];
+  }
+  try {
+    return await ref.watch(accountRepositoryProvider).fetchSavedCards();
+  } catch (_) {
+    return const <SavedCard>[];
+  }
 });
 
 /// The `address_label` select options (Home/Office/Other → option ids),

@@ -13,6 +13,7 @@ import '../features/account/presentation/screens/order_detail_screen.dart';
 import '../features/account/presentation/screens/order_tracking_screen.dart';
 import '../features/account/presentation/screens/guest_track_order_screen.dart';
 import '../features/account/presentation/screens/orders_screen.dart';
+import '../features/account/presentation/screens/payment_methods_screen.dart';
 import '../features/account/presentation/screens/settings_screen.dart';
 import '../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../features/auth/presentation/screens/reset_password_screen.dart';
@@ -181,6 +182,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.addressForm,
         builder: (context, state) =>
             AddressFormScreen(initial: state.extra as CustomerAddress?),
+      ),
+      GoRoute(
+        path: AppRoutes.paymentMethods,
+        builder: (context, state) => const PaymentMethodsScreen(),
       ),
       GoRoute(
         path: AppRoutes.editProfile,

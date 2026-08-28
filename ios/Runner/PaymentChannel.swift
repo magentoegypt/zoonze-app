@@ -147,9 +147,21 @@ final class PaymentChannel: NSObject {
       }
       activeSession = session
 
+      // A stored card is a different SDK screen: it shows the saved card and
+      // asks only for the CVV. Which one opens is decided from the order the
+      // backend built — it attaches `savedCard` when the quote carried a vault
+      // token (docs/backend/payment-contract.md §④) — not from a channel
+      // argument, so Dart never has to describe the card. The CVV-less overload
+      // is deliberate: the SDK collects it, so no CVV crosses the channel.
+      let savedCard = order.savedCard != nil
       DispatchQueue.main.async {
-        NISdk.sharedInstance.showCardPaymentViewWith(
-          cardPaymentDelegate: session, overParent: parent, for: order)
+        if savedCard {
+          NISdk.sharedInstance.launchSavedCardPayment(
+            cardPaymentDelegate: session, overParent: parent, for: order)
+        } else {
+          NISdk.sharedInstance.showCardPaymentViewWith(
+            cardPaymentDelegate: session, overParent: parent, for: order)
+        }
       }
     }
 

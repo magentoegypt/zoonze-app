@@ -11,6 +11,7 @@ import '../../domain/checkout.dart';
 import '../../domain/payment_session.dart';
 import '../../payments/payment_method_card.dart';
 import '../../payments/payment_runner.dart';
+import '../../payments/saved_card_picker.dart';
 import '../../payments/wallet_availability.dart';
 
 /// Arguments for the post-order complete-payment screen, passed via go_router
@@ -52,6 +53,10 @@ class CompletePaymentScreen extends ConsumerStatefulWidget {
 class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
   String? _selectedCode;
 
+  /// `public_hash` of the stored card picked under the card row. When set, the
+  /// order is switched onto the vault method rather than the plain card one.
+  String? _selectedHash;
+
   /// The method currently set on the order server-side (updated after a switch).
   late String? _activeCode = widget.args.currentMethodCode;
   bool _busy = false;
@@ -70,20 +75,40 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
   /// Wallets are filtered again here, not just at checkout. The caller does pass
   /// an already-filtered list, but this route takes its args from `extra`, so it
   /// must not depend on the caller having done it.
-  List<PaymentMethodOption> _switchableMethods(WalletAvailability availability) =>
-      _args.methods
-          .where((m) => m.isRedirect && availability.allows(m.wallet))
-          .toList();
+  List<PaymentMethodOption> _switchableMethods(WalletAvailability availability) {
+    final switchable = _args.methods
+        .where((m) => m.isRedirect && availability.allows(m.wallet))
+        .toList();
+    // The vault code is folded into the card row here for the same reason as at
+    // checkout — the picker lives inside it, so it must not also be its own row.
+    if (!switchable.any((m) => m.isCard)) return switchable;
+    return switchable.where((m) => !m.isCardVault).toList();
+  }
+
+  /// The `ngeniusonline_vault` option, when the store offers one.
+  PaymentMethodOption? get _vaultMethod {
+    for (final m in _args.methods) {
+      if (m.isCardVault) return m;
+    }
+    return null;
+  }
 
   Future<void> _pay() async {
     final code = _selectedCode;
     if (code == null || _busy) return;
     final method = _args.methods.firstWhere((m) => m.code == code);
+    // Paying with a stored card means switching the order onto the vault
+    // method, whatever row the shopper tapped to get there.
+    final hash = _selectedHash;
+    final vault = _vaultMethod;
+    final target = hash != null && vault != null ? vault.code : code;
     setState(() => _busy = true);
     try {
       final repo = ref.read(checkoutRepositoryProvider);
-      // Same method → recreate its session; different → switch on the order.
-      final session = code == _activeCode
+      // Same method and no card change → recreate its session; otherwise switch
+      // the order. A saved card always goes through the switch, because the
+      // token is part of what changes even when the method code doesn't.
+      final session = target == _activeCode && hash == null
           ? await repo.fetchPaymentSession(
               _args.orderNumber,
               email: _args.email,
@@ -92,13 +117,14 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
             )
           : await repo.setOrderPaymentMethod(
               _args.orderNumber,
-              code,
+              target,
               email: _args.email,
               lastname: _args.lastname,
               token: _args.orderToken,
+              publicHash: hash,
             );
       if (!mounted) return;
-      if (session != null && code != _activeCode) _activeCode = code;
+      if (session != null && target != _activeCode) _activeCode = target;
       final result = await runPaymentSession(
         context: context,
         ref: ref,
@@ -183,7 +209,28 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
                   PaymentMethodCard(
                     method: method,
                     selected: _selectedCode == method.code,
-                    onTap: () => setState(() => _selectedCode = method.code),
+                    onTap: () => setState(() {
+                      _selectedCode = method.code;
+                      if (!method.isCard) _selectedHash = null;
+                    }),
+                    child: method.isCard
+                        ? SavedCardPicker(
+                            vaultMethod: _vaultMethod,
+                            selectedHash: _selectedHash,
+                            saveCard: false,
+                            enabled: !_busy,
+                            showSaveOption: false,
+                            onSelectCard: (card) => setState(() {
+                              _selectedCode = method.code;
+                              _selectedHash = card.publicHash;
+                            }),
+                            onUseNewCard: () => setState(() {
+                              _selectedCode = method.code;
+                              _selectedHash = null;
+                            }),
+                            onSaveCardChanged: (_) {},
+                          )
+                        : null,
                   ),
                 const SizedBox(height: 8),
                 if (methods.isNotEmpty)

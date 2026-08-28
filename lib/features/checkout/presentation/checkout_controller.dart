@@ -22,6 +22,8 @@ class CheckoutState {
     this.selectedShipping,
     this.paymentMethods = const <PaymentMethodOption>[],
     this.selectedPayment,
+    this.selectedSavedCardHash,
+    this.saveCard = false,
     this.grandTotal,
     this.submittedPhone = '',
     this.guestOtpVerified = false,
@@ -38,6 +40,17 @@ class CheckoutState {
   final ShippingMethodOption? selectedShipping;
   final List<PaymentMethodOption> paymentMethods;
   final PaymentMethodOption? selectedPayment;
+
+  /// `public_hash` of the stored card the shopper picked, or null for "use a
+  /// new card". Only ever set alongside a [selectedPayment] that is
+  /// `isCardVault` — the two travel together to `setPaymentMethodOnCart`.
+  final String? selectedSavedCardHash;
+
+  /// "Save this card for next time" — asks the gateway to tokenise the card
+  /// being entered. Only meaningful on the plain card method, and only for a
+  /// signed-in customer (Magento's vault is keyed to one).
+  final bool saveCard;
+
   final Money? grandTotal;
 
   /// The normalized (E.164) telephone last submitted with the shipping address —
@@ -59,6 +72,36 @@ class CheckoutState {
       selectedShipping != null && paymentMethods.isNotEmpty;
   bool get paymentDone => selectedPayment != null;
 
+  /// The saved-card method, when the backend advertises one for this customer.
+  PaymentMethodOption? get cardVaultMethod {
+    for (final m in paymentMethods) {
+      if (m.isCardVault) return m;
+    }
+    return null;
+  }
+
+  /// The rows checkout actually draws. The vault method is folded into the
+  /// ordinary card row (the picker renders inside it) rather than shown as a
+  /// second "Visa & MasterCard"-ish entry.
+  ///
+  /// Folding only happens when there *is* a card row to fold into: a store that
+  /// somehow offers the vault code alone must still show it, or its saved cards
+  /// would be unreachable.
+  List<PaymentMethodOption> get visiblePaymentMethods {
+    if (!paymentMethods.any((m) => m.isCard)) return paymentMethods;
+    return paymentMethods.where((m) => !m.isCardVault).toList();
+  }
+
+  /// Whether [row] should read as selected. The card row stays lit while a
+  /// saved card is chosen, because the selected *method* is then the vault code
+  /// and the card row is what the picker lives in.
+  bool isRowSelected(PaymentMethodOption row) {
+    final selected = selectedPayment;
+    if (selected == null) return false;
+    if (selected.code == row.code) return true;
+    return row.isCard && selected.isCardVault;
+  }
+
   static const Object _keep = Object();
 
   CheckoutState copyWith({
@@ -69,6 +112,8 @@ class CheckoutState {
     Object? selectedShipping = _keep,
     List<PaymentMethodOption>? paymentMethods,
     Object? selectedPayment = _keep,
+    Object? selectedSavedCardHash = _keep,
+    bool? saveCard,
     Object? grandTotal = _keep,
     String? submittedPhone,
     bool? guestOtpVerified,
@@ -86,6 +131,10 @@ class CheckoutState {
     selectedPayment: identical(selectedPayment, _keep)
         ? this.selectedPayment
         : selectedPayment as PaymentMethodOption?,
+    selectedSavedCardHash: identical(selectedSavedCardHash, _keep)
+        ? this.selectedSavedCardHash
+        : selectedSavedCardHash as String?,
+    saveCard: saveCard ?? this.saveCard,
     grandTotal: identical(grandTotal, _keep)
         ? this.grandTotal
         : grandTotal as Money?,
@@ -176,6 +225,7 @@ class CheckoutController extends Notifier<CheckoutState> {
         selectedShipping: null,
         paymentMethods: const [],
         selectedPayment: null,
+        selectedSavedCardHash: null,
         submittedPhone: phone,
         guestOtpVerified: phoneChanged ? false : state.guestOtpVerified,
         isBusy: false,
@@ -225,6 +275,7 @@ class CheckoutController extends Notifier<CheckoutState> {
         grandTotal: total,
         paymentMethods: payments,
         selectedPayment: null,
+        selectedSavedCardHash: null,
         isBusy: false,
       );
       // Pre-select Cash on Delivery (QA default) so the summary + Place Order
@@ -301,20 +352,58 @@ class CheckoutController extends Notifier<CheckoutState> {
     for (final m in methods) {
       if (_isCod(m.code)) return m;
     }
-    return methods.first;
+    // Never the vault row: it isn't drawn on its own, and pre-selecting it
+    // would arm a payment with no card chosen.
+    for (final m in methods) {
+      if (!m.isCardVault) return m;
+    }
+    return null;
   }
 
-  Future<bool> selectPayment(PaymentMethodOption method) async {
+  /// Selects a payment method, optionally with a saved card.
+  ///
+  /// [savedCardHash] pays with a stored card — pass it together with the vault
+  /// method (`CheckoutState.cardVaultMethod`), never with the plain card row.
+  Future<bool> selectPayment(
+    PaymentMethodOption method, {
+    String? savedCardHash,
+  }) async {
     final cartId = _cartId;
     if (cartId == null) return false;
+    // The save opt-in only applies to the card the shopper is about to type.
+    final wantsSave = savedCardHash == null && method.isCard && state.saveCard;
     state = state.copyWith(isBusy: true, error: null);
     try {
-      await _repo.setPaymentMethod(cartId, method.code);
-      state = state.copyWith(selectedPayment: method, isBusy: false);
+      final saved = await _repo.setPaymentMethod(
+        cartId,
+        method.code,
+        publicHash: savedCardHash,
+        saveCard: wantsSave,
+      );
+      state = state.copyWith(
+        selectedPayment: method,
+        selectedSavedCardHash: savedCardHash,
+        // The store refused the opt-in (§④ not deployed): untick it rather than
+        // leave a checkbox promising something that won't happen.
+        saveCard: wantsSave && !saved ? false : null,
+        isBusy: false,
+      );
       return true;
     } catch (error) {
       state = state.copyWith(isBusy: false, error: error);
       return false;
+    }
+  }
+
+  /// Toggles "save this card for next time". Re-sends the method when the card
+  /// row is already selected, so the flag reaches the quote instead of only the
+  /// UI — otherwise ticking the box after choosing the card would do nothing.
+  Future<void> setSaveCard(bool value) async {
+    if (state.saveCard == value) return;
+    state = state.copyWith(saveCard: value);
+    final selected = state.selectedPayment;
+    if (selected != null && selected.isCard) {
+      await selectPayment(selected);
     }
   }
 

@@ -96,10 +96,50 @@ class CheckoutRepository {
         .toList();
   }
 
-  Future<void> setPaymentMethod(String cartId, String code) => _mutate(
-    CheckoutQueries.setPaymentMethod,
-    {'cartId': cartId, 'code': code},
-  );
+  /// Sets the cart's payment method, optionally with the saved-card extras.
+  ///
+  /// Returns whether the *extras* were accepted; the method itself is set either
+  /// way (or throws). [publicHash] pays with a stored card; [saveCard] asks the
+  /// gateway to tokenise the card about to be entered.
+  ///
+  /// Those two sub-inputs are backend additions (§④). A store that hasn't
+  /// shipped them rejects the value, so the save opt-in **retries bare** — not
+  /// saving a card must never cost the shopper their order. A saved-card
+  /// selection deliberately does not fall back: dropping the hash would place
+  /// the order against an unspecified token.
+  Future<bool> setPaymentMethod(
+    String cartId,
+    String code, {
+    String? publicHash,
+    bool saveCard = false,
+  }) async {
+    final extras = <String, dynamic>{
+      if (publicHash != null) 'ngeniusonline_vault': {'public_hash': publicHash},
+      if (publicHash == null && saveCard)
+        'ngeniusonline': {'is_active_payment_token_enabler': true},
+    };
+    Future<void> send(Map<String, dynamic> method) => _mutate(
+      CheckoutQueries.setPaymentMethod,
+      {'cartId': cartId, 'method': method},
+    );
+
+    if (extras.isEmpty) {
+      await send({'code': code});
+      return true;
+    }
+    try {
+      await send({'code': code, ...extras});
+      return true;
+    } on Failure catch (failure) {
+      if (publicHash != null) rethrow;
+      PaymentTrace.record(
+        'vault: save-card opt-in refused (${failure.kind.name}: '
+        '${failure.detail ?? "no detail"}) — retrying without it',
+      );
+      await send({'code': code});
+      return false;
+    }
+  }
 
   /// Sends a guest-checkout OTP to the cart's shipping phone. The address (with
   /// a +971 telephone) must already be on the cart. Throws [Failure] (with the
@@ -208,15 +248,24 @@ class CheckoutRepository {
     String? email,
     String? lastname,
     String? token,
+    String? publicHash,
   }) async {
     try {
-      final data = await _mutate(CheckoutQueries.setOrderPaymentMethod, {
-        'orderNumber': orderNumber,
-        'methodCode': methodCode,
-        'email': email,
-        'lastname': lastname,
-        'token': token,
-      });
+      // Two documents, because `public_hash` doesn't exist on the input type
+      // until §④ ships and an unknown field fails validation even when null.
+      final data = await _mutate(
+        publicHash == null
+            ? CheckoutQueries.setOrderPaymentMethod
+            : CheckoutQueries.setOrderPaymentMethodWithCard,
+        {
+          'orderNumber': orderNumber,
+          'methodCode': methodCode,
+          'email': email,
+          'lastname': lastname,
+          'token': token,
+          if (publicHash != null) 'publicHash': publicHash,
+        },
+      );
       final session = _parseSession(
         data['setOrderPaymentMethod'] as Map<String, dynamic>?,
         orderNumber,

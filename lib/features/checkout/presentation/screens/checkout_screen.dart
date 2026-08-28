@@ -19,6 +19,7 @@ import '../../../../core/widgets/summary_row.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../account/data/account_repository.dart';
 import '../../../account/domain/customer_address.dart';
+import '../../../account/domain/saved_card.dart';
 import '../../../auth/presentation/auth_controller.dart';
 import '../../../cart/domain/cart.dart';
 import '../../../cart/presentation/cart_controller.dart';
@@ -27,6 +28,7 @@ import '../../domain/payment_session.dart';
 import '../../domain/shipping_address_input.dart';
 import '../../payments/payment_method_card.dart';
 import '../../payments/payment_runner.dart';
+import '../../payments/saved_card_picker.dart';
 import '../../payments/wallet_availability.dart';
 import '../checkout_controller.dart';
 import 'complete_payment_screen.dart';
@@ -215,6 +217,15 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
           },
           orElse: () => AddressForm(controller: _address),
         );
+  }
+
+  /// Selects a stored card: the *method* becomes the vault code, the card's
+  /// `public_hash` rides along. Guarded on the vault method existing, because
+  /// the picker only offers cards when it does.
+  Future<void> _payWithSavedCard(SavedCard card) async {
+    final vault = ref.read(checkoutControllerProvider).cardVaultMethod;
+    if (vault == null) return;
+    await _controller.selectPayment(vault, savedCardHash: card.publicHash);
   }
 
   Future<void> _placeOrder() async {
@@ -483,11 +494,26 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 if (state.shippingDone) ...[
                   const SizedBox(height: 24),
                   _StepHeader(index: 3, title: l10n.checkoutPayment),
-                  for (final method in state.paymentMethods)
+                  for (final method in state.visiblePaymentMethods)
                     PaymentMethodCard(
                       method: method,
-                      selected: state.selectedPayment?.code == method.code,
+                      selected: state.isRowSelected(method),
                       onTap: () => _controller.selectPayment(method),
+                      // Saved cards live inside the card row rather than as
+                      // extra top-level options; the picker draws nothing until
+                      // the customer actually has one.
+                      child: method.isCard
+                          ? SavedCardPicker(
+                              vaultMethod: state.cardVaultMethod,
+                              selectedHash: state.selectedSavedCardHash,
+                              saveCard: state.saveCard,
+                              enabled: !busy,
+                              onSelectCard: (card) => _payWithSavedCard(card),
+                              onUseNewCard: () =>
+                                  _controller.selectPayment(method),
+                              onSaveCardChanged: _controller.setSaveCard,
+                            )
+                          : null,
                     ),
                   // Security reassurance below the methods (Figma / QA #5).
                   Padding(

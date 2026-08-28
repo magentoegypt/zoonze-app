@@ -53,6 +53,26 @@ class PaymentMethodOption {
 
   bool get isTabby => code.toLowerCase().contains('tabby');
 
+  /// Magento's vault code for N-Genius saved cards (`ngeniusonline_vault`),
+  /// mirroring core `payflowpro_cc_vault`. The backend advertises it in
+  /// `available_payment_methods` only when the customer actually has a stored
+  /// token — the app never injects it.
+  ///
+  /// It is not rendered as its own row: checkout nests the saved cards under
+  /// the ordinary card row (see `CheckoutState.visiblePaymentMethods`), so a
+  /// shopper with four cards still sees one "Visa & MasterCard" entry.
+  bool get isCardVault {
+    final c = code.toLowerCase().replaceAll(RegExp('[^a-z0-9]'), '');
+    return c.contains('ngenius') && c.contains('vault');
+  }
+
+  /// The plain N-Genius card row — the one the saved-card picker hangs under.
+  /// Excludes the wallets (which ride the same gateway) and the vault code.
+  bool get isCard =>
+      !isWallet && !isCardVault && !isTabby &&
+      (code.toLowerCase().contains('ngenius') ||
+          code.toLowerCase().contains('network_international'));
+
   /// Magento's **Zero Subtotal Checkout** (`free`) — surfaced only when the cart
   /// grand total is 0 (e.g. fully covered by a coupon or 100%-off items). It has
   /// no gateway: `placeOrder` completes the order as paid immediately, so it

@@ -142,6 +142,33 @@ mutation DeleteAddress($id: Int!) {
 }
 ''';
 
+  // --- Saved cards (Magento Vault) -----------------------------------------
+  // Core `Magento_VaultGraphQl`, already live on the store. Saved N-Genius
+  // cards appear here once the gateway is vault-aware
+  // (docs/backend/payment-contract.md §④); until then the list is empty and the
+  // whole feature stays hidden. `details` is a JSON string — parsed (and
+  // tolerated when malformed) by `SavedCard.fromToken`.
+  static const String savedCards = r'''
+query CustomerPaymentTokens {
+  customerPaymentTokens {
+    items {
+      public_hash
+      payment_method_code
+      type
+      details
+    }
+  }
+}
+''';
+
+  static const String deleteSavedCard = r'''
+mutation DeleteSavedCard($publicHash: String!) {
+  deletePaymentToken(public_hash: $publicHash) {
+    result
+  }
+}
+''';
+
   static const String updateProfile = r'''
 mutation UpdateProfile($input: CustomerUpdateInput!) {
   updateCustomerV2(input: $input) {

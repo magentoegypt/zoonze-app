@@ -8,6 +8,8 @@ import org.json.JSONObject
 import payment.sdk.android.payments.PaymentsLauncher
 import payment.sdk.android.payments.PaymentsRequest
 import payment.sdk.android.payments.PaymentsResult
+import payment.sdk.android.savedCard.SavedCardPaymentLauncher
+import payment.sdk.android.savedCard.SavedCardPaymentRequest
 
 /**
  * Android half of the `zoonze/payments` MethodChannel — the N-Genius (Network
@@ -34,12 +36,16 @@ class PaymentChannel {
         private const val LINK_AUTHORIZATION = "payment-authorization"
         private const val LINK_PAY_PAGE = "payment"
 
+        /** Present on the order JSON when the backend attached a stored card. */
+        private const val NODE_SAVED_CARD = "savedCard"
+
         private const val WALLET_CARD = "card"
         private const val WALLET_APPLE_PAY = "applepay"
         private const val WALLET_SAMSUNG_PAY = "samsungpay"
     }
 
     private var launcher: PaymentsLauncher? = null
+    private var savedCardLauncher: SavedCardPaymentLauncher? = null
     private var samsung: SamsungPaySession? = null
 
     /**
@@ -60,8 +66,14 @@ class PaymentChannel {
     private var tokenSeq: Long = 0
     private var cardToken: Long = 0
 
-    fun attach(engine: FlutterEngine, launcher: PaymentsLauncher, activity: Activity) {
+    fun attach(
+        engine: FlutterEngine,
+        launcher: PaymentsLauncher,
+        savedCardLauncher: SavedCardPaymentLauncher,
+        activity: Activity,
+    ) {
         this.launcher = launcher
+        this.savedCardLauncher = savedCardLauncher
         this.samsung = SamsungPaySession(activity)
         MethodChannel(engine.dartExecutor.binaryMessenger, CHANNEL)
             .setMethodCallHandler { call, result -> handle(call, result) }
@@ -135,6 +147,31 @@ class PaymentChannel {
             return
         }
 
+        // A stored card is a different SDK activity: it renders the saved card
+        // and recaptures only the CVV. Which one to open is decided here rather
+        // than by a channel argument, because the order JSON is authoritative —
+        // the backend attaches `savedCard` to the N-Genius order when the quote
+        // carried a vault token (docs/backend/payment-contract.md §④), and the
+        // SDK reads it from that same order. No CVV crosses the channel; the
+        // SDK's own capture screen collects it.
+        if (hasSavedCard(orderJson)) {
+            val activeSavedCard = savedCardLauncher
+            if (activeSavedCard == null) {
+                result.success(
+                    payload("FAILED", orderNumber, raw = "saved-card launcher unavailable"),
+                )
+                return
+            }
+            cardToken = claimPending(result, orderNumber)
+            activeSavedCard.launch(
+                SavedCardPaymentRequest.builder()
+                    .gatewayAuthorizationUrl(authorizationUrl)
+                    .payPageUrl(payPageUrl)
+                    .build(),
+            )
+            return
+        }
+
         val activeLauncher = launcher
         if (activeLauncher == null) {
             result.success(
@@ -151,6 +188,20 @@ class PaymentChannel {
                 .payPageUrl(payPageUrl)
                 .build(),
         )
+    }
+
+    /**
+     * Whether the order carries a stored card. Tolerates a malformed body the
+     * same way [parseLinks] does — an unreadable order falls back to the normal
+     * card form, which is the recoverable direction.
+     */
+    private fun hasSavedCard(orderJson: String?): Boolean {
+        if (orderJson.isNullOrEmpty()) return false
+        return try {
+            JSONObject(orderJson).optJSONObject(NODE_SAVED_CARD) != null
+        } catch (error: Exception) {
+            false
+        }
     }
 
     private fun startSamsungPay(
