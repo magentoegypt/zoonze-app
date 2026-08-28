@@ -85,11 +85,10 @@ class CategoriesScreen extends ConsumerWidget {
 /// Sub-category drill-down: tapping a parent category lists its child
 /// categories (which themselves drill down or open the PLP when they're leaves).
 ///
-/// **No longer linked from the app.** Since the Categories tab was unified onto
-/// the product listing (CL042-DEV14), nothing pushes this route — the listing
-/// shows a category's children itself. It stays registered so an existing
-/// `/subcategories/:uid` deep link keeps resolving rather than 404ing; retire
-/// both once we're sure none are in circulation.
+/// Reached from the Categories tab, which browses the tree rather than jumping
+/// to products. Its tiles resolve artwork the same way the listing's rail does,
+/// so a level whose categories carry no `image` still shows real imagery
+/// (CL042-DEV22) instead of a wall of placeholders.
 class SubcategoriesScreen extends ConsumerWidget {
   const SubcategoriesScreen({
     super.key,
@@ -143,17 +142,21 @@ class SubcategoriesScreen extends ConsumerWidget {
   }
 }
 
-/// Opens a tapped category's product listing — the same destination Home and
-/// the drawer use (CL042-DEV14).
+/// Opens a tapped category: drills into the sub-category grid when it has
+/// navigable children, otherwise jumps straight to its product listing.
 ///
-/// It used to fork: a category with children opened [SubcategoriesScreen]
-/// instead, so the same category landed on a different screen depending on
-/// where you tapped it, and the one reached from here showed no products at
-/// all. The storefront has no such split — every category is one page carrying
-/// both its products and a rail of its children — and now the listing carries
-/// that rail too, the fork only cost a step.
+/// This tab is the browse surface — its job is to open up the tree, so a parent
+/// shows what's inside it rather than going straight to products. Home and the
+/// drawer still go directly to the listing, which is the shortcut path. (The
+/// two were briefly unified onto the listing; the grid is what's wanted here.)
 void _openCategory(BuildContext context, Category category) {
-  context.push(AppRoutes.category(category.uid), extra: category.name);
+  final hasSubcategories = category.children.any((c) => c.includeInMenu);
+  context.push(
+    hasSubcategories
+        ? AppRoutes.subcategories(category.uid)
+        : AppRoutes.category(category.uid),
+    extra: category.name,
+  );
 }
 
 /// Two-column grid of category cards, shared by the top-level Categories tab
