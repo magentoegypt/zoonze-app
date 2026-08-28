@@ -40,6 +40,11 @@ class ZoonzeScaffold extends StatefulWidget {
 class _ZoonzeScaffoldState extends State<ZoonzeScaffold> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
+  /// Mirrors the drawer's open state so [build] can hand the pop back to the
+  /// framework only while the drawer is shut. Tracked rather than read from the
+  /// key because `canPop` is decided at build time.
+  bool _drawerOpen = false;
+
   void _onBack(bool didPop, Object? result) {
     if (didPop) return;
     // 1) Close the drawer if it's open.
@@ -64,13 +69,34 @@ class _ZoonzeScaffoldState extends State<ZoonzeScaffold> {
 
   @override
   Widget build(BuildContext context) {
+    // A pushed route (PDP, cart, orders, …) is one the router can pop; on those
+    // the app bar already shows a back arrow instead of the hamburger.
+    final isPushed = context.canPop();
+
+    // Hand the pop to the framework on a pushed route with the drawer shut.
+    // This is what arms the edge-swipe back (CL042-DEV11): the Cupertino back
+    // gesture is only installed when the route's popDisposition is `pop`, and a
+    // blanket `canPop: false` reports `doNotPop`, which silently disabled the
+    // gesture on every screen using this scaffold. The cases `_onBack` exists
+    // for — closing the drawer, sending a non-Home tab root back to Home,
+    // exiting from Home — all still report false and route through it.
+    final deferToFramework = isPushed && !_drawerOpen;
+
     return PopScope(
-      canPop: false,
+      canPop: deferToFramework,
       onPopInvokedWithResult: _onBack,
       child: Scaffold(
         key: _scaffoldKey,
         appBar: widget.appBar ?? ZoonzeAppBar(showSearch: widget.showSearch),
         drawer: const MenuDrawer(),
+        onDrawerChanged: (open) {
+          if (mounted) setState(() => _drawerOpen = open);
+        },
+        // Both gestures live in the same ~20px strip and the drawer's wins the
+        // arena, so a pushed route would open the menu instead of going back.
+        // The hamburger isn't offered there anyway — the drawer stays a
+        // tab-root affordance, and the edge belongs to the back gesture.
+        drawerEnableOpenDragGesture: !isPushed,
         body: widget.body,
         bottomNavigationBar: Column(
           mainAxisSize: MainAxisSize.min,
