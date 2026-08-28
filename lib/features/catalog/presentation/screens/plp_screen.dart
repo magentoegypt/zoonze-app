@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../app/routes.dart';
 import '../../../../app/shell/marketing_footer.dart';
 import '../../../../app/shell/zoonze_scaffold.dart';
-import '../../../../app/theme/app_colors.dart';
 import '../../../../app/theme/theme_x.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/store/store_controller.dart';
@@ -42,12 +42,6 @@ class PlpScreen extends ConsumerStatefulWidget {
 class _PlpScreenState extends ConsumerState<PlpScreen> {
   final ScrollController _scroll = ScrollController();
 
-  /// Selected sub-category chip — null means "All" (the parent category).
-  String? _selectedSubUid;
-
-  /// The category whose products the grid currently lists.
-  String get _effectiveUid => _selectedSubUid ?? widget.categoryUid;
-
   @override
   void initState() {
     super.initState();
@@ -61,13 +55,7 @@ class _PlpScreenState extends ConsumerState<PlpScreen> {
   }
 
   PlpController get _controller =>
-      ref.read(plpControllerProvider(_effectiveUid).notifier);
-
-  void _selectSub(String? uid) {
-    if (uid == _selectedSubUid) return;
-    setState(() => _selectedSubUid = uid);
-    if (_scroll.hasClients) _scroll.jumpTo(0);
-  }
+      ref.read(plpControllerProvider(widget.categoryUid).notifier);
 
   void _onScroll() {
     if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 400) {
@@ -137,10 +125,10 @@ class _PlpScreenState extends ConsumerState<PlpScreen> {
     final l10n = AppLocalizations.of(context);
     // Warm the top of each appended page as it arrives — the grid is 400px
     // from the bottom when loadMore fires, so the images have a head start.
-    ref.listen(plpControllerProvider(_effectiveUid), (previous, next) {
+    ref.listen(plpControllerProvider(widget.categoryUid), (previous, next) {
       _warmAppendedPage(previous?.products.length ?? 0, next.products);
     });
-    final state = ref.watch(plpControllerProvider(_effectiveUid));
+    final state = ref.watch(plpControllerProvider(widget.categoryUid));
     // Sub-category chips come from the parent category's navigable children.
     final parent = ref
         .watch(categoryByUidProvider(widget.categoryUid))
@@ -205,8 +193,6 @@ class _PlpScreenState extends ConsumerState<PlpScreen> {
             title: widget.title ?? l10n.navCategories,
             state: state,
             subcats: subcats,
-            selectedSubUid: _selectedSubUid,
-            onSelectSub: _selectSub,
             onFilters: () => _openFilters(state),
             onSort: () => _openSort(state),
           ),
@@ -253,8 +239,6 @@ class _Header extends StatelessWidget {
     required this.title,
     required this.state,
     required this.subcats,
-    required this.selectedSubUid,
-    required this.onSelectSub,
     required this.onFilters,
     required this.onSort,
   });
@@ -262,27 +246,8 @@ class _Header extends StatelessWidget {
   final String title;
   final PlpState state;
   final List<Category> subcats;
-  final String? selectedSubUid;
-  final ValueChanged<String?> onSelectSub;
   final VoidCallback onFilters;
   final VoidCallback onSort;
-
-  /// The chip-row entry the current selection belongs to: the selection itself
-  /// when a sub-category is picked, its parent when the pick is one level
-  /// deeper. Keeps the chip row highlighted while browsing the third level.
-  Category? get _branch {
-    final uid = selectedSubUid;
-    if (uid == null) return null;
-    for (final c in subcats) {
-      if (c.uid == uid || c.children.any((g) => g.uid == uid)) return c;
-    }
-    return null;
-  }
-
-  /// Navigable children of the selected sub-category — the third level.
-  List<Category> get _grandchildren => (_branch?.children ?? const <Category>[])
-      .where((c) => c.includeInMenu)
-      .toList(growable: false);
 
   @override
   Widget build(BuildContext context) {
@@ -303,27 +268,21 @@ class _Header extends StatelessWidget {
           ),
         ),
         Divider(height: 1, thickness: 1, color: context.hairline),
+        // The category's children as photo circles (CL042-DEV14), matching
+        // the storefront's `beauty-subcats` rail — which it draws on every
+        // category page that has children, the top level included.
+        //
+        // Tapping one *navigates* to that category's own listing rather than
+        // filtering in place, so each level is a real page with its own rail,
+        // its own product count and its own back step — the way the site works.
         if (subcats.isNotEmpty)
-          _SubcategoryChips(
-            subcats: subcats,
-            // The branch, not the raw selection: a third-level pick keeps its
-            // parent chip lit rather than clearing the row.
-            selectedUid: _branch?.uid,
-            onSelect: onSelectSub,
-          ),
-        // Third level, shown once a sub-category with children of its own is
-        // picked (CL042-DEV14). The storefront reaches the same place by
-        // navigating — its category page carries a `beauty-subcats` rail of the
-        // children — so the app opens the level in place instead, keeping the
-        // chip row above as the "where am I" trail.
-        if (_grandchildren.isNotEmpty) ...[
-          const SizedBox(height: 4),
           CategoryCircleRail(
-            categories: _grandchildren,
-            selectedUid: selectedSubUid,
-            onTap: (category) => onSelectSub(category.uid),
+            categories: subcats,
+            onTap: (category) => context.push(
+              AppRoutes.category(category.uid),
+              extra: category.name,
+            ),
           ),
-        ],
         Padding(
           padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 16, 12),
           child: Row(
@@ -358,85 +317,7 @@ class _Header extends StatelessWidget {
   }
 }
 
-/// Horizontally scrollable sub-category filter pills (Figma `subcats`). "All"
-/// resets to the parent category.
-class _SubcategoryChips extends StatelessWidget {
-  const _SubcategoryChips({
-    required this.subcats,
-    required this.selectedUid,
-    required this.onSelect,
-  });
-
-  final List<Category> subcats;
-  final String? selectedUid;
-  final ValueChanged<String?> onSelect;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsetsDirectional.fromSTEB(16, 14, 16, 10),
-      child: Row(
-        children: [
-          _Chip(
-            label: l10n.filterAll,
-            selected: selectedUid == null,
-            onTap: () => onSelect(null),
-          ),
-          for (final c in subcats) ...[
-            const SizedBox(width: 8),
-            _Chip(
-              label: c.name,
-              selected: selectedUid == c.uid,
-              onTap: () => onSelect(c.uid),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _Chip extends StatelessWidget {
-  const _Chip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.brandPrimary : AppColors.surfaceMuted,
-          borderRadius: BorderRadius.circular(999),
-          border: selected
-              ? null
-              : Border.all(color: AppColors.borderDefault),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-            color: selected ? Colors.white : AppColors.inkMuted,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Bordered pill shell for the compact Filters / Sort controls.
+/// Outlined pill shell shared by the Sort and Filters buttons.
 class _Pill extends StatelessWidget {
   const _Pill({required this.child});
   final Widget child;

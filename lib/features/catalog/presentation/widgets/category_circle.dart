@@ -6,36 +6,40 @@ import '../../../../core/widgets/network_image.dart';
 import '../../domain/category.dart';
 import '../catalog_providers.dart';
 
-/// The storefront's sub-category rail (`.beauty-subcats`), rebuilt for the app.
+/// The "Shop by Category" circle rail, reused for category navigation on the
+/// product listing (CL042-DEV14).
 ///
-/// A horizontally scrolling row of round photo tiles with the category name
-/// beneath, sized to the site's own mobile breakpoint: an 84px circle on a
-/// blush ground, 13px label, 18px between cards.
+/// Geometry is deliberately identical to the home screen's Shop by Category
+/// rail (`_CategoryGrid` / `_CategoryCircle` in `home_screen.dart`) — 72px
+/// circle on an 80px card, 14px apart, 12px single-line label — so the two read
+/// as the same control in two places. Keep them in step if either moves.
+///
+/// It replaces the old text pills because the storefront draws its
+/// `beauty-subcats` rail on *every* category page, the top level included, so
+/// pills were the wrong shape at every depth rather than only the deepest.
 ///
 /// Categories below the top level have no `image` on this store, so the rail
 /// resolves stand-ins from [categoryThumbnailsProvider] — the first product in
-/// each category, the same substitution the website makes. A category with no
-/// products keeps the empty blush circle rather than borrowing someone else's
-/// photo; the website leaves those blank too.
+/// each, the same substitution the website makes.
 class CategoryCircleRail extends ConsumerWidget {
   const CategoryCircleRail({
     super.key,
     required this.categories,
     required this.onTap,
-    this.selectedUid,
   });
 
   final List<Category> categories;
+
+  /// Opens the tapped category. The rail navigates rather than filters, so
+  /// there is no selected state to carry and no "All" control to return to —
+  /// each level is its own page, left via back, exactly like the storefront.
   final ValueChanged<Category> onTap;
 
-  /// Highlighted card, if one of these is the active filter.
-  final String? selectedUid;
-
-  static const double _circle = 84;
-  static const double _cardWidth = 84;
-
-  /// Circle + 10px gap + two lines of 13px label, matching the site card.
-  static const double railHeight = _circle + 10 + 34;
+  /// Home's Shop by Category measurements.
+  static const double _circle = 72;
+  static const double _cardWidth = 80;
+  static const double _gap = 14;
+  static const double railHeight = 116;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -52,18 +56,28 @@ class CategoryCircleRail extends ConsumerWidget {
       height: railHeight,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: categories.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 18),
+        separatorBuilder: (_, __) => const SizedBox(width: _gap),
         itemBuilder: (context, index) {
           final category = categories[index];
-          return _CategoryCircle(
-            category: category,
-            imageUrl: (category.image ?? '').isNotEmpty
-                ? category.image
-                : thumbnails[category.uid],
-            selected: category.uid == selectedUid,
+          final url = (category.image ?? '').isNotEmpty
+              ? category.image
+              : thumbnails[category.uid];
+          return _RailTile(
+            label: category.name,
             onTap: () => onTap(category),
+            child: ZoonzeImage(
+              url: url,
+              width: _circle,
+              height: _circle,
+              decodeWidth: _circle,
+              // Same neutral tile home falls back to when a category has no
+              // usable image — here that means a category with no products to
+              // borrow one from.
+              placeholder: (_) => const _CategoryFallback(),
+              error: (_) => const _CategoryFallback(),
+            ),
           );
         },
       ),
@@ -71,71 +85,60 @@ class CategoryCircleRail extends ConsumerWidget {
   }
 }
 
-class _CategoryCircle extends StatelessWidget {
-  const _CategoryCircle({
-    required this.category,
-    required this.imageUrl,
-    required this.selected,
+/// One rail card: round media well + label.
+class _RailTile extends StatelessWidget {
+  const _RailTile({
+    required this.label,
     required this.onTap,
+    required this.child,
   });
 
-  final Category category;
-  final String? imageUrl;
-  final bool selected;
+  final String label;
   final VoidCallback onTap;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(16),
       child: SizedBox(
         width: CategoryCircleRail._cardWidth,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: CategoryCircleRail._circle,
-              height: CategoryCircleRail._circle,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.surfaceTint,
-                // Selection reads as the burgundy ring the site shows on hover.
-                border: Border.all(
-                  color: selected
-                      ? AppColors.brandPrimary
-                      : const Color(0x2EB76E79),
-                  width: selected ? 2 : 1,
-                ),
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: ZoonzeImage(
-                url: imageUrl,
-                decodeWidth: CategoryCircleRail._circle,
-                // An empty circle is the correct answer for a category with no
-                // products — don't dress it up with a glyph the site lacks.
-                error: (_) => const SizedBox.shrink(),
-                placeholder: (_) => const SizedBox.shrink(),
+            ClipOval(
+              child: SizedBox(
+                width: CategoryCircleRail._circle,
+                height: CategoryCircleRail._circle,
+                child: child,
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Text(
-              category.name,
-              maxLines: 2,
+              label,
+              maxLines: 1,
               textAlign: TextAlign.center,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 13,
-                height: 1.25,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                color: selected
-                    ? AppColors.brandPrimary
-                    : AppColors.inkHeading,
-              ),
+              style: const TextStyle(fontSize: 12),
             ),
           ],
         ),
       ),
     );
   }
+}
+
+/// Blush tile with a burgundy spa glyph — the same stand-in the home rail uses
+/// for a category with no usable image.
+class _CategoryFallback extends StatelessWidget {
+  const _CategoryFallback();
+
+  @override
+  Widget build(BuildContext context) => const ColoredBox(
+    color: AppColors.surfaceTint,
+    child: Center(
+      child: Icon(Icons.spa_outlined, color: AppColors.brandPrimary),
+    ),
+  );
 }
