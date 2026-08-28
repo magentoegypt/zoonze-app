@@ -14,6 +14,7 @@ Two GraphQL queries + one Flutter `MethodChannel`:
 1. `paymentSession(order_number)` — create / return a gateway session for an **already-placed** order.
 2. `tabbyConfig` — Tabby eligibility + promo metadata (NOT checkout gating).
 3. `zoonze/payments` MethodChannel — hand the session to the native N-Genius / Tabby SDK and map the result.
+4. **Saved cards** — core Magento Vault + two input fields; no new resolver (§④).
 
 **Non-gateway methods need none of the above.** Methods with no off-site step — Magento's
 **Zero Subtotal Checkout** (`free`, offered only when the grand total is 0), cash on delivery,
@@ -409,6 +410,118 @@ finalises the order server-side) before showing the success screen.
 
 ---
 
+## ④ Saved cards (N-Genius card-on-file)
+
+Lets a customer store the card they paid with and pick it next time. **Read and delete
+need no new resolvers** — the app uses core `Magento_VaultGraphQl`, which is already live
+on the store. What the backend owes is making N-Genius vault-aware, plus two input fields.
+
+Guests are out of scope: Magento's vault is keyed to a customer.
+
+### What the app already does
+
+`customerPaymentTokens` / `deletePaymentToken` are wired (`AccountQueries.savedCards` /
+`deleteSavedCard` → `SavedCard.fromToken`). The whole feature is invisible until the vault
+starts returning N-Genius rows: no picker at checkout, no save opt-in accepted, an empty
+Account → Payment Methods list. Nothing about today's card flow changes.
+
+### 4.1 Vault rows
+
+Write `vault_payment_token` rows for `ngeniusonline` after a successful authorization, with
+`type: card` and the standard Magento card `details` JSON:
+
+```json
+{"type":"VI","maskedCC":"1111","expirationDate":"12/2028"}
+```
+
+The app filters `customerPaymentTokens` to tokens whose `payment_method_code` contains
+`ngenius` (either the base or the vault code is accepted) and tolerates a malformed
+`details` blob by rendering a dot-masked card rather than dropping the row.
+
+### 4.2 Saving a card — `is_active_payment_token_enabler`
+
+Mirrors core `BraintreeInput`. Add to the store's schema:
+
+```graphql
+input PaymentMethodInput {
+    ngeniusonline: NGeniusOnlineInput
+    ngeniusonline_vault: VaultTokenInput   # core type, already live: { public_hash: String! }
+}
+
+input NGeniusOnlineInput {
+    is_active_payment_token_enabler: Boolean
+}
+```
+
+When the flag is set, create the N-Genius order with tokenisation enabled and persist the
+`savedCard` the gateway returns (`cardToken`, `maskedPan`, `expiry`, `scheme`,
+`cardholderName`) to the vault once the payment authorizes.
+
+> **The app retries without the flag if the store rejects it**
+> (`CheckoutRepository.setPaymentMethod`), and unticks the box. Not saving a card must
+> never cost the shopper their order. A *saved-card selection* deliberately does **not**
+> fall back — dropping the hash would place the order against an unspecified token.
+
+### 4.3 Paying with a saved card — `ngeniusonline_vault`
+
+A vault method code, mirroring core `payflowpro_cc_vault`. It must arrive from
+`Cart.available_payment_methods` like any other method, **only when the customer has at
+least one token** — the app hardcodes nothing and never injects it.
+
+```graphql
+setPaymentMethodOnCart(input: {
+  cart_id: "…"
+  payment_method: { code: "ngeniusonline_vault", ngeniusonline_vault: { public_hash: "…" } }
+})
+```
+
+When the quote payment carries a `public_hash`, the N-Genius order-create payload gains
+that token's `savedCard` block. Everything downstream is unchanged: `paymentSession`
+returns the same shape, `gateway: NGENIUS`, the same `_links` and `order_response`.
+
+The app does **not** render this as its own row. Checkout folds it into the ordinary card
+row and shows the stored cards inside it, so a shopper with four cards still sees one
+"Visa & MasterCard" entry (`CheckoutState.visiblePaymentMethods`).
+
+### 4.4 Retrying onto a saved card — `SetOrderPaymentMethodInput.public_hash`
+
+```graphql
+input SetOrderPaymentMethodInput {
+    public_hash: String   # new, optional: switch a placed order onto a stored card
+}
+```
+
+Same ownership rules as §①. The app sends a **separate document** when a card is picked
+(`CheckoutQueries.setOrderPaymentMethodWithCard`), because an unknown input field fails
+document validation even when the variable is null — the existing retry screen must keep
+working on a store that hasn't shipped this.
+
+### 4.5 Native: nothing new on the channel
+
+Both SDKs decide the screen from the **order**, not from an argument — so `pay` gains no
+field and no CVV ever crosses the channel:
+
+| Platform | Trigger | Entry point |
+|---|---|---|
+| Android | `savedCard` node in the order JSON | `SavedCardPaymentLauncher.launch(SavedCardPaymentRequest.builder().gatewayAuthorizationUrl(…).payPageUrl(…).build())` — same `PaymentsResult`, so the status mapping is shared |
+| iOS | `OrderResponse.savedCard != nil` | `NISdk.launchSavedCardPayment(cardPaymentDelegate:overParent:for:)` (the CVV-less overload) |
+
+CVV recapture is the SDK's own screen (Android `SavedCardPaymentState.CaptureCvv`), which
+is what keeps card data out of the app process entirely. An order without a `savedCard`
+node falls back to the normal card form — the recoverable direction.
+
+### 4.6 Optional `additional_data`
+
+| key | value |
+|---|---|
+| `saved_card` | masked pan of the attached card, e.g. `••••1111` — payment-trace/diagnostic only, never load-bearing |
+
+> **Depends on §① actually working.** Saved cards ride the same N-Genius session as the
+> card flow, so `docs/backend/ngenius-graphql-session.md` (the checkout-session plugin that
+> makes `paymentSession` return `READY` for a GraphQL-placed order) is a hard prerequisite.
+
+---
+
 ## App-side mapping (already implemented)
 
 | Contract | App |
@@ -426,3 +539,8 @@ finalises the order server-side) before showing the success screen.
 | `wallet` (`pay` arg) | `PaymentSession.wallet` / `walletForMethodCode` (`domain/payment_wallet.dart`) |
 | `walletAvailability` | `WalletProbe` / `walletAvailabilityProvider` / `filterUnavailableWallets` (`payments/wallet_availability.dart`) |
 | `ngeniusonline_applepay` / `ngeniusonline_samsungpay` | `PaymentMethodOption.isApplePay` / `isSamsungPay`; ordering in `CheckoutController._payRank` |
+| `customerPaymentTokens` / `deletePaymentToken` (§④) | `AccountQueries.savedCards` / `deleteSavedCard` → `SavedCard` (`account/domain/saved_card.dart`), `savedCardsProvider` (empty on any error) |
+| `is_active_payment_token_enabler` (§4.2) | `CheckoutRepository.setPaymentMethod(saveCard:)` — retries bare if refused; `CheckoutController.setSaveCard` |
+| `ngeniusonline_vault` (§4.3) | `PaymentMethodOption.isCardVault`, folded into the card row by `CheckoutState.visiblePaymentMethods`; `SavedCardPicker` |
+| `SetOrderPaymentMethodInput.public_hash` (§4.4) | `CheckoutQueries.setOrderPaymentMethodWithCard` → `setOrderPaymentMethod(publicHash:)`, used by `CompletePaymentScreen` |
+| order `savedCard` → saved-card SDK screen (§4.5) | `PaymentChannel.hasSavedCard` (Android) / `order.savedCard` (iOS) — no channel argument |
