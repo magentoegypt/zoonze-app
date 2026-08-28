@@ -275,7 +275,11 @@ class _Header extends StatelessWidget {
         // Tapping one *navigates* to that category's own listing rather than
         // filtering in place, so each level is a real page with its own rail,
         // its own product count and its own back step — the way the site works.
-        if (subcats.isNotEmpty)
+        if (subcats.isNotEmpty) ...[
+          // Breathing room under the title's rule — the circles sat flush
+          // against it. Kept here rather than inside the rail so the rail's
+          // geometry stays exactly home's Shop by Category.
+          const SizedBox(height: 14),
           CategoryCircleRail(
             categories: subcats,
             onTap: (category) => context.push(
@@ -283,6 +287,7 @@ class _Header extends StatelessWidget {
               extra: category.name,
             ),
           ),
+        ],
         Padding(
           padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 16, 12),
           child: Row(
