@@ -313,19 +313,32 @@ class _MarketingFooterState extends ConsumerState<MarketingFooter> {
   }
 }
 
-/// Accepted-payment badges row shown above the footer copyright (card · tabby ·
-/// Mastercard · Visa), mirroring the website footer. Rendered as lightweight
-/// brand chips; swap in official brand assets if/when they're provided.
+/// Accepted-payment badges row shown above the footer copyright (Apple Pay ·
+/// Samsung Pay · card · tabby · Mastercard · Visa).
+///
+/// Rendered as lightweight brand chips rather than artwork, matching how the
+/// other marks here are drawn; swap in official brand assets when they're
+/// provided. That matters most for the two wallets: Apple and Samsung both
+/// require their supplied mark artwork rather than a recreation, so these are
+/// placeholders for review purposes, not shippable brand marks.
+///
+/// A [Wrap] rather than a [Row] — six chips no longer fit one line on a narrow
+/// screen, and a silent overflow here would be the first thing to break.
 class _PaymentBadges extends StatelessWidget {
   const _PaymentBadges();
 
   @override
   Widget build(BuildContext context) {
-    return const Row(
-      mainAxisSize: MainAxisSize.min,
+    return const Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      alignment: WrapAlignment.center,
       children: [
-        _PayChip(child: Icon(Icons.credit_card, size: 18, color: Color(0xFF1F2937))),
-        SizedBox(width: 8),
+        _PayChip(child: _ApplePayMark()),
+        _PayChip(width: 56, child: _SamsungPayMark()),
+        _PayChip(
+          child: Icon(Icons.credit_card, size: 18, color: Color(0xFF1F2937)),
+        ),
         _PayChip(
           child: Text(
             'tabby',
@@ -336,9 +349,7 @@ class _PaymentBadges extends StatelessWidget {
             ),
           ),
         ),
-        SizedBox(width: 8),
         _PayChip(child: _MastercardMark()),
-        SizedBox(width: 8),
         _PayChip(
           child: Text(
             'VISA',
@@ -358,19 +369,70 @@ class _PaymentBadges extends StatelessWidget {
 
 /// White rounded chip that hosts one payment mark.
 class _PayChip extends StatelessWidget {
-  const _PayChip({required this.child});
+  const _PayChip({required this.child, this.width = 42});
   final Widget child;
+
+  /// Wider than the default only where a wordmark needs the room.
+  final double width;
 
   @override
   Widget build(BuildContext context) => Container(
-    width: 42,
+    width: width,
     height: 27,
     alignment: Alignment.center,
+    padding: const EdgeInsets.symmetric(horizontal: 3),
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(5),
     ),
-    child: child,
+    // Scale a mark down rather than let it overflow. These are text lockups in
+    // a fixed-width chip, so their width moves with the font: Cairo in Arabic
+    // and the OS large-text setting both render them wider than Inter does, and
+    // the Apple Pay lockup already overflowed by ~10px under the test font.
+    child: FittedBox(fit: BoxFit.scaleDown, child: child),
+  );
+}
+
+/// Apple logo + "Pay". `Icons.apple` is Material's own apple glyph, so no
+/// Apple-supplied artwork is embedded in the repo.
+class _ApplePayMark extends StatelessWidget {
+  const _ApplePayMark();
+
+  @override
+  Widget build(BuildContext context) => const Row(
+    mainAxisSize: MainAxisSize.min,
+    // Pinned LTR: a Row takes its order from Directionality, so in Arabic this
+    // rendered as "Pay " with the glyph on the wrong side. A brand lockup is
+    // not layout — it reads the same in every locale (QA'd on device in AR).
+    textDirection: TextDirection.ltr,
+    children: [
+      Icon(Icons.apple, size: 15, color: Color(0xFF111111)),
+      Text(
+        'Pay',
+        style: TextStyle(
+          color: Color(0xFF111111),
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
+        ),
+      ),
+    ],
+  );
+}
+
+/// "Samsung Pay" wordmark in Samsung blue.
+class _SamsungPayMark extends StatelessWidget {
+  const _SamsungPayMark();
+
+  @override
+  Widget build(BuildContext context) => const Text(
+    'Samsung Pay',
+    maxLines: 1,
+    style: TextStyle(
+      color: Color(0xFF1428A0),
+      fontWeight: FontWeight.w700,
+      fontSize: 8.5,
+      letterSpacing: -0.1,
+    ),
   );
 }
 
