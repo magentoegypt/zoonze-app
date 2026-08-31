@@ -10,6 +10,7 @@ import '../../data/checkout_repository.dart';
 import '../../domain/checkout.dart';
 import '../../domain/payment_session.dart';
 import '../../payments/payment_method_card.dart';
+import '../../payments/payment_order.dart';
 import '../../payments/payment_runner.dart';
 import '../../payments/saved_card_picker.dart';
 import '../../payments/wallet_availability.dart';
@@ -72,13 +73,16 @@ class _CompletePaymentScreenState extends ConsumerState<CompletePaymentScreen> {
   /// threw, the session came back null, and the customer got a generic
   /// "payment session unavailable" for picking a method that was shown to them.
   ///
-  /// Wallets are filtered again here, not just at checkout. The caller does pass
-  /// an already-filtered list, but this route takes its args from `extra`, so it
+  /// Wallets are filtered again here, and the rows re-sorted into the CL042-DEV27
+  /// order, not just at checkout. The caller does pass an already-filtered and
+  /// already-ordered list, but this route takes its args from `extra`, so it
   /// must not depend on the caller having done it.
   List<PaymentMethodOption> _switchableMethods(WalletAvailability availability) {
-    final switchable = _args.methods
-        .where((m) => m.isRedirect && availability.allows(m.wallet))
-        .toList();
+    final switchable = orderPayments(
+      _args.methods
+          .where((m) => m.isRedirect && availability.allows(m.wallet))
+          .toList(),
+    );
     // The vault code is folded into the card row here for the same reason as at
     // checkout — the picker lives inside it, so it must not also be its own row.
     if (!switchable.any((m) => m.isCard)) return switchable;

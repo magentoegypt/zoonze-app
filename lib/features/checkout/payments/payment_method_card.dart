@@ -92,8 +92,8 @@ class PaymentMethodCard extends StatelessWidget {
   /// icon so the row still renders rather than showing a broken image.
   Widget _methodMark(BuildContext context, PaymentMethodOption m) {
     final asset = switch (m.wallet) {
-      PaymentWallet.applePay => 'apple_pay',
-      PaymentWallet.samsungPay => 'samsung_pay',
+      PaymentWallet.applePay => 'apple_pay_mark',
+      PaymentWallet.samsungPay => 'samsung_pay_mark',
       PaymentWallet.card => null,
     };
     if (asset == null) {

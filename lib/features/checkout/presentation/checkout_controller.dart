@@ -10,7 +10,7 @@ import '../../catalog/domain/money.dart';
 import '../data/checkout_repository.dart';
 import '../domain/checkout.dart';
 import '../domain/payment_session.dart';
-import '../domain/payment_wallet.dart';
+import '../payments/payment_order.dart';
 import '../payments/wallet_availability.dart';
 
 class CheckoutState {
@@ -264,7 +264,7 @@ class CheckoutController extends Notifier<CheckoutState> {
       // availability is a device concern the backend cannot see. This single
       // filter point feeds `state.paymentMethods`, the default selection, and
       // the method list forwarded to the complete-payment screen.
-      final payments = _orderPayments(
+      final payments = orderPayments(
         filterUnavailableWallets(
           await _repo.setBillingSameAsShipping(cartId),
           await ref.read(walletAvailabilityProvider.future),
@@ -300,48 +300,6 @@ class CheckoutController extends Notifier<CheckoutState> {
     return sorted.first;
   }
 
-  /// Payment methods in the Figma display order, stable within a rank.
-  List<PaymentMethodOption> _orderPayments(List<PaymentMethodOption> methods) {
-    final indexed = methods.asMap().entries.toList()
-      ..sort((a, b) {
-        final r = _payRank(a.value.code).compareTo(_payRank(b.value.code));
-        return r != 0 ? r : a.key.compareTo(b.key);
-      });
-    return [for (final e in indexed) e.value];
-  }
-
-  /// CL042-DEV27 order: Apple Pay, Samsung Pay, Visa & MasterCard, Tabby, Cash
-  /// on Delivery. Check/Money order is not in the client's list, so it sorts
-  /// below it; anything unknown (including Zero Subtotal `free`, which is
-  /// normally the only method when it appears) keeps the old fallback rank.
-  ///
-  /// The wallet tests must stay ABOVE the `ngenius` substring test: the wallet
-  /// method codes are `ngeniusonline_applepay` / `ngeniusonline_samsungpay`, so a substring
-  /// check would swallow them into the card row's rank and leave their relative
-  /// order down to whatever the API happened to return.
-  static int _payRank(String code) {
-    final c = code.toLowerCase();
-    switch (walletForMethodCode(code)) {
-      case PaymentWallet.applePay:
-        return 0;
-      case PaymentWallet.samsungPay:
-        return 1;
-      case PaymentWallet.card:
-        break;
-    }
-    if (c.contains('ngenius') || c.contains('network')) return 2;
-    if (c.contains('tabby')) return 3;
-    if (_isCod(c)) return 4;
-    if (c.contains('checkmo') || c.contains('check')) return 5;
-    return 50;
-  }
-
-  static bool _isCod(String code) {
-    final c = code.toLowerCase();
-    return c.contains('cashondelivery') || c.contains('cash_on_delivery') ||
-        c == 'cod';
-  }
-
   /// Cash on Delivery when present (QA default), else the first method.
   ///
   /// Deliberately still COD even though DEV27 moves its row to the bottom:
@@ -350,7 +308,7 @@ class CheckoutController extends Notifier<CheckoutState> {
   PaymentMethodOption? _defaultPayment(List<PaymentMethodOption> methods) {
     if (methods.isEmpty) return null;
     for (final m in methods) {
-      if (_isCod(m.code)) return m;
+      if (isCodMethod(m.code)) return m;
     }
     // Never the vault row: it isn't drawn on its own, and pre-selecting it
     // would arm a payment with no card chosen.
