@@ -7,7 +7,7 @@ import '../../core/error/failure.dart';
 import '../../core/store/store_controller.dart';
 import '../../core/util/launch.dart';
 import '../../core/validation/validators.dart';
-import '../../core/widgets/brand_logo.dart';
+import '../../core/widgets/brand_wordmark.dart';
 import '../../core/widgets/failure_message.dart';
 import '../../core/widgets/social_icon.dart';
 import '../../core/widgets/web_view_screen.dart';
@@ -159,7 +159,7 @@ class _MarketingFooterState extends ConsumerState<MarketingFooter> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const BrandLogo(onDark: true, height: 48),
+          const BrandWordmark(),
           const SizedBox(height: 16),
           Text(
             l10n.footerTagline,

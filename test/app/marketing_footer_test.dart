@@ -3,8 +3,11 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:zoonze_app/app/shell/marketing_footer.dart';
+import 'package:zoonze_app/app/theme/app_theme.dart';
 import 'package:zoonze_app/core/config/store_contact.dart';
 import 'package:zoonze_app/core/error/failure.dart';
+import 'package:zoonze_app/core/widgets/brand_logo.dart';
+import 'package:zoonze_app/core/widgets/brand_wordmark.dart';
 import 'package:zoonze_app/features/newsletter/data/newsletter_repository.dart';
 import 'package:zoonze_app/l10n/l10n.dart';
 
@@ -138,5 +141,27 @@ void main() {
     expect(find.text('Shipping & Delivery'), findsOneWidget);
     expect(find.text('Returns & Exchanges'), findsOneWidget);
     expect(find.byType(InkWell), findsWidgets);
+  });
+
+  testWidgets('the brand mark is the text wordmark, not the lockup image', (
+    tester,
+  ) async {
+    await _pump(tester);
+    // The storefront's `.beauty-footer__brand` is text; QA rejected the Z-mark
+    // lockup here (CL042-QA01), so pin the direction against a future revert.
+    expect(find.byType(BrandWordmark), findsOneWidget);
+    expect(find.text('Zoonze'), findsOneWidget);
+    expect(find.byType(BrandLogo), findsNothing);
+
+    // Both pinned on the widget itself: the base theme font is Cairo in Arabic
+    // and the footer is RTL there, but the Latin brand name inherits neither.
+    final mark = tester.widget<Text>(
+      find.descendant(
+        of: find.byType(BrandWordmark),
+        matching: find.byType(Text),
+      ),
+    );
+    expect(mark.style?.fontFamily, AppTheme.latinFont);
+    expect(mark.textDirection, TextDirection.ltr);
   });
 }
