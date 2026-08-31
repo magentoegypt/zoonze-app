@@ -43,6 +43,19 @@ abstract final class AppTheme {
       // *directional* start edge: swipe in from the left in English, from the
       // right in Arabic, no manual flipping (see [[rtl-arrow-double-flip]] for
       // why manual mirroring is a trap here).
+      //
+      // Do NOT swap Android to PredictiveBackPageTransitionsBuilder. It ships
+      // no Flutter-side drag detector at all — it only renders the system's
+      // predictive-back preview — so on Android 11 (API 30), where predictive
+      // back does not exist, it would help nothing, and on any 3-button-nav
+      // device it would remove the in-app swipe outright. For the same reason
+      // `android:enableOnBackInvokedCallback` stays out of AndroidManifest.xml:
+      // it is a no-op on API 30, which is the version QA tests on.
+      //
+      // The Cupertino detector is necessary but not sufficient: it is a 20 px
+      // strip flush against the screen edge, inside the band Android reserves
+      // for system navigation, and it is disabled outright on a first route.
+      // BackSwipeDetector (app/shell/back_swipe.dart) covers both gaps.
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: <TargetPlatform, PageTransitionsBuilder>{
           TargetPlatform.android: CupertinoPageTransitionsBuilder(),
