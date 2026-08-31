@@ -10,7 +10,9 @@ import 'package:zoonze_app/core/storage/locale_prefs.dart';
 import 'package:zoonze_app/core/store/store_controller.dart';
 import 'package:zoonze_app/core/store/store_repository.dart';
 import 'package:zoonze_app/core/widgets/web_view_screen.dart';
+import 'package:zoonze_app/features/catalog/data/brands_provider.dart';
 import 'package:zoonze_app/features/catalog/data/catalog_repository.dart';
+import 'package:zoonze_app/features/catalog/domain/brand.dart';
 import 'package:zoonze_app/l10n/l10n.dart';
 
 import '../support/fakes.dart';
@@ -32,6 +34,11 @@ GoRouter _router() => GoRouter(
       builder: (_, s) => Text('PLP ${s.pathParameters['uid']}'),
     ),
     GoRoute(
+      path: AppRoutes.brand,
+      builder: (_, s) => Text('BRAND ${(s.extra! as Brand).optionId}'),
+    ),
+    GoRoute(path: AppRoutes.brands, builder: (_, __) => const Text('BRANDS')),
+    GoRoute(
       path: AppRoutes.webview,
       builder: (_, s) => Text('WEB ${(s.extra! as WebViewArgs).url}'),
     ),
@@ -44,6 +51,7 @@ Future<GoRouter> _pump(
   ({String type, String uid, String? urlKey})? resolved,
   String persistedLocale = 'en',
   bool preloadStores = true,
+  List<Brand> brands = kSampleBrands,
 }) async {
   final router = _router();
   final container = ProviderContainer(
@@ -56,6 +64,7 @@ Future<GoRouter> _pump(
       catalogRepositoryProvider.overrideWithValue(
         FakeCatalogRepository(resolved: resolved),
       ),
+      brandsProvider.overrideWith((ref) async => brands),
     ],
   );
   addTearDown(container.dispose);
@@ -124,14 +133,34 @@ void main() {
       expect(find.text('PLP cat-fragrance'), findsOneWidget);
     });
 
+    // CL042-DEV19/QA01: a `shopbrand` link has no url_rewrite, so `urlResolver`
+    // can only answer null. It used to land in the WebView; it now resolves to
+    // the app's own brand screens, exactly as a home banner CTA does.
+    testWidgets('sends the brand index to the Brands directory', (tester) async {
+      await _pump(tester, link: 'https://zoonze.com/uae-en/shopbrand/');
+
+      expect(find.text('BRANDS'), findsOneWidget);
+    });
+
+    testWidgets('sends a brand link to the native brand listing', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        link: 'https://zoonze.com/uae-en/shopbrand/Mancera.html',
+      );
+
+      expect(find.text('BRAND 126'), findsOneWidget);
+    });
+
     testWidgets('sends an unresolvable link on our domain to the in-app '
         'WebView rather than dead-ending', (tester) async {
-      await _pump(tester, link: 'https://zoonze.com/uae-en/shopbrand/');
+      await _pump(tester, link: 'https://zoonze.com/uae-en/about-us/');
 
       // go_router normalises the trailing slash off the location, so the
       // WebView receives the path without it — Magento serves both.
       expect(
-        find.text('WEB https://zoonze.com/uae-en/shopbrand'),
+        find.text('WEB https://zoonze.com/uae-en/about-us'),
         findsOneWidget,
       );
     });

@@ -17,6 +17,7 @@ import 'package:zoonze_app/features/wishlist/data/wishlist_repository.dart';
 import 'package:zoonze_app/features/wishlist/domain/wishlist_entry.dart';
 import 'package:zoonze_app/features/catalog/data/catalog_repository.dart';
 import 'package:zoonze_app/features/catalog/domain/aggregation.dart';
+import 'package:zoonze_app/features/catalog/domain/brand.dart';
 import 'package:zoonze_app/features/catalog/domain/category.dart';
 import 'package:zoonze_app/features/catalog/domain/home_config.dart';
 import 'package:zoonze_app/features/catalog/domain/money.dart';
@@ -681,3 +682,37 @@ GraphQLClient fakeGraphQLClient() => GraphQLClient(
   ),
   cache: GraphQLCache(),
 );
+
+/// Brands as the live `brands` feed serves them: mixed-case `url_key` that is
+/// exactly the `shopbrand/<key>.html` path segment, and a non-null `option_id`
+/// (every one of the 310 live brands has one). `Bath & Body Works` is the case
+/// where the display title and the key differ.
+const List<Brand> kSampleBrands = <Brand>[
+  Brand(
+    brandId: 114,
+    title: 'Mancera',
+    urlKey: 'Mancera',
+    url: 'https://zoonze.com/uae-en/shopbrand/Mancera.html',
+    imageUrl: 'https://zoonze.com/media/brand/mancera.png',
+    optionId: 126,
+    position: 0,
+  ),
+  Brand(
+    brandId: 104,
+    title: 'Bath & Body Works',
+    urlKey: 'BathBodyWorks',
+    url: 'https://zoonze.com/uae-en/shopbrand/BathBodyWorks.html',
+    imageUrl: 'https://zoonze.com/media/brand/bbw.png',
+    optionId: 110,
+    position: 0,
+  ),
+  Brand(
+    brandId: 146,
+    title: 'ANUA',
+    urlKey: 'ANUA',
+    url: 'https://zoonze.com/uae-en/shopbrand/ANUA.html',
+    imageUrl: 'https://zoonze.com/media/brand/anua.png',
+    optionId: 158,
+    position: 0,
+  ),
+];

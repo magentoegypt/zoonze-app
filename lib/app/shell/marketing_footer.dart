@@ -115,14 +115,18 @@ class _MarketingFooterState extends ConsumerState<MarketingFooter> {
   }
 
   /// Opens a storefront [path] (relative to the active store's base URL) in the
-  /// in-app WebView. `?webview=1` lets the storefront detect it's rendering
-  /// inside the app and hide its own header/footer/announcement chrome.
+  /// in-app WebView.
+  ///
+  /// The storefront's `webview=1` chrome-hiding flag is deliberately not sent:
+  /// it returns HTTP 500 on `shopbrand` pages (CL042-DEV19/QA01), so every
+  /// in-app storefront link now loads the page exactly as the browser would.
+  /// See `inAppStorefrontUrl` in `features/catalog/presentation/storefront_links.dart`.
   void _openStorePage(String path, String title) {
     final base = _storeBase();
     final sep = base.endsWith('/') ? '' : '/';
     context.push(
       AppRoutes.webview,
-      extra: WebViewArgs(url: '$base$sep$path?webview=1', title: title),
+      extra: WebViewArgs(url: '$base$sep$path', title: title),
     );
   }
 

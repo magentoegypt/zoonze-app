@@ -1827,7 +1827,12 @@ class _EditorialBanner extends ConsumerWidget {
       child: InkWell(
         onTap: banner.ctaUrl.isEmpty
             ? null
-            : () => openStorefrontUrl(context, ref, banner.ctaUrl),
+            : () => openStorefrontUrl(
+                context,
+                ref,
+                banner.ctaUrl,
+                title: banner.eyebrow.isNotEmpty ? banner.eyebrow : banner.title,
+              ),
         child: SizedBox(
           height: 230,
           child: Stack(
@@ -2057,7 +2062,8 @@ class _ExclusiveOfferBanner extends ConsumerWidget {
       child: InkWell(
         onTap: offer.ctaUrl.isEmpty
             ? null
-            : () => openStorefrontUrl(context, ref, offer.ctaUrl),
+            : () =>
+                  openStorefrontUrl(context, ref, offer.ctaUrl, title: offer.title),
         child: SizedBox(
           height: 200,
           child: Stack(

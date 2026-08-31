@@ -9,7 +9,9 @@ import 'package:zoonze_app/core/storage/locale_prefs.dart';
 import 'package:zoonze_app/core/store/store_controller.dart';
 import 'package:zoonze_app/core/store/store_repository.dart';
 import 'package:zoonze_app/core/widgets/web_view_screen.dart';
+import 'package:zoonze_app/features/catalog/data/brands_provider.dart';
 import 'package:zoonze_app/features/catalog/data/catalog_repository.dart';
+import 'package:zoonze_app/features/catalog/domain/brand.dart';
 import 'package:zoonze_app/features/catalog/presentation/storefront_links.dart';
 import 'package:zoonze_app/l10n/l10n.dart';
 
@@ -37,6 +39,7 @@ Future<void> _pump(
   required String link,
   ({String type, String uid, String? urlKey})? resolved,
   String locale = 'en',
+  List<Brand> brands = kSampleBrands,
 }) async {
   final router = GoRouter(
     initialLocation: AppRoutes.home,
@@ -50,6 +53,11 @@ Future<void> _pump(
         path: '/product/:urlKey',
         builder: (_, s) => Text('PDP ${s.pathParameters['urlKey']}'),
       ),
+      GoRoute(
+        path: AppRoutes.brand,
+        builder: (_, s) => Text('BRAND ${(s.extra! as Brand).optionId}'),
+      ),
+      GoRoute(path: AppRoutes.brands, builder: (_, __) => const Text('BRANDS')),
       GoRoute(
         path: AppRoutes.webview,
         builder: (_, s) => Text('WEB ${(s.extra! as WebViewArgs).url}'),
@@ -66,6 +74,7 @@ Future<void> _pump(
       catalogRepositoryProvider.overrideWithValue(
         FakeCatalogRepository(resolved: resolved),
       ),
+      brandsProvider.overrideWith((ref) async => brands),
     ],
   );
   addTearDown(container.dispose);
@@ -108,27 +117,85 @@ Future<StoreState> _loadedState({String locale = 'en'}) async {
 
 void main() {
   group('openStorefrontUrl', () {
-    // CL042-DEV19: this is the banner CTA from the ticket. `shopbrand` is a
-    // third-party route with no url_rewrite entity, so `urlResolver` returns
-    // null — and the old code then launched it externally, where Android's own
-    // app-link filter handed it back to a router that had no matching route.
-    testWidgets(
-      'opens an unresolvable link on our domain in the in-app WebView '
-      'instead of launching it externally',
-      (tester) async {
-        await _pump(
-          tester,
-          link: 'https://zoonze.com/uae-ar/shopbrand/Mancera.html',
-        );
+    // CL042-DEV19/QA01: this is the banner CTA from the ticket. `shopbrand` is
+    // a third-party route with no url_rewrite entity, so `urlResolver` returns
+    // null. It used to launch externally (Android's app-link filter handed it
+    // back to a router with no matching route), then to open the storefront
+    // page in the in-app WebView — where `?webview=1` answers HTTP 500 and the
+    // shopper got "We couldn't reach the store". It now opens the app's own
+    // brand listing, which is what the ticket asked for.
+    testWidgets('opens a brand CTA on the native brand listing', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        link: 'https://zoonze.com/uae-ar/shopbrand/Mancera.html',
+      );
 
-        expect(
-          find.text(
-            'WEB https://zoonze.com/uae-ar/shopbrand/Mancera.html?webview=1',
-          ),
-          findsOneWidget,
-        );
-      },
-    );
+      expect(find.text('BRAND 126'), findsOneWidget);
+      expect(find.textContaining('WEB '), findsNothing);
+    });
+
+    // The live `promoSplitBanners` / `homeBanners` feeds emit a trailing slash
+    // after `.html`, which is what QA actually tapped.
+    testWidgets('opens a brand CTA carrying the live trailing slash', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        link: 'https://zoonze.com/uae-en/shopbrand/BathBodyWorks.html/',
+      );
+
+      expect(find.text('BRAND 110'), findsOneWidget);
+    });
+
+    testWidgets('opens a brand CTA on the Arabic store the same way', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        locale: 'ar',
+        link: 'https://zoonze.com/uae-ar/shopbrand/ANUA.html/',
+      );
+
+      expect(find.text('BRAND 158'), findsOneWidget);
+    });
+
+    testWidgets('sends the brand index to the Brands directory', (
+      tester,
+    ) async {
+      await _pump(tester, link: 'https://zoonze.com/uae-en/shopbrand/');
+
+      expect(find.text('BRANDS'), findsOneWidget);
+    });
+
+    // The feed being empty (offline, or the brand deleted) must not dead-end:
+    // fall back to the page itself, now WITHOUT `webview=1`.
+    testWidgets('falls back to the in-app WebView for an unknown brand', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        link: 'https://zoonze.com/uae-en/shopbrand/Nowhere.html',
+        brands: const <Brand>[],
+      );
+
+      expect(
+        find.text('WEB https://zoonze.com/uae-en/shopbrand/Nowhere.html'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('opens a CMS page in the in-app WebView without webview=1', (
+      tester,
+    ) async {
+      await _pump(tester, link: 'https://zoonze.com/uae-en/about-us/');
+
+      expect(
+        find.text('WEB https://zoonze.com/uae-en/about-us/'),
+        findsOneWidget,
+      );
+    });
 
     testWidgets('maps a category-id URL straight to the PLP', (tester) async {
       await _pump(
@@ -168,47 +235,123 @@ void main() {
       expect(find.textContaining('WEB '), findsNothing);
     });
 
-    testWidgets('resolves a store-relative CTA against base_link_url', (
+    testWidgets('resolves a store-relative brand CTA against the active view', (
       tester,
     ) async {
-      await _pump(tester, link: 'shopbrand/');
+      await _pump(tester, link: 'shopbrand/Mancera.html');
 
+      expect(find.text('BRAND 126'), findsOneWidget);
+    });
+  });
+
+  group('brandFromStorefrontUrl', () {
+    test('matches the url_key segment', () {
       expect(
-        find.text('WEB https://zoonze.com/uae-en/shopbrand/?webview=1'),
-        findsOneWidget,
+        brandFromStorefrontUrl(
+          kSampleBrands,
+          'https://zoonze.com/uae-en/shopbrand/Mancera.html',
+        )?.optionId,
+        126,
       );
+    });
+
+    test('tolerates the trailing slash the live feed emits', () {
+      expect(
+        brandFromStorefrontUrl(
+          kSampleBrands,
+          'https://zoonze.com/uae-en/shopbrand/ANUA.html/',
+        )?.optionId,
+        158,
+      );
+    });
+
+    test('matches case-insensitively', () {
+      expect(
+        brandFromStorefrontUrl(kSampleBrands, 'shopbrand/anua.html')?.optionId,
+        158,
+      );
+    });
+
+    test('matches with .html absent', () {
+      expect(
+        brandFromStorefrontUrl(kSampleBrands, 'shopbrand/Mancera')?.optionId,
+        126,
+      );
+    });
+
+    test('works under the Arabic store segment', () {
+      expect(
+        brandFromStorefrontUrl(
+          kSampleBrands,
+          'https://zoonze.com/uae-ar/shopbrand/BathBodyWorks.html',
+        )?.optionId,
+        110,
+      );
+    });
+
+    // Admin can key a banner by the display name where the feed carries the
+    // punctuation-free key.
+    test('folds punctuation so a display-name key still matches', () {
+      expect(
+        brandFromStorefrontUrl(
+          kSampleBrands,
+          'shopbrand/Bath-Body-Works.html',
+        )?.optionId,
+        110,
+      );
+    });
+
+    test('is null for an unknown brand', () {
+      expect(
+        brandFromStorefrontUrl(kSampleBrands, 'shopbrand/Nowhere.html'),
+        isNull,
+      );
+    });
+
+    test('is null for the brand index and for a non-brand URL', () {
+      expect(brandFromStorefrontUrl(kSampleBrands, 'shopbrand/'), isNull);
+      expect(brandFromStorefrontUrl(kSampleBrands, 'fragrance.html'), isNull);
+    });
+
+    test('isBrandIndexUrl only for the index', () {
+      expect(isBrandIndexUrl('https://zoonze.com/uae-en/shopbrand/'), isTrue);
+      expect(isBrandIndexUrl('https://zoonze.com/uae-en/shopbrand'), isTrue);
+      expect(isBrandIndexUrl('shopbrand/Mancera.html'), isFalse);
+      expect(isBrandIndexUrl('fragrance.html'), isFalse);
     });
   });
 
   group('inAppStorefrontUrl', () {
-    test('appends webview=1 and keeps an existing query', () async {
+    // CL042-DEV19/QA01: `webview=1` answers HTTP 500 on brand pages, so the app
+    // no longer sends it anywhere.
+    test('keeps an existing query and adds nothing', () async {
       expect(
         inAppStorefrontUrl(
           await _loadedState(),
           'https://zoonze.com/p.html?utm=x',
         ),
-        'https://zoonze.com/p.html?utm=x&webview=1',
+        'https://zoonze.com/p.html?utm=x',
       );
     });
 
     test('upgrades http to https', () async {
       expect(
         inAppStorefrontUrl(await _loadedState(), 'http://zoonze.com/p.html'),
-        'https://zoonze.com/p.html?webview=1',
+        'https://zoonze.com/p.html',
       );
     });
 
     test('resolves a relative path against the active view', () async {
       expect(
         inAppStorefrontUrl(await _loadedState(locale: 'ar'), 'shopbrand/'),
-        'https://zoonze.com/uae-ar/shopbrand/?webview=1',
+        'https://zoonze.com/uae-ar/shopbrand/',
       );
     });
 
     test('does not double a path that already carries the store segment', () async {
       expect(
         inAppStorefrontUrl(await _loadedState(), '/uae-en/shopbrand/'),
-        'https://zoonze.com/uae-en/shopbrand/?webview=1',
+        'https://zoonze.com/uae-en/shopbrand/',
       );
     });
 

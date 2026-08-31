@@ -88,7 +88,16 @@ class _DeepLinkResolverScreenState
       return;
     }
 
-    final resolved = await ref.read(catalogRepositoryProvider).resolveUrl(url);
+    // A `shopbrand` path has no `url_rewrite`, so `urlResolver` can only
+    // answer null for it. Map it to the app's own brand listing instead, and
+    // skip the round trip entirely (CL042-DEV19/QA01).
+    final isBrandUrl = shopbrandKey(url) != null;
+    final brand = isBrandUrl ? await lookUpBrand(ref, url) : null;
+    if (!mounted) return;
+
+    final resolved = isBrandUrl
+        ? null
+        : await ref.read(catalogRepositoryProvider).resolveUrl(url);
     if (!mounted) return;
 
     // Grab the router and the strings up front: `go` below tears this
@@ -106,9 +115,17 @@ class _DeepLinkResolverScreenState
         resolved.type == 'CATEGORY' &&
         resolved.uid.isNotEmpty) {
       path = AppRoutes.category(resolved.uid);
+    } else if (brand != null) {
+      // A `shopbrand` link is a brand landing, not a catalogue entity, so
+      // `urlResolver` returns null for it. Open the app's own brand listing —
+      // the same destination a home banner CTA now reaches (CL042-DEV19/QA01).
+      path = AppRoutes.brand;
+      extra = brand;
+    } else if (isBrandIndexUrl(url)) {
+      path = AppRoutes.brands;
     } else {
-      // Ours, but not a catalogue entity (CMS page, shopbrand, blog) — show
-      // the real page in the in-app browser.
+      // Ours, but not a catalogue entity (CMS page, blog) — show the real page
+      // in the in-app browser.
       path = AppRoutes.webview;
       extra = WebViewArgs(url: url, title: title);
     }
