@@ -50,8 +50,12 @@ Future<int> _pumpAndDrag(
 
 void main() {
   group('BackSwipePolicy', () {
-    test('a pushed route takes the leading edge from the drawer', () {
-      final policy = BackSwipePolicy.forScreen(isPushed: true, isHome: false);
+    test('anything poppable takes the leading edge from the drawer', () {
+      final policy = BackSwipePolicy.forRoute(
+        canPop: true,
+        isTabRoot: false,
+        isHome: false,
+      );
       expect(policy.enabled, isTrue);
       expect(policy.startEdge, isTrue);
       expect(policy.trailingEdge, isFalse);
@@ -59,7 +63,11 @@ void main() {
     });
 
     test('a non-Home tab root leaves the leading edge to the drawer', () {
-      final policy = BackSwipePolicy.forScreen(isPushed: false, isHome: false);
+      final policy = BackSwipePolicy.forRoute(
+        canPop: false,
+        isTabRoot: true,
+        isHome: false,
+      );
       expect(policy.enabled, isTrue);
       expect(policy.startEdge, isFalse);
       expect(policy.trailingEdge, isTrue);
@@ -67,14 +75,38 @@ void main() {
     });
 
     test('Home arms nothing, there is nowhere further back to go', () {
-      final policy = BackSwipePolicy.forScreen(isPushed: false, isHome: true);
+      final policy = BackSwipePolicy.forRoute(
+        canPop: false,
+        isTabRoot: true,
+        isHome: true,
+      );
       expect(policy.enabled, isFalse);
       expect(policy.drawerOwnsLeadingEdge, isTrue);
     });
 
-    test('a pushed route under the Home tab still takes the edge', () {
-      final policy = BackSwipePolicy.forScreen(isPushed: true, isHome: true);
-      expect(policy.drawerOwnsLeadingEdge, isFalse);
+    test('a first route that is not a tab root arms nothing', () {
+      // Splash and welcome. Sending a swipe "home" from onboarding would skip
+      // the sign-in choice entirely.
+      final policy = BackSwipePolicy.forRoute(
+        canPop: false,
+        isTabRoot: false,
+        isHome: false,
+      );
+      expect(policy.enabled, isFalse);
+      expect(policy.startEdge, isFalse);
+      expect(policy.trailingEdge, isFalse);
+    });
+
+    test('a bare-Scaffold screen that was pushed is covered too', () {
+      // Settings, search, checkout, addresses: no ZoonzeScaffold, so before
+      // AppBackSwipe these armed nothing at all.
+      final policy = BackSwipePolicy.forRoute(
+        canPop: true,
+        isTabRoot: false,
+        isHome: false,
+      );
+      expect(policy.enabled, isTrue);
+      expect(policy.startEdge, isTrue);
     });
   });
 

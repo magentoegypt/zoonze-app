@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -42,10 +43,15 @@ import '../core/widgets/web_view_screen.dart';
 import 'deep_link_resolver_screen.dart';
 import 'routes.dart';
 
+/// The router's [Navigator], exposed so [AppBackSwipe] can drive pops through
+/// [NavigatorState.maybePop] (which honours `PopScope`) from above the router.
+final rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'rootNavigator');
+
 /// App router. Phase 1 wires the catalogue browse flow + global chrome. Auth
 /// guards and payment/push deep links land in later phases.
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: AppRoutes.splash,
     // Anything the table can't match — in practice an incoming Android App
     // Link like https://zoonze.com/uae-en/<slug>.html — is handed to the

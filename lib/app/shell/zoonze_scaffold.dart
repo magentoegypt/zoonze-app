@@ -75,7 +75,6 @@ class _ZoonzeScaffoldState extends State<ZoonzeScaffold> {
     // A pushed route (PDP, cart, orders, …) is one the router can pop; on those
     // the app bar already shows a back arrow instead of the hamburger.
     final isPushed = context.canPop();
-    final isHome = widget.currentTab == AppTab.home;
 
     // Hand the pop to the framework on a pushed route with the drawer shut.
     // This is what arms the edge-swipe back (CL042-DEV11): the Cupertino back
@@ -86,40 +85,31 @@ class _ZoonzeScaffoldState extends State<ZoonzeScaffold> {
     // exiting from Home — all still report false and route through it.
     final deferToFramework = isPushed && !_drawerOpen;
 
-    // Which edge means "back" here, and whether the drawer keeps its drag.
-    // See [BackSwipePolicy] for the decision table and how to reverse it.
-    final policy = BackSwipePolicy.forScreen(isPushed: isPushed, isHome: isHome);
-
+    // The back swipe itself lives in [AppBackSwipe], above the router, so every
+    // route gets it — not just the screens using this scaffold. All this owns
+    // is the drawer's competing edge-drag.
     return PopScope(
       canPop: deferToFramework,
       onPopInvokedWithResult: _onBack,
-      child: BackSwipeDetector(
-        enabled: policy.enabled,
-        startEdge: policy.startEdge,
-        trailingEdge: policy.trailingEdge,
-        onBack: isPushed
-            ? () => Navigator.maybePop(context)
-            : () => context.go(AppRoutes.home),
-        child: Scaffold(
-          key: _scaffoldKey,
-          appBar: widget.appBar ?? ZoonzeAppBar(showSearch: widget.showSearch),
-          drawer: const MenuDrawer(),
-          onDrawerChanged: (open) {
-            if (mounted) setState(() => _drawerOpen = open);
-          },
-          // Both gestures live in the same ~20px strip and the drawer's wins the
-          // arena, so a pushed route would open the menu instead of going back.
-          // The hamburger isn't offered there anyway — the drawer stays a
-          // tab-root affordance, and the edge belongs to the back gesture.
-          drawerEnableOpenDragGesture: policy.drawerOwnsLeadingEdge,
-          body: widget.body,
-          bottomNavigationBar: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (widget.bottomBar != null) widget.bottomBar!,
-              ZoonzeBottomNav(current: widget.currentTab),
-            ],
-          ),
+      child: Scaffold(
+        key: _scaffoldKey,
+        appBar: widget.appBar ?? ZoonzeAppBar(showSearch: widget.showSearch),
+        drawer: const MenuDrawer(),
+        onDrawerChanged: (open) {
+          if (mounted) setState(() => _drawerOpen = open);
+        },
+        // Both gestures live in the same ~20px strip and the drawer's wins the
+        // arena, so a pushed route would open the menu instead of going back.
+        // The hamburger isn't offered there anyway — the drawer stays a
+        // tab-root affordance, and the edge belongs to the back gesture.
+        drawerEnableOpenDragGesture: !isPushed,
+        body: widget.body,
+        bottomNavigationBar: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (widget.bottomBar != null) widget.bottomBar!,
+            ZoonzeBottomNav(current: widget.currentTab),
+          ],
         ),
       ),
     );

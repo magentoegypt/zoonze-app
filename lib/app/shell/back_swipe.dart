@@ -2,6 +2,9 @@ import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../routes.dart';
 
 /// Width of the framework's own Cupertino back-gesture strip
 /// (`_kBackGestureWidth`, `package:flutter/src/cupertino/route.dart`). The
@@ -24,24 +27,25 @@ const double _kCommitVelocity = 700.0;
 /// below the commit distance so the gesture still feels immediate.
 const double _kEdgeAcceptSlop = 40.0;
 
-/// Which edges mean "back" on a given screen, and whether the gesture is armed
-/// at all. Lifted out of `ZoonzeScaffold.build` so the decision table can be
-/// asserted directly, without standing up the whole shell.
+/// Which edges mean "back" on a given route, and whether the drawer keeps its
+/// edge-drag. Decided in one place so every screen behaves the same — the shell
+/// screens and the ~20 that use a bare [Scaffold] alike.
 ///
 /// The drawer keeps the leading edge on tab roots: it opens with the *same*
 /// inward drag a leading-edge back swipe would use, so no direction test could
 /// separate the two in the gesture arena, and arming both would only make the
-/// drawer flaky. Back therefore lives on the trailing edge there, and on the
-/// leading edge wherever the drawer's drag is off.
+/// drawer flaky.
 ///
-/// | Screen        | Leading edge   | Trailing edge |
-/// |---------------|----------------|---------------|
-/// | Home          | drawer         | —             |
-/// | Other tab root| drawer         | → Home        |
-/// | Pushed route  | → pop          | —             |
+/// | Route                  | Leading edge | Trailing edge |
+/// |------------------------|--------------|---------------|
+/// | Home                   | drawer       | —             |
+/// | Other tab root         | drawer       | → Home        |
+/// | Anything poppable      | → pop        | —             |
+/// | Splash / welcome       | —            | —             |
 ///
-/// To reverse that call, hand the leading edge to the swipe on tab roots:
-/// `drawerOwnsLeadingEdge` becomes `isHome` and the two edge flags swap.
+/// That last row matters: those are first routes too, but they are not tab
+/// roots, and sending a swipe "home" from onboarding would skip the sign-in
+/// choice entirely.
 @immutable
 class BackSwipePolicy {
   const BackSwipePolicy._({
@@ -51,19 +55,20 @@ class BackSwipePolicy {
     required this.drawerOwnsLeadingEdge,
   });
 
-  factory BackSwipePolicy.forScreen({
-    required bool isPushed,
+  factory BackSwipePolicy.forRoute({
+    required bool canPop,
+    required bool isTabRoot,
     required bool isHome,
   }) {
-    // The drawer's edge-drag is a tab-root affordance; on a pushed route the
-    // hamburger isn't offered anyway, so the edge belongs to the back gesture.
-    final drawerOwnsLeadingEdge = !isPushed;
+    // Only a tab root below Home has somewhere to go when nothing can pop.
+    final goesHome = !canPop && isTabRoot && !isHome;
     return BackSwipePolicy._(
-      // Home is the destination; there is nowhere further back to go.
-      enabled: !isHome,
-      startEdge: !drawerOwnsLeadingEdge,
-      trailingEdge: drawerOwnsLeadingEdge,
-      drawerOwnsLeadingEdge: drawerOwnsLeadingEdge,
+      enabled: canPop || goesHome,
+      startEdge: canPop,
+      trailingEdge: goesHome,
+      // The drawer's edge-drag is a tab-root affordance; on a pushed route the
+      // hamburger isn't offered anyway, so the edge belongs to the back gesture.
+      drawerOwnsLeadingEdge: !canPop,
     );
   }
 
@@ -269,5 +274,100 @@ class _EdgeBackDrag extends HorizontalDragGestureRecognizer {
     double? deviceTouchSlop,
   ) {
     return globalDistanceMoved.abs() > _kEdgeAcceptSlop;
+  }
+}
+
+/// Installs the back swipe once, above the router's [Navigator], so it covers
+/// every route — the shell screens and the ~20 that build a bare [Scaffold]
+/// (settings, search, auth, checkout, addresses, order detail…). Those were the
+/// screens QA reported it "not working on": nothing there ever armed a gesture,
+/// because only [ZoonzeScaffold] used to install one.
+///
+/// Going through [NavigatorState.maybePop] rather than `router.pop()` is
+/// deliberate: it fires [PopScope], so `ZoonzeScaffold`'s existing ladder still
+/// runs — an open drawer closes first, and a tab root heads back to Home. When
+/// nothing handles the pop, a tab root falls through to Home explicitly.
+class AppBackSwipe extends StatefulWidget {
+  const AppBackSwipe({
+    super.key,
+    required this.router,
+    required this.navigatorKey,
+    required this.child,
+  });
+
+  final GoRouter router;
+  final GlobalKey<NavigatorState> navigatorKey;
+  final Widget child;
+
+  @override
+  State<AppBackSwipe> createState() => _AppBackSwipeState();
+}
+
+class _AppBackSwipeState extends State<AppBackSwipe> {
+  @override
+  void initState() {
+    super.initState();
+    widget.router.routerDelegate.addListener(_onRouteChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.router.routerDelegate.removeListener(_onRouteChanged);
+    super.dispose();
+  }
+
+  /// Deferred by a frame on purpose. This widget sits *above* the `Router`, and
+  /// the delegate notifies while that descendant is building — rebuilding
+  /// synchronously marks an already-dirty ancestor dirty again and trips
+  /// framework's `!_dirty` assertion. A frame's lag in arming an edge band is
+  /// imperceptible.
+  void _onRouteChanged() {
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  /// The current path, or null before the router has resolved its first match.
+  /// [GoRouter.state] throws `Bad state: No element` in that window, which is
+  /// reachable on the very first build.
+  String? get _location {
+    final configuration = widget.router.routerDelegate.currentConfiguration;
+    return configuration.isEmpty ? null : configuration.uri.path;
+  }
+
+  bool _isTabRoot(String location) =>
+      AppTab.values.any((tab) => tab.route == location);
+
+  @override
+  Widget build(BuildContext context) {
+    final location = _location;
+    if (location == null) return widget.child;
+    final policy = BackSwipePolicy.forRoute(
+      canPop: widget.router.canPop(),
+      isTabRoot: _isTabRoot(location),
+      isHome: location == AppRoutes.home,
+    );
+    return BackSwipeDetector(
+      enabled: policy.enabled,
+      startEdge: policy.startEdge,
+      trailingEdge: policy.trailingEdge,
+      onBack: _back,
+      child: widget.child,
+    );
+  }
+
+  Future<void> _back() async {
+    final navigator = widget.navigatorKey.currentState;
+    if (navigator == null) return;
+    // maybePop fires PopScope, so ZoonzeScaffold's ladder still runs: an open
+    // drawer closes first, and a tab root heads back to Home.
+    if (await navigator.maybePop()) return;
+    final location = _location;
+    if (location != null &&
+        location != AppRoutes.home &&
+        _isTabRoot(location)) {
+      widget.router.go(AppRoutes.home);
+    }
   }
 }

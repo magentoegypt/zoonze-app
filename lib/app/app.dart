@@ -11,6 +11,7 @@ import '../features/cart/presentation/cart_controller.dart';
 import '../features/wishlist/presentation/wishlist_controller.dart';
 import '../l10n/l10n.dart';
 import 'notification_routes.dart';
+import 'shell/back_swipe.dart';
 import 'router.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_mode_controller.dart';
@@ -122,9 +123,16 @@ class _ZoonzeAppState extends ConsumerState<ZoonzeApp>
       // Defaults to light (white) — the app no longer follows the OS dark mode
       // unless the user picks Black/System in Settings.
       themeMode: themeMode,
+      // The back swipe is installed once, here, above the router's Navigator so
+      // it reaches every route — including the screens that build a bare
+      // Scaffold and so never had one (CL042-DEV11).
       builder: (context, child) => Directionality(
         textDirection: store.isRtl ? TextDirection.rtl : TextDirection.ltr,
-        child: child ?? const SizedBox.shrink(),
+        child: AppBackSwipe(
+          router: router,
+          navigatorKey: rootNavigatorKey,
+          child: child ?? const SizedBox.shrink(),
+        ),
       ),
     );
   }
