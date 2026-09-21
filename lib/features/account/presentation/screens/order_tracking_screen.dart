@@ -17,47 +17,48 @@ import '../order_format.dart';
 /// One timeline step: a label, an optional timestamp, and whether it's done.
 typedef _Step = ({String label, String time, bool done});
 
-/// Track Order (Figma `63:2`): status banner, a five-stage timeline derived
-/// from the Magento order status (see [_stageIndex] — best-effort, never
-/// invented progress), the carrier + tracking number(s) once a shipment exists,
-/// delivery address, items, and a help link. Reached from the My Orders "Track"
-/// action — and, for a guest, straight from checkout — with the
-/// [CustomerOrder].
+/// Track Order (Figma `63:2`): status banner, a four-stage timeline driven by
+/// what the backend has actually done to the order (see [_stageIndex]), the
+/// carrier + tracking number(s) once a shipment exists, delivery address,
+/// items, and a help link. Reached from the My Orders "Track" action — and,
+/// for a guest, straight from checkout — with the [CustomerOrder].
 class OrderTrackingScreen extends ConsumerWidget {
   const OrderTrackingScreen({super.key, required this.order});
 
   final CustomerOrder order;
 
-  /// Which of the 5 fixed stages the order has reached (0 = Placed … 4 =
-  /// Delivered), derived from the Magento status + shipment presence. Cancelled
-  /// returns -1 (handled separately). The mapping is best-effort — Magento has
-  /// no dedicated "packed" status — so it degrades gracefully to the nearest
-  /// known stage rather than inventing progress.
+  /// Which of the 4 fixed stages the order has reached (0 = Placed …
+  /// 3 = Delivered), read from what the backend has actually recorded rather
+  /// than guessed from the status label:
+  ///
+  ///   0 Order Placed      the customer checked out
+  ///   1 Order Confirmed   an invoice exists
+  ///   2 Packed & Shipped  a shipment exists
+  ///   3 Delivered         the order is complete
+  ///
+  /// Cancelled returns -1 and On Hold returns the stage genuinely reached —
+  /// both are states an order sits in, not stages it passes through, so the
+  /// timeline stops there and the status card names the state.
+  ///
+  /// Each stage implies the ones before it: Magento can invoice and ship in
+  /// either order, and a shipment without an invoice still means the order got
+  /// packed, so the timeline fills up to the furthest event rather than
+  /// leaving a gap in the middle.
   int _stageIndex() {
     if (order.isCancelled) return -1;
-    if (order.isDelivered) return 4;
-    final s = order.status.toLowerCase();
-    var idx = 0;
-    if (s.contains('process') || s.contains('confirm')) idx = 1;
-    if (s.contains('pack') || s.contains('ready')) idx = 2;
-    if (s.contains('out_for_delivery') ||
-        s.contains('out for delivery') ||
-        s.contains('ship')) {
-      idx = 3;
-    }
-    // A shipment/tracking number exists → at least out for delivery.
-    if (order.hasTracking && idx < 3) idx = 3;
-    return idx;
+    if (order.isDelivered) return 3;
+    if (order.hasShipment || order.hasTracking) return 2;
+    if (order.hasInvoice) return 1;
+    return 0;
   }
 
-  /// The five fixed timeline stages, filled up to (and including) the reached
+  /// The four fixed timeline stages, filled up to (and including) the reached
   /// stage. Only "Order Placed" carries a timestamp (the order date).
   List<_Step> _steps(AppLocalizations l10n, String locale, String storeZone) {
     final labels = <String>[
       l10n.orderPlaced,
       l10n.orderStageConfirmed,
       l10n.orderStagePacked,
-      l10n.orderStageOutForDelivery,
       l10n.ordersFilterDelivered,
     ];
     final reached = _stageIndex();
@@ -66,29 +67,36 @@ class OrderTrackingScreen extends ConsumerWidget {
         (
           label: labels[i],
           time: i == 0 ? orderFmtDateTime(order.date, locale, storeZone) : '',
-          // Cancelled (reached < 0): only Placed is done; rest stay pending.
-          done: reached >= 0 && i <= reached,
+          // Placed always stands: the order exists, so it was placed — even
+          // once cancelled (reached < 0), where the rest stay pending.
+          done: i == 0 || i <= reached,
         ),
     ];
   }
 
-  IconData _statusIcon() => switch (_stageIndex()) {
-    < 0 => Icons.cancel_outlined,
-    4 => Icons.check_circle_outline,
-    3 => Icons.local_shipping_outlined,
-    2 => Icons.inventory_2_outlined,
-    1 => Icons.receipt_long_outlined,
-    _ => Icons.shopping_bag_outlined,
-  };
+  IconData _statusIcon() {
+    if (order.isOnHold) return Icons.pause_circle_outline;
+    return switch (_stageIndex()) {
+      < 0 => Icons.cancel_outlined,
+      3 => Icons.check_circle_outline,
+      2 => Icons.local_shipping_outlined,
+      1 => Icons.receipt_long_outlined,
+      _ => Icons.shopping_bag_outlined,
+    };
+  }
 
-  String _statusLabel(AppLocalizations l10n) => switch (_stageIndex()) {
-    < 0 => l10n.orderStatusCancelled,
-    4 => l10n.ordersFilterDelivered,
-    3 => l10n.orderStageOutForDelivery,
-    2 => l10n.orderStagePacked,
-    1 => l10n.orderStageConfirmed,
-    _ => l10n.orderPlaced,
-  };
+  String _statusLabel(AppLocalizations l10n) {
+    // Hold reads over the stage: the order is paused where it got to, and
+    // saying "Order Confirmed" while it sits on hold would be misleading.
+    if (order.isOnHold) return l10n.orderStatusOnHold;
+    return switch (_stageIndex()) {
+      < 0 => l10n.orderStatusCancelled,
+      3 => l10n.ordersFilterDelivered,
+      2 => l10n.orderStagePacked,
+      1 => l10n.orderStageConfirmed,
+      _ => l10n.orderPlaced,
+    };
+  }
 
   /// Secondary line under the status: the real delivery method when present,
   /// otherwise the order date. No fabricated per-order ETA.

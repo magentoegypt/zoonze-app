@@ -67,6 +67,8 @@ class CustomerOrder {
     this.lines = const <OrderLine>[],
     this.trackings = const <OrderTracking>[],
     this.comments = const <OrderComment>[],
+    this.invoiceCount = 0,
+    this.shipmentCount = 0,
   });
 
   final String number;
@@ -114,7 +116,18 @@ class CustomerOrder {
   /// Real status-history entries (newest last), for the tracking timeline.
   final List<OrderComment> comments;
 
+  /// How many invoices / shipments the backend has raised against this order.
+  /// These are the events the tracking timeline advances on — an order is
+  /// "confirmed" when it has been invoiced and "shipped" when a shipment
+  /// exists, which is what the merchant sees in the admin. Counting shipments
+  /// rather than tracking numbers matters: a shipment created without a
+  /// tracking number is still a shipment.
+  final int invoiceCount;
+  final int shipmentCount;
+
   bool get hasTracking => trackings.isNotEmpty;
+  bool get hasInvoice => invoiceCount > 0;
+  bool get hasShipment => shipmentCount > 0;
 
   /// Distinct products in the order (matches the thumbnail count / "Items (N)").
   int get itemCount => lines.length;
@@ -128,6 +141,11 @@ class CustomerOrder {
     final s = status.toLowerCase();
     return s.contains('cancel') || s.contains('refund') || s.contains('closed');
   }
+
+  /// Magento's `holded` state — a pause, not a stage. The timeline stops where
+  /// it genuinely got to and the status card says so, rather than implying the
+  /// order is still moving.
+  bool get isOnHold => status.toLowerCase().contains('hold');
 }
 
 /// A page of customer orders (for append-on-scroll pagination).

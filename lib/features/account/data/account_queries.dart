@@ -46,7 +46,9 @@ abstract final class AccountQueries {
       telephone
       country_code
     }
+    invoices { number }
     shipments {
+      number
       tracking { title number carrier }
     }
 ''';

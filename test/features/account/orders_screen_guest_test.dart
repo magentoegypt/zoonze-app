@@ -217,6 +217,117 @@ void main() {
       );
     });
 
+    // QA (CL042-DEV18): the timeline must follow what the backend actually
+    // did to the order — invoice, shipment, completion — and move as each
+    // happens, rather than sitting on "Order Placed" while the order ships.
+    testWidgets('a fresh order has only Order Placed done', (tester) async {
+      await pump(
+        tester,
+        const CustomerOrder(
+          number: '000000200',
+          status: 'Pending',
+          date: '2026-01-05',
+        ),
+      );
+      expect(_doneLabels(tester), ['Order Placed']);
+    });
+
+    testWidgets('an invoice advances it to Order Confirmed', (tester) async {
+      await pump(
+        tester,
+        const CustomerOrder(
+          number: '000000201',
+          status: 'Processing',
+          date: '2026-01-05',
+          invoiceCount: 1,
+        ),
+      );
+      expect(_doneLabels(tester), ['Order Placed', 'Order Confirmed']);
+    });
+
+    testWidgets('a shipment advances it to Packed & Shipped', (tester) async {
+      await pump(
+        tester,
+        const CustomerOrder(
+          number: '000000202',
+          status: 'Processing',
+          date: '2026-01-05',
+          invoiceCount: 1,
+          shipmentCount: 1,
+        ),
+      );
+      expect(_doneLabels(tester), [
+        'Order Placed',
+        'Order Confirmed',
+        'Packed & Shipped',
+      ]);
+    });
+
+    testWidgets('a shipment with no tracking number still counts', (
+      tester,
+    ) async {
+      // The old logic keyed off tracking numbers, so a shipment raised
+      // without one left the timeline stuck a stage behind the admin.
+      await pump(
+        tester,
+        const CustomerOrder(
+          number: '000000203',
+          status: 'Processing',
+          date: '2026-01-05',
+          shipmentCount: 1,
+        ),
+      );
+      expect(_doneLabels(tester), contains('Packed & Shipped'));
+    });
+
+    testWidgets('a complete order fills the timeline', (tester) async {
+      await pump(
+        tester,
+        const CustomerOrder(
+          number: '000000204',
+          status: 'Complete',
+          date: '2026-01-05',
+          invoiceCount: 1,
+          shipmentCount: 1,
+        ),
+      );
+      expect(_doneLabels(tester), hasLength(4));
+      expect(_doneLabels(tester).last, 'Delivered');
+    });
+
+    testWidgets('on hold freezes the timeline and names the state', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        const CustomerOrder(
+          number: '000000205',
+          status: 'On Hold',
+          date: '2026-01-05',
+          invoiceCount: 1,
+        ),
+      );
+      // Paused where it genuinely got to — not advanced, not reset.
+      expect(_doneLabels(tester), ['Order Placed', 'Order Confirmed']);
+      expect(find.text('On Hold'), findsOneWidget);
+    });
+
+    testWidgets('cancelled leaves everything after Placed pending', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        const CustomerOrder(
+          number: '000000206',
+          status: 'Canceled',
+          date: '2026-01-05',
+          invoiceCount: 1,
+        ),
+      );
+      expect(_doneLabels(tester), ['Order Placed']);
+      expect(find.text('Cancelled'), findsOneWidget);
+    });
+
     testWidgets('renders the tracking number LTR in Arabic', (tester) async {
       await pump(
         tester,
@@ -234,4 +345,21 @@ void main() {
       expect(number.textDirection, TextDirection.ltr);
     });
   });
+}
+
+/// The timeline stages currently shown as done, in order.
+///
+/// Read from the tick each completed step renders — the timeline dots are the
+/// only check icons on the screen — so the assertion follows what a tester
+/// actually sees. Stages always fill as a prefix (each implies the ones before
+/// it), so the tick count names them.
+List<String> _doneLabels(WidgetTester tester) {
+  const stages = [
+    'Order Placed',
+    'Order Confirmed',
+    'Packed & Shipped',
+    'Delivered',
+  ];
+  final done = find.byIcon(Icons.check).evaluate().length;
+  return stages.take(done).toList();
 }

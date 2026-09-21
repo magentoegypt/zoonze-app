@@ -254,8 +254,14 @@ class AccountRepository {
       if (sum > 0) discount = Money(amount: sum, currency: currency);
     }
     final trackings = <OrderTracking>[];
-    for (final shipment in (json['shipments'] as List<dynamic>? ?? const [])) {
+    final shipments = json['shipments'] as List<dynamic>? ?? const [];
+    // Invoices/shipments are what the tracking timeline advances on, so count
+    // the shipments themselves — one raised without a tracking number still
+    // means the order shipped.
+    var shipmentCount = 0;
+    for (final shipment in shipments) {
       if (shipment is! Map<String, dynamic>) continue;
+      shipmentCount++;
       for (final t in (shipment['tracking'] as List<dynamic>? ?? const [])) {
         if (t is! Map<String, dynamic>) continue;
         final number = (t['number'] as String?) ?? '';
@@ -313,6 +319,10 @@ class AccountRepository {
       lines: lines,
       trackings: trackings,
       comments: comments,
+      invoiceCount: (json['invoices'] as List<dynamic>? ?? const [])
+          .whereType<Map<String, dynamic>>()
+          .length,
+      shipmentCount: shipmentCount,
     );
   }
 
