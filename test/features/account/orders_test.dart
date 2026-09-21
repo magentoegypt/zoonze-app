@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:zoonze_app/core/config/store_timezone.dart';
 import 'package:zoonze_app/features/account/data/account_repository.dart';
 import 'package:zoonze_app/features/account/domain/order.dart';
 import 'package:zoonze_app/features/account/presentation/screens/order_detail_screen.dart';
@@ -71,15 +72,22 @@ void main() {
   group('OrderDetailScreen', () {
     Future<void> pump(WidgetTester tester, CustomerOrder order) async {
       await tester.pumpWidget(
-        MaterialApp(
-          localizationsDelegates: const [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
+        ProviderScope(
+          // The screen renders order times in the store's zone; stub it so the
+          // test never reaches the network for storeConfig.
+          overrides: [
+            storeTimezoneProvider.overrideWith((ref) async => 'Asia/Dubai'),
           ],
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: OrderDetailScreen(order: order),
+          child: MaterialApp(
+            localizationsDelegates: const [
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: OrderDetailScreen(order: order),
+          ),
         ),
       );
       await tester.pumpAndSettle();

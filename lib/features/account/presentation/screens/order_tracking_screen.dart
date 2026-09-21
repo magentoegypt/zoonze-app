@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/routes.dart';
 import '../../../../app/shell/marketing_footer.dart';
 import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/config/store_timezone.dart';
 import '../../../../core/widgets/network_image.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../../core/widgets/zoonze_back_button.dart';
@@ -21,7 +23,7 @@ typedef _Step = ({String label, String time, bool done});
 /// delivery address, items, and a help link. Reached from the My Orders "Track"
 /// action — and, for a guest, straight from checkout — with the
 /// [CustomerOrder].
-class OrderTrackingScreen extends StatelessWidget {
+class OrderTrackingScreen extends ConsumerWidget {
   const OrderTrackingScreen({super.key, required this.order});
 
   final CustomerOrder order;
@@ -50,7 +52,7 @@ class OrderTrackingScreen extends StatelessWidget {
 
   /// The five fixed timeline stages, filled up to (and including) the reached
   /// stage. Only "Order Placed" carries a timestamp (the order date).
-  List<_Step> _steps(AppLocalizations l10n, String locale) {
+  List<_Step> _steps(AppLocalizations l10n, String locale, String storeZone) {
     final labels = <String>[
       l10n.orderPlaced,
       l10n.orderStageConfirmed,
@@ -63,7 +65,7 @@ class OrderTrackingScreen extends StatelessWidget {
       for (var i = 0; i < labels.length; i++)
         (
           label: labels[i],
-          time: i == 0 ? orderFmtDateTime(order.date, locale) : '',
+          time: i == 0 ? orderFmtDateTime(order.date, locale, storeZone) : '',
           // Cancelled (reached < 0): only Placed is done; rest stay pending.
           done: reached >= 0 && i <= reached,
         ),
@@ -90,16 +92,19 @@ class OrderTrackingScreen extends StatelessWidget {
 
   /// Secondary line under the status: the real delivery method when present,
   /// otherwise the order date. No fabricated per-order ETA.
-  String _statusSub(String locale) =>
+  String _statusSub(String locale, String storeZone) =>
       (order.shippingMethod != null && order.shippingMethod!.isNotEmpty)
       ? order.shippingMethod!
-      : orderFmtDateTime(order.date, locale);
+      : orderFmtDateTime(order.date, locale, storeZone);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final locale = Localizations.localeOf(context).languageCode;
-    final steps = _steps(l10n, locale);
+    // Empty until the store config lands — the timestamp then reads as it
+    // always did (device-local) rather than jumping once it arrives.
+    final storeZone = ref.watch(storeTimezoneProvider).valueOrNull ?? '';
+    final steps = _steps(l10n, locale, storeZone);
 
     return ZoonzeScaffold(
       currentTab: AppTab.account,
@@ -146,7 +151,7 @@ class OrderTrackingScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        _statusSub(locale),
+                        _statusSub(locale, storeZone),
                         style: const TextStyle(
                           color: AppColors.inkMuted,
                           fontSize: 12.5,

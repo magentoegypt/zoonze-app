@@ -6,6 +6,7 @@ import '../../../../app/routes.dart';
 import '../../../../app/shell/marketing_footer.dart';
 import '../../../../app/shell/zoonze_scaffold.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/config/store_timezone.dart';
 import '../../../../core/widgets/network_image.dart';
 import '../../../../core/error/failure.dart';
 import '../../../../core/widgets/empty_state.dart';
@@ -350,7 +351,7 @@ class _Chip extends StatelessWidget {
   }
 }
 
-class _OrderCard extends StatelessWidget {
+class _OrderCard extends ConsumerWidget {
   const _OrderCard({
     required this.order,
     required this.onDetails,
@@ -364,8 +365,10 @@ class _OrderCard extends StatelessWidget {
   final VoidCallback onReorder;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
+    // Magento stamps order dates in the store's zone — see orderFmtDate.
+    final storeZone = ref.watch(storeTimezoneProvider).valueOrNull ?? '';
     final isPast = order.isDelivered || order.isCancelled;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -400,7 +403,7 @@ class _OrderCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          '${orderFmtDate(order.date, Localizations.localeOf(context).languageCode)} · ${l10n.orderItemCount(order.itemCount)}',
+                          '${orderFmtDate(order.date, Localizations.localeOf(context).languageCode, storeZone)} · ${l10n.orderItemCount(order.itemCount)}',
                           style: const TextStyle(
                             color: AppColors.inkMuted,
                             fontSize: 12,

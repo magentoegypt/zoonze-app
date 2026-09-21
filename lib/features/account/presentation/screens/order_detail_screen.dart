@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/config/store_timezone.dart';
 import '../../../../core/widgets/network_image.dart';
 import '../../../../l10n/l10n.dart';
 import '../../../catalog/domain/money.dart';
@@ -22,6 +23,8 @@ class OrderDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final locale = Localizations.localeOf(context).languageCode;
+    // Magento stamps order times in the store's zone — see orderFmtDate.
+    final storeZone = ref.watch(storeTimezoneProvider).valueOrNull ?? '';
     return Scaffold(
       appBar: AppBar(title: Text(l10n.orderDetailsTitle)),
       body: ListView(
@@ -33,7 +36,7 @@ class OrderDetailScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '${orderFmtDate(order.date, locale)} · ${order.status}',
+            '${orderFmtDate(order.date, locale, storeZone)} · ${order.status}',
             style: const TextStyle(color: AppColors.inkMuted),
           ),
           const SizedBox(height: 16),
@@ -159,7 +162,7 @@ class OrderDetailScreen extends ConsumerWidget {
             for (final c in order.comments.reversed)
               _TimelineRow(
                 message: c.message,
-                timestamp: orderFmtDateTime(c.timestamp, locale),
+                timestamp: orderFmtDateTime(c.timestamp, locale, storeZone),
               ),
           ],
 

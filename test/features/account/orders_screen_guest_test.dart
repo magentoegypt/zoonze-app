@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:zoonze_app/core/config/store_contact.dart';
+import 'package:zoonze_app/core/config/store_timezone.dart';
 import 'package:zoonze_app/core/storage/local_cache.dart';
 import 'package:zoonze_app/core/storage/locale_prefs.dart';
 import 'package:zoonze_app/core/storage/secure_token_store.dart';
@@ -91,6 +92,9 @@ Widget _harness({
       localePrefsProvider.overrideWithValue(FakeLocalePrefs(locale)),
       catalogRepositoryProvider.overrideWithValue(FakeCatalogRepository()),
       storeContactProvider.overrideWithValue(_testContact),
+      // The screens render order times in the store's zone; stub it so the
+      // test never reaches the network for storeConfig.
+      storeTimezoneProvider.overrideWith((ref) async => 'Asia/Dubai'),
       cartRepositoryProvider.overrideWithValue(FakeCartRepository()),
       wishlistRepositoryProvider.overrideWithValue(FakeWishlistRepository()),
     ],
