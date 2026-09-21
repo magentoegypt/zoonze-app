@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
@@ -1469,24 +1470,8 @@ class _SpecialOfferCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: AppColors.brandPrimary),
-                        ),
-                        child: Text(
-                          offer.couponCode,
-                          style: const TextStyle(
-                            color: AppColors.brandPrimary,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12,
-                          ),
-                        ),
+                      Flexible(
+                        child: _CopyCouponChip(code: offer.couponCode),
                       ),
                     ],
                   ),
@@ -1495,6 +1480,69 @@ class _SpecialOfferCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// The advertised promo code, as a tappable chip that copies it to the
+/// clipboard. The whole chip is the tap target — the trailing icon is the
+/// affordance that says so — because a code you can read but not lift out is
+/// the thing QA filed this for. Same idiom as the cart coupon field and the
+/// order/tracking numbers: [Clipboard.setData] plus a confirming snackbar.
+class _CopyCouponChip extends StatelessWidget {
+  const _CopyCouponChip({required this.code});
+
+  final String code;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Tooltip(
+      message: l10n.actionCopy,
+      child: InkWell(
+        onTap: () async {
+          final messenger = ScaffoldMessenger.of(context);
+          await Clipboard.setData(ClipboardData(text: code));
+          messenger.showSnackBar(
+            SnackBar(content: Text(l10n.cartCouponCopied)),
+          );
+        },
+        borderRadius: BorderRadius.circular(6),
+        child: Semantics(
+          button: true,
+          label: '${l10n.actionCopy} $code',
+          child: Container(
+            padding: const EdgeInsetsDirectional.fromSTEB(8, 2, 6, 2),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: AppColors.brandPrimary),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    code,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppColors.brandPrimary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                const Icon(
+                  Icons.copy_outlined,
+                  size: 14,
+                  color: AppColors.brandPrimary,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
