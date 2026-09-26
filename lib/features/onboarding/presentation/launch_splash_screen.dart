@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/routes.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../core/assets/app_images.dart';
+import '../../../core/storage/local_cache.dart';
 import '../../../core/storage/secure_token_store.dart';
 import '../../../core/util/image_prefetch.dart';
 import '../../../core/widgets/network_image.dart';
@@ -17,10 +18,17 @@ import '../../catalog/domain/home_config.dart';
 import '../../catalog/presentation/catalog_providers.dart';
 import '../../../core/widgets/brand_lockup.dart';
 import '../../../l10n/l10n.dart';
+import 'intro_video_screen.dart';
 
 /// Launch splash: full ZoonZE logo (tinted white on burgundy) + tagline. While
 /// it shows, we read the saved session: a returning signed-in customer skips
 /// Welcome/Sign In and lands on Home; everyone else goes to Welcome. Chrome-free.
+///
+/// On the **first launch after install** the intro video (CL042-DEV41) takes
+/// the place of that static branding — it ends on the same logo, so showing
+/// both would play the logo twice. Everything else is unchanged: the same
+/// warm-up runs behind it and the same routing decision follows. The video is
+/// shown once and never again; see [_introSeenKey].
 class LaunchSplashScreen extends ConsumerStatefulWidget {
   const LaunchSplashScreen({super.key});
 
@@ -28,12 +36,58 @@ class LaunchSplashScreen extends ConsumerStatefulWidget {
   ConsumerState<LaunchSplashScreen> createState() => _LaunchSplashScreenState();
 }
 
+/// Hive key recording that the first-launch intro has been played.
+const String _introSeenKey = 'intro_video_seen';
+
+/// Backstop for the intro gate. Generous enough never to clip the 13.5s video
+/// on a slow device, short enough that a wedged decoder can't strand a user on
+/// a black screen — startup must not be able to hang behind a promo.
+const Duration _introMaxHold = Duration(seconds: 25);
+
 class _LaunchSplashScreenState extends ConsumerState<LaunchSplashScreen> {
+  /// Whether this launch shows the intro instead of the static branding.
+  /// Decided once, before first paint, so the body never swaps mid-launch.
+  late final bool _playIntro;
+
+  /// Completes when the intro ends, is skipped, or fails to start.
+  final _introGate = Completer<void>();
+
   @override
   void initState() {
     super.initState();
+    _playIntro = !_introAlreadySeen();
     _warmHome();
     _routeOnboarding();
+  }
+
+  bool _introAlreadySeen() {
+    try {
+      return ref.read(localCacheProvider).readString(_introSeenKey) != null;
+    } on Object {
+      // No cache, no intro — a storage failure must not gate the app behind a
+      // video, and showing it again is worse than not showing it at all.
+      return true;
+    }
+  }
+
+  /// Marks the intro played and releases the gate. Idempotent: end-of-video,
+  /// Skip and an init failure can all arrive, and only the first matters.
+  void _finishIntro() {
+    if (_introGate.isCompleted) return;
+    _introGate.complete();
+    // Fire-and-forget: a failed write costs a replay on next launch, which is
+    // not worth delaying startup for.
+    unawaited(
+      Future(() async {
+        try {
+          await ref
+              .read(localCacheProvider)
+              .writeString(_introSeenKey, DateTime.now().toIso8601String());
+        } on Object {
+          // Ignored — see above.
+        }
+      }),
+    );
   }
 
   /// The splash deliberately holds for 2.6s. Spend it fetching what Home needs
@@ -76,10 +130,15 @@ class _LaunchSplashScreenState extends ConsumerState<LaunchSplashScreen> {
 
   Future<void> _routeOnboarding() async {
     // Hold the splash long enough for the branding to register (QA: it flashed
-    // by in under a second) while reading the persisted token.
+    // by in under a second) while reading the persisted token. On an intro
+    // launch the hold is the video instead — bounded, so a stalled decoder
+    // still lets the app through.
+    final hold = _playIntro
+        ? _introGate.future.timeout(_introMaxHold, onTimeout: () {})
+        : Future<void>.delayed(const Duration(milliseconds: 2600));
     final results = await Future.wait<Object?>([
       ref.read(secureTokenStoreProvider).read(),
-      Future<void>.delayed(const Duration(milliseconds: 2600)),
+      hold,
     ]);
     if (!mounted) return;
     final token = results.first as String?;
@@ -90,6 +149,15 @@ class _LaunchSplashScreenState extends ConsumerState<LaunchSplashScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    if (_playIntro) {
+      return IntroVideoView(
+        onFinished: _finishIntro,
+        // Couldn't decode: drop straight through to routing rather than hold a
+        // black frame. The flag is still set, so a device that can never play
+        // it doesn't meet it on every launch.
+        onFailed: _finishIntro,
+      );
+    }
     return Scaffold(
       backgroundColor: AppColors.brandPrimary,
       body: Stack(

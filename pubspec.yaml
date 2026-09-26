@@ -78,6 +78,11 @@ flutter:
     # the licensed artwork is dropped in by hand; the checkout row falls back to
     # a Material icon while the directory holds only the README.
     - assets/payments/
+    # First-launch intro (assets/video/README.md). Re-encoded from the 4K
+    # master to 1080x1920 and stripped of its silent audio track — ~1 MB, which
+    # every user downloads, so keep any replacement to the same budget. Listed
+    # as a file, not a directory, so the README beside it isn't shipped too.
+    - assets/video/app_intro.mp4
   fonts:
     # Variable fonts (all weights in a single file). Inter + Playfair Display for
     # Latin/EN; Cairo for Arabic/AR. See docs/FIGMA_DESIGN.md.
