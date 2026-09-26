@@ -111,6 +111,8 @@ class OrderDetailScreen extends ConsumerWidget {
             ),
           if (order.shippingAmount != null)
             _TotalRow(label: l10n.orderShippingLabel, amount: order.shippingAmount!),
+          if (order.hasCodFee)
+            _TotalRow(label: l10n.checkoutCodFee, amount: order.codFee!),
           if (order.total != null)
             _TotalRow(label: l10n.cartTotal, amount: order.total!, emphasize: true),
 

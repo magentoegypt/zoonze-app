@@ -17,7 +17,7 @@ before acting on one.
 
 | # | Blocker | Blocks | Source | Status |
 |---|---------|--------|--------|--------|
-| 1 | `cod_fee` missing from `OrderTotal` | COD fee itemisation in order history | [CL042-DEV43](https://app.clickup.com/t/14zb93nuzfu) | Requested 2026-09-26 · *verified today* |
+| ~~1~~ | ~~`cod_fee` missing from `OrderTotal`~~ | — | [CL042-DEV43](https://app.clickup.com/t/14zb93nuzfu) | **Shipped 2026-09-26** · app wired |
 | 2 | N-Genius session not returned through GraphQL | Card payments in the app; saved cards ride the same session | [ngenius-graphql-session.md](ngenius-graphql-session.md) | Root cause confirmed 2026-07-29 |
 | 3 | Vault surface for `ngeniusonline` | Saved cards (CL042-DEV25) | [payment-contract.md](payment-contract.md) §④ | Specified, not confirmed live |
 | 4 | No device-token endpoint / FCM sending | All push notifications | [notifications-contract.md](notifications-contract.md) | Not implemented |
@@ -28,22 +28,20 @@ before acting on one.
 
 ---
 
-## 1. `cod_fee` missing from `OrderTotal`
+## 1. `cod_fee` on `OrderTotal` — ✅ RESOLVED
 
-`CartPrices.cod_fee` is live and consumed: the cart and checkout summaries show
-a "Cash on Delivery Fee" row and the quoted total matches what is charged
-(app 1.0.2+112).
+**Shipped 2026-09-26**, the same day it was asked for. A `Money`, always
+present, `0` when it does not apply — the same shape as on `CartPrices` — and
+on `guestOrder` too, so one selection covers customer and guest lookups.
 
-`OrderTotal` has no equivalent field — its members are `subtotal_excl_tax`,
-`subtotal_incl_tax`, `total_shipping`, `shipping_handling`, `taxes`,
-`discounts`, `grand_total`, `base_grand_total`. So a past COD order shows the
-right `grand_total` over parts that sum 10.00 AED short of it.
+Resolved against a real pre-module order, where the column is NULL: it returns
+`0` rather than erroring, so historical orders need no special handling. They
+do not reconcile retroactively, but nothing breaks.
 
-**Needed:** `cod_fee` on `OrderTotal`, a `Money` returning 0 when it does not
-apply — the same shape as on `CartPrices`. Nothing else.
-
-**Meanwhile:** the order screen renders whatever comes back, so it degrades to
-a breakdown that does not reconcile rather than to an error.
+**App side wired the same day:** `cod_fee` is selected on the order query,
+carried on `CustomerOrder`, and the order detail screen shows a "Cash on
+Delivery Fee" row between shipping and the total whenever the amount is above
+zero. Orders that never carried the fee simply do not show the row.
 
 ## 2. N-Genius session not returned through GraphQL
 

@@ -15,6 +15,10 @@ abstract final class AccountQueries {
       total_shipping { value currency }
       grand_total { value currency }
       discounts { amount { value currency } label }
+      # Cash-on-Delivery handling fee (MagentoEgypt_CodFee), already inside
+      # grand_total. Money, never null: 0 when it does not apply, including on
+      # orders placed before the module existed, whose column is NULL.
+      cod_fee { value currency }
     }
     items {
       product_name
