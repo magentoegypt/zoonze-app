@@ -3,12 +3,17 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
-import '../../../app/theme/app_colors.dart';
 import '../../../l10n/l10n.dart';
 
 /// Asset path of the first-launch intro. See `assets/video/README.md` for the
 /// encode it must be kept to.
 const String kIntroVideoAsset = 'assets/video/app_intro.mp4';
+
+/// The video's own background red, sampled from its corner (constant for the
+/// whole clip). Deliberately **not** `AppColors.brandPrimary` (#9E1B3F): the
+/// two are visibly different, and this colour is what makes the letterbox
+/// bands indistinguishable from the frame itself.
+const Color _kIntroBackdrop = Color(0xFF8F2221);
 
 /// The first-launch intro video (CL042-DEV41), shown once in place of the
 /// static launch splash.
@@ -100,17 +105,19 @@ class _IntroVideoViewState extends State<IntroVideoView> {
     final l10n = AppLocalizations.of(context);
     final controller = _controller;
     return Scaffold(
-      // Matches the video's own background, so the letterbox on an aspect
-      // ratio the video doesn't fill reads as part of it.
-      backgroundColor: AppColors.brandPrimary,
+      backgroundColor: _kIntroBackdrop,
       body: Stack(
         children: [
           if (_ready && controller != null)
-            // Cover the screen — the intro is 9:16 and phones are close
-            // enough to it that cropping beats letterboxing.
+            // Contain, not cover. The intro is 9:16 and its copy runs nearly
+            // edge to edge, so covering a 19.5:9 phone cropped ~11% off each
+            // side and cut the words in half ("HURRY BEFORE" lost both its
+            // outer letters — QA, 2026-09-26). Letterboxing against the
+            // video's own background colour costs nothing visible, because the
+            // sunburst's edges are a flat red that the bands match exactly.
             Positioned.fill(
               child: FittedBox(
-                fit: BoxFit.cover,
+                fit: BoxFit.contain,
                 child: SizedBox(
                   width: controller.value.size.width,
                   height: controller.value.size.height,
