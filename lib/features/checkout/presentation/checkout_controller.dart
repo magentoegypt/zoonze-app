@@ -318,6 +318,22 @@ class CheckoutController extends Notifier<CheckoutState> {
     return null;
   }
 
+  /// Re-reads the cart so the totals reflect what the server now charges,
+  /// returning its grand total (the previous one when the refresh fails).
+  ///
+  /// A stale total here is a money-shown-vs-money-charged bug, but a failed
+  /// refresh must not block choosing a method — the amount the customer is
+  /// charged comes from the server at placeOrder either way.
+  Future<Money?> _refreshedGrandTotal() async {
+    try {
+      await ref.read(cartControllerProvider.notifier).refresh();
+      return ref.read(cartControllerProvider).cart.totals.grandTotal ??
+          state.grandTotal;
+    } on Object {
+      return state.grandTotal;
+    }
+  }
+
   /// Selects a payment method, optionally with a saved card.
   ///
   /// [savedCardHash] pays with a stored card — pass it together with the vault
@@ -338,9 +354,19 @@ class CheckoutController extends Notifier<CheckoutState> {
         publicHash: savedCardHash,
         saveCard: wantsSave,
       );
+      // The method can change the total: Cash on Delivery carries a flat
+      // handling fee the server puts inside grand_total (CL042-DEV43). Our
+      // grandTotal was read when the *shipping* method was set, before any
+      // payment method existed on the quote — and COD is the pre-selected
+      // default — so without this the summary and the Place Order button
+      // would quote a figure lower than the customer is actually charged.
+      // Re-read on every method, including switching away, since that
+      // removes the fee again.
+      final refreshed = await _refreshedGrandTotal();
       state = state.copyWith(
         selectedPayment: method,
         selectedSavedCardHash: savedCardHash,
+        grandTotal: refreshed,
         // The store refused the opt-in (§④ not deployed): untick it rather than
         // leave a checkbox promising something that won't happen.
         saveCard: wantsSave && !saved ? false : null,

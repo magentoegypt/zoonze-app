@@ -455,6 +455,7 @@
   "checkoutPayment": "طريقة الدفع",
   "checkoutSummary": "ملخّص الطلب",
   "checkoutDeliveryFee": "رسوم التوصيل",
+  "checkoutCodFee": "رسوم الدفع عند الاستلام",
   "checkoutPaymentSecurityNote": "تتم معالجة المدفوعات الإلكترونية بأمان، والدفع عند الاستلام متاح في جميع أنحاء الإمارات.",
   "checkoutContinue": "متابعة",
   "checkoutPlaceOrder": "تأكيد الطلب",
