@@ -21,10 +21,11 @@ before acting on one.
 | 2 | N-Genius session not returned through GraphQL | Card payments in the app; saved cards ride the same session | [ngenius-graphql-session.md](ngenius-graphql-session.md) | Root cause confirmed 2026-07-29 |
 | 3 | Vault surface for `ngeniusonline` | Saved cards (CL042-DEV25) | [payment-contract.md](payment-contract.md) §④ | Specified, not confirmed live |
 | 4 | No device-token endpoint / FCM sending | All push notifications | [notifications-contract.md](notifications-contract.md) | Not implemented |
-| 5 | Wallet method codes absent from `available_payment_methods` | Apple Pay, Samsung Pay | [payment-contract.md](payment-contract.md) | Not served as of 2026-08-20 |
+| 5 | `ngeniusonline_applepay` absent from `available_payment_methods` | Apple Pay only — Samsung Pay now served | [payment-contract.md](payment-contract.md) | Narrowed 2026-09-26 · *verified today* |
 | 6 | Free-shipping carrier offers no free method at threshold | Checkout charges shipping the cart promised free | [android-qa-backend-flags.md](android-qa-backend-flags.md) §1 | Open · config only |
 | 7 | Assorted config/content gaps | Cosmetic + catalog | [android-qa-backend-flags.md](android-qa-backend-flags.md) §§2,3,4,6,8 | Open |
 | 8 | Cart / wishlist not shared across web and app | Cross-platform continuity | *no contract doc* | Carried forward |
+| 9 | Tamara absent from the checkout API entirely | Tamara as a payment method ([CL042-DEV42](https://app.clickup.com/t/14zb93nuzft)) | *no contract doc* | Open · *verified today* |
 
 ---
 
@@ -73,7 +74,7 @@ reset, and new/updated order.
 
 **Meanwhile:** the notifications screen is permanently empty.
 
-## 5. Wallet method codes absent
+## 5. Apple Pay absent — Samsung Pay now served
 
 Apple Pay and Samsung Pay are N-Genius **presentations**, not separate gateways:
 same order, same session, only `method_code` differs
@@ -81,12 +82,17 @@ same order, same session, only `method_code` differs
 `available_payment_methods` like any other method — the app adds nothing and
 only filters by a device-capability probe.
 
+**Changed 2026-09-26:** `ngeniusonline_samsungpay` is now served on both store
+views (checked on a live AE cart, `eg_en` and `eg_ar`). This entry was recorded
+as "neither served" on 2026-08-20; only Apple Pay is still missing.
+
+Since the app filters wallets by device capability, Samsung Pay should now
+appear on capable Android hardware **without any app change** — that has not
+been confirmed on a device, and is worth checking before assuming it works.
+
 **Also external, not backend:** the Apple Pay processing certificate (CSR from
 N-Genius), regenerating both committed provisioning profiles, and Samsung Pay
 portal registration. See [decisions/payments.md](../decisions/payments.md) §5.
-
-**Meanwhile:** neither row appears, and checkout renders the methods that are
-served.
 
 ## 6. Free-shipping carrier offers no free method at threshold
 
@@ -110,6 +116,42 @@ a store-agnostic `items_v2` resolver override for the wishlist.
 **This one has no contract doc** — it comes from an earlier investigation. Worth
 writing up properly before it is handed over, since the detail here is thinner
 than every other entry.
+
+## 9. Tamara absent from the checkout API entirely
+
+[CL042-DEV42](https://app.clickup.com/t/14zb93nuzft) asks for Tamara. Checked
+against the live store on 2026-09-26 — it is not reachable from the app by any
+route:
+
+| Check | Result |
+| --- | --- |
+| `available_payment_methods`, live AE cart, `eg_en` | Samsung Pay · Visa & MasterCard · Tabby · Cash On Delivery |
+| same on `eg_ar`, cart at AED 2,490 | identical four — not a BNPL threshold |
+| `PaymentGateway` enum on the live schema | `NGENIUS`, `TABBY` only |
+| Any Tamara type in the schema | none |
+| Any Tamara field on `StoreConfig` | none |
+
+The app builds its checkout list strictly from `available_payment_methods` and
+routes payment by the gateway the session reports, so there is nothing for app
+code to bind to. Writing a gateway now would mean inventing the method code, the
+enum value and the SDK contract, and finding out they were wrong when the
+backend lands — so the app side is deliberately **not** started.
+
+The absence of any schema type suggests the Magento module is not installed,
+rather than installed but unexposed; admin is where to confirm that. Note the
+ticket describes adding Tamara to the **website** — a method reaching the
+website does not reach the app until its GraphQL surface exists, which is the
+same gap as #2.
+
+**Needed, mirroring Tabby:** the method in `available_payment_methods`, `TAMARA`
+added to `PaymentGateway`, and `paymentSession` returning a Tamara session. Once
+those exist the app work is a third `PaymentProvider` value, a resolver branch
+and a gateway implementation — whose shape depends on whether Tamara ships a
+Flutter package (like Tabby) or needs native code (like N-Genius). The
+integration pack was emailed to the team and should settle that.
+
+**Meanwhile:** no Tamara row appears, and checkout renders the four methods that
+are served.
 
 ---
 
