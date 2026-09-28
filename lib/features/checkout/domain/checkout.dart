@@ -48,10 +48,18 @@ class PaymentMethodOption {
     final c = code.toLowerCase();
     return c.contains('ngenius') ||
         c.contains('network_international') ||
-        c.contains('tabby');
+        c.contains('tabby') ||
+        c.contains('tamara');
   }
 
   bool get isTabby => code.toLowerCase().contains('tabby');
+
+  /// Tamara (`tamara_pay_by_instalments`) — BNPL, like Tabby, and therefore a
+  /// redirect method. It must never fall through to the non-gateway path: the
+  /// backend served it before `PaymentGateway` gained a `TAMARA` value, and
+  /// while it read as non-redirect the app finalised on `placeOrder` and showed
+  /// order success with nothing paid.
+  bool get isTamara => code.toLowerCase().contains('tamara');
 
   /// Magento's vault code for N-Genius saved cards (`ngeniusonline_vault`),
   /// mirroring core `payflowpro_cc_vault`. The backend advertises it in
