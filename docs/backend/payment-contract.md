@@ -552,6 +552,29 @@ answer to the app's request on [CL042-DEV42](https://app.clickup.com/t/14zb93nuz
 
 Top-level: `payment_id` (the Tamara order id), `web_url`, `publishable_key`.
 
+### The method code is rewritten after payment
+
+Tamara rewrites `tamara_pay_by_instalments` to carry the chosen instalment
+count, so the same method comes back as e.g. `tamara_pay_by_instalments_4`.
+Everything the app keys on the code (redirect classification, display rank)
+matches by substring for this reason; an exact match would sort a paid Tamara
+order below Cash on Delivery as an unknown method.
+
+`tamara_pay_now` was **disabled 2026-09-28**: Tamara's live account never
+returned `PAY_NOW` for any cart, so every customer who chose it got a failed
+payment. Instalments is the only Tamara code served today. Re-enabling is a
+config flip once Tamara's account manager enables it properly.
+
+### Open, backend-side
+
+- **Eligibility filtering never runs** (Tamara's `getItems()` early-return), so
+  checkout offers Tamara even on carts Tamara declines outright — the customer
+  reaches the hosted page and fails there rather than never seeing the option.
+  The app cannot fix this: it shows what `available_payment_methods` returns.
+- **Base URLs are `http://`**, so the return URLs Tamara receives are `http`.
+  It works via redirect, and the app matches the return on **host**, which is
+  scheme-independent — but the frontend secure base URL is worth setting.
+
 ### Is the success return authoritative?
 
 **Yes — but only if the page is actually loaded.** Magento reconciles with

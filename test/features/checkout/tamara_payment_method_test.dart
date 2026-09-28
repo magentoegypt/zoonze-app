@@ -30,6 +30,37 @@ void main() {
     });
   });
 
+  group('Tamara rewrites its own method code', () {
+    // Backend note (2026-09-28): after payment Tamara rewrites the code to the
+    // chosen instalment count, so the same method comes back as
+    // `tamara_pay_by_instalments_4`. Everything keyed on the code must survive
+    // that — these are substring matches, and this locks that in.
+    const rewritten = PaymentMethodOption(
+      code: 'tamara_pay_by_instalments_4',
+      title: 'Tamara',
+    );
+
+    test('still reads as Tamara and as a redirect method', () {
+      expect(rewritten.isTamara, isTrue);
+      expect(rewritten.isRedirect, isTrue);
+      expect(rewritten.isTabby, isFalse);
+      expect(isCodMethod(rewritten.code), isFalse);
+    });
+
+    test('still ranks with instalments, not as an unknown method', () {
+      // An unknown code sorts to the bottom, below Cash on Delivery — which is
+      // where this would land if the match were exact rather than substring.
+      expect(
+        paymentRank(rewritten.code),
+        paymentRank('tamara_pay_by_instalments'),
+      );
+      expect(
+        paymentRank(rewritten.code),
+        lessThan(paymentRank('cashondelivery')),
+      );
+    });
+  });
+
   group('Tamara sits directly after Tabby', () {
     test('ranks between Tabby and Cash on Delivery', () {
       expect(
