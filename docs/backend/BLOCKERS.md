@@ -25,7 +25,7 @@ before acting on one.
 | 6 | Free-shipping carrier offers no free method at threshold | Checkout charges shipping the cart promised free | [android-qa-backend-flags.md](android-qa-backend-flags.md) §1 | Open · config only |
 | 7 | Assorted config/content gaps | Cosmetic + catalog | [android-qa-backend-flags.md](android-qa-backend-flags.md) §§2,3,4,6,8 | Open |
 | 8 | Cart / wishlist not shared across web and app | Cross-platform continuity | *no contract doc* | Carried forward |
-| 9 | Tamara absent from the checkout API entirely | Tamara as a payment method ([CL042-DEV42](https://app.clickup.com/t/14zb93nuzft)) | *no contract doc* | Open · *verified today* |
+| 9 | Tamara absent from the checkout API entirely | Tamara as a payment method ([CL042-DEV42](https://app.clickup.com/t/14zb93nuzft)) | *no contract doc* | Open · re-checked 2026-09-28 |
 
 ---
 
@@ -152,6 +152,26 @@ integration pack was emailed to the team and should settle that.
 
 **Meanwhile:** no Tamara row appears, and checkout renders the four methods that
 are served.
+
+**Re-checked 2026-09-28**, after word that Tamara had "gone to live mode":
+unchanged. Absent from `available_payment_methods` with *and* without a
+shipping method selected, on a AED 1,660 cart; `PaymentGateway` still
+`NGENIUS`/`TABBY`; still no Tamara type or config field.
+
+Live mode is the extension's sandbox-versus-production credential setting — it
+does not make a method visible to GraphQL. Core Magento lists any **active,
+applicable** method in `available_payment_methods` without custom GraphQL code,
+which is how Tabby appears, so the absence points at the method not being
+active for this quote: check that it is enabled **at the website scope the app
+queries**, that allowed countries include AE, that min/max order total and
+customer group do not exclude the cart, and that config cache was flushed.
+
+**When it does appear, two things follow.** The row shows in the app with **no
+code change** — checkout is built from `available_payment_methods`. But paying
+needs `TAMARA` on the `PaymentGateway` enum and a `paymentSession` that returns
+a Tamara session; without those the app cannot present anything. Enabling the
+method *before* the session support exists would let shoppers select Tamara and
+place orders that cannot then be paid, so the two should land together.
 
 ---
 

@@ -308,9 +308,18 @@ class CheckoutRepository {
     );
   }
 
-  PaymentProvider _gateway(String? raw) => raw?.toUpperCase() == 'TABBY'
-      ? PaymentProvider.tabby
-      : PaymentProvider.ngenius;
+  /// Maps the backend's `gateway` to something this build can present.
+  ///
+  /// Named exhaustively rather than defaulting: an unrecognised gateway used to
+  /// fall through to N-Genius, so a method enabled server-side before the app
+  /// supported it would have handed its session to the card SDK. Unknown now
+  /// stays unknown, and the caller leaves the order awaiting payment instead of
+  /// presenting the wrong screen.
+  PaymentProvider _gateway(String? raw) => switch (raw?.toUpperCase()) {
+    'TABBY' => PaymentProvider.tabby,
+    'NGENIUS' => PaymentProvider.ngenius,
+    _ => PaymentProvider.unknown,
+  };
 
   /// Fetches the backend-configured Tabby products (installments / pay later /
   /// card instalments) with enable flags, thresholds and promo toggles. Returns

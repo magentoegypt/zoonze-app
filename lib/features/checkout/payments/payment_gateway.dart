@@ -47,6 +47,9 @@ class PaymentGatewayResolver {
     return switch (session.gateway) {
       PaymentProvider.tabby => tabby,
       PaymentProvider.ngenius => native,
+      // A gateway this build cannot present — the caller treats a null the same
+      // as a non-ready session and leaves the order awaiting payment.
+      PaymentProvider.unknown => null,
     };
   }
 }

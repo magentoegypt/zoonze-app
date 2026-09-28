@@ -42,6 +42,23 @@ void main() {
       expect((gateway as _StubGateway?)?.label, 'tabby');
     });
 
+    // A gateway the backend names but this build does not implement — Tamara
+    // being the live case: a method can be switched on server-side before the
+    // app ships support for it.
+    test('gives no gateway for one this build does not implement', () {
+      // Previously anything that was not Tabby fell through to N-Genius, so a
+      // Tamara session would have opened the card SDK for a non-card payment.
+      // Null is what the caller already treats as "couldn't present", leaving
+      // the order awaiting payment.
+      final gateway = resolver.resolve(
+        _session(
+          gateway: PaymentProvider.unknown,
+          method: 'tamara_pay_by_instalments',
+        ),
+      );
+      expect(gateway, isNull);
+    });
+
     test('routes a READY N-Genius session to the native gateway', () {
       final gateway = resolver.resolve(
         _session(gateway: PaymentProvider.ngenius, method: 'ngeniusonline'),
