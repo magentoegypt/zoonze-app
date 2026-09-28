@@ -142,6 +142,31 @@ app asks for a session, cannot get a usable one, and says so rather than
 claiming success. The shopper can retry from `CompletePaymentScreen` once the
 backend lands.
 
+### Config says two methods; only one is served
+
+Admin has **both** `tamara_pay_now` and `tamara_pay_by_instalments` enabled
+(Production, `https://api.tamara.co`, email whitelist off), and the live
+credentials check returns:
+
+| Product | Min | Max |
+| --- | --- | --- |
+| `PAY_BY_INSTALMENTS` | 1 | 100,000 AED |
+| `PAY_NOW` | 1 | 7,500 AED |
+
+But `available_payment_methods` returns **only instalments**, checked at AED 830
+and AED 8,300. At 830 Pay Now is well inside its 7,500 ceiling and should be
+offered, so its absence is not the cap — check Pay Now's own allowed countries,
+min/max and customer-group settings, and that config cache was flushed. (At
+8,300 its absence would be correct.)
+
+The app is ready either way: both codes rank after Tabby and stay adjacent,
+instalments first, and both are treated as redirect methods.
+
+Also worth noting for the website/app gap: the **PDP widget is on** for the
+storefront, from `cdn.tamara.co`. The app has no Tamara promo — the Tabby
+equivalent is driven by a `tabbyConfig` query, and there is no Tamara
+counterpart. Achieving parity would need one.
+
 ### Needed
 
 `TAMARA` on the `PaymentGateway` enum, and `paymentSession` returning a Tamara

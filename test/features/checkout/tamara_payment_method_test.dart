@@ -42,6 +42,33 @@ void main() {
       );
     });
 
+    test('keeps both Tamara methods together, instalments first', () {
+      // The store has tamara_pay_now and tamara_pay_by_instalments enabled;
+      // only instalments is served so far. Ranked explicitly so the pair does
+      // not reorder between requests when Pay Now does appear.
+      final ordered = orderPayments(const [
+        PaymentMethodOption(code: 'cashondelivery', title: 'COD'),
+        PaymentMethodOption(code: 'tamara_pay_now', title: 'Tamara Pay Now'),
+        PaymentMethodOption(code: 'tabby_installments', title: 'Tabby'),
+        PaymentMethodOption(code: 'tamara_pay_by_instalments', title: 'Tamara'),
+      ]);
+      expect(ordered.map((m) => m.code).toList(), [
+        'tabby_installments',
+        'tamara_pay_by_instalments',
+        'tamara_pay_now',
+        'cashondelivery',
+      ]);
+    });
+
+    test('treats Pay Now as a redirect method too', () {
+      const payNow = PaymentMethodOption(
+        code: 'tamara_pay_now',
+        title: 'Tamara Pay Now',
+      );
+      expect(payNow.isRedirect, isTrue);
+      expect(payNow.isTamara, isTrue);
+    });
+
     test('orders the live method list the way the client asked', () {
       // Exactly what the store returns today, deliberately shuffled — the API
       // currently lists Tamara first.

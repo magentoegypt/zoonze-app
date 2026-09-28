@@ -18,11 +18,12 @@ List<PaymentMethodOption> orderPayments(List<PaymentMethodOption> methods) {
   return [for (final e in indexed) e.value];
 }
 
-/// Display order: Apple Pay, Samsung Pay, Visa & MasterCard, Tabby, **Tamara**,
-/// Cash on Delivery (CL042-DEV27, with Tamara placed after Tabby at the
-/// client's request 2026-09-28). Check/Money order is not in the client's list,
-/// so it sorts below them; anything unknown (including Zero Subtotal `free`,
-/// which is normally the only method when it appears) keeps the fallback rank.
+/// Display order: Apple Pay, Samsung Pay, Visa & MasterCard, Tabby, **Tamara
+/// instalments, Tamara Pay Now**, Cash on Delivery (CL042-DEV27, with Tamara
+/// placed after Tabby at the client's request 2026-09-28). Check/Money order is
+/// not in the client's list, so it sorts below them; anything unknown
+/// (including Zero Subtotal `free`, which is normally the only method when it
+/// appears) keeps the fallback rank.
 ///
 /// The wallet tests must stay ABOVE the `ngenius` substring test: the wallet
 /// method codes are `ngeniusonline_applepay` / `ngeniusonline_samsungpay`, so a
@@ -40,9 +41,13 @@ int paymentRank(String code) {
   }
   if (c.contains('ngenius') || c.contains('network')) return 2;
   if (c.contains('tabby')) return 3;
-  if (c.contains('tamara')) return 4;
-  if (isCodMethod(c)) return 5;
-  if (c.contains('checkmo') || c.contains('check')) return 6;
+  // Both Tamara methods sit after Tabby and stay adjacent, instalments first:
+  // that is the BNPL offer pairing with Tabby, while Pay Now is pay-in-full.
+  // Ranked explicitly rather than left to the order the API returns, which has
+  // been observed to move Tamara between first and fourth across requests.
+  if (c.contains('tamara')) return c.contains('pay_now') ? 5 : 4;
+  if (isCodMethod(c)) return 6;
+  if (c.contains('checkmo') || c.contains('check')) return 7;
   return 50;
 }
 
