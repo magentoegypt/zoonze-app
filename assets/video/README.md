@@ -1,9 +1,14 @@
 # assets/video
 
-## app_intro.mp4 — first-launch intro (CL042-DEV41)
+## app_intro.mp4 — launch intro (CL042-DEV41)
 
-Plays once, on the first launch after install, in place of the static launch
-splash. Skippable from the first frame. See
+Plays on **every cold start**, in place of the static launch splash, with Skip
+appearing after five seconds. Both are the client's explicit instruction
+(CL042-QA01, 2026-09-27) — it originally played once, and that was reversed.
+Not on resume: only a cold start rebuilds the splash.
+
+Switchable with `--dart-define=INTRO_VIDEO_ENABLED=false`, which still needs a
+build — it is a compile-time flag, not remote config. See
 `lib/features/onboarding/presentation/intro_video_screen.dart`.
 
 **This file is a re-encode, not the master.** The supplied master was

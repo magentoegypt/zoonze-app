@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/routes.dart';
 import '../../../app/theme/app_colors.dart';
 import '../../../core/assets/app_images.dart';
-import '../../../core/storage/local_cache.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/storage/secure_token_store.dart';
 import '../../../core/util/image_prefetch.dart';
 import '../../../core/widgets/network_image.dart';
@@ -24,11 +24,16 @@ import 'intro_video_screen.dart';
 /// it shows, we read the saved session: a returning signed-in customer skips
 /// Welcome/Sign In and lands on Home; everyone else goes to Welcome. Chrome-free.
 ///
-/// On the **first launch after install** the intro video (CL042-DEV41) takes
-/// the place of that static branding — it ends on the same logo, so showing
-/// both would play the logo twice. Everything else is unchanged: the same
-/// warm-up runs behind it and the same routing decision follows. The video is
-/// shown once and never again; see [_introSeenKey].
+/// The intro video (CL042-DEV41) takes the place of that static branding on
+/// **every cold start** — the client's explicit instruction (CL042-QA01,
+/// 2026-09-27), reversing the once-only behaviour shipped first. It ends on the
+/// same logo the splash shows, so playing both would show the logo twice.
+/// Everything else is unchanged: the same warm-up runs behind it and the same
+/// routing decision follows.
+///
+/// Cold start only. This screen is the router's entry point, so returning from
+/// the background does not rebuild it and the intro does not replay on resume —
+/// which would be genuinely disruptive and is not what was asked for.
 class LaunchSplashScreen extends ConsumerStatefulWidget {
   const LaunchSplashScreen({super.key});
 
@@ -36,12 +41,10 @@ class LaunchSplashScreen extends ConsumerStatefulWidget {
   ConsumerState<LaunchSplashScreen> createState() => _LaunchSplashScreenState();
 }
 
-/// Hive key recording that the first-launch intro has been played.
-const String _introSeenKey = 'intro_video_seen';
-
 /// Backstop for the intro gate. Generous enough never to clip the 13.5s video
 /// on a slow device, short enough that a wedged decoder can't strand a user on
-/// a black screen — startup must not be able to hang behind a promo.
+/// a black screen — startup must not be able to hang behind a promo. It now
+/// guards every launch, not just the first.
 const Duration _introMaxHold = Duration(seconds: 25);
 
 class _LaunchSplashScreenState extends ConsumerState<LaunchSplashScreen> {
@@ -55,39 +58,16 @@ class _LaunchSplashScreenState extends ConsumerState<LaunchSplashScreen> {
   @override
   void initState() {
     super.initState();
-    _playIntro = !_introAlreadySeen();
+    _playIntro = AppConfig.introVideoEnabled;
     _warmHome();
     _routeOnboarding();
   }
 
-  bool _introAlreadySeen() {
-    try {
-      return ref.read(localCacheProvider).readString(_introSeenKey) != null;
-    } on Object {
-      // No cache, no intro — a storage failure must not gate the app behind a
-      // video, and showing it again is worse than not showing it at all.
-      return true;
-    }
-  }
-
-  /// Marks the intro played and releases the gate. Idempotent: end-of-video,
-  /// Skip and an init failure can all arrive, and only the first matters.
+  /// Releases the gate. Idempotent: end-of-video, Skip and an init failure can
+  /// all arrive, and only the first matters.
   void _finishIntro() {
     if (_introGate.isCompleted) return;
     _introGate.complete();
-    // Fire-and-forget: a failed write costs a replay on next launch, which is
-    // not worth delaying startup for.
-    unawaited(
-      Future(() async {
-        try {
-          await ref
-              .read(localCacheProvider)
-              .writeString(_introSeenKey, DateTime.now().toIso8601String());
-        } on Object {
-          // Ignored — see above.
-        }
-      }),
-    );
   }
 
   /// The splash deliberately holds for 2.6s. Spend it fetching what Home needs
@@ -152,9 +132,10 @@ class _LaunchSplashScreenState extends ConsumerState<LaunchSplashScreen> {
     if (_playIntro) {
       return IntroVideoView(
         onFinished: _finishIntro,
-        // Couldn't decode: drop straight through to routing rather than hold a
-        // black frame. The flag is still set, so a device that can never play
-        // it doesn't meet it on every launch.
+        // Couldn't decode: drop straight through to routing rather than hold
+        // a black frame. This matters more now the intro runs on every launch
+        // — a decode failure would otherwise block every single start, not
+        // just the first.
         onFailed: _finishIntro,
       );
     }

@@ -38,14 +38,19 @@ void main() {
       home: IntroVideoView(onFinished: onFinished, onFailed: onFailed),
     );
 
-    testWidgets('offers Skip from the first frame, before playback', (
-      tester,
-    ) async {
+    // The client asked for Skip after five seconds (CL042-QA01). Before that
+    // the intro cannot be dismissed at all, so the timing is the whole of the
+    // shopper's escape route and worth pinning down.
+    testWidgets('hides Skip until the five seconds are up', (tester) async {
       await tester.pumpWidget(harness(onFinished: () {}, onFailed: () {}));
       await tester.pump();
-      // Not gated on the video being ready: a promo a user cannot dismiss is
-      // the worst thing to put in front of them at launch.
-      expect(find.text('Skip'), findsOneWidget);
+      expect(find.text('Skip Intro'), findsNothing);
+
+      await tester.pump(const Duration(seconds: 4));
+      expect(find.text('Skip Intro'), findsNothing);
+
+      await tester.pump(const Duration(seconds: 2)); // 6s total
+      expect(find.text('Skip Intro'), findsOneWidget);
     });
 
     testWidgets('Skip finishes exactly once, however often it is tapped', (
@@ -55,10 +60,10 @@ void main() {
       await tester.pumpWidget(
         harness(onFinished: () => finished++, onFailed: () {}),
       );
+      await tester.pump(kIntroSkipDelay + const Duration(seconds: 1));
+      await tester.tap(find.text('Skip Intro'));
       await tester.pump();
-      await tester.tap(find.text('Skip'));
-      await tester.pump();
-      await tester.tap(find.text('Skip'));
+      await tester.tap(find.text('Skip Intro'));
       await tester.pump();
       expect(finished, 1);
     });
@@ -68,7 +73,8 @@ void main() {
     ) async {
       // There is no video platform channel under flutter_test, so initialize()
       // fails here exactly as it would on a device that cannot decode the
-      // asset — the path that strands a user on first launch.
+      // asset. That path matters more now the intro runs on every launch: a
+      // decode failure would otherwise block every start, not just the first.
       var failed = 0;
       await tester.pumpWidget(
         harness(onFinished: () {}, onFailed: () => failed++),
@@ -77,12 +83,12 @@ void main() {
       expect(failed, 1);
     });
 
-    testWidgets('localizes Skip in Arabic', (tester) async {
+    testWidgets('uses the Arabic wording the client supplied', (tester) async {
       await tester.pumpWidget(
         harness(onFinished: () {}, onFailed: () {}, locale: 'ar'),
       );
-      await tester.pump();
-      expect(find.text('تخطّي'), findsOneWidget);
+      await tester.pump(kIntroSkipDelay + const Duration(seconds: 1));
+      expect(find.text('تخطي المقدمة'), findsOneWidget);
     });
   });
 
@@ -127,37 +133,32 @@ void main() {
       );
     }
 
-    testWidgets('plays the intro on a first launch', (tester) async {
-      await tester.pumpWidget(harness(FakeLocalCache()));
-      await tester.pump();
-      expect(find.byType(IntroVideoView), findsOneWidget);
-      // Let the gate close so its backstop timer is cancelled before teardown.
-      await tester.pumpAndSettle();
-    });
-
-    testWidgets('shows the static splash once the intro has been seen', (
-      tester,
-    ) async {
+    testWidgets('plays the intro on every cold start', (tester) async {
+      // The client reversed the once-only behaviour (CL042-QA01): it must show
+      // "every time we open the app".
       final cache = FakeLocalCache();
-      await cache.writeString('intro_video_seen', '2026-09-26T00:00:00.000');
-      await tester.pumpWidget(harness(cache));
-      await tester.pump();
-      expect(find.byType(IntroVideoView), findsNothing);
-      // The static branding, not a video.
-      expect(find.text('BEAUTY & FRAGRANCE'), findsOneWidget);
-      await tester.pumpAndSettle(const Duration(seconds: 3));
+      for (var launch = 1; launch <= 3; launch++) {
+        await tester.pumpWidget(harness(cache));
+        await tester.pump();
+        expect(
+          find.byType(IntroVideoView),
+          findsOneWidget,
+          reason: 'launch $launch should still play the intro',
+        );
+        await tester.pumpAndSettle();
+        // Tear the tree down so the next iteration is a fresh launch.
+        await tester.pumpWidget(const SizedBox.shrink());
+      }
     });
 
-    testWidgets('records the intro so the next launch skips it', (
+    testWidgets('persists nothing that could suppress a later launch', (
       tester,
     ) async {
       final cache = FakeLocalCache();
       await tester.pumpWidget(harness(cache));
-      // Video init fails under flutter_test, which is the failure path: it must
-      // still mark the intro seen, or a device that cannot decode it would meet
-      // it on every single launch.
       await tester.pumpAndSettle();
-      expect(cache.readString('intro_video_seen'), isNotNull);
+      // The old build wrote an "intro_video_seen" key; nothing should now.
+      expect(cache.readString('intro_video_seen'), isNull);
     });
 
     testWidgets('a failed intro still routes on, it does not hang', (
