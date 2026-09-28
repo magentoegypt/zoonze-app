@@ -522,6 +522,50 @@ node falls back to the normal card form — the recoverable direction.
 
 ---
 
+## Tamara
+
+Redirect gateway, no native SDK. `paymentSession` returns `gateway: TAMARA`,
+`status: READY` and a hosted `web_url`; the app opens it and the customer
+completes there. Live since 2026-09-28; this section is the backend's own
+answer to the app's request on [CL042-DEV42](https://app.clickup.com/t/14zb93nuzft).
+
+### Return URLs
+
+```
+{base}tamara/payment/{ORDER_ENTITY_ID}/{success|cancel|failure}
+```
+
+- `{ORDER_ENTITY_ID}` is the Magento **entity_id**, not the increment id.
+- **Match on the path segment.** Magento reads no query parameters from the
+  return, so whatever Tamara appends is ignored — matching on it would mean
+  matching on something the store itself does not act on.
+- Server-to-server: `tamara/payment/notification?storeId={id}` — never a
+  customer return, and must not be read as a verdict.
+
+### `additional_data`
+
+| key | value |
+|-----|-------|
+| `tamara_order_id` | Tamara's order id |
+| `checkout_url` | hosted checkout |
+| `success_url` / `cancel_url` / `failure_url` | the three returns above, in full |
+
+Top-level: `payment_id` (the Tamara order id), `web_url`, `publishable_key`.
+
+### Is the success return authoritative?
+
+**Yes — but only if the page is actually loaded.** Magento reconciles with
+Tamara synchronously while serving `…/success`.
+
+> **The app must not close the WebView on the redirect.** Intercepting that
+> navigation and closing early reports a success the store never recorded. The
+> app therefore allows the return to load and closes on `onPageFinished`; a
+> success page that fails to load is reported as a failure, not a success.
+
+If the sheet is closed before the page loads, poll the **order state** until it
+leaves `pending`/`payment_review`. Do **not** poll
+`PaymentSessionOutput.status`: that is session lifecycle, not payment result.
+
 ## App-side mapping (already implemented)
 
 | Contract | App |

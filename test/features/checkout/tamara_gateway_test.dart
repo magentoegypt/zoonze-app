@@ -3,78 +3,56 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:zoonze_app/features/checkout/domain/payment_session.dart';
 import 'package:zoonze_app/features/checkout/payments/tamara_payment_gateway.dart';
 
-PaymentOutcome _classify(String url) => classifyTamaraReturn(Uri.parse(url));
+PaymentOutcome? _classify(String url) => classifyTamaraReturn(Uri.parse(url));
 
 void main() {
+  // Backend contract (2026-09-28):
+  //   {base}tamara/payment/{ORDER_ENTITY_ID}/{success|cancel|failure}
+  // matched on the PATH SEGMENT — Magento reads no query parameters, so
+  // anything Tamara appends is noise.
   group('classifyTamaraReturn', () {
-    // The exact return paths are set by the Magento Tamara module and are not
-    // in the payment contract, so this matches the conventional shapes. What
-    // must hold regardless of spelling: nothing ambiguous reads as success.
-    test('reads an approved return as success', () {
+    test('reads the verdict from the last path segment', () {
       expect(
-        _classify('https://zoonze.com/tamara/payment/success?orderId=9'),
+        _classify('https://zoonze.com/tamara/payment/4821/success'),
         PaymentOutcome.success,
       );
       expect(
-        _classify('https://zoonze.com/checkout?paymentStatus=approved'),
-        PaymentOutcome.success,
-      );
-    });
-
-    test('reads a cancellation as cancelled', () {
-      expect(
-        _classify('https://zoonze.com/tamara/payment/cancel?orderId=9'),
+        _classify('https://zoonze.com/tamara/payment/4821/cancel'),
         PaymentOutcome.cancelled,
       );
-    });
-
-    test('reads a decline as rejected, not failed', () {
-      // A Tamara decline is a normal path, like Tabby's: the customer goes back
-      // to method selection rather than being shown an error.
       expect(
-        _classify('https://zoonze.com/tamara/payment/failure?status=declined'),
-        PaymentOutcome.rejected,
-      );
-    });
-
-    test('reads an explicit failure as failed', () {
-      expect(
-        _classify('https://zoonze.com/tamara/payment/failure'),
+        _classify('https://zoonze.com/tamara/payment/4821/failure'),
         PaymentOutcome.failed,
       );
     });
 
-    test('reads an expiry as expired', () {
+    test('ignores whatever Tamara appends as query', () {
       expect(
-        _classify('https://zoonze.com/tamara/payment/expired'),
-        PaymentOutcome.expired,
+        _classify(
+          'https://zoonze.com/tamara/payment/4821/success'
+          '?paymentStatus=declined&orderId=abc',
+        ),
+        PaymentOutcome.success,
       );
     });
 
-    test('never calls an unreadable return a success', () {
-      // The case that matters most: back at the store with nothing we can
-      // parse. Cancelled sends the customer to CompletePaymentScreen, where
-      // they can retry or pay later. Success would hand them a confirmation
-      // for money that may never have moved.
-      for (final url in [
-        'https://zoonze.com/',
-        'https://zoonze.com/checkout/onepage',
-        'https://zoonze.com/tamara/payment/notify?id=abc',
-      ]) {
-        expect(_classify(url), PaymentOutcome.cancelled, reason: url);
-      }
+    test('works under a store-view path prefix', () {
+      expect(
+        _classify('https://zoonze.com/eg_en/tamara/payment/4821/success'),
+        PaymentOutcome.success,
+      );
     });
 
-    test('checks cancel and decline before success', () {
-      // A cancel URL that still carries "success" somewhere in the path must
-      // not be read as a success.
+    test('is not fooled by a store page that merely ends in success', () {
+      // The route is part of the match, not just the verdict.
+      expect(_classify('https://zoonze.com/checkout/success'), isNull);
+      expect(_classify('https://zoonze.com/'), isNull);
+    });
+
+    test('does not treat the server-to-server endpoint as a verdict', () {
       expect(
-        _classify('https://zoonze.com/checkout/success/cancel'),
-        PaymentOutcome.cancelled,
-      );
-      expect(
-        _classify('https://zoonze.com/checkout/success?status=declined'),
-        PaymentOutcome.rejected,
+        _classify('https://zoonze.com/tamara/payment/notification?storeId=1'),
+        isNull,
       );
     });
   });

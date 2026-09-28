@@ -129,26 +129,19 @@ nor a native SDK the app uses (like N-Genius), but its session carries a hosted
 `web_url` — so the gateway renders that in a WebView and reads the outcome from
 where Tamara sends the customer afterwards.
 
-### One thing the contract still does not state
+### Contract now documented
 
-`payment-contract.md` documents N-Genius and Tabby only. **Tamara's return URLs
-are not specified anywhere**, so the app classifies them by shape — matching
-cancel / declined / expired / failure / success in the returned path and query.
+The backend supplied the return URLs and `additional_data` keys on 2026-09-28,
+and they are written up in
+[payment-contract.md](payment-contract.md#tamara). Returns are
+`{base}tamara/payment/{ORDER_ENTITY_ID}/{success|cancel|failure}`, matched on
+the **path segment** — Magento reads no query parameters.
 
-Two deliberate properties, both worth keeping if this is tightened later:
-
-- **The return is detected by arriving at the store's host, not by leaving
-  Tamara's.** A card leg can pass through a bank's 3-D Secure page, which is
-  neither domain; treating "left tamara.co" as the end would abort a payment
-  mid-authentication.
-- **Anything unreadable is treated as *not* a success**, landing the customer on
-  CompletePaymentScreen to retry or pay later. A wrong "cancelled" is
-  recoverable; a wrong "success" hands out an order confirmation for money that
-  may never have moved.
-
-**Worth closing properly:** ask the backend for the Tamara return URLs and
-`additional_data` keys, add a Tamara section to `payment-contract.md`, and
-tighten the classifier to match them exactly instead of by shape.
+**The correction that mattered:** success reconciles with Tamara *while the
+return page is being served*. The first implementation intercepted that
+navigation and closed the WebView on the redirect, which would have reported a
+success the store never recorded. The app now lets the return load and closes
+on page-finished; a success page that fails to load is reported as a failure.
 
 ---
 
