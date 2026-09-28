@@ -5,6 +5,7 @@ import '../../../core/diagnostics/payment_trace.dart';
 import '../../catalog/domain/money.dart';
 import '../domain/payment_session.dart';
 import 'payment_gateway.dart';
+import 'tamara_settlement.dart';
 
 /// What happened when we tried to drive a session to payment.
 enum PaymentStep { presented, pending, rejected, failed, unavailable }
@@ -46,8 +47,20 @@ Future<PaymentRunResult> runPaymentSession({
       }
       try {
         PaymentTrace.record('run: presenting ${session.gateway.name}');
-        final outcome = await gateway.present(context, session, amount: amount);
+        var outcome = await gateway.present(context, session, amount: amount);
         PaymentTrace.record('run: outcome ${outcome.name}');
+        // Tamara only: a dismissal is not proof of non-payment. Magento
+        // reconciles while serving the return page, so closing the sheet first
+        // skips that — but Tamara's server-to-server notification reconciles
+        // anyway, a moment later. Ask the order before telling someone who just
+        // paid that they did not. Only ever upgrades, and only on an invoice.
+        if (session.gateway == PaymentProvider.tamara &&
+            outcome == PaymentOutcome.cancelled) {
+          if (await tamaraOrderSettled(ref, session.orderNumber)) {
+            PaymentTrace.record('run: tamara settled after dismissal → success');
+            outcome = PaymentOutcome.success;
+          }
+        }
         return PaymentRunResult(PaymentStep.presented, outcome);
       } on PaymentGatewayUnavailable {
         // The native module is missing or unregistered — distinct from a bad

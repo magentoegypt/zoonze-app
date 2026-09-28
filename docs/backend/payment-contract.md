@@ -566,6 +566,18 @@ If the sheet is closed before the page loads, poll the **order state** until it
 leaves `pending`/`payment_review`. Do **not** poll
 `PaymentSessionOutput.status`: that is session lifecycle, not payment result.
 
+> **App note — `state` is not exposed.** `CustomerOrder` carries `status`, which
+> is a **localized label** (the Arabic store view returns Arabic), and no
+> `state` field. Deciding whether money moved by matching translated strings is
+> not sound, so the app polls for an **invoice** instead: Magento raises one on
+> capture, and `invoices` is already in the order selection. It is consulted
+> only after a dismissal, can only upgrade the outcome to success, and treats
+> any error as not-settled.
+>
+> **Adding `state` to `CustomerOrder` would let the app follow this guidance
+> literally.** Worth doing if Tamara is ever configured authorize-only, where
+> no invoice is raised until capture and the probe would find nothing.
+
 ## App-side mapping (already implemented)
 
 | Contract | App |
