@@ -8,11 +8,11 @@ enum PaymentOutcome { success, cancelled, rejected, failed, expired }
 /// Gateways this build can actually present.
 ///
 /// [unknown] is not a gateway — it is the backend naming one this app does not
-/// implement (a new method enabled server-side before the app ships support,
-/// e.g. Tamara). It exists so an unrecognised name cannot be mistaken for a
-/// gateway we do have: routing a foreign session into the N-Genius SDK would
-/// show the shopper a card screen for a payment that is not a card.
-enum PaymentProvider { ngenius, tabby, unknown }
+/// implement (a method enabled server-side before the app ships support). It
+/// exists so an unrecognised name cannot be mistaken for a gateway we do have:
+/// routing a foreign session into the N-Genius SDK would show the shopper a
+/// card screen for a payment that is not a card.
+enum PaymentProvider { ngenius, tabby, tamara, unknown }
 
 /// Lifecycle of a gateway session as reported by the `paymentSession` resolver.
 enum PaymentSessionStatus { ready, pending, rejected, failed }

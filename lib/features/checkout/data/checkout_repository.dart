@@ -317,6 +317,7 @@ class CheckoutRepository {
   /// presenting the wrong screen.
   PaymentProvider _gateway(String? raw) => switch (raw?.toUpperCase()) {
     'TABBY' => PaymentProvider.tabby,
+    'TAMARA' => PaymentProvider.tamara,
     'NGENIUS' => PaymentProvider.ngenius,
     _ => PaymentProvider.unknown,
   };

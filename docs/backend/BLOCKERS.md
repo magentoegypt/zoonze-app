@@ -25,7 +25,7 @@ before acting on one.
 | 6 | Free-shipping carrier offers no free method at threshold | Checkout charges shipping the cart promised free | [android-qa-backend-flags.md](android-qa-backend-flags.md) §1 | Open · config only |
 | 7 | Assorted config/content gaps | Cosmetic + catalog | [android-qa-backend-flags.md](android-qa-backend-flags.md) §§2,3,4,6,8 | Open |
 | 8 | Cart / wishlist not shared across web and app | Cross-platform continuity | *no contract doc* | Carried forward |
-| 9 | `TAMARA` missing from `PaymentGateway` — method is served but unpayable | Paying with Tamara ([CL042-DEV42](https://app.clickup.com/t/14zb93nuzft)) | *no contract doc* | **Live and urgent** 2026-09-28 |
+| ~~9~~ | ~~Tamara served but unpayable~~ | — | [CL042-DEV42](https://app.clickup.com/t/14zb93nuzft) | **Resolved 2026-09-28** · app wired |
 
 ---
 
@@ -117,66 +117,38 @@ a store-agnostic `items_v2` resolver override for the wishlist.
 writing up properly before it is handed over, since the detail here is thinner
 than every other entry.
 
-## 9. Tamara is served but cannot be paid
+## 9. Tamara — ✅ RESOLVED
 
-**Changed 2026-09-28: Tamara went live.** `available_payment_methods` now
-returns `tamara_pay_by_instalments` / "Tamara". Because checkout is built from
-that list, the row appeared in the app **with no release** — including in
-builds already with testers.
+**Backend landed `TAMARA` on 2026-09-28**, same day. Verified against
+production: `PaymentGateway` is now `NGENIUS`, `TABBY`, `TAMARA`, and a real
+Tamara order resolves `status: READY` with a `payment_id`, a
+`checkout…tamara.co` `web_url` and a `publishable_key`.
 
-**But `PaymentGateway` still has only `NGENIUS` and `TABBY`.** The session
-field is `gateway: PaymentGateway!` — non-nullable — so the resolver cannot
-describe a Tamara session at all. It can only error, or name a gateway that is
-not Tamara.
+**App wired the same day.** Tamara ships neither a Flutter package (like Tabby)
+nor a native SDK the app uses (like N-Genius), but its session carries a hosted
+`web_url` — so the gateway renders that in a WebView and reads the outcome from
+where Tamara sends the customer afterwards.
 
-### What that broke, and what the app now does
+### One thing the contract still does not state
 
-`PaymentMethodOption.isRedirect` listed ngenius/tabby only, so Tamara read as a
-**non-redirect** method — the class that finalises on `placeOrder` with no
-payment step, like cash on delivery. A shopper selecting Tamara reached **order
-success having paid nothing**. Fixed: Tamara is classified as the redirect
-method it is, so it takes the session path.
+`payment-contract.md` documents N-Genius and Tabby only. **Tamara's return URLs
+are not specified anywhere**, so the app classifies them by shape — matching
+cancel / declined / expired / failure / success in the returned path and query.
 
-With that fix the honest outcome is an order left **awaiting payment**: the
-app asks for a session, cannot get a usable one, and says so rather than
-claiming success. The shopper can retry from `CompletePaymentScreen` once the
-backend lands.
+Two deliberate properties, both worth keeping if this is tightened later:
 
-### Config says two methods; only one is served
+- **The return is detected by arriving at the store's host, not by leaving
+  Tamara's.** A card leg can pass through a bank's 3-D Secure page, which is
+  neither domain; treating "left tamara.co" as the end would abort a payment
+  mid-authentication.
+- **Anything unreadable is treated as *not* a success**, landing the customer on
+  CompletePaymentScreen to retry or pay later. A wrong "cancelled" is
+  recoverable; a wrong "success" hands out an order confirmation for money that
+  may never have moved.
 
-Admin has **both** `tamara_pay_now` and `tamara_pay_by_instalments` enabled
-(Production, `https://api.tamara.co`, email whitelist off), and the live
-credentials check returns:
-
-| Product | Min | Max |
-| --- | --- | --- |
-| `PAY_BY_INSTALMENTS` | 1 | 100,000 AED |
-| `PAY_NOW` | 1 | 7,500 AED |
-
-But `available_payment_methods` returns **only instalments**, checked at AED 830
-and AED 8,300. At 830 Pay Now is well inside its 7,500 ceiling and should be
-offered, so its absence is not the cap — check Pay Now's own allowed countries,
-min/max and customer-group settings, and that config cache was flushed. (At
-8,300 its absence would be correct.)
-
-The app is ready either way: both codes rank after Tabby and stay adjacent,
-instalments first, and both are treated as redirect methods.
-
-Also worth noting for the website/app gap: the **PDP widget is on** for the
-storefront, from `cdn.tamara.co`. The app has no Tamara promo — the Tabby
-equivalent is driven by a `tabbyConfig` query, and there is no Tamara
-counterpart. Achieving parity would need one.
-
-### Needed
-
-`TAMARA` on the `PaymentGateway` enum, and `paymentSession` returning a Tamara
-session (payment id / redirect URL) the way it does for Tabby. Then the app
-needs a Tamara gateway implementation — Dart or native depending on what Tamara
-ships, which the integration pack emailed to the team should settle.
-
-> **Until then, consider disabling Tamara in Magento admin.** It is visible and
-> selectable in the app right now, and every order placed with it will sit
-> unpaid. Showing a method that cannot complete is worse than not offering it.
+**Worth closing properly:** ask the backend for the Tamara return URLs and
+`additional_data` keys, add a Tamara section to `payment-contract.md`, and
+tighten the classifier to match them exactly instead of by shape.
 
 ---
 

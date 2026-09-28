@@ -31,6 +31,7 @@ void main() {
   const resolver = PaymentGatewayResolver(
     native: _StubGateway('native'),
     tabby: _StubGateway('tabby'),
+    tamara: _StubGateway('tamara'),
   );
 
   group('PaymentGatewayResolver', () {
@@ -45,6 +46,16 @@ void main() {
     // A gateway the backend names but this build does not implement — Tamara
     // being the live case: a method can be switched on server-side before the
     // app ships support for it.
+    test('routes a READY Tamara session to the Tamara gateway', () {
+      final gateway = resolver.resolve(
+        _session(
+          gateway: PaymentProvider.tamara,
+          method: 'tamara_pay_by_instalments',
+        ),
+      );
+      expect((gateway as _StubGateway?)?.label, 'tamara');
+    });
+
     test('gives no gateway for one this build does not implement', () {
       // Previously anything that was not Tabby fell through to N-Genius, so a
       // Tamara session would have opened the card SDK for a non-card payment.
@@ -53,7 +64,7 @@ void main() {
       final gateway = resolver.resolve(
         _session(
           gateway: PaymentProvider.unknown,
-          method: 'tamara_pay_by_instalments',
+          method: 'some_future_method',
         ),
       );
       expect(gateway, isNull);
