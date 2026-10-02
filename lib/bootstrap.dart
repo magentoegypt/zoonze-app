@@ -11,6 +11,7 @@ import 'core/notifications/notification_service.dart';
 import 'core/storage/local_cache.dart';
 import 'core/storage/locale_prefs.dart';
 import 'core/store/store_controller.dart';
+import 'core/util/edge_to_edge.dart';
 import 'features/notifications/data/device_token_repository.dart';
 import 'features/notifications/data/notification_inbox.dart';
 import 'features/notifications/presentation/notification_settings_controller.dart';
@@ -20,6 +21,10 @@ import 'features/notifications/presentation/notification_settings_controller.dar
 /// the app. The flavor itself comes from `--dart-define-from-file`.
 Future<void> bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Draw behind the system bars on Android 10-14 as well, so the layout
+  // matches Android 15+, which enforces it for our target SDK either way.
+  await enableEdgeToEdge();
 
   // Locale date symbols (so Arabic order dates render Arabic month names).
   await initializeDateFormatting();
